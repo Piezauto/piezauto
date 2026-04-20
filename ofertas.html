@@ -1,0 +1,526 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ofertas y Descuentos — Piezauto</title>
+  <meta name="description" content="Las mejores ofertas en autopartes y repuestos. Descuentos de hasta 30% en frenos, suspensión, filtros y más.">
+  <meta name="robots" content="index, follow">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Piezauto">
+  <meta property="og:title" content="Ofertas y Descuentos — Piezauto">
+  <meta property="og:description" content="Las mejores ofertas en autopartes y repuestos. Descuentos de hasta 30% en frenos, suspensión, filtros y más.">
+  <meta property="og:image" content="https://piezauto.com.ar/img/og-default.jpg">
+  <meta property="og:url" content="https://piezauto.com.ar/ofertas.html">
+  <link rel="canonical" href="https://piezauto.com.ar/ofertas.html">
+  <link rel="stylesheet" href="css/estilos.css">
+  <style>
+    .ofertas-hero {
+      background: linear-gradient(135deg, var(--negro) 0%, #2a0a0a 100%);
+      padding: 48px 24px 40px;
+      text-align: center;
+    }
+    .ofertas-hero h1 { font-size: 32px; font-weight: 800; color: #fff; margin-bottom: 8px; }
+    .ofertas-hero p  { color: #aaa; font-size: 15px; }
+
+    .oferta-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--rojo);
+      color: #fff;
+      padding: 5px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 800;
+      margin-bottom: 16px;
+      letter-spacing: 0.03em;
+    }
+
+    /* GRID */
+    .grilla-ofertas {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 20px;
+      padding: 40px 0;
+    }
+
+    .oferta-card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: var(--sombra);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.15s, box-shadow 0.15s;
+      cursor: pointer;
+      position: relative;
+    }
+    .oferta-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 28px rgba(0,0,0,0.13);
+    }
+
+    .oferta-ribbon {
+      position: absolute;
+      top: 12px;
+      left: -4px;
+      background: var(--rojo);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 4px 12px 4px 10px;
+      border-radius: 0 20px 20px 0;
+      letter-spacing: 0.04em;
+      z-index: 2;
+    }
+
+    .oferta-card-img {
+      width: 100%;
+      height: 190px;
+      object-fit: contain;
+      background: #f9f9f9;
+      padding: 16px;
+    }
+
+    .oferta-card-body {
+      padding: 14px 16px 18px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .oferta-card-nombre {
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 1.3;
+    }
+
+    .oferta-card-codigo { font-size: 12px; color: #aaa; }
+
+    .oferta-precios {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      margin-top: 4px;
+    }
+    .precio-original {
+      font-size: 14px;
+      color: #bbb;
+      text-decoration: line-through;
+    }
+    .precio-oferta {
+      font-size: 24px;
+      font-weight: 900;
+      color: var(--rojo);
+    }
+    .descuento-pct {
+      font-size: 11px;
+      font-weight: 800;
+      background: #fff3f3;
+      color: var(--rojo);
+      padding: 2px 8px;
+      border-radius: 20px;
+    }
+
+    .countdown-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #c00;
+      background: #fff3f3;
+      border-radius: 8px;
+      padding: 6px 10px;
+      margin-top: 4px;
+    }
+    .countdown-wrap span { font-size: 14px; }
+
+    .oferta-card-btn {
+      margin-top: auto;
+      background: var(--rojo);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .oferta-card-btn:hover { opacity: 0.88; }
+
+    .filtros-oferta {
+      display: flex;
+      gap: 12px;
+      margin: 24px 0 0;
+      flex-wrap: wrap;
+    }
+    .filtros-oferta select,
+    .filtros-oferta input {
+      padding: 9px 14px;
+      border: 1.5px solid #ddd;
+      border-radius: 8px;
+      font-size: 13px;
+      outline: none;
+      background: #fff;
+    }
+
+    .sin-ofertas {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 80px 20px;
+      color: #aaa;
+    }
+    .sin-ofertas .icono { font-size: 48px; margin-bottom: 12px; }
+    .sin-ofertas h2 { font-size: 20px; font-weight: 700; color: #555; }
+
+    @media (max-width: 600px) {
+      .grilla-ofertas { grid-template-columns: 1fr 1fr; gap: 12px; }
+      .ofertas-hero h1 { font-size: 24px; }
+    }
+    @media (max-width: 400px) {
+      .grilla-ofertas { grid-template-columns: 1fr; }
+    }
+  </style>
+
+  <!-- ============================================================
+    GOOGLE ANALYTICS — Agregar antes del lanzamiento a producción
+    Reemplazá G-XXXXXXXXXX con tu Measurement ID real de GA4.
+    Instrucciones completas: analytics_setup.md
+    ============================================================
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-XXXXXXXXXX');
+  </script>
+  ============================================================ -->
+  <link rel="manifest" href="/manifest.json">
+  <script>if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');</script>
+</head>
+<body>
+
+<div class="site-header-wrap">
+  <div class="topbar">
+    <span id="topbar-info">📍 Zona Oeste, AMBA &nbsp;·&nbsp; Lun–Vie 9–18hs &nbsp;·&nbsp; Sáb 9–13hs</span>
+    <div class="topbar-right">
+      <a href="tel:+541143000000" id="topbar-telefono">📞 011 4300-0000</a>
+      <a href="https://wa.me/5491143000000" target="_blank" id="topbar-whatsapp">💬 WhatsApp</a>
+    </div>
+  </div>
+  <header class="header">
+    <a href="index.html" class="header-logo">Piezauto</a>
+    <div class="header-search">
+      <input type="text" id="header-buscar" placeholder="Buscá tu autoparte..." onkeydown="if(event.key==='Enter') buscarDesdeHeader()">
+      <button onclick="buscarDesdeHeader()">🔍</button>
+    </div>
+    <nav class="header-nav">
+      <a href="index.html">Inicio</a>
+      <a href="catalogo.html">Catálogo</a>
+      <a href="ofertas.html" style="color:#fff">Ofertas</a>
+      <a href="talleres.html">Talleres</a>
+      <a href="nosotros.html">Nosotros</a>
+      <a href="usuario.html">Mi cuenta</a>
+    </nav>
+    <div class="header-carrito" onclick="verCarrito()">
+      🛒 <span id="carrito-count">0</span>
+    </div>
+    <button class="menu-hamburguesa" onclick="toggleMenu()" aria-label="Abrir menú">
+      <span></span><span></span><span></span>
+    </button>
+    <nav class="header-nav-mobile" id="menu-mobile">
+      <a href="index.html" onclick="toggleMenu()">Inicio</a>
+      <a href="catalogo.html" onclick="toggleMenu()">Catálogo</a>
+      <a href="ofertas.html" onclick="toggleMenu()">Ofertas</a>
+      <a href="talleres.html" onclick="toggleMenu()">Talleres</a>
+      <a href="nosotros.html" onclick="toggleMenu()">Nosotros</a>
+      <a href="usuario.html" onclick="toggleMenu()">Mi cuenta</a>
+    </nav>
+  </header>
+</div>
+
+<!-- HERO -->
+<section class="ofertas-hero">
+  <div class="oferta-badge">🔥 Ofertas y descuentos</div>
+  <h1>Los mejores precios en autopartes</h1>
+  <p>Aprovechá las promociones por tiempo limitado — stock sujeto a disponibilidad</p>
+  <div class="filtros-oferta" style="justify-content:center;margin-top:20px">
+    <select id="filtro-orden" onchange="filtrarOfertas()" aria-label="Ordenar por">
+      <option value="descuento">Mayor descuento primero</option>
+      <option value="precio-asc">Menor precio</option>
+      <option value="precio-desc">Mayor precio</option>
+      <option value="tiempo">Tiempo restante</option>
+    </select>
+    <select id="filtro-categoria" onchange="filtrarOfertas()" aria-label="Filtrar por categoría">
+      <option value="">Todas las categorías</option>
+    </select>
+    <input type="text" id="filtro-buscar" placeholder="Buscar en ofertas..." oninput="filtrarOfertas()" aria-label="Buscar en ofertas">
+  </div>
+</section>
+
+<main class="container">
+  <!-- SECCIÓN LIQUIDACIÓN -->
+  <div id="seccion-liquidacion" style="display:none;margin-top:32px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+      <h2 style="font-size:20px;font-weight:800">⚡ Liquidación — Últimas unidades</h2>
+      <span class="badge-liquidacion">Stock muy bajo</span>
+    </div>
+    <div class="grilla-ofertas" id="grilla-liquidacion" style="padding:0 0 24px"></div>
+    <hr style="border:none;border-top:1.5px solid #eee;margin-bottom:32px">
+  </div>
+
+  <h2 style="font-size:20px;font-weight:800;margin-top:24px;margin-bottom:4px">Todas las ofertas</h2>
+  <div class="grilla-ofertas" id="grilla-ofertas">
+    <div class="loader" style="grid-column:1/-1;padding:80px;text-align:center">Cargando ofertas...</div>
+  </div>
+</main>
+
+<footer class="footer-nuevo">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-col">
+        <div class="footer-logo">Piezauto</div>
+        <p>Más de 40 años en el mercado de autopartes del AMBA. Stock real, asesoramiento honesto y precio justo.</p>
+        <div class="footer-social">
+          <a href="https://instagram.com/piezauto" target="_blank" aria-label="Instagram">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+          </a>
+          <a href="https://facebook.com/piezauto" target="_blank" aria-label="Facebook">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+          </a>
+          <a href="https://wa.me/5491143000000" target="_blank" aria-label="WhatsApp">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          </a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>Empresa</h4>
+        <ul>
+          <li><a href="nosotros.html">Nosotros</a></li>
+          <li><a href="nosotros.html">Contacto</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Comprar</h4>
+        <ul>
+          <li><a href="catalogo.html">Catálogo</a></li>
+          <li><a href="ofertas.html">Ofertas</a></li>
+          <li><a href="seguimiento.html">Seguimiento</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Talleres</h4>
+        <ul>
+          <li><a href="talleres.html">Piezauto Point</a></li>
+          <li><a href="nosotros.html">Unirse a la red</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Legal</h4>
+        <ul>
+          <li><a href="terminos.html">Términos y condiciones</a></li>
+          <li><a href="privacidad.html">Política de privacidad</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© <span class="footer-year"></span> Piezauto — Zona Oeste, Buenos Aires. Todos los derechos reservados.</p>
+      <p style="margin-top:4px">Precios en pesos argentinos con IVA incluido. Stock sujeto a disponibilidad.</p>
+    </div>
+  </div>
+</footer>
+<script>document.querySelectorAll('.footer-year').forEach(el => el.textContent = new Date().getFullYear());</script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script src="js/mantenimiento.js" defer></script>
+<script src="js/notifications.js"></script>
+<script src="js/autocomplete.js"></script>
+<script src="js/whatsapp-widget.js"></script>
+<script>
+
+function buscarDesdeHeader() {
+  const q = document.getElementById('header-buscar').value.trim();
+  if (q) window.location.href = 'busqueda.html?q=' + encodeURIComponent(q);
+}
+function toggleMenu() {
+  document.getElementById('menu-mobile').classList.toggle('open');
+}
+
+let todasLasOfertas = [];
+let carrito = JSON.parse(localStorage.getItem('pz_carrito') || '[]');
+actualizarContadorCarrito();
+
+function actualizarContadorCarrito() {
+  document.getElementById('carrito-count').textContent = carrito.reduce((a,i) => a+i.cantidad, 0);
+}
+function agregarAlCarrito(producto) {
+  const existe = carrito.find(i => i.id === producto.id);
+  if (existe) { existe.cantidad++; } else { carrito.push({ ...producto, cantidad: 1 }); }
+  localStorage.setItem('pz_carrito', JSON.stringify(carrito));
+  actualizarContadorCarrito();
+  alert(`✅ "${producto.nombre}" agregado al carrito`);
+}
+function verCarrito() { window.location.href = 'checkout.html'; }
+
+function pctDesc(precio, oferta) { return Math.round(((precio - oferta) / precio) * 100); }
+
+function formatCountdown(fechaFin) {
+  const diff = new Date(fechaFin) - Date.now();
+  if (diff <= 0) return '<span style="color:#c00;font-weight:700">¡Oferta vencida!</span>';
+  const dias  = Math.floor(diff / 86400000);
+  const hs    = Math.floor((diff % 86400000) / 3600000);
+  const min   = Math.floor((diff % 3600000) / 60000);
+  const seg   = Math.floor((diff % 60000) / 1000);
+  if (dias >= 2) return `<span>${dias}d ${hs}h restantes</span>`;
+  if (hs >= 1)   return `<span style="color:#c00">⏰ ${hs}h ${min}min restantes</span>`;
+  return `<span style="color:#c00;font-weight:800">⏰ ¡${min}min ${seg}seg!</span>`;
+}
+
+function renderOfertaCard(p, extraBadge) {
+  const pct = pctDesc(p.precio, p.precio_oferta);
+  const img = p.imagenes?.[0] || 'https://placehold.co/300x200?text=Sin+imagen';
+  const tieneVencimiento = !!p.fecha_fin_oferta;
+  const cdId = `cd-${p.id}`;
+  return `
+    <div class="oferta-card" onclick="window.location='producto.html?id=${p.id}'">
+      <div class="oferta-ribbon" aria-label="Descuento ${pct}%">-${pct}% OFF</div>
+      ${extraBadge || ''}
+      <img class="oferta-card-img" src="${img}" alt="${p.nombre}" loading="lazy">
+      <div class="oferta-card-body">
+        <div class="oferta-card-nombre">${p.nombre}</div>
+        ${p.codigo_pieza ? `<div class="oferta-card-codigo">Cód: ${p.codigo_pieza}</div>` : ''}
+        <div class="oferta-precios">
+          <span class="precio-original" aria-label="Precio original">$${Number(p.precio).toLocaleString('es-AR')}</span>
+          <span class="precio-oferta" aria-label="Precio oferta">$${Number(p.precio_oferta).toLocaleString('es-AR')}</span>
+          <span class="descuento-pct">-${pct}%</span>
+        </div>
+        ${tieneVencimiento
+          ? `<div class="countdown-wrap" id="${cdId}">${formatCountdown(p.fecha_fin_oferta)}</div>`
+          : ''}
+        <button class="oferta-card-btn" onclick="event.stopPropagation(); agregarAlCarrito({id:'${p.id}',nombre:'${p.nombre.replace(/'/g,"\\'")}',precio:${p.precio_oferta}})">
+          🛒 Agregar al carrito
+        </button>
+      </div>
+    </div>`;
+}
+
+function renderOfertas(lista) {
+  const grilla = document.getElementById('grilla-ofertas');
+  if (!lista.length) {
+    grilla.innerHTML = '<div class="sin-ofertas"><div class="icono">🔍</div><h2>No se encontraron productos</h2></div>';
+    return;
+  }
+  grilla.innerHTML = lista.map(p => renderOfertaCard(p, '')).join('');
+  iniciarCountdowns(lista);
+}
+
+function iniciarCountdowns(lista) {
+  clearInterval(window._cdInterval);
+  const conVencimiento = lista.filter(p => p.fecha_fin_oferta);
+  if (!conVencimiento.length) return;
+  window._cdInterval = setInterval(() => {
+    conVencimiento.forEach(p => {
+      const el = document.getElementById(`cd-${p.id}`);
+      if (el) el.innerHTML = formatCountdown(p.fecha_fin_oferta);
+    });
+  }, 1000);
+}
+
+async function cargarOfertas() {
+  const grilla = document.getElementById('grilla-ofertas');
+  const ahora  = new Date().toISOString();
+
+  const [ofertasRes, catRes, liquidRes] = await Promise.all([
+    db.from('productos').select('*, categorias(id, nombre, slug)')
+      .eq('activo', true).not('precio_oferta', 'is', null)
+      .or(`fecha_fin_oferta.is.null,fecha_fin_oferta.gte.${ahora}`)
+      .order('creado_en', { ascending: false }),
+    db.from('categorias').select('id, nombre').order('nombre'),
+    db.from('productos').select('id, nombre, precio, precio_oferta, stock, imagenes, codigo_pieza')
+      .eq('activo', true).gt('stock', 0).lte('stock', 2).order('stock', { ascending: true }).limit(8),
+  ]);
+
+  // Cargar filtro de categorías
+  const catSel = document.getElementById('filtro-categoria');
+  if (catRes.data?.length) {
+    catRes.data.forEach(c => {
+      catSel.innerHTML += `<option value="${c.id}">${c.nombre}</option>`;
+    });
+  }
+
+  if (ofertasRes.error) {
+    grilla.innerHTML = '<div class="sin-ofertas"><div class="icono">⚠️</div><h2>Error al cargar las ofertas.</h2></div>';
+    return;
+  }
+  if (!ofertasRes.data?.length) {
+    grilla.innerHTML = '<div class="sin-ofertas"><div class="icono">🔖</div><h2>No hay ofertas activas por el momento</h2><p style="margin-top:8px;font-size:14px">Volvé pronto — actualizamos los precios seguido.</p><a href="index.html" class="btn btn-rojo" style="display:inline-block;margin-top:20px">Ver todos los productos</a></div>';
+    return;
+  }
+
+  todasLasOfertas = ofertasRes.data;
+  renderOfertas(todasLasOfertas);
+
+  // Sección liquidación (stock 1-2)
+  if (liquidRes.data?.length) {
+    document.getElementById('seccion-liquidacion').style.display = 'block';
+    document.getElementById('grilla-liquidacion').innerHTML = liquidRes.data.map(p => {
+      const precio = p.precio_oferta || p.precio;
+      const img = p.imagenes?.[0] || 'https://placehold.co/300x200?text=Sin+imagen';
+      const stockBadge = `<div style="position:absolute;top:44px;left:-4px;z-index:3"><span class="badge-liquidacion">⚡ ${p.stock} en stock</span></div>`;
+      if (p.precio_oferta) return renderOfertaCard(p, stockBadge);
+      return `
+        <div class="oferta-card" onclick="window.location='producto.html?id=${p.id}'">
+          ${stockBadge}
+          <img class="oferta-card-img" src="${img}" alt="${p.nombre}" loading="lazy">
+          <div class="oferta-card-body">
+            <div class="oferta-card-nombre">${p.nombre}</div>
+            <div class="precio-oferta">$${Number(precio).toLocaleString('es-AR')}</div>
+            <button class="oferta-card-btn" onclick="event.stopPropagation(); agregarAlCarrito({id:'${p.id}',nombre:'${p.nombre.replace(/'/g,"\\'")}',precio:${precio}})">🛒 Agregar al carrito</button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+}
+
+function filtrarOfertas() {
+  const orden    = document.getElementById('filtro-orden').value;
+  const catId    = document.getElementById('filtro-categoria').value;
+  const texto    = document.getElementById('filtro-buscar').value.toLowerCase().trim();
+
+  let lista = todasLasOfertas.filter(p => {
+    const matchCat  = !catId  || (p.categorias?.id === catId || p.categoria_id === catId);
+    const matchTxt  = !texto  || p.nombre.toLowerCase().includes(texto) || (p.codigo_pieza||'').toLowerCase().includes(texto);
+    return matchCat && matchTxt;
+  });
+
+  if (orden === 'descuento') {
+    lista.sort((a,b) => pctDesc(b.precio, b.precio_oferta) - pctDesc(a.precio, a.precio_oferta));
+  } else if (orden === 'precio-asc') {
+    lista.sort((a,b) => a.precio_oferta - b.precio_oferta);
+  } else if (orden === 'precio-desc') {
+    lista.sort((a,b) => b.precio_oferta - a.precio_oferta);
+  } else if (orden === 'tiempo') {
+    lista.sort((a,b) => {
+      const fa = a.fecha_fin_oferta ? new Date(a.fecha_fin_oferta) : new Date('2099-01-01');
+      const fb = b.fecha_fin_oferta ? new Date(b.fecha_fin_oferta) : new Date('2099-01-01');
+      return fa - fb;
+    });
+  }
+
+  renderOfertas(lista);
+}
+
+// ── INIT ──────────────────────────────────────
+cargarOfertas();
+
+</script>
+<script src="js/config-topbar.js"></script>
+</body>
+</html>

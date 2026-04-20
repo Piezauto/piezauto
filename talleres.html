@@ -1,0 +1,546 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Red de Talleres Piezauto Point — AMBA</title>
+  <meta name="description" content="Encontrá talleres mecánicos de confianza en el AMBA. Reservá turnos online, conocé sus servicios y precios. Red verificada Piezauto Point.">
+  <meta name="robots" content="index, follow">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Piezauto">
+  <meta property="og:title" content="Red de Talleres Piezauto Point — AMBA">
+  <meta property="og:description" content="Encontrá talleres mecánicos de confianza en el AMBA. Reservá turnos online, conocé sus servicios y precios. Red verificada Piezauto Point.">
+  <meta property="og:image" content="https://piezauto.com.ar/img/og-default.jpg">
+  <meta property="og:url" content="https://piezauto.com.ar/talleres.html">
+  <link rel="canonical" href="https://piezauto.com.ar/talleres.html">
+  <link rel="stylesheet" href="css/estilos.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    .talleres-hero {
+      background: var(--negro);
+      padding: 48px 24px 40px;
+      text-align: center;
+    }
+    .talleres-hero h1 {
+      font-size: 30px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+    .talleres-hero p { color: #aaa; font-size: 15px; margin-bottom: 24px; }
+
+    .point-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--rojo);
+      color: #fff;
+      padding: 5px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+
+    .filtros-wrap {
+      max-width: 700px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+    .filtros-wrap input,
+    .filtros-wrap select {
+      padding: 11px 14px;
+      border-radius: 8px;
+      border: none;
+      font-size: 14px;
+      background: #fff;
+      outline: none;
+    }
+
+    /* GRILLA */
+    .talleres-grilla {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 20px;
+      padding: 40px 0;
+    }
+
+    .taller-card-full {
+      background: #fff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: var(--sombra);
+      transition: transform 0.15s;
+      cursor: pointer;
+    }
+    .taller-card-full:hover { transform: translateY(-3px); }
+
+    .taller-card-header {
+      background: var(--negro);
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .taller-avatar {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: var(--rojo);
+      color: #fff;
+      font-size: 20px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .taller-card-nombre {
+      font-size: 16px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .taller-card-localidad {
+      font-size: 13px;
+      color: #aaa;
+      margin-top: 3px;
+    }
+
+    .taller-card-body { padding: 16px 20px; }
+
+    .taller-stars {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+    .stars-text { color: #f4a427; font-size: 16px; letter-spacing: 1px; }
+    .stars-num { font-size: 13px; color: #888; }
+
+    .taller-descripcion {
+      font-size: 13px;
+      color: #666;
+      line-height: 1.6;
+      margin-bottom: 12px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .taller-horario {
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .taller-servicios-preview {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-bottom: 14px;
+    }
+    .servicio-tag {
+      background: #f0f0f0;
+      color: #555;
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-weight: 500;
+    }
+
+    .taller-card-acciones {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding: 0 20px 18px;
+    }
+    .btn-ver-taller {
+      padding: 10px;
+      background: var(--negro);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: center;
+    }
+    .btn-reservar {
+      padding: 10px;
+      background: var(--rojo);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    /* MODAL PERFIL TALLER */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 200;
+      overflow-y: auto;
+      padding: 20px;
+    }
+    .modal-overlay.activo { display: flex; align-items: flex-start; justify-content: center; }
+    .modal-box {
+      background: #fff;
+      border-radius: 14px;
+      width: 100%;
+      max-width: 640px;
+      margin: auto;
+      overflow: hidden;
+    }
+    .modal-header {
+      background: var(--negro);
+      padding: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-header-info { display: flex; align-items: center; gap: 14px; }
+    .modal-avatar {
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      background: var(--rojo);
+      color: #fff;
+      font-size: 22px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-nombre { font-size: 18px; font-weight: 800; color: #fff; }
+    .modal-localidad { font-size: 13px; color: #aaa; margin-top: 3px; }
+    .modal-cerrar {
+      background: none;
+      border: none;
+      color: #aaa;
+      font-size: 24px;
+      cursor: pointer;
+      padding: 4px 8px;
+    }
+    .modal-cerrar:hover { color: #fff; }
+    .modal-body { padding: 24px; }
+    .modal-seccion { margin-bottom: 24px; }
+    .modal-seccion h3 {
+      font-size: 13px;
+      font-weight: 700;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .modal-info-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      color: #444;
+      margin-bottom: 8px;
+    }
+    .modal-servicios {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .modal-servicio-card {
+      background: #f8f8f8;
+      border-radius: 8px;
+      padding: 12px;
+    }
+    .modal-servicio-nombre { font-size: 13px; font-weight: 700; }
+    .modal-servicio-precio { font-size: 14px; font-weight: 800; color: var(--rojo); margin-top: 4px; }
+    .modal-servicio-duracion { font-size: 11px; color: #aaa; }
+
+    /* FORM TURNO EN MODAL */
+    .turno-form {
+      background: #f8f8f8;
+      border-radius: 10px;
+      padding: 18px;
+    }
+    .turno-form h4 {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 14px;
+    }
+    .turno-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .turno-grid input,
+    .turno-grid select,
+    .turno-grid textarea {
+      padding: 9px 12px;
+      border: 1.5px solid #ddd;
+      border-radius: 8px;
+      font-size: 13px;
+      outline: none;
+      background: #fff;
+    }
+    .turno-grid input:focus,
+    .turno-grid select:focus { border-color: var(--rojo); }
+    .turno-grid .full { grid-column: 1 / -1; }
+
+    .resenas-lista { display: flex; flex-direction: column; gap: 12px; }
+    .resena-item {
+      background: #f8f8f8;
+      border-radius: 8px;
+      padding: 12px 14px;
+    }
+    .resena-autor { font-size: 13px; font-weight: 700; }
+    .resena-stars { color: #f4a427; font-size: 13px; margin: 3px 0; }
+    .resena-texto { font-size: 13px; color: #555; }
+
+    .vista-toggle-talleres { display: flex; gap: 8px; margin-bottom: 20px; }
+    .btn-vista-tl { display: flex; align-items: center; gap: 6px; padding: 8px 16px; border: 2px solid #e0e0e0; border-radius: 8px; background: #fff; cursor: pointer; font-size: 13px; font-weight: 600; color: #666; transition: all 0.15s; }
+    .btn-vista-tl.activo { background: #E63946; border-color: #E63946; color: #fff; }
+    .btn-vista-tl:hover:not(.activo) { border-color: #E63946; color: #E63946; }
+
+    @media (max-width: 600px) {
+      .filtros-wrap { grid-template-columns: 1fr; }
+      .talleres-grilla { grid-template-columns: 1fr; }
+      .modal-servicios { grid-template-columns: 1fr; }
+      .turno-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+
+  <!-- ============================================================
+    GOOGLE ANALYTICS — Agregar antes del lanzamiento a producción
+    Reemplazá G-XXXXXXXXXX con tu Measurement ID real de GA4.
+    Instrucciones completas: analytics_setup.md
+    ============================================================
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-XXXXXXXXXX');
+  </script>
+  ============================================================ -->
+  <link rel="manifest" href="/manifest.json">
+  <script>if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');</script>
+</head>
+<body>
+
+<div class="site-header-wrap">
+  <div class="topbar">
+    <span id="topbar-info">📍 Zona Oeste, AMBA &nbsp;·&nbsp; Lun–Vie 9–18hs &nbsp;·&nbsp; Sáb 9–13hs</span>
+    <div class="topbar-right">
+      <a href="tel:+541143000000" id="topbar-telefono">📞 011 4300-0000</a>
+      <a href="https://wa.me/5491143000000" target="_blank" id="topbar-whatsapp">💬 WhatsApp</a>
+    </div>
+  </div>
+  <header class="header">
+    <a href="index.html" class="header-logo">Piezauto</a>
+    <div class="header-search">
+      <input type="text" id="header-buscar" placeholder="Buscá tu autoparte..." onkeydown="if(event.key==='Enter') buscarDesdeHeader()">
+      <button onclick="buscarDesdeHeader()">🔍</button>
+    </div>
+    <nav class="header-nav">
+      <a href="index.html">Inicio</a>
+      <a href="catalogo.html">Catálogo</a>
+      <a href="ofertas.html">Ofertas</a>
+      <a href="talleres.html" style="color:#fff">Talleres</a>
+      <a href="nosotros.html">Nosotros</a>
+      <a href="usuario.html">Mi cuenta</a>
+    </nav>
+    <div class="header-carrito" onclick="verCarrito()">
+      🛒 <span id="carrito-count">0</span>
+    </div>
+    <button class="menu-hamburguesa" onclick="toggleMenu()" aria-label="Abrir menú">
+      <span></span><span></span><span></span>
+    </button>
+    <nav class="header-nav-mobile" id="menu-mobile">
+      <a href="index.html" onclick="toggleMenu()">Inicio</a>
+      <a href="catalogo.html" onclick="toggleMenu()">Catálogo</a>
+      <a href="ofertas.html" onclick="toggleMenu()">Ofertas</a>
+      <a href="talleres.html" onclick="toggleMenu()">Talleres</a>
+      <a href="nosotros.html" onclick="toggleMenu()">Nosotros</a>
+      <a href="usuario.html" onclick="toggleMenu()">Mi cuenta</a>
+    </nav>
+  </header>
+</div>
+
+<!-- HERO -->
+<section class="talleres-hero">
+  <div class="point-badge">★ Red Piezauto Point</div>
+  <h1>Talleres de confianza en el AMBA</h1>
+  <p>Encontrá el taller más cercano, conocé sus servicios y reservá tu turno online</p>
+  <div class="filtros-wrap">
+    <input type="text" id="buscar-taller" placeholder="Buscar taller..." oninput="filtrarTalleres()">
+    <select id="filtro-zona" onchange="filtrarTalleres()">
+      <option value="">Todas las zonas</option>
+      <option value="Zona Oeste">Zona Oeste</option>
+      <option value="Zona Norte">Zona Norte</option>
+      <option value="Zona Sur">Zona Sur</option>
+      <option value="Capital Federal">Capital Federal</option>
+    </select>
+    <select id="filtro-servicio-tipo" onchange="filtrarTalleres()">
+      <option value="">Todos los servicios</option>
+      <option value="frenos">Frenos</option>
+      <option value="aceite">Cambio de aceite</option>
+      <option value="suspension">Suspensión</option>
+      <option value="electricidad">Electricidad</option>
+      <option value="chapa">Chapa y pintura</option>
+    </select>
+  </div>
+</section>
+
+<!-- GRILLA DE TALLERES -->
+<main class="container">
+  <div class="vista-toggle-talleres">
+    <button id="btn-tl-lista" class="btn-vista-tl activo" onclick="cambiarVistaTalleres('lista')">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="1" width="14" height="3" rx="1"/><rect x="1" y="6.5" width="14" height="3" rx="1"/><rect x="1" y="12" width="14" height="3" rx="1"/></svg>
+      Lista
+    </button>
+    <button id="btn-tl-mapa" class="btn-vista-tl" onclick="cambiarVistaTalleres('mapa')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      Mapa
+    </button>
+  </div>
+  <div id="mapa-talleres" style="display:none; height:500px; border-radius:14px; overflow:hidden; margin-bottom:24px;"></div>
+  <div class="talleres-grilla" id="talleres-grilla">
+    <div class="loader" style="grid-column:1/-1;padding:60px;text-align:center">Cargando talleres...</div>
+  </div>
+</main>
+
+<!-- MODAL PERFIL DEL TALLER -->
+<div class="modal-overlay" id="modal-taller">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-header-info">
+        <div class="modal-avatar" id="modal-avatar">?</div>
+        <div>
+          <div class="modal-nombre" id="modal-nombre">—</div>
+          <div class="modal-localidad" id="modal-localidad">—</div>
+        </div>
+      </div>
+      <button class="modal-cerrar" onclick="cerrarModal()">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="modal-seccion">
+        <h3>Información</h3>
+        <div id="modal-info"></div>
+      </div>
+
+      <div class="modal-seccion" id="modal-servicios-wrap">
+        <h3>Servicios</h3>
+        <div class="modal-servicios" id="modal-servicios"></div>
+      </div>
+
+      <div class="modal-seccion">
+        <h3>Reservar turno</h3>
+        <div class="turno-form">
+          <div class="turno-grid">
+            <input type="text" id="turno-nombre" placeholder="Tu nombre *">
+            <input type="tel" id="turno-tel" placeholder="Tu teléfono *">
+            <input type="date" id="turno-fecha">
+            <input type="time" id="turno-hora">
+            <select id="turno-servicio" class="full">
+              <option value="">Seleccioná un servicio (opcional)</option>
+            </select>
+            <textarea id="turno-desc" class="full" rows="2" placeholder="Describí brevemente el trabajo..."></textarea>
+          </div>
+          <button class="btn btn-rojo btn-full" style="margin-top:12px" onclick="reservarTurno()">
+            Confirmar reserva
+          </button>
+          <div id="turno-msg" style="margin-top:10px;font-size:13px;font-weight:600;text-align:center"></div>
+        </div>
+      </div>
+
+      <div class="modal-seccion" id="modal-resenas-wrap">
+        <h3>Reseñas</h3>
+        <div class="resenas-lista" id="modal-resenas"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<footer class="footer-nuevo">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-col">
+        <div class="footer-logo">Piezauto</div>
+        <p>Más de 40 años en el mercado de autopartes del AMBA. Stock real, asesoramiento honesto y precio justo.</p>
+        <div class="footer-social">
+          <a href="https://instagram.com/piezauto" target="_blank" aria-label="Instagram">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+          </a>
+          <a href="https://facebook.com/piezauto" target="_blank" aria-label="Facebook">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+          </a>
+          <a href="https://wa.me/5491143000000" target="_blank" aria-label="WhatsApp">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          </a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>Empresa</h4>
+        <ul>
+          <li><a href="nosotros.html">Nosotros</a></li>
+          <li><a href="nosotros.html">Contacto</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Comprar</h4>
+        <ul>
+          <li><a href="catalogo.html">Catálogo</a></li>
+          <li><a href="ofertas.html">Ofertas</a></li>
+          <li><a href="seguimiento.html">Seguimiento</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Talleres</h4>
+        <ul>
+          <li><a href="talleres.html">Piezauto Point</a></li>
+          <li><a href="unirse-point.html">¿Tenés un taller? Sumate</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Legal</h4>
+        <ul>
+          <li><a href="terminos.html">Términos y condiciones</a></li>
+          <li><a href="privacidad.html">Política de privacidad</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© <span class="footer-year"></span> Piezauto — Zona Oeste, Buenos Aires. Todos los derechos reservados.</p>
+      <p style="margin-top:4px">Precios en pesos argentinos con IVA incluido. Stock sujeto a disponibilidad.</p>
+    </div>
+  </div>
+</footer>
+<script>document.querySelectorAll('.footer-year').forEach(el => el.textContent = new Date().getFullYear());</script>
+
+<!-- BOTÓN FLOTANTE WHATSAPP -->
+<script src="js/whatsapp-widget.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script src="js/mantenimiento.js" defer></script>
+  <script src="js/notifications.js"></script>
+  <script src="js/autocomplete.js"></script>
+<script src="js/talleres.js"></script>
+<script src="js/config-topbar.js"></script>
+</body>
+</html>

@@ -1,0 +1,590 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Proveedores — Piezauto Admin</title>
+  <link rel="stylesheet" href="../css/estilos.css">
+  <style>
+    body { background: #f0f0f0; }
+    .admin-wrap { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+    .admin-sidebar { background: var(--negro); padding: 24px 0; display: flex; flex-direction: column; }
+    .admin-sidebar-logo { font-size: 18px; font-weight: 800; padding: 0 20px 24px; border-bottom: 1px solid #333; margin-bottom: 16px; background: linear-gradient(135deg, #E63946 0%, #ff6b6b 50%, #c1121f 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .admin-nav-item { display: block; padding: 12px 20px; color: #aaa; font-size: 14px; font-weight: 500; cursor: pointer; border-left: 3px solid transparent; transition: all 0.15s; text-decoration: none; }
+    .admin-nav-item:hover, .admin-nav-item.activo { background: #222; color: #fff; border-left-color: var(--rojo); }
+    .admin-content { padding: 32px; overflow-y: auto; }
+    .panel { display: none; }
+    .panel.activo { display: block; }
+    .card-form { background: #fff; border-radius: 10px; padding: 24px; box-shadow: var(--sombra); margin-bottom: 20px; }
+    .card-form h2 { font-size: 15px; font-weight: 700; margin-bottom: 16px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    .form-group label { font-size: 12px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.04em; }
+    .form-group input, .form-group select, .form-group textarea { padding: 9px 12px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 14px; outline: none; background: #fff; transition: border-color 0.15s; }
+    .form-group input:focus, .form-group select:focus { border-color: var(--rojo); }
+    .form-group.full { grid-column: 1 / -1; }
+    .tabla-admin { width: 100%; border-collapse: collapse; background: #fff; border-radius: 10px; overflow: hidden; box-shadow: var(--sombra); }
+    .tabla-admin th { background: #f5f5f5; padding: 11px 14px; text-align: left; font-size: 12px; font-weight: 700; color: #666; text-transform: uppercase; letter-spacing: 0.04em; }
+    .tabla-admin td { padding: 12px 14px; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
+    .tabla-admin tr:last-child td { border-bottom: none; }
+    .accion-btn { padding: 5px 12px; border-radius: 6px; border: none; font-size: 12px; font-weight: 600; cursor: pointer; }
+    .accion-editar { background: #e8f0fe; color: #1a56c4; }
+    .accion-eliminar { background: #fce8e8; color: #c00; }
+    .badge-activo { background: #e6f7ee; color: #1a7a3f; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .badge-inactivo { background: #fce8e8; color: #c00; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+
+    /* TABS */
+    .tabs-bar { display: flex; gap: 2px; margin-bottom: 24px; background: #e0e0e0; border-radius: 10px; padding: 4px; }
+    .tab-btn { flex: 1; padding: 9px 12px; border: none; background: transparent; border-radius: 8px; font-size: 13px; font-weight: 600; color: #888; cursor: pointer; transition: all 0.15s; }
+    .tab-btn.activo { background: #fff; color: var(--negro); box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+
+    /* IMPORT */
+    .upload-zone { border: 2px dashed #ccc; border-radius: 12px; padding: 40px; text-align: center; cursor: pointer; transition: all 0.2s; background: #fafafa; }
+    .upload-zone:hover, .upload-zone.dragover { border-color: var(--rojo); background: #fff5f5; }
+    .upload-zone input { display: none; }
+    .upload-icono { font-size: 40px; margin-bottom: 12px; }
+    .upload-txt { font-size: 15px; font-weight: 600; color: #555; }
+    .upload-sub { font-size: 13px; color: #999; margin-top: 4px; }
+
+    .preview-table-wrap { overflow-x: auto; margin: 16px 0; }
+    .preview-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .preview-table th { background: #f0f0f0; padding: 7px 10px; text-align: left; font-weight: 700; border: 1px solid #e0e0e0; white-space: nowrap; }
+    .preview-table td { padding: 6px 10px; border: 1px solid #e0e0e0; white-space: nowrap; max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
+    .preview-table tr:nth-child(even) td { background: #fafafa; }
+
+    .mapeo-grid { display: grid; grid-template-columns: 220px 1fr 160px; gap: 0; }
+    .mapeo-header { font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase; padding: 8px 12px; background: #f5f5f5; border-bottom: 1px solid #e0e0e0; }
+    .mapeo-row { display: contents; }
+    .mapeo-cell { padding: 9px 12px; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; }
+    .mapeo-cell select { width: 100%; border: 1.5px solid #ddd; border-radius: 6px; padding: 6px 8px; font-size: 13px; outline: none; }
+    .mapeo-cell select:focus { border-color: var(--rojo); }
+    .req-badge { background: #fce8e8; color: #c00; font-size: 10px; padding: 1px 6px; border-radius: 10px; margin-left: 6px; font-weight: 700; }
+
+    .import-progress { background: #f0f0f0; border-radius: 8px; padding: 16px; margin-top: 16px; }
+    .progress-bar-wrap { background: #ddd; border-radius: 20px; height: 8px; margin: 8px 0; }
+    .progress-bar { background: var(--rojo); border-radius: 20px; height: 8px; width: 0%; transition: width 0.3s; }
+
+    /* CATÁLOGO */
+    .catalogo-filtros { display: flex; gap: 12px; margin-bottom: 16px; align-items: center; }
+    .catalogo-filtros input { flex: 1; padding: 9px 14px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 14px; outline: none; }
+    .catalogo-filtros select { padding: 9px 12px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 14px; outline: none; }
+    .stats-bar { display: flex; gap: 16px; margin-bottom: 20px; }
+    .stat-pill { background: #fff; border-radius: 8px; padding: 10px 16px; font-size: 13px; box-shadow: var(--sombra); }
+    .stat-pill strong { font-size: 20px; display: block; color: var(--rojo); }
+
+    .grupo-card { background: #fff; border-radius: 10px; padding: 16px; margin-bottom: 10px; box-shadow: var(--sombra); }
+    .grupo-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+    .grupo-nombre { font-size: 15px; font-weight: 700; }
+    .grupo-oem { font-size: 12px; color: #888; margin-top: 3px; }
+    .grupo-acciones { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+    .precio-mejor { font-size: 20px; font-weight: 900; color: #1a7a3f; }
+    .provs-lista { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #f0f0f0; }
+    .prov-pill { display: flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+    .prov-pill.mejor { background: #e6f7ee; color: #1a7a3f; }
+    .prov-pill.normal { background: #f0f0f0; color: #555; }
+    .prov-pill .estrella { font-size: 11px; }
+    .btn-publicar { padding: 7px 16px; border-radius: 8px; border: none; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+    .btn-publicar.publicar { background: var(--rojo); color: #fff; }
+    .btn-publicar.publicado { background: #e6f7ee; color: #1a7a3f; border: 1.5px solid #1a7a3f; }
+    .sin-oem-card { background: #fffdf0; border: 1px solid #f0e0a0; border-radius: 10px; padding: 14px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+
+    /* EQUIVALENCIAS */
+    .equiv-row { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 10px; align-items: center; }
+
+    /* CADENA DE PRECIOS */
+    .precio-chain { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #f0f0f0; font-size: 12px; }
+    .pc-label { color: #aaa; }
+    .pc-valor { font-weight: 700; color: #333; }
+    .pc-flecha { color: #ccc; font-size: 10px; }
+    .pc-descuento { color: #c00; font-size: 11px; }
+    .pc-iva { color: #555; font-size: 11px; }
+    .pc-margen { color: #1a56c4; font-size: 11px; }
+    .pc-venta { background: var(--rojo); color: #fff; padding: 2px 10px; border-radius: 20px; font-weight: 800; font-size: 13px; }
+    .pc-neto { color: #555; font-weight: 600; }
+
+    /* RECARGO NO FISCAL — opciones radio visual */
+    .nofiscal-opcion {
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      padding: 10px 18px; border: 2px solid #e0e0e0; border-radius: 10px;
+      cursor: pointer; background: #fff; transition: all 0.15s; min-width: 110px; text-align: center;
+    }
+    .nofiscal-opcion:hover { border-color: #bbb; background: #f9f9f9; }
+    .nofiscal-opcion input[type="radio"] { display: none; }
+    .nofiscal-opcion.activa { border-color: #1a7a3f; background: #e8f7ee; }
+    .nofiscal-opcion .no-label { font-size: 10px; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: .05em; }
+    .nofiscal-opcion .no-val   { font-size: 18px; font-weight: 900; color: #555; }
+    .nofiscal-opcion.activa .no-label { color: #1a7a3f; }
+    .nofiscal-opcion.activa .no-val   { color: #1a7a3f; }
+    .nofiscal-custom-input {
+      width: 54px; padding: 3px 6px; border: 1.5px solid #ccc; border-radius: 6px;
+      font-size: 14px; font-weight: 700; text-align: center; outline: none; background: #fff;
+    }
+    .nofiscal-opcion.activa .nofiscal-custom-input { border-color: #1a7a3f; }
+
+    /* SIMULADOR HORIZONTAL */
+    .sim-tabla { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .sim-tabla th {
+      background: #3a3a3a; color: #fff; padding: 10px 14px;
+      text-align: center; font-weight: 700; white-space: nowrap; font-size: 12px;
+    }
+    .sim-tabla td { padding: 12px 14px; text-align: center; border-bottom: 1px solid #eee; }
+    .sim-tabla .col-neto     { background: #f5f5f5; }
+    .sim-tabla .col-iva      { background: #e8f0fe; }
+    .sim-tabla .col-nofiscal { background: #e8f7ee; }
+    .sim-tabla .td-big  { font-size: 17px; font-weight: 900; }
+    .sim-tabla .td-venta-iva      { font-size: 17px; font-weight: 900; color: #1a56c4; }
+    .sim-tabla .td-venta-nofiscal { font-size: 17px; font-weight: 900; color: #1a7a3f; }
+
+    /* TOGGLES IVA */
+    .iva-toggle {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 10px 16px; border-radius: 10px; border: 2px solid #ddd; background: #f8f8f8;
+      cursor: pointer; transition: all 0.15s; font-family: inherit; min-width: 88px;
+    }
+    .iva-toggle:hover { border-color: #bbb; background: #f0f0f0; }
+    .iva-toggle .tg-label { font-size: 10px; font-weight: 700; letter-spacing: .05em; color: #aaa; text-transform: uppercase; }
+    .iva-toggle .tg-val   { font-size: 18px; font-weight: 900; color: #555; margin-top: 3px; }
+    .iva-toggle-custom {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 10px 14px; border-radius: 10px; border: 2px solid #ddd; background: #f8f8f8;
+      cursor: pointer; transition: all 0.15s; min-width: 96px;
+    }
+    .iva-toggle-custom:hover { border-color: #bbb; background: #f0f0f0; }
+    .tg-custom-label { font-size: 10px; font-weight: 700; letter-spacing: .05em; color: #aaa; text-transform: uppercase; }
+    .tg-custom-input { border: 1.5px solid #ddd; border-radius: 6px; background: #fff; transition: border-color 0.15s; }
+    .iva-activo-verde { background: #e6f7ee !important; border-color: #1a7a3f !important; }
+    .iva-activo-verde .tg-label, .iva-activo-verde .tg-val { color: #1a7a3f !important; }
+    .iva-activo-azul  { background: #e8f0fe !important; border-color: #1a56c4 !important; }
+    .iva-activo-azul  .tg-label, .iva-activo-azul  .tg-val { color: #1a56c4 !important; }
+    .iva-activo-custom { background: #fef8e6 !important; border-color: #c48a00 !important; }
+    .iva-activo-custom .tg-custom-label { color: #c48a00 !important; }
+    .iva-activo-custom .tg-custom-input { border-color: #c48a00 !important; }
+  </style>
+
+  <!-- ============================================================
+    GOOGLE ANALYTICS — Agregar antes del lanzamiento a producción
+    Reemplazá G-XXXXXXXXXX con tu Measurement ID real de GA4.
+    Instrucciones completas: analytics_setup.md
+    ============================================================
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-XXXXXXXXXX');
+  </script>
+  ============================================================ -->
+</head>
+<body>
+<div class="admin-wrap">
+
+  <aside class="admin-sidebar">
+    <div class="admin-sidebar-logo">Piezauto Admin</div>
+    <a href="index.html" class="admin-nav-item">Dashboard</a>
+    <a href="index.html" class="admin-nav-item">Productos</a>
+    <span class="admin-nav-item activo">Proveedores</span>
+    <a href="index.html" class="admin-nav-item">Talleres</a>
+    <a href="index.html" class="admin-nav-item">Pedidos</a>
+    <span class="admin-nav-item" onclick="window.open('../index.html','_blank')">Ver sitio web</span>
+  </aside>
+
+  <main class="admin-content">
+
+    <div style="margin-bottom:24px">
+      <h1 style="font-size:22px;font-weight:800">Gestión de proveedores</h1>
+      <p style="color:#888;font-size:14px;margin-top:4px">Importá listas de precios, analizá el mejor precio y publicá productos a la tienda.</p>
+    </div>
+
+    <div class="tabs-bar">
+      <button class="tab-btn activo" id="tab-btn-proveedores" onclick="mostrarPanel('proveedores')">Proveedores</button>
+      <button class="tab-btn" id="tab-btn-importar" onclick="mostrarPanel('importar')">Importar Excel</button>
+      <button class="tab-btn" id="tab-btn-catalogo" onclick="mostrarPanel('catalogo')">Catálogo & mejor precio</button>
+      <button class="tab-btn" id="tab-btn-equivalencias" onclick="mostrarPanel('equivalencias')">Equivalencias OEM</button>
+    </div>
+
+    <!-- ══════════════════════════════
+         PANEL 1: PROVEEDORES
+    ══════════════════════════════ -->
+    <div id="panel-proveedores" class="panel activo">
+      <div class="card-form">
+        <h2>Agregar proveedor</h2>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Nombre del proveedor *</label>
+            <input type="text" id="prov-nombre" placeholder="Ej: Bosch Argentina">
+          </div>
+          <div class="form-group">
+            <label>Nombre del archivo Excel esperado</label>
+            <input type="text" id="prov-archivo" placeholder="Ej: bosch.xlsx">
+          </div>
+          <div class="form-group">
+            <label>Contacto</label>
+            <input type="text" id="prov-contacto" placeholder="Nombre del vendedor">
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="prov-email" placeholder="ventas@proveedor.com">
+          </div>
+          <div class="form-group">
+            <label>Teléfono</label>
+            <input type="text" id="prov-telefono" placeholder="+54 11...">
+          </div>
+          <div class="form-group">
+            <label>Notas internas</label>
+            <input type="text" id="prov-notas" placeholder="Descuento especial, condiciones...">
+          </div>
+        </div><!-- fin form-grid datos generales -->
+
+        <!-- ══ CONDICIONES COMERCIALES ══ -->
+        <div style="margin-top:20px;padding-top:16px;border-top:1px solid #f0f0f0">
+
+          <!-- Fila 1: Descuentos (izq) + Toggles IVA (der) -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:16px;align-items:start">
+
+            <!-- DESCUENTOS CASCADA -->
+            <div>
+              <div style="font-size:11px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Descuentos del proveedor — cascada</div>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+                <div class="form-group">
+                  <label>Descuento 1 (%)</label>
+                  <input type="number" id="prov-descuento1" placeholder="0.00" min="0" max="100" step="0.01" oninput="calcularSimulacion()">
+                </div>
+                <div class="form-group">
+                  <label>Descuento 2 (%) <span style="font-size:10px;color:#ccc">cascada</span></label>
+                  <input type="number" id="prov-descuento2" placeholder="0.00" min="0" max="100" step="0.01" oninput="calcularSimulacion()">
+                </div>
+                <div class="form-group">
+                  <label>Descuento 3 (%) <span style="font-size:10px;color:#ccc">cascada</span></label>
+                  <input type="number" id="prov-descuento3" placeholder="0.00" min="0" max="100" step="0.01" oninput="calcularSimulacion()">
+                </div>
+              </div>
+            </div>
+
+            <!-- RECARGO COMPROBANTE NO FISCAL -->
+            <div>
+              <div style="font-size:11px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Recargo comprobante no fiscal</div>
+              <div style="font-size:12px;color:#888;margin-bottom:10px">IVA: <strong style="color:#1a56c4">21% fijo</strong> — siempre se aplica sobre el precio neto</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+
+                <label class="nofiscal-opcion activa" id="rdo-wrap-sin">
+                  <input type="radio" name="nofiscal-tipo" value="sin_recargo" checked onchange="onRecargoChange()">
+                  <span class="no-label">Sin recargo</span>
+                  <span class="no-val">0%</span>
+                </label>
+
+                <label class="nofiscal-opcion" id="rdo-wrap-medio">
+                  <input type="radio" name="nofiscal-tipo" value="medio_iva" onchange="onRecargoChange()">
+                  <span class="no-label">Medio IVA</span>
+                  <span class="no-val">10,5%</span>
+                </label>
+
+                <label class="nofiscal-opcion" id="rdo-wrap-custom" onclick="document.getElementById('rdo-custom').checked=true;onRecargoChange()">
+                  <input type="radio" id="rdo-custom" name="nofiscal-tipo" value="personalizado" onchange="onRecargoChange()">
+                  <span class="no-label">Personalizado</span>
+                  <div style="display:flex;align-items:center;gap:3px;margin-top:2px">
+                    <input type="number" id="prov-nofiscal-pct" min="0" max="999" step="0.5" placeholder="0"
+                      class="nofiscal-custom-input"
+                      onclick="event.stopPropagation();document.getElementById('rdo-custom').checked=true;onRecargoChange()"
+                      oninput="event.stopPropagation();document.getElementById('rdo-custom').checked=true;onRecargoChange()">
+                    <span style="font-size:13px;font-weight:700;color:#888">%</span>
+                  </div>
+                </label>
+
+              </div>
+            </div>
+
+          </div><!-- fin fila 1 -->
+
+          <!-- Fila 2: Margen + Condición + Moneda -->
+          <div style="display:grid;grid-template-columns:160px 1fr 160px;gap:12px;margin-bottom:12px">
+            <div class="form-group">
+              <label>Margen de venta (%)</label>
+              <input type="number" id="prov-margen" placeholder="30.00" min="0" step="0.01" oninput="calcularSimulacion()">
+            </div>
+            <div class="form-group">
+              <label>Condición de pago</label>
+              <select id="prov-condicion" onchange="onCondicionChange()">
+                <option value="contado">Contado</option>
+                <option value="15">15 días</option>
+                <option value="30">30 días</option>
+                <option value="45">45 días</option>
+                <option value="60">60 días</option>
+                <option value="90">90 días</option>
+                <option value="cta_cte">Cuenta corriente</option>
+                <option value="consignacion">Consignación</option>
+                <option value="custom">Personalizado…</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Moneda</label>
+              <select id="prov-moneda" onchange="calcularSimulacion()">
+                <option value="ARS">ARS — Pesos</option>
+                <option value="USD">USD — Dólar</option>
+                <option value="EUR">EUR — Euro</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Condición personalizada (visible solo cuando se elige "Personalizado") -->
+          <div id="prov-condicion-custom-wrap" style="display:none;margin-bottom:12px">
+            <div class="form-group">
+              <label>Condición personalizada</label>
+              <input type="text" id="prov-condicion-custom" placeholder="Ej: 30/70, letras a 180 días, cheque diferido…">
+            </div>
+          </div>
+
+          <!-- Fila 3: Límite de crédito + Día de pago -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div class="form-group">
+              <label>Límite de crédito ($)</label>
+              <input type="number" id="prov-limite-credito" placeholder="0.00" min="0" step="0.01">
+            </div>
+            <div class="form-group">
+              <label>Día de pago preferido</label>
+              <select id="prov-dia-pago">
+                <option value="">Cualquier día</option>
+                <option value="lunes">Lunes</option>
+                <option value="martes">Martes</option>
+                <option value="miercoles">Miércoles</option>
+                <option value="jueves">Jueves</option>
+                <option value="viernes">Viernes</option>
+                <option value="dia_5">Día 5 del mes</option>
+                <option value="dia_10">Día 10 del mes</option>
+                <option value="dia_15">Día 15 del mes</option>
+                <option value="dia_20">Día 20 del mes</option>
+                <option value="ultimo">Último día del mes</option>
+              </select>
+            </div>
+          </div>
+
+        </div><!-- fin condiciones comerciales -->
+
+        <!-- ══ SIMULADOR DE PRECIO ══ -->
+        <div style="background:#f8f8f8;border-radius:10px;padding:16px 20px;margin-top:20px">
+          <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;flex-wrap:wrap">
+            <span style="font-size:13px;font-weight:700">Simulador de precios</span>
+            <div style="display:flex;align-items:center;gap:8px">
+              <label style="font-size:12px;color:#888">Precio lista de ejemplo:</label>
+              <input type="number" id="sim-precio" value="1000" min="0"
+                style="width:130px;padding:6px 10px;border:1.5px solid #ddd;border-radius:6px;font-size:14px;font-weight:700;outline:none;background:#fff"
+                oninput="calcularSimulacion()">
+            </div>
+          </div>
+          <div style="overflow-x:auto;border-radius:8px;border:1px solid #e0e0e0">
+            <table class="sim-tabla">
+              <thead>
+                <tr>
+                  <th>Precio de lista</th>
+                  <th>Descuento aplicado</th>
+                  <th class="col-neto">Precio neto</th>
+                  <th class="col-iva">Precio con IVA (21%)</th>
+                  <th class="col-nofiscal">Precio no fiscal<br><small id="sim-nofiscal-label" style="font-weight:400;opacity:.8">(sin recargo)</small></th>
+                </tr>
+              </thead>
+              <tbody id="sim-tabla-body">
+                <tr>
+                  <td colspan="5" style="padding:20px;color:#aaa;font-size:12px;text-align:center">Ingresá el precio lista para ver la simulación.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <!-- ══ FIN SIMULADOR ══ -->
+
+        <div style="margin-top:16px;display:flex;gap:10px;align-items:center">
+          <button class="btn btn-rojo" onclick="guardarProveedor()">Guardar proveedor</button>
+          <span id="prov-msg" style="font-size:13px;font-weight:600"></span>
+        </div>
+      </div>
+
+      <table class="tabla-admin" id="tabla-proveedores">
+        <thead>
+          <tr>
+            <th>Proveedor</th>
+            <th>Archivo Excel</th>
+            <th>Contacto</th>
+            <th>Tipo de comprobante</th>
+            <th>Condiciones</th>
+            <th>Desc / Margen</th>
+            <th>Última importación</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-proveedores">
+          <tr><td colspan="7" class="loader">Cargando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ══════════════════════════════
+         PANEL 2: IMPORTAR EXCEL
+    ══════════════════════════════ -->
+    <div id="panel-importar" class="panel">
+
+      <div class="card-form">
+        <h2>Paso 1 — Seleccioná el proveedor y el archivo</h2>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Proveedor *</label>
+            <select id="imp-proveedor" onchange="onProveedorChange()">
+              <option value="">Seleccioná un proveedor</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>¿Dónde están los encabezados?</label>
+            <select id="imp-tiene-header">
+              <option value="si">Fila 1 — encabezados normales</option>
+              <option value="fila2">Fila 2 — la fila 1 es un título o info extra</option>
+              <option value="no">Sin encabezados — los datos empiezan desde la fila 1</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="margin-top:16px">
+          <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+            <input type="file" id="file-input" accept=".xlsx,.xls,.csv" onchange="onFileSelect(event)">
+            <div class="upload-icono">📂</div>
+            <div class="upload-txt">Hacé click o arrastrá el archivo Excel aquí</div>
+            <div class="upload-sub">Soporta .xlsx, .xls y .csv</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="seccion-mapeo" style="display:none">
+        <div class="card-form">
+          <h2>Paso 2 — Revisá la previsualización y mapeá las columnas</h2>
+
+          <div id="import-info" style="background:#f0f8ff;border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:14px"></div>
+
+          <div class="preview-table-wrap">
+            <div style="font-size:12px;font-weight:600;color:#888;margin-bottom:6px;text-transform:uppercase">Primeras 5 filas del archivo:</div>
+            <table class="preview-table" id="preview-table"></table>
+          </div>
+
+          <div style="margin:20px 0 10px">
+            <div style="font-size:12px;font-weight:600;color:#888;margin-bottom:10px;text-transform:uppercase">Mapeo de columnas</div>
+            <div style="font-size:13px;color:#666;margin-bottom:14px">Indicá qué columna del Excel corresponde a cada campo del sistema. Si el campo no existe en este Excel, dejá "— No mapear —".</div>
+            <div style="background:#fff;border:1px solid #e0e0e0;border-radius:8px;overflow:hidden">
+              <div class="mapeo-grid">
+                <div class="mapeo-header">Campo del sistema</div>
+                <div class="mapeo-header">Columna del Excel</div>
+                <div class="mapeo-header">Vista previa</div>
+              </div>
+              <div id="mapeo-filas"></div>
+            </div>
+          </div>
+
+          <div id="mapeo-guardado-aviso" style="display:none;background:#e6f7ee;border-radius:8px;padding:10px 14px;font-size:13px;color:#1a7a3f;margin-bottom:14px">
+            ✅ Se cargó el mapeo guardado para este proveedor. Revisá que siga siendo correcto.
+          </div>
+
+          <div style="display:flex;gap:12px;align-items:center">
+            <button class="btn btn-rojo" onclick="ejecutarImport()">Importar todas las filas</button>
+            <button class="btn btn-blanco" onclick="cancelarImport()">Cancelar</button>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:#666;cursor:pointer">
+              <input type="checkbox" id="reemplazar-check" checked>
+              Reemplazar datos existentes de este proveedor
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div id="seccion-resultado" style="display:none">
+        <div class="card-form">
+          <h2>Importación completada</h2>
+          <div id="resultado-contenido"></div>
+          <div style="margin-top:16px;display:flex;gap:10px">
+            <button class="btn btn-rojo" onclick="mostrarPanel('catalogo')">Ver catálogo</button>
+            <button class="btn btn-blanco" onclick="resetImport()">Importar otro archivo</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════
+         PANEL 3: CATÁLOGO & MEJOR PRECIO
+    ══════════════════════════════ -->
+    <div id="panel-catalogo" class="panel">
+      <div class="catalogo-filtros">
+        <input type="text" id="cat-buscar" placeholder="Buscar por nombre, OEM o código..." oninput="filtrarCatalogo()">
+        <select id="cat-proveedor-filtro" onchange="filtrarCatalogo()">
+          <option value="">Todos los proveedores</option>
+        </select>
+        <select id="cat-estado-filtro" onchange="filtrarCatalogo()">
+          <option value="">Todos</option>
+          <option value="publicado">Publicados en tienda</option>
+          <option value="no-publicado">No publicados</option>
+        </select>
+        <button class="btn btn-rojo" onclick="publicarSeleccionados()">Publicar seleccionados</button>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+          <input type="checkbox" onchange="seleccionarTodosCatalogo(this.checked)"> Seleccionar todos
+        </label>
+        <span id="cat-seleccionados-label" style="font-size:13px;color:#666"></span>
+      </div>
+
+      <div class="stats-bar" id="catalogo-stats"></div>
+
+      <div id="catalogo-aviso-limite" style="display:none;background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:#856404">
+        ⚠️ Mostrando los primeros 500 resultados. Usá el buscador para filtrar por nombre o código.
+      </div>
+
+      <div id="catalogo-contenido">
+        <div class="loader" style="padding:40px">Cargando catálogo...</div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════
+         PANEL 4: EQUIVALENCIAS OEM
+    ══════════════════════════════ -->
+    <div id="panel-equivalencias" class="panel">
+      <div class="card-form">
+        <h2>Agregar equivalencia manual</h2>
+        <p style="font-size:13px;color:#666;margin-bottom:16px">
+          Cuando dos proveedores llaman distinto al mismo producto, registrá la equivalencia aquí. El buscador de la tienda encontrará el producto por cualquiera de los dos códigos.
+        </p>
+        <div class="equiv-row">
+          <div class="form-group">
+            <label>Código OEM A</label>
+            <input type="text" id="eq-oem-a" placeholder="Código proveedor 1">
+          </div>
+          <div class="form-group">
+            <label>Código OEM B</label>
+            <input type="text" id="eq-oem-b" placeholder="Código proveedor 2">
+          </div>
+          <div class="form-group">
+            <label>Nombre común (opcional)</label>
+            <input type="text" id="eq-nombre" placeholder="Ej: Filtro de aceite Toyota">
+          </div>
+          <button class="btn btn-rojo" style="align-self:flex-end;height:40px" onclick="agregarEquivalencia()">Agregar</button>
+        </div>
+        <div id="eq-msg" style="margin-top:10px;font-size:13px;font-weight:600"></div>
+      </div>
+
+      <div style="margin-bottom:12px;display:flex;gap:10px;align-items:center">
+        <input type="text" id="eq-buscar" placeholder="Buscar en equivalencias..." oninput="filtrarEquivalencias()" style="padding:8px 14px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;outline:none;flex:1">
+        <button class="btn btn-blanco" onclick="detectarEquivalenciasSugeridas()" style="font-size:13px">Detectar posibles duplicados</button>
+      </div>
+
+      <table class="tabla-admin">
+        <thead>
+          <tr><th>Código A</th><th>Código B</th><th>Nombre común</th><th>Verificada</th><th>Acciones</th></tr>
+        </thead>
+        <tbody id="tbody-equivalencias">
+          <tr><td colspan="5" class="loader">Cargando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase.js"></script>
+  <script src="../js/autocomplete.js"></script>
+<script src="proveedores.js"></script>
+</body>
+</html>

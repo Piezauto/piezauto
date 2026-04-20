@@ -1,0 +1,396 @@
+﻿<!DOCTYPE html>
+<!-- Página de configuración de MercadoPago — Solo para uso interno/dev -->
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configuración MercadoPago — Piezauto</title>
+  <link rel="stylesheet" href="css/estilos.css">
+  <style>
+    body { background: #1a1a1a; color: #e0e0e0; font-family: system-ui, sans-serif; }
+    .mp-wrap { max-width: 860px; margin: 0 auto; padding: 40px 24px; }
+    .mp-header { text-align: center; padding: 40px 0 32px; border-bottom: 1px solid #333; margin-bottom: 40px; }
+    .mp-header h1 { font-size: 28px; font-weight: 800; color: #fff; margin-bottom: 8px; }
+    .mp-header p { color: #888; font-size: 15px; }
+    .dev-badge {
+      display: inline-block;
+      background: #333;
+      color: #aaa;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-bottom: 16px;
+    }
+    .seccion { margin-bottom: 48px; }
+    .seccion h2 {
+      font-size: 18px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 6px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #333;
+    }
+    .seccion h3 { font-size: 14px; font-weight: 700; color: #ccc; margin: 20px 0 8px; }
+    .seccion p { font-size: 14px; color: #aaa; line-height: 1.7; margin-bottom: 10px; }
+    .credencial-card {
+      background: #222;
+      border: 1px solid #333;
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin-bottom: 12px;
+    }
+    .credencial-card .label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--rojo);
+      margin-bottom: 4px;
+    }
+    .credencial-card .desc { font-size: 13px; color: #999; line-height: 1.6; }
+    .credencial-card code {
+      display: inline-block;
+      background: #111;
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-family: monospace;
+      font-size: 12px;
+      color: #7dd3fc;
+      margin-top: 6px;
+    }
+    .modo-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+    .modo-card {
+      background: #222;
+      border: 1px solid #333;
+      border-radius: 10px;
+      padding: 16px;
+    }
+    .modo-card .titulo { font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 6px; }
+    .modo-card .subtitulo { font-size: 12px; color: #888; line-height: 1.6; }
+    .modo-card.sandbox { border-color: #f4a427; }
+    .modo-card.produccion { border-color: #22c55e; }
+    pre {
+      background: #111;
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      padding: 20px;
+      overflow-x: auto;
+      font-family: 'Consolas', 'Monaco', monospace;
+      font-size: 13px;
+      color: #d4d4d4;
+      line-height: 1.6;
+      margin: 14px 0;
+    }
+    .kw { color: #569cd6; }
+    .str { color: #ce9178; }
+    .cm { color: #6a9955; }
+    .fn { color: #dcdcaa; }
+    .var-name { color: #9cdcfe; }
+    .checklist { list-style: none; padding: 0; margin: 0; }
+    .checklist li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 14px;
+      color: #bbb;
+      padding: 10px 0;
+      border-bottom: 1px solid #2a2a2a;
+      line-height: 1.5;
+    }
+    .checklist li:last-child { border-bottom: none; }
+    .check-num {
+      flex-shrink: 0;
+      width: 24px;
+      height: 24px;
+      border: 2px solid var(--rojo);
+      border-radius: 50%;
+      color: var(--rojo);
+      font-size: 11px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .alerta {
+      background: #2a1a00;
+      border: 1px solid #f4a427;
+      border-radius: 8px;
+      padding: 14px 18px;
+      font-size: 13px;
+      color: #f4a427;
+      line-height: 1.6;
+      margin: 14px 0;
+    }
+    .alerta strong { color: #ffd87a; }
+    .opcion-titulo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+    .opcion-badge {
+      background: var(--rojo);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 3px 10px;
+      border-radius: 20px;
+      text-transform: uppercase;
+    }
+    @media (max-width: 600px) { .modo-wrap { grid-template-columns: 1fr; } }
+  </style>
+
+  <!-- ============================================================
+    GOOGLE ANALYTICS — Agregar antes del lanzamiento a producción
+    Reemplazá G-XXXXXXXXXX con tu Measurement ID real de GA4.
+    Instrucciones completas: analytics_setup.md
+    ============================================================
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-XXXXXXXXXX');
+  </script>
+  ============================================================ -->
+  <link rel="manifest" href="/manifest.json">
+  <script>if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');</script>
+</head>
+<body>
+
+<header class="header">
+  <a href="index.html" class="header-logo">Piezauto</a>
+  <nav class="header-nav">
+    <a href="index.html">Inicio</a>
+    <a href="checkout.html">Checkout</a>
+  </nav>
+</header>
+
+<div class="mp-wrap">
+
+  <div class="mp-header">
+    <div class="dev-badge">Solo uso interno — Dev</div>
+    <h1>Configuración MercadoPago</h1>
+    <p>Guía para integrar el pago real en Piezauto</p>
+  </div>
+
+  <!-- SECCIÓN 1: CREDENCIALES -->
+  <div class="seccion">
+    <h2>1. Credenciales necesarias</h2>
+    <p>Obtené tus credenciales desde el <a href="https://www.mercadopago.com.ar/developers/panel/app" style="color:var(--rojo)" target="_blank">panel de desarrolladores de MercadoPago</a>. Necesitás dos claves:</p>
+
+    <div class="credencial-card">
+      <div class="label">Public Key — Frontend</div>
+      <div class="desc">Se usa en el browser para inicializar el SDK de MP. <strong style="color:#fff">No es secreta</strong> — puede estar en el HTML.</div>
+      <code>TEST-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx</code>
+    </div>
+
+    <div class="credencial-card">
+      <div class="label">Access Token — Backend / Proxy</div>
+      <div class="desc"><strong style="color:#fff">Nunca expongas este token en el frontend.</strong> Va solo en tu proxy (Netlify Function, Vercel, Supabase Edge, etc.) como variable de entorno.</div>
+      <code>TEST-0000000000000000-000000-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx-00000000</code>
+    </div>
+
+    <h3>Modo Sandbox vs Producción</h3>
+    <div class="modo-wrap">
+      <div class="modo-card sandbox">
+        <div class="titulo">🧪 Sandbox (TEST)</div>
+        <div class="subtitulo">Las claves que empiezan con <code style="background:#0d0d0d;color:#7dd3fc;padding:1px 6px;border-radius:3px;font-family:monospace">TEST-</code> son para pruebas. Podés usar tarjetas de prueba de MP sin cobrar dinero real.</div>
+      </div>
+      <div class="modo-card produccion">
+        <div class="titulo">🚀 Producción</div>
+        <div class="subtitulo">Claves sin el prefijo <code style="background:#0d0d0d;color:#7dd3fc;padding:1px 6px;border-radius:3px;font-family:monospace">TEST-</code>. Se cobran pagos reales. Activar solo cuando el sitio esté listo para producción.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECCIÓN 2: OPCIÓN A — NETLIFY / VERCEL -->
+  <div class="seccion">
+    <h2>2. Opción A — Proxy con Netlify Functions / Vercel</h2>
+    <div class="opcion-titulo">
+      <span class="opcion-badge">Recomendada</span>
+      <span style="font-size:13px;color:#888">Sin servidor propio, deploy gratuito</span>
+    </div>
+    <p>Creás una serverless function que recibe los datos del pedido, llama a la API de MP con tu Access Token, y devuelve el link de pago. El frontend nunca ve el Access Token.</p>
+
+    <h3>netlify/functions/mp-preference.js</h3>
+    <div class="alerta">
+      <strong>Instalación:</strong> npm install mercadopago<br>
+      Agregá la variable de entorno <code style="background:#1a0a00;color:#ffd87a;padding:1px 6px;border-radius:3px;font-family:monospace">MP_ACCESS_TOKEN</code> en el panel de Netlify/Vercel.
+    </div>
+<pre><span class="cm">// netlify/functions/mp-preference.js</span>
+<span class="kw">const</span> { <span class="var-name">MercadoPagoConfig</span>, <span class="var-name">Preference</span> } = <span class="fn">require</span>(<span class="str">'mercadopago'</span>);
+
+<span class="kw">const</span> <span class="var-name">client</span> = <span class="kw">new</span> <span class="fn">MercadoPagoConfig</span>({
+  <span class="var-name">accessToken</span>: process.<span class="var-name">env</span>.<span class="var-name">MP_ACCESS_TOKEN</span>,
+});
+
+<span class="var-name">exports</span>.<span class="var-name">handler</span> = <span class="kw">async</span> (<span class="var-name">event</span>) => {
+  <span class="kw">if</span> (<span class="var-name">event</span>.<span class="var-name">httpMethod</span> !== <span class="str">'POST'</span>) {
+    <span class="kw">return</span> { <span class="var-name">statusCode</span>: <span class="str">405</span>, <span class="var-name">body</span>: <span class="str">'Method Not Allowed'</span> };
+  }
+
+  <span class="kw">const</span> { <span class="var-name">pedidoId</span>, <span class="var-name">items</span>, <span class="var-name">payer</span>, <span class="var-name">backUrls</span> } = <span class="fn">JSON</span>.<span class="fn">parse</span>(<span class="var-name">event</span>.<span class="var-name">body</span>);
+
+  <span class="kw">const</span> <span class="var-name">pref</span> = <span class="kw">await</span> <span class="kw">new</span> <span class="fn">Preference</span>(<span class="var-name">client</span>).<span class="fn">create</span>({
+    <span class="var-name">body</span>: {
+      <span class="var-name">items</span>,
+      <span class="var-name">payer</span>,
+      <span class="var-name">back_urls</span>:        <span class="var-name">backUrls</span>,
+      <span class="var-name">auto_return</span>:      <span class="str">'approved'</span>,
+      <span class="var-name">external_reference</span>: <span class="var-name">pedidoId</span>,
+    },
+  });
+
+  <span class="kw">return</span> {
+    <span class="var-name">statusCode</span>: <span class="str">200</span>,
+    <span class="var-name">headers</span>: {
+      <span class="str">'Content-Type'</span>:                <span class="str">'application/json'</span>,
+      <span class="str">'Access-Control-Allow-Origin'</span>:  <span class="str">'*'</span>,
+    },
+    <span class="var-name">body</span>: <span class="fn">JSON</span>.<span class="fn">stringify</span>({
+      <span class="var-name">init_point</span>:         <span class="var-name">pref</span>.<span class="var-name">init_point</span>,
+      <span class="var-name">sandbox_init_point</span>: <span class="var-name">pref</span>.<span class="var-name">sandbox_init_point</span>,
+    }),
+  };
+};</pre>
+
+    <h3>Para Vercel — api/mp-preference.js</h3>
+<pre><span class="cm">// api/mp-preference.js (Vercel)</span>
+<span class="kw">const</span> { <span class="var-name">MercadoPagoConfig</span>, <span class="var-name">Preference</span> } = <span class="fn">require</span>(<span class="str">'mercadopago'</span>);
+<span class="kw">const</span> <span class="var-name">client</span> = <span class="kw">new</span> <span class="fn">MercadoPagoConfig</span>({ <span class="var-name">accessToken</span>: process.<span class="var-name">env</span>.<span class="var-name">MP_ACCESS_TOKEN</span> });
+
+<span class="var-name">module</span>.<span class="var-name">exports</span> = <span class="kw">async</span> (<span class="var-name">req</span>, <span class="var-name">res</span>) => {
+  <span class="kw">const</span> { <span class="var-name">pedidoId</span>, <span class="var-name">items</span>, <span class="var-name">payer</span>, <span class="var-name">backUrls</span> } = <span class="var-name">req</span>.<span class="var-name">body</span>;
+  <span class="kw">const</span> <span class="var-name">pref</span> = <span class="kw">await</span> <span class="kw">new</span> <span class="fn">Preference</span>(<span class="var-name">client</span>).<span class="fn">create</span>({
+    <span class="var-name">body</span>: { <span class="var-name">items</span>, <span class="var-name">payer</span>, <span class="var-name">back_urls</span>: <span class="var-name">backUrls</span>, <span class="var-name">auto_return</span>: <span class="str">'approved'</span>, <span class="var-name">external_reference</span>: <span class="var-name">pedidoId</span> },
+  });
+  <span class="var-name">res</span>.<span class="fn">json</span>({ <span class="var-name">init_point</span>: <span class="var-name">pref</span>.<span class="var-name">init_point</span>, <span class="var-name">sandbox_init_point</span>: <span class="var-name">pref</span>.<span class="var-name">sandbox_init_point</span> });
+};</pre>
+  </div>
+
+  <!-- SECCIÓN 3: OPCIÓN B — SUPABASE EDGE FUNCTIONS -->
+  <div class="seccion">
+    <h2>3. Opción B — Supabase Edge Functions</h2>
+    <p>Si ya usás Supabase, podés crear una Edge Function en Deno. No necesitás otro servicio de hosting.</p>
+
+    <div class="alerta">
+      <strong>Setup:</strong> supabase functions new mp-preference<br>
+      Luego seteá el secret: <code style="background:#1a0a00;color:#ffd87a;padding:1px 6px;border-radius:3px;font-family:monospace">supabase secrets set MP_ACCESS_TOKEN=tu-token</code>
+    </div>
+
+    <h3>supabase/functions/mp-preference/index.ts</h3>
+<pre><span class="cm">// supabase/functions/mp-preference/index.ts</span>
+<span class="kw">import</span> { <span class="var-name">serve</span> } <span class="kw">from</span> <span class="str">'https://deno.land/std@0.177.0/http/server.ts'</span>;
+
+<span class="kw">const</span> <span class="var-name">MP_ACCESS_TOKEN</span> = <span class="var-name">Deno</span>.<span class="var-name">env</span>.<span class="fn">get</span>(<span class="str">'MP_ACCESS_TOKEN'</span>)!;
+
+<span class="fn">serve</span>(<span class="kw">async</span> (<span class="var-name">req</span>) => {
+  <span class="kw">if</span> (<span class="var-name">req</span>.<span class="var-name">method</span> === <span class="str">'OPTIONS'</span>) {
+    <span class="kw">return</span> <span class="kw">new</span> <span class="fn">Response</span>(<span class="str">'ok'</span>, {
+      <span class="var-name">headers</span>: {
+        <span class="str">'Access-Control-Allow-Origin'</span>:  <span class="str">'*'</span>,
+        <span class="str">'Access-Control-Allow-Headers'</span>: <span class="str">'Content-Type'</span>,
+      },
+    });
+  }
+
+  <span class="kw">const</span> { <span class="var-name">pedidoId</span>, <span class="var-name">items</span>, <span class="var-name">payer</span>, <span class="var-name">backUrls</span> } = <span class="kw">await</span> <span class="var-name">req</span>.<span class="fn">json</span>();
+
+  <span class="kw">const</span> <span class="var-name">mpRes</span> = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">'https://api.mercadopago.com/checkout/preferences'</span>, {
+    <span class="var-name">method</span>: <span class="str">'POST'</span>,
+    <span class="var-name">headers</span>: {
+      <span class="str">'Content-Type'</span>:  <span class="str">'application/json'</span>,
+      <span class="str">'Authorization'</span>: <span class="str">`Bearer </span><span class="var-name">${MP_ACCESS_TOKEN}</span><span class="str">`</span>,
+    },
+    <span class="var-name">body</span>: <span class="fn">JSON</span>.<span class="fn">stringify</span>({
+      <span class="var-name">items</span>,
+      <span class="var-name">payer</span>,
+      <span class="var-name">back_urls</span>:        <span class="var-name">backUrls</span>,
+      <span class="var-name">auto_return</span>:      <span class="str">'approved'</span>,
+      <span class="var-name">external_reference</span>: <span class="var-name">pedidoId</span>,
+    }),
+  });
+
+  <span class="kw">const</span> <span class="var-name">data</span> = <span class="kw">await</span> <span class="var-name">mpRes</span>.<span class="fn">json</span>();
+
+  <span class="kw">return</span> <span class="kw">new</span> <span class="fn">Response</span>(<span class="fn">JSON</span>.<span class="fn">stringify</span>({
+    <span class="var-name">init_point</span>:         <span class="var-name">data</span>.<span class="var-name">init_point</span>,
+    <span class="var-name">sandbox_init_point</span>: <span class="var-name">data</span>.<span class="var-name">sandbox_init_point</span>,
+  }), {
+    <span class="var-name">headers</span>: {
+      <span class="str">'Content-Type'</span>:               <span class="str">'application/json'</span>,
+      <span class="str">'Access-Control-Allow-Origin'</span>: <span class="str">'*'</span>,
+    },
+  });
+});</pre>
+
+    <p>La URL del endpoint va a ser algo como: <code style="background:#111;color:#7dd3fc;padding:2px 8px;border-radius:4px;font-family:monospace">https://xxxxxxxxxxxx.supabase.co/functions/v1/mp-preference</code></p>
+  </div>
+
+  <!-- SECCIÓN 4: CONFIGURAR EN CHECKOUT -->
+  <div class="seccion">
+    <h2>4. Configurar en checkout.html</h2>
+    <p>Una vez que tengas tu proxy deployado, editá las dos variables al inicio del script de checkout.html:</p>
+<pre><span class="cm">// Ejemplo con Netlify Functions:</span>
+<span class="kw">var</span> <span class="var-name">MP_PROXY_URL</span> = <span class="str">'https://tu-sitio.netlify.app/.netlify/functions/mp-preference'</span>;
+<span class="kw">var</span> <span class="var-name">MP_PUBLIC_KEY</span> = <span class="str">'TEST-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'</span>;
+
+<span class="cm">// Ejemplo con Vercel:</span>
+<span class="kw">var</span> <span class="var-name">MP_PROXY_URL</span> = <span class="str">'https://tu-sitio.vercel.app/api/mp-preference'</span>;
+<span class="kw">var</span> <span class="var-name">MP_PUBLIC_KEY</span> = <span class="str">'TEST-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'</span>;
+
+<span class="cm">// Ejemplo con Supabase Edge Functions:</span>
+<span class="kw">var</span> <span class="var-name">MP_PROXY_URL</span> = <span class="str">'https://xxxxxxxxxxxx.supabase.co/functions/v1/mp-preference'</span>;
+<span class="kw">var</span> <span class="var-name">MP_PUBLIC_KEY</span> = <span class="str">'TEST-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'</span>;</pre>
+    <p>Para ir a producción, reemplazá las claves <code style="background:#111;color:#7dd3fc;padding:2px 8px;border-radius:4px;font-family:monospace">TEST-</code> por las claves reales de tu cuenta de MP.</p>
+  </div>
+
+  <!-- SECCIÓN 5: CHECKLIST PRODUCCIÓN -->
+  <div class="seccion">
+    <h2>5. Checklist para ir a producción</h2>
+    <ul class="checklist">
+      <li>
+        <div class="check-num">1</div>
+        <div>Crear cuenta de MercadoPago de vendedor y activar el modo producción en el panel de developers.</div>
+      </li>
+      <li>
+        <div class="check-num">2</div>
+        <div>Obtener las claves de producción (sin prefijo <code style="background:#111;color:#7dd3fc;padding:1px 6px;border-radius:3px;font-family:monospace">TEST-</code>) y reemplazar en <code style="background:#111;color:#7dd3fc;padding:1px 6px;border-radius:3px;font-family:monospace">MP_PUBLIC_KEY</code> y en la variable de entorno <code style="background:#111;color:#7dd3fc;padding:1px 6px;border-radius:3px;font-family:monospace">MP_ACCESS_TOKEN</code> del proxy.</div>
+      </li>
+      <li>
+        <div class="check-num">3</div>
+        <div>Configurar las <strong style="color:#fff">notificaciones IPN/Webhooks</strong> en el panel de MP para que actualicen el estado del pedido en Supabase al recibir el pago.</div>
+      </li>
+      <li>
+        <div class="check-num">4</div>
+        <div>Implementar el manejo de los query params en <code style="background:#111;color:#7dd3fc;padding:1px 6px;border-radius:3px;font-family:monospace">seguimiento.html</code>: <code style="background:#111;color:#7dd3fc;padding:1px 6px;border-radius:3px;font-family:monospace">?pedido=ID&amp;pago=aprobado|fallido|pendiente</code> para mostrar el estado al usuario.</div>
+      </li>
+      <li>
+        <div class="check-num">5</div>
+        <div>Implementar la limpieza del carrito (<code style="background:#111;color:#7dd3fc;padding:1px 6px;border-radius:3px;font-family:monospace">localStorage.removeItem('pz_carrito')</code>) en <code style="background:#111;color:#7dd3fc;padding:1px 6px;border-radius:3px;font-family:monospace">seguimiento.html</code> cuando el param <code style="background:#111;color:#7dd3fc;padding:1px 6px;border-radius:3px;font-family:monospace">pago=aprobado</code>.</div>
+      </li>
+      <li>
+        <div class="check-num">6</div>
+        <div>Probar el flujo completo con las tarjetas de prueba de MP antes de activar producción.</div>
+      </li>
+      <li>
+        <div class="check-num">7</div>
+        <div>Agregar CORS correcto en el proxy si el frontend y el proxy están en dominios distintos. El header <code style="background:#111;color:#7dd3fc;padding:1px 6px;border-radius:3px;font-family:monospace">Access-Control-Allow-Origin</code> debe apuntar solo a tu dominio en producción.</div>
+      </li>
+    </ul>
+  </div>
+
+</div>
+
+<footer class="footer" style="background:#111;border-top:1px solid #222">
+  <p style="color:#555"><strong style="color:#888">Piezauto</strong> — Documentación interna</p>
+</footer>
+
+</body>
+</html>

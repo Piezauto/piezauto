@@ -1,0 +1,2263 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — Piezauto</title>
+  <link rel="stylesheet" href="../css/estilos.css">
+  <style>
+    body { background: #f0f0f0; }
+    .admin-wrap { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+    .admin-sidebar {
+      background: var(--negro); padding: 24px 0;
+      display: flex; flex-direction: column;
+      overflow-y: auto; position: sticky; top: 0; max-height: 100vh;
+    }
+    .admin-sidebar-logo {
+      font-size: 18px; font-weight: 800;
+      padding: 0 20px 24px; border-bottom: 1px solid #333;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, #E63946 0%, #ff6b6b 50%, #c1121f 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .admin-nav-item {
+      display: block; padding: 12px 20px;
+      color: #aaa; font-size: 14px; font-weight: 500;
+      cursor: pointer; transition: background 0.15s, color 0.15s;
+      border-left: 3px solid transparent;
+    }
+    .admin-nav-item:hover, .admin-nav-item.activo {
+      background: #222; color: #fff; border-left-color: var(--rojo);
+    }
+    .admin-content { padding: 32px; overflow-y: auto; }
+    .admin-header {
+      display: flex; align-items: center;
+      justify-content: space-between; margin-bottom: 28px;
+    }
+    .admin-titulo { font-size: 22px; font-weight: 800; }
+    .panel { display: none; }
+    .panel.activo { display: block; }
+
+    /* SIDEBAR — SEPARADORES DE SECCIÓN */
+    .sidebar-section-label {
+      font-size: 10px;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 16px 20px 4px;
+      font-weight: 700;
+      user-select: none;
+      pointer-events: none;
+    }
+    .sidebar-divider {
+      border: none;
+      border-top: 1px solid #2a2a2a;
+      margin: 8px 0;
+    }
+
+    /* FORMULARIO */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group label { font-size: 13px; font-weight: 600; color: #555; }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      padding: 10px 12px; border: 1.5px solid #ddd;
+      border-radius: 8px; font-size: 14px;
+      outline: none; transition: border-color 0.15s;
+      background: #fff;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus { border-color: var(--rojo); }
+    .form-group.full { grid-column: 1 / -1; }
+
+    /* TABLA ADMIN */
+    .tabla-admin { width: 100%; border-collapse: collapse; background: #fff; border-radius: 10px; overflow: hidden; box-shadow: var(--sombra); }
+    .tabla-admin th { background: #f5f5f5; padding: 12px 14px; text-align: left; font-size: 13px; font-weight: 700; color: #555; }
+    .tabla-admin td { padding: 12px 14px; border-bottom: 1px solid #f0f0f0; font-size: 14px; vertical-align: middle; }
+    .tabla-admin tr:last-child td { border-bottom: none; }
+    .badge-activo   { background: #e6f7ee; color: #1a7a3f; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .badge-inactivo { background: #fce8e8; color: #c00;    padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .accion-btn { padding: 6px 12px; border-radius: 6px; border: none; font-size: 12px; font-weight: 600; cursor: pointer; margin-right: 4px; }
+    .accion-editar  { background: #e8f0fe; color: #1a56c4; }
+    .accion-eliminar { background: #fce8e8; color: #c00; }
+
+    /* ESTADÍSTICAS */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 28px; }
+    .stat-card {
+      background: #fff; border-radius: 10px; padding: 20px;
+      box-shadow: var(--sombra); text-align: center;
+    }
+    .stat-num { font-size: 36px; font-weight: 900; color: var(--rojo); }
+    .stat-label { font-size: 13px; color: #888; margin-top: 4px; }
+
+    .card-form {
+      background: #fff; border-radius: 10px; padding: 24px;
+      box-shadow: var(--sombra); margin-bottom: 24px;
+    }
+    .card-form h2 { font-size: 16px; font-weight: 700; margin-bottom: 20px; }
+
+    /* DASHBOARD — CHART + BAJO STOCK */
+    .dash-grid-2 {
+      display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 24px;
+    }
+    .chart-wrap { position: relative; height: 220px; }
+    .bajo-stock-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px;
+    }
+    .bajo-stock-item:last-child { border-bottom: none; }
+    .stock-badge {
+      font-weight: 800; font-size: 12px; min-width: 28px;
+      text-align: center; padding: 2px 8px; border-radius: 20px;
+    }
+    .stock-cero { background: #fce8e8; color: #c00; }
+    .stock-poco { background: #fff3cd; color: #856404; }
+
+    /* BADGE SIDEBAR */
+    .sidebar-badge {
+      background: var(--rojo); color: #fff;
+      border-radius: 50%; min-width: 18px; height: 18px;
+      font-size: 11px; font-weight: 700;
+      display: inline-flex; align-items: center; justify-content: center;
+      margin-left: auto; padding: 0 4px;
+    }
+
+    /* BADGE ESTADO PEDIDO */
+    .badge-nuevo      { background: #e8f0fe; color: #1a56c4; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .badge-confirmado { background: #e6f7ee; color: #1a7a3f; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .badge-preparando { background: #fff3cd; color: #856404; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .badge-enviado    { background: #e0e7ff; color: #3730a3; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .badge-entregado  { background: #d1fae5; color: #065f46; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .badge-cancelado  { background: #fce8e8; color: #c00;    padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+
+    /* MODAL PEDIDO DETALLE */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5); z-index: 1000;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.activo { display: flex; }
+    .modal-box {
+      background: #fff; border-radius: 14px; width: 90%; max-width: 700px;
+      max-height: 90vh; overflow-y: auto; padding: 28px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    }
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid #eee;
+    }
+    .modal-titulo { font-size: 18px; font-weight: 800; }
+    .modal-cerrar {
+      background: #f0f0f0; border: none; border-radius: 50%;
+      width: 32px; height: 32px; font-size: 16px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .modal-seccion { margin-bottom: 20px; }
+    .modal-seccion h3 { font-size: 13px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 12px; }
+    .modal-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .info-item label { font-size: 11px; color: #aaa; display: block; font-weight: 600; }
+    .info-item span  { font-size: 14px; font-weight: 500; }
+    .items-pedido-tabla { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .items-pedido-tabla th { background: #f8f8f8; padding: 8px 10px; text-align: left; font-weight: 700; color: #555; }
+    .items-pedido-tabla td { padding: 8px 10px; border-bottom: 1px solid #f0f0f0; }
+
+    /* IMAGE UPLOAD */
+    .upload-area {
+      border: 2px dashed #ddd; border-radius: 8px; padding: 20px;
+      text-align: center; background: #fafafa; transition: border-color 0.2s;
+    }
+    .upload-area:hover { border-color: var(--rojo); }
+    .upload-area input[type="file"] { display: none; }
+    .upload-label {
+      cursor: pointer; font-size: 14px; color: #888;
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+    }
+    .upload-label .upload-icono { font-size: 28px; }
+
+    /* MODELOS — TAG CHIPS */
+    .modelo-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: #f0f0f0; border-radius: 20px;
+      padding: 4px 12px; font-size: 12px; font-weight: 600; margin: 3px;
+    }
+    .modelo-chip button {
+      background: none; border: none; cursor: pointer;
+      color: #999; font-size: 14px; line-height: 1; padding: 0;
+    }
+    .modelo-chip button:hover { color: var(--rojo); }
+
+    /* ── COMPATIBILIDAD ─────────────────────── */
+    .compat-section { border-top: 2px solid #f0f0f0; padding-top: 20px; margin-top: 20px; }
+    .compat-section-title { font-size: 13px; font-weight: 700; color: #666; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 14px; }
+    .compat-row { display: grid; grid-template-columns: 1fr 1fr 110px 110px auto; gap: 10px; align-items: end; margin-bottom: 14px; }
+    .compat-badge-area { min-height: 46px; padding: 10px 12px; background: #f8f8f8; border-radius: 8px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; border: 1.5px solid #eee; }
+    .compat-badge { display: inline-flex; align-items: center; gap: 4px; background: #fff; border: 1.5px solid #ddd; border-radius: 20px; padding: 4px 6px 4px 12px; font-size: 12px; font-weight: 600; color: #444; }
+    .compat-badge-rm { background: none; border: none; cursor: pointer; color: #bbb; font-size: 14px; font-weight: 800; line-height: 1; padding: 2px 4px; transition: color .1s; }
+    .compat-badge-rm:hover { color: var(--rojo); }
+    .compat-empty { color: #bbb; font-size: 13px; font-style: italic; }
+    .universal-toggle { display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: #f0fff4; border: 1.5px solid #a3d9b0; border-radius: 8px; font-size: 14px; font-weight: 600; color: #1a7a3f; cursor: pointer; margin-bottom: 14px; width: fit-content; }
+    .universal-toggle input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; accent-color: #1a7a3f; }
+    /* ── FILTRO POR AUTO ─────────────────────── */
+    .filtro-auto-card { background: #fff; border-radius: 10px; padding: 16px 20px; box-shadow: var(--sombra); margin-bottom: 16px; }
+    .filtro-auto-titulo { font-size: 12px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 10px; }
+    .filtro-auto-row { display: grid; grid-template-columns: 1fr 1fr 110px auto; gap: 10px; align-items: end; }
+
+    /* BADGES STOCK INVENTARIO */
+    .badge-stock { display:inline-block; padding:2px 9px; border-radius:20px; font-size:11px; font-weight:700; }
+    .badge-stock.rojo    { background:#fee2e2; color:#dc2626; }
+    .badge-stock.naranja { background:#ffedd5; color:#ea580c; }
+    .badge-stock.amarillo{ background:#fef9c3; color:#ca8a04; }
+    .badge-stock.verde   { background:#dcfce7; color:#16a34a; }
+
+    /* DESCUENTO POR VOLUMEN */
+    .descuento-vol-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px;
+    }
+    .descuento-vol-item:last-child { border-bottom: none; }
+    .descuento-vol-item input { width: 90px; padding: 6px 10px; border: 1.5px solid #ddd; border-radius: 6px; font-size: 13px; outline: none; }
+    .descuento-vol-item input:focus { border-color: var(--rojo); }
+    .descuento-vol-btn-del { background: #fce8e8; color: #c00; border: none; border-radius: 6px; padding: 5px 10px; cursor: pointer; font-size: 12px; }
+
+    /* FILTROS PEDIDOS */
+    .filtros-pedidos { background: #fff; border-radius: 10px; padding: 16px 20px; box-shadow: var(--sombra); margin-bottom: 16px; }
+    .filtros-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+    .filtro-grupo { display: flex; flex-direction: column; gap: 5px; }
+    .filtro-grupo label { font-size: 12px; font-weight: 700; color: #666; }
+    .filtro-grupo input,
+    .filtro-grupo select { padding: 8px 10px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 13px; outline: none; background: #fff; }
+    .filtro-grupo input:focus,
+    .filtro-grupo select:focus { border-color: var(--rojo); }
+    .filtros-row > button { padding: 8px 16px; border: none; border-radius: 8px; background: var(--rojo); color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; height: 38px; align-self: flex-end; }
+
+    /* TAGS PRODUCTO */
+    .tags-input-wrap { border: 1.5px solid #333; border-radius: 8px; padding: 8px; background: #111; min-height: 44px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; cursor: text; }
+    .tags-input-wrap:focus-within { border-color: var(--rojo); }
+    .tags-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .tag-chip { background: #222; border: 1px solid #444; color: #ddd; font-size: 12px; padding: 3px 10px; border-radius: 20px; display: flex; align-items: center; gap: 6px; }
+    .tag-chip button { background: none; border: none; color: #888; cursor: pointer; font-size: 14px; padding: 0; line-height: 1; }
+    .tag-chip button:hover { color: #E63946; }
+    #tag-input { background: none; border: none; outline: none; color: #fff; font-size: 14px; flex: 1; min-width: 120px; }
+
+    /* HEATMAP */
+    .heatmap-wrap { overflow-x: auto; padding: 4px 0; }
+    .heatmap-grid { display: grid; grid-template-rows: repeat(7, 14px); grid-auto-flow: column; gap: 3px; width: max-content; }
+    .hm-cell { width: 14px; height: 14px; border-radius: 3px; }
+    .heatmap-leyenda { display: flex; align-items: center; gap: 4px; margin-top: 10px; font-size: 11px; color: #888; }
+
+    /* WIDGET CARD */
+    .widget-card { background: #fff; border-radius: 10px; padding: 20px; box-shadow: var(--sombra); margin-bottom: 24px; }
+    .widget-titulo { font-size: 15px; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; }
+
+    /* ACTIVIDAD REALTIME */
+    .realtime-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #22c55e; margin-left: 6px; animation: pulse-dot 2s infinite; }
+    @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.8)} }
+    .actividad-lista { display: flex; flex-direction: column; gap: 0; max-height: 280px; overflow-y: auto; }
+    .actividad-item { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid #f5f5f5; font-size: 13px; }
+    .actividad-item:last-child { border-bottom: none; }
+    .act-icon { font-size: 16px; flex-shrink: 0; }
+    .act-texto { flex: 1; color: #333; }
+    .act-hora { font-size: 11px; color: #aaa; white-space: nowrap; }
+    .actividad-loading { padding: 20px; text-align: center; color: #aaa; font-size: 13px; }
+
+    /* CONFIGURACIÓN */
+    .config-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+    .card { background: #fff; border-radius: 10px; padding: 24px; box-shadow: var(--sombra); }
+    .card-subtitulo { font-size: 14px; font-weight: 700; color: #444; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid #f0f0f0; }
+    .form-row { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+    .form-row label { font-size: 13px; font-weight: 600; color: #555; }
+    .form-row input { padding: 10px 12px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 14px; outline: none; transition: border-color 0.15s; background: #fff; }
+    .form-row input:focus { border-color: var(--rojo); }
+
+    /* LOGÍSTICA */
+    .logistica-tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+    .log-tab { padding: 8px 16px; border-radius: 8px; border: 1.5px solid #e0e0e0; background: #fff; cursor: pointer; font-size: 13px; font-weight: 600; color: #555; transition: all 0.15s; }
+    .log-tab.activo { background: var(--rojo); border-color: var(--rojo); color: #fff; }
+    .logistica-lista { display: flex; flex-direction: column; gap: 12px; }
+    .log-card { background: #fff; border: 1px solid #e0e0e0; border-radius: 12px; padding: 20px; }
+    .log-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
+    .log-pedido-id { font-size: 14px; font-weight: 700; color: #1a1a1a; }
+    .log-cliente { font-size: 13px; color: #666; }
+    .log-fecha { font-size: 12px; color: #aaa; }
+    .log-acciones { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1px solid #f0f0f0; }
+    .log-acciones select { padding: 7px 10px; border: 1.5px solid #ddd; border-radius: 6px; font-size: 13px; cursor: pointer; }
+    .log-tracking-wrap { display: flex; gap: 8px; flex: 1; min-width: 200px; }
+    .log-tracking-wrap select { width: 120px; flex-shrink: 0; }
+    .log-tracking-wrap input { flex: 1; padding: 7px 10px; border: 1.5px solid #ddd; border-radius: 6px; font-size: 13px; }
+    .log-btn { padding: 7px 14px; border-radius: 6px; border: none; font-size: 13px; font-weight: 700; cursor: pointer; transition: opacity 0.15s; }
+    .log-btn:hover { opacity: 0.85; }
+    .log-btn-estado { background: #1a1a1a; color: #fff; }
+    .log-btn-tracking { background: var(--rojo); color: #fff; }
+
+    /* REALTIME NOTIF */
+    @keyframes slideIn { from { transform:translateX(120%); opacity:0; } to { transform:translateX(0); opacity:1; } }
+
+    @media (max-width: 700px) {
+      .admin-wrap { grid-template-columns: 1fr; }
+      .admin-sidebar { display: none; }
+      .form-grid { grid-template-columns: 1fr; }
+      .dash-grid-2 { grid-template-columns: 1fr; }
+      .modal-grid-2 { grid-template-columns: 1fr; }
+      .compat-row { grid-template-columns: 1fr 1fr; }
+      .filtro-auto-row { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+
+  <!-- ============================================================
+    GOOGLE ANALYTICS — Agregar antes del lanzamiento a producción
+    Reemplazá G-XXXXXXXXXX con tu Measurement ID real de GA4.
+    Instrucciones completas: analytics_setup.md
+    ============================================================
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-XXXXXXXXXX');
+  </script>
+  ============================================================ -->
+</head>
+<body>
+<script>
+// Verificación de sesión — debe ejecutarse antes de renderizar
+if (!sessionStorage.getItem('pz_admin')) {
+  window.location.replace('login.html');
+}
+</script>
+
+<div class="admin-wrap">
+
+  <!-- SIDEBAR -->
+  <aside class="admin-sidebar">
+    <div class="admin-sidebar-logo">Piezauto Admin</div>
+
+    <!-- VENTAS -->
+    <div class="sidebar-section-label">Ventas</div>
+    <span class="admin-nav-item activo" id="nav-dashboard" onclick="mostrarPanel('dashboard')">📊 Dashboard</span>
+    <span class="admin-nav-item" id="nav-pedidos" onclick="mostrarPanel('pedidos')" style="display:flex;align-items:center">🛒 Pedidos <span id="badge-pedidos-nuevos" class="sidebar-badge" style="display:none">0</span></span>
+    <span class="admin-nav-item" id="nav-cupones" onclick="mostrarPanel('cupones')">🏷️ Cupones</span>
+    <span class="admin-nav-item" id="nav-reportes" onclick="mostrarPanel('reportes')">📈 Reportes</span>
+    <span class="admin-nav-item" id="nav-logistica" onclick="mostrarPanel('logistica')">🚚 Logística</span>
+
+    <!-- CATÁLOGO -->
+    <div class="sidebar-section-label">Catálogo</div>
+    <span class="admin-nav-item" id="nav-productos" onclick="mostrarPanel('productos')">📦 Productos</span>
+    <span class="admin-nav-item" id="nav-nuevo-producto" onclick="mostrarPanel('nuevo-producto')">➕ Nuevo producto</span>
+    <span class="admin-nav-item" id="nav-categorias" onclick="mostrarPanel('categorias')">🗂️ Categorías</span>
+    <span class="admin-nav-item" id="nav-marcas" onclick="mostrarPanel('marcas')">🏷️ Marcas</span>
+    <span class="admin-nav-item" id="nav-inventario" onclick="mostrarPanel('inventario')">📋 Inventario</span>
+    <span class="admin-nav-item" id="nav-ofertas" onclick="mostrarPanel('ofertas')">🔥 Ofertas</span>
+    <span class="admin-nav-item" id="nav-combos" onclick="mostrarPanel('combos')">🎁 Combos</span>
+
+    <!-- COMPRAS Y PROVEEDORES -->
+    <div class="sidebar-section-label">Compras y Proveedores</div>
+    <span class="admin-nav-item" onclick="window.location='proveedores.html'">🏭 Proveedores</span>
+    <span class="admin-nav-item" onclick="window.location='proveedores.html#importar'">📥 Importar listas</span>
+    <span class="admin-nav-item" onclick="window.location='proveedores.html#catalogo'">🔍 Catálogo interno</span>
+    <span class="admin-nav-item" id="nav-pagos" onclick="mostrarPanel('pagos')">💳 Pagos a proveedores</span>
+    <span class="admin-nav-item" onclick="window.location='proveedores.html#equivalencias'">🔄 Equivalencias OEM</span>
+
+    <!-- RED DE TALLERES -->
+    <div class="sidebar-section-label">Red de Talleres</div>
+    <span class="admin-nav-item" id="nav-talleres" onclick="mostrarPanel('talleres')">🔧 Talleres</span>
+    <span class="admin-nav-item" id="nav-nuevo-taller" onclick="mostrarPanel('nuevo-taller')">➕ Nuevo taller</span>
+    <span class="admin-nav-item" id="nav-facturacion-point" onclick="mostrarPanel('facturacion-point')" style="display:flex;align-items:center">📄 Facturación Point <span id="badge-facturacion" class="sidebar-badge" style="display:none">0</span></span>
+    <span class="admin-nav-item" id="nav-devoluciones" onclick="mostrarPanel('devoluciones')" style="display:flex;align-items:center">↩️ Devoluciones <span id="badge-devoluciones" class="sidebar-badge" style="display:none">0</span></span>
+    <span class="admin-nav-item" id="nav-mensajes-internos" onclick="mostrarPanel('mensajes-internos')" style="display:flex;align-items:center">💬 Mensajes internos <span id="badge-mensajes-admin" class="sidebar-badge" style="display:none">0</span></span>
+
+    <!-- CONFIGURACIÓN -->
+    <div class="sidebar-section-label">Configuración</div>
+    <span class="admin-nav-item" id="nav-modelos" onclick="mostrarPanel('modelos')">🚗 Modelos de autos</span>
+    <span class="admin-nav-item" id="nav-vendedores" onclick="mostrarPanel('vendedores')">👤 Vendedores</span>
+    <span class="admin-nav-item" id="nav-banners" onclick="mostrarPanel('banners')">🖼️ Banners</span>
+    <span class="admin-nav-item" id="nav-consultas" onclick="mostrarPanel('consultas')" style="display:flex;align-items:center">✉️ Consultas <span id="badge-consultas-nuevas" class="sidebar-badge" style="display:none">0</span></span>
+    <span class="admin-nav-item" id="nav-configuracion" onclick="mostrarPanel('configuracion')">⚙️ Configuración general</span>
+    <span class="admin-nav-item" id="nav-estado-sistema" onclick="mostrarPanel('estado-sistema')">🔧 Estado del sistema</span>
+
+    <!-- VER SITIO / SESIÓN -->
+    <hr class="sidebar-divider" style="margin-top:auto">
+    <span class="admin-nav-item" onclick="window.open('../index.html','_blank')" style="color:#888;font-size:13px">↗ Ver sitio web</span>
+    <span class="admin-nav-item" id="nav-test" onclick="window.location='test.html'" style="color:#888;font-size:13px">🧪 Test del sistema</span>
+    <span class="admin-nav-item" onclick="window.open('../docs/manual_admin.html','_blank')" style="color:#888;font-size:13px">📖 Manual admin</span>
+    <span class="admin-nav-item" onclick="cerrarSesionAdmin()" style="color:#c00;font-size:13px;margin-top:4px">🚪 Cerrar sesión</span>
+  </aside>
+
+  <!-- CONTENIDO -->
+  <main class="admin-content">
+
+    <!-- ══════════════════════════════════════════
+         DASHBOARD
+    ══════════════════════════════════════════ -->
+    <div id="panel-dashboard" class="panel activo">
+      <div class="admin-header">
+        <div class="admin-titulo">Dashboard</div>
+        <span id="dash-fecha" style="font-size:13px;color:#888"></span>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-num" id="stat-productos">—</div>
+          <div class="stat-label">Productos activos</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="stat-talleres">—</div>
+          <div class="stat-label">Talleres registrados</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="stat-pedidos">—</div>
+          <div class="stat-label">Pedidos totales</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="stat-usuarios">—</div>
+          <div class="stat-label">Usuarios registrados</div>
+        </div>
+      </div>
+
+      <div class="dash-grid-2">
+        <!-- Gráfico pedidos 30 días -->
+        <div class="card-form" style="margin-bottom:0">
+          <h2>Pedidos — últimos 30 días</h2>
+          <div class="chart-wrap">
+            <canvas id="chart-pedidos"></canvas>
+          </div>
+        </div>
+        <!-- Bajo stock -->
+        <div class="card-form" style="margin-bottom:0">
+          <h2>⚠️ Bajo stock</h2>
+          <div id="bajo-stock-lista"><div class="loader" style="padding:20px">Cargando...</div></div>
+        </div>
+      </div>
+
+      <!-- Últimos pedidos -->
+      <div class="card-form" style="margin-top:24px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <h2 style="margin-bottom:0">Últimos pedidos</h2>
+          <button class="btn btn-blanco" style="font-size:12px;padding:6px 14px" onclick="mostrarPanel('pedidos')">Ver todos</button>
+        </div>
+        <table class="tabla-admin" id="tabla-ultimos-pedidos">
+          <thead>
+            <tr><th>Fecha</th><th>Cliente</th><th>Total</th><th>Estado</th><th></th></tr>
+          </thead>
+          <tbody id="tbody-ultimos-pedidos">
+            <tr><td colspan="5" class="loader">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Accesos rápidos -->
+      <div class="card-form">
+        <h2>Accesos rápidos</h2>
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <button class="btn btn-rojo" onclick="mostrarPanel('nuevo-producto')">+ Cargar producto</button>
+          <button class="btn btn-blanco" onclick="mostrarPanel('nuevo-taller')">+ Nuevo taller</button>
+          <button class="btn btn-blanco" onclick="mostrarPanel('pedidos')">Ver pedidos</button>
+          <button class="btn btn-blanco" onclick="mostrarPanel('modelos')">Modelos de autos</button>
+        </div>
+      </div>
+
+      <!-- Heatmap de pedidos -->
+      <div class="widget-card">
+        <div class="widget-titulo">Actividad de pedidos — últimas 12 semanas</div>
+        <div class="heatmap-wrap" id="heatmap-pedidos"></div>
+        <div class="heatmap-leyenda">
+          <span>Menos</span>
+          <span class="hm-cell" style="background:#1a1a1a;border:1px solid #333"></span>
+          <span class="hm-cell" style="background:#7f1d1d"></span>
+          <span class="hm-cell" style="background:#b91c1c"></span>
+          <span class="hm-cell" style="background:#dc2626"></span>
+          <span class="hm-cell" style="background:#E63946"></span>
+          <span>Más</span>
+        </div>
+      </div>
+
+      <!-- Actividad en tiempo real -->
+      <div class="widget-card">
+        <div class="widget-titulo">Actividad reciente <span class="realtime-dot"></span></div>
+        <div id="actividad-lista" class="actividad-lista">
+          <div class="actividad-loading">Cargando actividad...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         LISTADO PRODUCTOS
+    ══════════════════════════════════════════ -->
+    <div id="panel-productos" class="panel">
+      <div class="admin-header">
+        <div class="admin-titulo">Productos</div>
+        <button class="btn btn-rojo" onclick="mostrarPanel('nuevo-producto')">+ Nuevo producto</button>
+      </div>
+
+      <!-- Filtro por auto compatible -->
+      <div class="filtro-auto-card">
+        <div class="filtro-auto-titulo">🔍 ¿Qué productos sirven para este auto?</div>
+        <div class="filtro-auto-row">
+          <div class="form-group">
+            <label>Marca</label>
+            <select id="fv-marca" onchange="onFvMarca()" style="border:1.5px solid #ddd;border-radius:8px;padding:8px 10px;font-size:13px;outline:none;width:100%">
+              <option value="">Todas las marcas</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Modelo</label>
+            <select id="fv-modelo" style="border:1.5px solid #ddd;border-radius:8px;padding:8px 10px;font-size:13px;outline:none;width:100%">
+              <option value="">Todos los modelos</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Año</label>
+            <input type="number" id="fv-anio" placeholder="2019" min="1970" max="2030"
+              style="border:1.5px solid #ddd;border-radius:8px;padding:8px 10px;font-size:13px;outline:none;width:100%">
+          </div>
+          <div style="display:flex;gap:8px;align-self:flex-end">
+            <button class="btn btn-rojo" onclick="filtrarPorAuto()" style="font-size:13px;height:40px">Buscar</button>
+            <button class="btn btn-blanco" onclick="limpiarFiltroAutoAdmin()" style="font-size:13px;height:40px">Limpiar</button>
+          </div>
+        </div>
+        <div id="fv-resultado" style="margin-top:8px;font-size:13px;color:#888;min-height:18px"></div>
+      </div>
+
+      <!-- Preguntas sin responder -->
+      <div id="preguntas-sin-responder-wrap" style="background:#fff8e0;border:1.5px solid #f4d03f;border-radius:10px;padding:16px 20px;margin-bottom:20px;display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:15px;font-weight:800">❓ Preguntas sin responder</span>
+            <span id="badge-preguntas" style="background:#E63946;color:#fff;border-radius:20px;padding:2px 10px;font-size:12px;font-weight:700">0</span>
+          </div>
+          <button onclick="document.getElementById('lista-preguntas-sr').style.display = document.getElementById('lista-preguntas-sr').style.display === 'none' ? '' : 'none'" style="background:none;border:none;cursor:pointer;font-size:12px;color:#888;font-weight:600">Mostrar/ocultar</button>
+        </div>
+        <div id="lista-preguntas-sr"></div>
+      </div>
+
+      <div style="overflow-x:auto">
+        <table class="tabla-admin" id="tabla-productos">
+          <thead>
+            <tr>
+              <th>Nombre / Código propio</th><th>OEM / Cód. proveedor</th>
+              <th>Precio lista</th><th>Precio venta</th>
+              <th>Stock</th><th>Estado</th><th>Compat.</th><th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-productos">
+            <tr><td colspan="8" class="loader">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         FORMULARIO NUEVO / EDITAR PRODUCTO
+    ══════════════════════════════════════════ -->
+    <div id="panel-nuevo-producto" class="panel">
+      <div class="admin-header">
+        <div class="admin-titulo" id="form-titulo">Nuevo producto</div>
+      </div>
+      <div class="card-form">
+        <div class="form-grid">
+          <div class="form-group full">
+            <label>Nombre del producto *</label>
+            <input type="text" id="f-nombre" placeholder="Ej: Pastilla de freno delantera Brembo">
+          </div>
+          <div class="form-group">
+            <label>Código de pieza (OEM)</label>
+            <input type="text" id="f-codigo" placeholder="Ej: BRE-1234">
+          </div>
+          <div class="form-group">
+            <label>Código propio (PZA-…)</label>
+            <input type="text" id="f-codigo-propio" placeholder="Se genera automáticamente al importar">
+          </div>
+          <div class="form-group">
+            <label>Fabricante</label>
+            <input type="text" id="f-fabricante" placeholder="Ej: Brembo, Bosch, SKF, NGK...">
+          </div>
+          <div class="form-group">
+            <label>Marca del producto</label>
+            <input type="text" id="f-marca" placeholder="Ej: original, premium...">
+          </div>
+          <div class="form-group">
+            <label>Marca del vehículo</label>
+            <input type="text" id="f-marca-vehiculo" placeholder="Ej: Ford, VW, Renault...">
+          </div>
+          <div class="form-group">
+            <label>Modelo del vehículo</label>
+            <input type="text" id="f-vehiculo" placeholder="Ej: Ranger, Golf, Clio...">
+          </div>
+          <div class="form-group">
+            <label>Versión / Carrocería</label>
+            <input type="text" id="f-version-formato" placeholder="Ej: 3P, 4P, sedan, pickup...">
+          </div>
+          <div class="form-group">
+            <label>Año desde</label>
+            <input type="number" id="f-anio-desde" placeholder="Ej: 2005" min="1960" max="2030">
+          </div>
+          <div class="form-group">
+            <label>Año hasta</label>
+            <input type="number" id="f-anio-hasta" placeholder="Ej: 2015" min="1960" max="2030">
+          </div>
+          <div class="form-group">
+            <label>Lado de montaje</label>
+            <select id="f-lado">
+              <option value="">— Sin especificar —</option>
+              <option value="D">Derecho</option>
+              <option value="I">Izquierdo</option>
+              <option value="ambos">Ambos lados</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Precio lista ($)</label>
+            <input type="number" id="f-precio-lista" placeholder="Precio de lista del proveedor" min="0">
+          </div>
+          <div class="form-group">
+            <label>Categoría *</label>
+            <select id="f-categoria">
+              <option value="">Seleccioná una categoría</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Vendedor externo</label>
+            <select id="f-vendedor">
+              <option value="">— Stock propio Piezauto —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Precio público ($) *</label>
+            <input type="number" id="f-precio" placeholder="0.00" min="0">
+          </div>
+          <div class="form-group">
+            <label>Precio para talleres ($)</label>
+            <input type="number" id="f-precio-taller" placeholder="0.00" min="0">
+          </div>
+          <div class="form-group">
+            <label>Stock disponible *</label>
+            <input type="number" id="f-stock" placeholder="0" min="0">
+          </div>
+          <div class="form-group">
+            <label>Estado</label>
+            <select id="f-activo">
+              <option value="true">Activo (visible en la web)</option>
+              <option value="false">Inactivo (oculto)</option>
+            </select>
+          </div>
+          <div class="form-group full">
+            <label>Descripción</label>
+            <textarea id="f-descripcion" rows="4" placeholder="Descripción técnica del producto..."></textarea>
+          </div>
+          <div class="form-group full">
+            <label>Códigos cruzados / alternativos (uno por línea)</label>
+            <textarea id="f-codigos-cruzados" rows="2" placeholder="Ej: 1234567&#10;ABC-0099&#10;XYZ-002"></textarea>
+            <span style="font-size:11px;color:#999">Códigos OEM alternativos de otros fabricantes para el mismo producto.</span>
+          </div>
+          <div class="form-group full">
+            <label>Tags</label>
+            <div class="tags-input-wrap" id="tags-wrap">
+              <div class="tags-chips" id="tags-chips"></div>
+              <input type="text" id="tag-input" placeholder="Escribí un tag y presioná Enter (ej: importado, original)"
+                     onkeydown="agregarTag(event)">
+            </div>
+          </div>
+          <div class="form-group full">
+            <label>URLs de imágenes (una por línea)</label>
+            <textarea id="f-imagenes" rows="3" placeholder="https://ejemplo.com/imagen1.jpg&#10;https://ejemplo.com/imagen2.jpg"></textarea>
+            <span style="font-size:11px;color:#999">También podés subir imágenes directamente:</span>
+          </div>
+          <!-- SUBIDA DE IMÁGENES -->
+          <div class="form-group full">
+            <label>Subir imagen desde el dispositivo</label>
+            <div class="upload-area" id="upload-area">
+              <label class="upload-label" for="f-imagen-file">
+                <span class="upload-icono">📸</span>
+                <span id="upload-label-text">Hacé click para seleccionar una imagen</span>
+                <span style="font-size:11px;color:#bbb">JPG, PNG, WEBP hasta 5 MB</span>
+              </label>
+              <input type="file" id="f-imagen-file" accept="image/*" onchange="previsualizarImagen(this)">
+            </div>
+            <div id="upload-preview" style="display:none;margin-top:10px;display:flex;align-items:center;gap:12px">
+              <img id="upload-preview-img" style="height:80px;border-radius:8px;border:1px solid #eee;object-fit:contain">
+              <button class="btn btn-rojo" style="font-size:12px;padding:8px 16px" onclick="subirImagen()">Subir imagen</button>
+              <span id="upload-estado" style="font-size:13px;font-weight:600"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SECCIÓN DE COMPATIBILIDADES ── -->
+        <div class="compat-section">
+          <div class="compat-section-title">Compatibilidad de vehículos</div>
+
+          <label class="universal-toggle">
+            <input type="checkbox" id="f-universal" onchange="onToggleUniversal()">
+            Producto universal — compatible con todos los vehículos (accesorios, líquidos genéricos, etc.)
+          </label>
+
+          <div id="compat-selector-wrap">
+            <div class="compat-row">
+              <div class="form-group">
+                <label>Marca</label>
+                <select id="c-marca" onchange="onCompatMarca()">
+                  <option value="">Seleccioná marca</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Modelo</label>
+                <select id="c-modelo" disabled>
+                  <option value="">Seleccioná modelo</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Año desde</label>
+                <input type="number" id="c-desde" placeholder="2005" min="1970" max="2030">
+              </div>
+              <div class="form-group">
+                <label>Año hasta</label>
+                <input type="number" id="c-hasta" placeholder="2023" min="1970" max="2030">
+              </div>
+              <div style="align-self:flex-end">
+                <button class="btn btn-rojo" onclick="agregarCompat()" style="height:42px;white-space:nowrap;padding:0 16px">+ Agregar</button>
+              </div>
+            </div>
+
+            <div style="font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">
+              Compatibilidades agregadas <span id="compat-count" style="font-weight:400;color:#aaa;text-transform:none;letter-spacing:0"></span>
+            </div>
+            <div class="compat-badge-area" id="compat-badges">
+              <span class="compat-empty">Ninguna cargada aún — el producto no aparecerá en búsquedas por auto</span>
+            </div>
+          </div>
+        </div>
+        <!-- ── FIN COMPATIBILIDADES ── -->
+
+        <div class="form-group full" style="margin-top:8px">
+          <label style="font-size:14px;font-weight:700;margin-bottom:12px;display:block">Descuentos por cantidad</label>
+          <div id="descuentos-vol-lista" style="margin-bottom:12px;min-height:8px"></div>
+          <button type="button" class="btn btn-blanco" style="font-size:13px;padding:7px 14px" onclick="agregarReglaDescuento()">+ Agregar regla</button>
+          <span style="font-size:11px;color:#aaa;margin-left:10px">Ej: Comprando 3 o más → 10% OFF</span>
+        </div>
+
+        <div style="display:flex;gap:12px;margin-top:24px">
+          <button class="btn btn-rojo" onclick="guardarProducto()">Guardar producto</button>
+          <button class="btn btn-blanco" onclick="limpiarFormulario(); mostrarPanel('productos')">Cancelar</button>
+        </div>
+        <div id="form-mensaje" style="margin-top:14px;font-size:14px;font-weight:600"></div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         CATEGORÍAS
+    ══════════════════════════════════════════ -->
+    <div id="panel-categorias" class="panel">
+      <div class="admin-header">
+        <div class="admin-titulo">Categorías</div>
+      </div>
+      <div class="card-form">
+        <h2>Agregar categoría</h2>
+        <div style="display:flex;gap:12px;align-items:flex-end">
+          <div class="form-group" style="flex:1">
+            <label>Nombre</label>
+            <input type="text" id="cat-nombre" placeholder="Ej: Correas">
+          </div>
+          <div class="form-group" style="flex:1">
+            <label>Slug (sin espacios, minúsculas)</label>
+            <input type="text" id="cat-slug" placeholder="Ej: correas">
+          </div>
+          <button class="btn btn-rojo" style="height:42px" onclick="agregarCategoria()">Agregar</button>
+        </div>
+        <div id="cat-mensaje" style="margin-top:10px;font-size:13px;font-weight:600"></div>
+      </div>
+      <table class="tabla-admin">
+        <thead><tr><th>Nombre</th><th>Slug</th></tr></thead>
+        <tbody id="tbody-categorias">
+          <tr><td colspan="2" class="loader">Cargando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         MODELOS DE AUTOS
+    ══════════════════════════════════════════ -->
+    <div id="panel-modelos" class="panel">
+      <div class="admin-header">
+        <div class="admin-titulo">Modelos de autos</div>
+      </div>
+
+      <!-- Agregar marca -->
+      <div class="card-form">
+        <h2>Agregar marca</h2>
+        <div style="display:flex;gap:12px;align-items:flex-end">
+          <div class="form-group" style="flex:1">
+            <label>Nombre de la marca *</label>
+            <input type="text" id="marca-nombre" placeholder="Ej: Toyota, Ford, Chevrolet...">
+          </div>
+          <button class="btn btn-rojo" style="height:42px" onclick="agregarMarca()">Agregar marca</button>
+        </div>
+        <div id="marca-mensaje" style="margin-top:10px;font-size:13px;font-weight:600"></div>
+        <div style="margin-top:14px" id="marcas-chips"></div>
+      </div>
+
+      <!-- Agregar modelo -->
+      <div class="card-form">
+        <h2>Agregar modelo</h2>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Marca *</label>
+            <select id="mod-marca">
+              <option value="">Seleccioná una marca</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Nombre del modelo *</label>
+            <input type="text" id="mod-nombre" placeholder="Ej: Corolla, Fiesta, Onix...">
+          </div>
+          <div class="form-group">
+            <label>Año desde *</label>
+            <input type="number" id="mod-anio-desde" placeholder="Ej: 2010" min="1970" max="2030">
+          </div>
+          <div class="form-group">
+            <label>Año hasta (vacío = vigente)</label>
+            <input type="number" id="mod-anio-hasta" placeholder="Ej: 2018" min="1970" max="2030">
+          </div>
+        </div>
+        <div style="margin-top:16px;display:flex;gap:12px;align-items:center">
+          <button class="btn btn-rojo" onclick="agregarModelo()">Agregar modelo</button>
+          <span id="mod-mensaje" style="font-size:13px;font-weight:600"></span>
+        </div>
+      </div>
+
+      <!-- Tabla de modelos -->
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+        <select id="filtro-marca-modelos" onchange="cargarTablaModelos()" style="padding:8px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;outline:none;background:#fff">
+          <option value="">Todas las marcas</option>
+        </select>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="tabla-admin">
+          <thead><tr><th>Marca</th><th>Modelo</th><th>Año desde</th><th>Año hasta</th><th>Acciones</th></tr></thead>
+          <tbody id="tbody-modelos">
+            <tr><td colspan="5" class="loader">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         TALLERES
+    ══════════════════════════════════════════ -->
+    <div id="panel-talleres" class="panel">
+      <div class="admin-header">
+        <div class="admin-titulo">Talleres Point</div>
+        <button class="btn btn-rojo" onclick="mostrarPanel('nuevo-taller')">+ Nuevo taller</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="tabla-admin">
+          <thead><tr><th>Nombre</th><th>Localidad</th><th>Zona</th><th>Email</th><th>Estado</th><th>Acciones</th></tr></thead>
+          <tbody id="tbody-talleres">
+            <tr><td colspan="6" class="loader">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         FORMULARIO NUEVO / EDITAR TALLER
+    ══════════════════════════════════════════ -->
+    <div id="panel-nuevo-taller" class="panel">
+      <div class="admin-header">
+        <div class="admin-titulo" id="taller-form-titulo">Nuevo taller</div>
+      </div>
+      <div class="card-form">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Nombre del taller *</label>
+            <input type="text" id="t-nombre" placeholder="Ej: Taller Mecánico García">
+          </div>
+          <div class="form-group">
+            <label>Email *</label>
+            <input type="email" id="t-email" placeholder="taller@ejemplo.com">
+          </div>
+          <div class="form-group">
+            <label>Contraseña</label>
+            <input type="password" id="t-password" placeholder="Dejar vacío para no cambiar">
+          </div>
+          <div class="form-group">
+            <label>Teléfono</label>
+            <input type="tel" id="t-telefono" placeholder="Ej: 011-4567-8900">
+          </div>
+          <div class="form-group">
+            <label>WhatsApp</label>
+            <input type="tel" id="t-whatsapp" placeholder="Ej: 1112345678">
+          </div>
+          <div class="form-group">
+            <label>Localidad</label>
+            <input type="text" id="t-localidad" placeholder="Ej: Palermo">
+          </div>
+          <div class="form-group">
+            <label>Zona</label>
+            <input type="text" id="t-zona" placeholder="Ej: CABA, GBA Norte, GBA Sur...">
+          </div>
+          <div class="form-group">
+            <label>Dirección</label>
+            <input type="text" id="t-direccion" placeholder="Ej: Av. Corrientes 1234">
+          </div>
+          <div class="form-group">
+            <label>Horario de apertura</label>
+            <input type="time" id="t-apertura">
+          </div>
+          <div class="form-group">
+            <label>Horario de cierre</label>
+            <input type="time" id="t-cierre">
+          </div>
+          <div class="form-group">
+            <label>URL del logo</label>
+            <input type="url" id="t-logo" placeholder="https://ejemplo.com/logo.png">
+          </div>
+          <div class="form-group">
+            <label>Estado</label>
+            <select id="t-activo">
+              <option value="true">Activo (visible en la web)</option>
+              <option value="false">Inactivo (oculto)</option>
+            </select>
+          </div>
+          <div class="form-group full">
+            <label>Descripción</label>
+            <textarea id="t-descripcion" rows="4" placeholder="Descripción del taller, especialidades, servicios..."></textarea>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;margin-top:20px">
+          <button class="btn btn-rojo" onclick="guardarTaller()">Guardar taller</button>
+          <button class="btn btn-blanco" onclick="limpiarFormularioTaller(); mostrarPanel('talleres')">Cancelar</button>
+        </div>
+        <div id="taller-form-mensaje" style="margin-top:14px;font-size:14px;font-weight:600"></div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         PEDIDOS
+    ══════════════════════════════════════════ -->
+    <div id="panel-pedidos" class="panel">
+      <div class="admin-header">
+        <div class="admin-titulo">Pedidos</div>
+        <select id="filtro-estado-pedido" onchange="aplicarFiltrosPedidos()" style="padding:8px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;outline:none;background:#fff">
+          <option value="">Todos los estados</option>
+          <option value="nuevo">Nuevo</option>
+          <option value="confirmado">Confirmado</option>
+          <option value="preparando">Preparando</option>
+          <option value="enviado">Enviado</option>
+          <option value="entregado">Entregado</option>
+          <option value="cancelado">Cancelado</option>
+        </select>
+      </div>
+
+      <div class="filtros-pedidos" id="filtros-pedidos">
+        <div class="filtros-row">
+          <div class="filtro-grupo">
+            <label>Período</label>
+            <select id="f-periodo" onchange="cambiarPeriodo()">
+              <option value="todos">Todos</option>
+              <option value="hoy">Hoy</option>
+              <option value="semana">Esta semana</option>
+              <option value="mes">Este mes</option>
+              <option value="rango">Rango personalizado</option>
+            </select>
+          </div>
+          <div class="filtro-grupo" id="rango-wrap" style="display:none;flex-direction:row;gap:8px;align-items:flex-end">
+            <div class="filtro-grupo">
+              <label>Desde</label>
+              <input type="date" id="f-desde">
+            </div>
+            <div class="filtro-grupo">
+              <label>Hasta</label>
+              <input type="date" id="f-hasta">
+            </div>
+          </div>
+          <div class="filtro-grupo">
+            <label>Método de pago</label>
+            <select id="f-metodo-pago">
+              <option value="">Todos</option>
+              <option value="mercadopago">MercadoPago</option>
+              <option value="transferencia">Transferencia</option>
+              <option value="efectivo">Efectivo</option>
+              <option value="tarjeta">Tarjeta</option>
+            </select>
+          </div>
+          <div class="filtro-grupo">
+            <label>Buscar</label>
+            <input type="text" id="f-buscar-pedido" placeholder="Cliente o N° de pedido..." oninput="aplicarFiltrosPedidos()">
+          </div>
+          <button onclick="aplicarFiltrosPedidos()">Filtrar</button>
+          <button onclick="limpiarFiltrosPedidos()" style="background:#444">Limpiar</button>
+        </div>
+      </div>
+
+      <div style="overflow-x:auto">
+        <table class="tabla-admin">
+          <thead>
+            <tr>
+              <th>Fecha</th><th>Cliente</th><th>Total</th>
+              <th>Método de pago</th><th>Estado</th><th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-pedidos">
+            <tr><td colspan="6" class="loader">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         CUPONES
+    ══════════════════════════════════════════ -->
+    <div id="panel-cupones" class="panel">
+      <div class="admin-header">
+        <div class="admin-titulo">Cupones de descuento</div>
+      </div>
+
+      <div class="card-form">
+        <h2>Crear cupón</h2>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Código *</label>
+            <input type="text" id="cup-codigo" placeholder="Ej: VERANO20" style="text-transform:uppercase">
+          </div>
+          <div class="form-group">
+            <label>Descripción</label>
+            <input type="text" id="cup-descripcion" placeholder="Para qué es este cupón">
+          </div>
+          <div class="form-group">
+            <label>Tipo *</label>
+            <select id="cup-tipo" onchange="onCuponTipo()">
+              <option value="porcentaje">Porcentaje (%)</option>
+              <option value="fijo">Monto fijo ($)</option>
+            </select>
+          </div>
+          <div class="form-group" id="cup-pct-wrap">
+            <label>Descuento (%)</label>
+            <input type="number" id="cup-porcentaje" placeholder="Ej: 15" min="1" max="100">
+          </div>
+          <div class="form-group" id="cup-fijo-wrap" style="display:none">
+            <label>Monto fijo ($)</label>
+            <input type="number" id="cup-fijo" placeholder="Ej: 2500" min="1">
+          </div>
+          <div class="form-group">
+            <label>Vencimiento (opcional)</label>
+            <input type="datetime-local" id="cup-vencimiento">
+          </div>
+          <div class="form-group">
+            <label>Usos máximos (vacío = ilimitado)</label>
+            <input type="number" id="cup-usos-max" placeholder="Ej: 100" min="1">
+          </div>
+        </div>
+        <div style="margin-top:16px;display:flex;gap:12px;align-items:center">
+          <button class="btn btn-rojo" onclick="guardarCupon()">Crear cupón</button>
+          <span id="cup-msg" style="font-size:13px;font-weight:600"></span>
+        </div>
+      </div>
+
+      <div style="overflow-x:auto">
+        <table class="tabla-admin">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Tipo</th>
+              <th>Descuento</th>
+              <th>Vencimiento</th>
+              <th>Usos</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-cupones">
+            <tr><td colspan="7" class="loader">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- REPORTES -->
+    <div id="panel-reportes" class="panel">
+      <div class="admin-header">
+        <div class="admin-titulo">Reportes</div>
+        <span id="reportes-periodo" style="font-size:13px;color:#888"></span>
+      </div>
+
+      <div class="stats-grid" id="reportes-stats">
+        <div class="stat-card"><div class="stat-num" id="r-ventas-mes">—</div><div class="stat-label">Ventas este mes ($)</div></div>
+        <div class="stat-card"><div class="stat-num" id="r-ventas-ant">—</div><div class="stat-label">Ventas mes anterior ($)</div></div>
+        <div class="stat-card"><div class="stat-num" id="r-pedidos-mes">—</div><div class="stat-label">Pedidos este mes</div></div>
+        <div class="stat-card"><div class="stat-num" id="r-ticket-prom">—</div><div class="stat-label">Ticket promedio</div></div>
+      </div>
+
+      <div class="dash-grid-2">
+        <div class="card-form" style="margin-bottom:0">
+          <h2>Producto más vendido</h2>
+          <div id="r-top-producto" class="loader">Cargando...</div>
+        </div>
+        <div class="card-form" style="margin-bottom:0">
+          <h2>Taller con más turnos</h2>
+          <div id="r-top-taller" class="loader">Cargando...</div>
+        </div>
+      </div>
+
+      <div class="card-form" style="margin-top:16px">
+        <h2>Pedidos por estado</h2>
+        <div id="r-por-estado"></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:24px">
+        <div class="card-form" style="margin-bottom:0">
+          <h2>Ventas por categoría</h2>
+          <div style="position:relative;height:220px"><canvas id="chart-categorias"></canvas></div>
+        </div>
+        <div class="card-form" style="margin-bottom:0">
+          <h2>Ingresos por método de pago</h2>
+          <div style="position:relative;height:220px"><canvas id="chart-pagos"></canvas></div>
+        </div>
+      </div>
+
+      <div class="card-form" style="margin-top:20px">
+        <h2>Top 5 productos más vendidos</h2>
+        <div id="top-productos-lista"></div>
+      </div>
+
+      <div class="card-form" style="margin-top:24px">
+        <h2>Exportar datos</h2>
+        <p style="font-size:13px;color:#888;margin-bottom:16px">Los archivos CSV se generan en el browser y se descargan directamente.</p>
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <button class="btn btn-blanco" onclick="exportarPedidos()">📥 Pedidos del mes</button>
+          <button class="btn btn-blanco" onclick="exportarClientes()">📥 Clientes</button>
+          <button class="btn btn-blanco" onclick="exportarProductos()">📥 Productos con stock</button>
+          <button class="btn btn-rojo" onclick="exportarReportePDF()">📄 Exportar PDF del reporte</button>
+        </div>
+        <div id="export-msg" style="margin-top:10px;font-size:13px;color:#888;min-height:18px"></div>
+      </div>
+
+      <!-- ESTADÍSTICAS AVANZADAS -->
+      <div class="card-form" style="margin-top:24px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+          <h2 style="margin:0">Estadísticas avanzadas</h2>
+          <button class="btn btn-blanco" onclick="cargarStatsAvanzadas()" id="btn-stats-avanzadas">Cargar estadísticas</button>
+        </div>
+        <div id="stats-avanzadas-wrap" style="display:none">
+
+          <!-- Heatmap de horarios de compra -->
+          <div style="margin-bottom:28px">
+            <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;color:#444">Mapa de calor — Horarios de compra</h3>
+            <p style="font-size:12px;color:#aaa;margin-bottom:12px">Horas del día con más pedidos (color más intenso = más pedidos)</p>
+            <div id="heatmap-horarios" style="display:grid;grid-template-columns:repeat(12,1fr);gap:4px"></div>
+            <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:#aaa">
+              <span>0hs</span><span>6hs</span><span>12hs</span><span>18hs</span><span>23hs</span>
+            </div>
+          </div>
+
+          <!-- Tasa de conversión -->
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:28px">
+            <div class="stat-card">
+              <div class="stat-num" id="adv-visitas" style="font-size:24px">—</div>
+              <div class="stat-label">Visitas únicas (sesión)</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-num" id="adv-pedidos-mes" style="font-size:24px">—</div>
+              <div class="stat-label">Pedidos este mes</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-num" id="adv-conversion" style="font-size:24px;color:#1a7a3f">—%</div>
+              <div class="stat-label">Tasa de conversión</div>
+            </div>
+          </div>
+
+          <!-- Valor promedio por método de pago -->
+          <div style="margin-bottom:28px">
+            <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;color:#444">Valor promedio por método de pago</h3>
+            <div id="adv-metodos-pago" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px"></div>
+          </div>
+
+          <!-- Tiempo promedio registro → primera compra -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:28px">
+            <div class="stat-card">
+              <div class="stat-num" id="adv-tiempo-prom" style="font-size:24px">—</div>
+              <div class="stat-label">Días promedio hasta primera compra</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-num" id="adv-ticket-prom" style="font-size:24px">—</div>
+              <div class="stat-label">Ticket promedio global</div>
+            </div>
+          </div>
+
+          <!-- Productos con mayor abandono de carrito -->
+          <div>
+            <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;color:#444">Productos más agregados al carrito (últimas 24hs)</h3>
+            <p style="font-size:12px;color:#aaa;margin-bottom:10px">Basado en eventos trackAddToCart registrados en dataLayer de esta sesión del browser.</p>
+            <div id="adv-carrito-abandono"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         COMBOS / BUNDLES
+    ══════════════════════════════════════════ -->
+    <div id="panel-combos" class="panel">
+      <div class="admin-header">
+        <div class="admin-titulo">Combos y bundles</div>
+        <button class="btn btn-rojo" onclick="abrirFormCombo(null)">+ Nuevo combo</button>
+      </div>
+
+      <div id="combos-lista" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;margin-bottom:24px">
+        <div class="loader" style="grid-column:1/-1;text-align:center;padding:40px">Cargando combos...</div>
+      </div>
+
+      <!-- Formulario combo -->
+      <div id="combo-form-wrap" class="card-form" style="display:none">
+        <h2 id="combo-form-titulo">Nuevo combo</h2>
+        <input type="hidden" id="combo-id">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="form-row full" style="grid-column:1/-1">
+            <label>Nombre del combo</label>
+            <input id="combo-nombre" type="text" placeholder="Ej: Kit de frenos completo">
+          </div>
+          <div class="form-row full" style="grid-column:1/-1">
+            <label>Descripción</label>
+            <textarea id="combo-descripcion" rows="2" placeholder="Describí qué incluye el combo..." style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;resize:vertical;font-family:inherit"></textarea>
+          </div>
+          <div class="form-row">
+            <label>Precio especial ($)</label>
+            <input id="combo-precio" type="number" min="0" placeholder="0">
+          </div>
+          <div class="form-row">
+            <label>Imagen URL (opcional)</label>
+            <input id="combo-imagen" type="url" placeholder="https://...">
+          </div>
+          <div class="form-row" style="display:flex;align-items:center;gap:10px">
+            <input type="checkbox" id="combo-destacado" style="width:18px;height:18px">
+            <label for="combo-destacado" style="font-size:14px;font-weight:500;color:#333">Marcar como destacado</label>
+          </div>
+        </div>
+
+        <div style="margin-top:18px">
+          <label style="font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:10px">Productos incluidos en el combo</label>
+          <div style="display:flex;gap:10px;margin-bottom:10px">
+            <select id="combo-prod-sel" style="flex:1;padding:9px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px">
+              <option value="">Seleccioná un producto...</option>
+            </select>
+            <input id="combo-prod-cant" type="number" min="1" value="1" style="width:70px;padding:9px;border:1.5px solid #ddd;border-radius:8px;font-size:14px">
+            <button class="btn btn-blanco" onclick="agregarProductoACombo()">Agregar</button>
+          </div>
+          <div id="combo-productos-lista" style="border:1px solid #f0f0f0;border-radius:8px;min-height:60px;padding:10px">
+            <div style="color:#aaa;font-size:13px;text-align:center;padding:10px">Sin productos agregados</div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-end">
+          <button class="btn btn-blanco" onclick="cerrarFormCombo()">Cancelar</button>
+          <button class="btn btn-rojo" onclick="guardarCombo()">Guardar combo</button>
+        </div>
+        <div id="combo-msg" style="margin-top:10px;font-size:13px;font-weight:600;min-height:18px"></div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         DEVOLUCIONES
+    ══════════════════════════════════════════ -->
+    <div id="panel-devoluciones" class="panel">
+      <div class="admin-header">
+        <div class="admin-titulo">Devoluciones</div>
+        <button class="btn btn-rojo" onclick="abrirFormDevolucion()">+ Nueva devolución</button>
+      </div>
+
+      <div class="stats-grid" style="margin-bottom:20px">
+        <div class="stat-card"><div class="stat-num" id="dev-stat-pendientes">—</div><div class="stat-label">Pendientes</div></div>
+        <div class="stat-card"><div class="stat-num" id="dev-stat-aprobadas">—</div><div class="stat-label">Aprobadas</div></div>
+        <div class="stat-card"><div class="stat-num" id="dev-stat-rechazadas">—</div><div class="stat-label">Rechazadas</div></div>
+        <div class="stat-card"><div class="stat-num" id="dev-stat-monto">—</div><div class="stat-label">Monto total devuelto</div></div>
+      </div>
+
+      <!-- Filtro estado -->
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+        <button class="btn btn-rojo" id="dev-filtro-todas" onclick="filtrarDevoluciones('todas')">Todas</button>
+        <button class="btn btn-blanco" id="dev-filtro-pendiente" onclick="filtrarDevoluciones('pendiente')">Pendientes</button>
+        <button class="btn btn-blanco" id="dev-filtro-aprobada" onclick="filtrarDevoluciones('aprobada')">Aprobadas</button>
+        <button class="btn btn-blanco" id="dev-filtro-rechazada" onclick="filtrarDevoluciones('rechazada')">Rechazadas</button>
+      </div>
+
+      <div class="card-form">
+        <table class="tabla-admin">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Pedido</th>
+              <th>Motivo</th>
+              <th>Items</th>
+              <th>Monto crédito</th>
+              <th>Estado</th>
+              <th>NC</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-devoluciones">
+            <tr><td colspan="8" class="vacio">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Formulario nueva devolución -->
+      <div id="dev-form-wrap" class="card-form" style="display:none;margin-top:20px">
+        <h2>Registrar devolución</h2>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="form-row">
+            <label>Número de pedido (primeros 8 chars)</label>
+            <input id="dev-pedido-buscar" type="text" placeholder="Ej: A1B2C3D4" maxlength="8">
+          </div>
+          <div class="form-row" style="display:flex;align-items:flex-end">
+            <button class="btn btn-blanco" onclick="buscarPedidoDevolucion()" style="width:100%">Buscar pedido</button>
+          </div>
+          <div class="form-row full" style="grid-column:1/-1" id="dev-pedido-info" style="display:none"></div>
+          <div class="form-row full" style="grid-column:1/-1">
+            <label>Motivo de devolución</label>
+            <textarea id="dev-motivo" rows="2" placeholder="Describí el motivo de la devolución..." style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;resize:vertical;font-family:inherit"></textarea>
+          </div>
+          <div class="form-row full" style="grid-column:1/-1">
+            <label>Productos a devolver (JSON)</label>
+            <div style="font-size:12px;color:#888;margin-bottom:6px">Formato: <code>[{"producto_id":"uuid","nombre":"nombre","cantidad":1,"precio_unitario":1000}]</code></div>
+            <textarea id="dev-items" rows="4" placeholder='[{"producto_id":"...","nombre":"...","cantidad":1,"precio_unitario":0}]' style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:8px;font-size:12px;resize:vertical;font-family:monospace"></textarea>
+          </div>
+          <div class="form-row">
+            <label>Monto del crédito ($)</label>
+            <input id="dev-monto" type="number" min="0" placeholder="0">
+          </div>
+          <div class="form-row">
+            <label>Nota interna (opcional)</label>
+            <input id="dev-nota" type="text" placeholder="Ej: cliente solicitó reposición">
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-end">
+          <button class="btn btn-blanco" onclick="cerrarFormDevolucion()">Cancelar</button>
+          <button class="btn btn-rojo" onclick="guardarDevolucion()">Registrar devolución</button>
+        </div>
+        <div id="dev-msg" style="margin-top:10px;font-size:13px;font-weight:600;min-height:18px"></div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         INVENTARIO Y STOCK
+    ══════════════════════════════════════════ -->
+    <div id="panel-inventario" class="panel">
+      <div class="admin-header">
+        <div class="admin-titulo">Inventario y Stock</div>
+        <button class="btn btn-rojo" onclick="exportarBajoStock()">Exportar bajo stock</button>
+      </div>
+
+      <div class="stats-grid" id="inv-stats">
+        <div class="stat-card">
+          <div class="stat-num" id="inv-total">—</div>
+          <div class="stat-label">Total productos</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="inv-sin-stock" style="color:#dc2626">—</div>
+          <div class="stat-label">Sin stock</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="inv-bajo" style="color:#ea580c">—</div>
+          <div class="stat-label">Bajo stock (≤5)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="inv-ok" style="color:#16a34a">—</div>
+          <div class="stat-label">Stock OK</div>
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+        <span id="inv-seleccionados-label" style="font-size:13px;color:#666;min-width:80px"></span>
+        <select id="inv-ajuste-tipo" style="padding:7px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px">
+          <option value="sumar">Sumar cantidad</option>
+          <option value="restar">Restar cantidad</option>
+          <option value="establecer">Establecer stock</option>
+        </select>
+        <input type="number" id="inv-ajuste-valor" min="0" placeholder="Cantidad" style="width:90px;padding:7px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px">
+        <button class="btn btn-rojo" onclick="ajusteStockMasivo()">Aplicar a seleccionados</button>
+      </div>
+
+      <div style="overflow-x:auto">
+        <table class="tabla-admin">
+          <thead>
+            <tr>
+              <th style="width:36px"><input type="checkbox" onchange="seleccionarTodosInv(this.checked)" title="Seleccionar todos"></th>
+              <th>Producto</th>
+              <th>Código</th>
+              <th>Categoría</th>
+              <th>Stock actual</th>
+              <th>Estado</th>
+              <th>Actualizar</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-inventario">
+            <tr><td colspan="7" class="loader">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         VENDEDORES
+    ══════════════════════════════════════════ -->
+    <div id="panel-vendedores" class="panel">
+      <div class="admin-header">
+        <div class="admin-titulo">Vendedores externos</div>
+      </div>
+      <div class="card-form" style="margin-bottom:24px">
+        <h2 id="v-form-titulo">Registrar vendedor</h2>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Nombre *</label>
+            <input type="text" id="v-nombre" placeholder="Ej: Juan García">
+          </div>
+          <div class="form-group">
+            <label>Email *</label>
+            <input type="email" id="v-email" placeholder="vendedor@email.com">
+          </div>
+          <div class="form-group">
+            <label>Teléfono</label>
+            <input type="tel" id="v-telefono" placeholder="+54 11 XXXX-XXXX">
+          </div>
+          <div class="form-group">
+            <label>Comisión (%)</label>
+            <input type="number" id="v-comision" placeholder="10" min="0" max="100" value="10">
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:4px">
+          <button class="btn btn-rojo" onclick="guardarVendedor()">Guardar vendedor</button>
+          <button class="btn btn-blanco" onclick="cancelarVendedor()" id="v-btn-cancelar" style="display:none">Cancelar</button>
+        </div>
+        <div id="v-msg" style="margin-top:10px;font-size:13px;font-weight:600;min-height:18px"></div>
+      </div>
+      <div class="card-form">
+        <h2>Vendedores activos</h2>
+        <div id="tabla-vendedores">
+          <div class="loader">Cargando...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         BANNERS DEL HOMEPAGE
+    ══════════════════════════════════════════ -->
+    <div id="panel-banners" class="panel">
+      <div class="admin-header">
+        <div class="admin-titulo">Banners del homepage</div>
+      </div>
+
+      <div class="card-form">
+        <h2>Agregar banner</h2>
+        <div class="form-grid">
+          <div class="form-group full">
+            <label>URL de la imagen *</label>
+            <input type="url" id="b-url" placeholder="https://ejemplo.com/banner.jpg" oninput="actualizarPreviewBanner()">
+          </div>
+          <div class="form-group">
+            <label>URL destino (link al hacer click)</label>
+            <input type="url" id="b-link" placeholder="https://piezauto.com.ar/ofertas.html">
+          </div>
+          <div class="form-group full">
+            <label>Texto alternativo / título del banner</label>
+            <input type="text" id="b-alt" placeholder="Ej: Ofertas de verano — hasta 30% OFF" oninput="actualizarPreviewBanner()">
+          </div>
+          <div class="form-group">
+            <label>Posición</label>
+            <select id="b-posicion">
+              <option value="arriba">Arriba del hero</option>
+              <option value="abajo">Abajo del hero</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Orden (número entero)</label>
+            <input type="number" id="b-orden" placeholder="1" min="0" value="0">
+          </div>
+          <div class="form-group" style="justify-content:flex-end;flex-direction:row;align-items:center;gap:10px">
+            <label style="font-size:13px;font-weight:600;color:#555">Activo</label>
+            <input type="checkbox" id="b-activo" checked style="width:18px;height:18px;cursor:pointer;accent-color:var(--rojo)">
+          </div>
+        </div>
+        <div id="banner-preview-wrap" style="display:none;margin-top:16px">
+          <p style="font-size:13px;font-weight:600;color:#555;margin-bottom:8px">Preview del banner:</p>
+          <div style="position:relative;border-radius:8px;overflow:hidden;background:#f0f0f0;height:160px">
+            <img id="banner-preview-img" src="" alt="Preview" style="width:100%;height:160px;object-fit:cover;display:block">
+            <div id="banner-preview-overlay" style="position:absolute;inset:0;background:linear-gradient(to right,rgba(0,0,0,0.5) 0%,transparent 60%);display:flex;align-items:center;padding:0 28px">
+              <span id="banner-preview-texto" style="color:#fff;font-size:18px;font-weight:800;text-shadow:0 2px 8px rgba(0,0,0,0.4)"></span>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:16px;display:flex;gap:12px;align-items:center">
+          <button class="btn btn-rojo" onclick="guardarBanner()">Guardar banner</button>
+          <span id="banner-msg" style="font-size:13px;font-weight:600"></span>
+        </div>
+      </div>
+
+      <div style="overflow-x:auto">
+        <table class="tabla-admin">
+          <thead>
+            <tr>
+              <th>Imagen</th>
+              <th>Texto alt</th>
+              <th>Link</th>
+              <th>Orden</th>
+              <th>Activo</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-banners">
+            <tr><td colspan="6" class="loader">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         CONSULTAS
+    ══════════════════════════════════════════ -->
+    <div id="panel-consultas" class="panel">
+      <div class="admin-header">
+        <div>
+          <div class="admin-titulo">Consultas de contacto</div>
+          <div style="font-size:13px;color:#888;margin-top:2px">Mensajes del formulario de nosotros.html</div>
+        </div>
+      </div>
+      <div id="consultas-lista"></div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         FACTURACIÓN POINT
+    ══════════════════════════════════════════ -->
+    <div id="panel-facturacion-point" class="panel">
+      <div class="admin-header">
+        <div class="admin-titulo">Facturación Point</div>
+        <button class="btn btn-rojo" onclick="document.getElementById('cargo-form').style.display='block'">+ Cargo manual</button>
+      </div>
+
+      <!-- Formulario cargo manual -->
+      <div id="cargo-form" style="display:none" class="card-form" style="margin-bottom:24px">
+        <h2>Nuevo cargo a taller</h2>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Taller *</label>
+            <select id="cargo-taller-id">
+              <option value="">Seleccioná un taller...</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Concepto *</label>
+            <input type="text" id="cargo-concepto" placeholder="Ej: Pedido de productos #123">
+          </div>
+          <div class="form-group">
+            <label>Monto ($) *</label>
+            <input type="number" id="cargo-monto" min="1" placeholder="0">
+          </div>
+          <div class="form-group">
+            <label>Fecha de vencimiento</label>
+            <input type="date" id="cargo-vencimiento">
+          </div>
+          <div class="form-group full">
+            <label>Nota interna</label>
+            <input type="text" id="cargo-nota" placeholder="Opcional">
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:14px;align-items:center">
+          <button class="btn btn-rojo" onclick="crearCargoTaller()">Crear cargo</button>
+          <button class="btn btn-blanco" onclick="document.getElementById('cargo-form').style.display='none'">Cancelar</button>
+          <span id="cargo-msg" style="font-size:13px;font-weight:600"></span>
+        </div>
+      </div>
+
+      <!-- Stats rápidas -->
+      <div class="stats-grid" id="facturacion-stats" style="margin-bottom:24px">
+        <div class="stat-card"><div class="stat-num" id="fact-pendiente-total">—</div><div class="stat-label">Total a cobrar</div></div>
+        <div class="stat-card"><div class="stat-num" id="fact-pendiente-cant">—</div><div class="stat-label">Facturas pendientes</div></div>
+        <div class="stat-card"><div class="stat-num" id="fact-vencidas">—</div><div class="stat-label">Vencidas</div></div>
+      </div>
+
+      <!-- Filtro por taller -->
+      <div style="display:flex;gap:12px;margin-bottom:16px;align-items:center;flex-wrap:wrap">
+        <select id="fact-filtro-taller" onchange="cargarFacturacionPoint()" style="padding:8px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;outline:none">
+          <option value="">Todos los talleres</option>
+        </select>
+        <select id="fact-filtro-estado" onchange="cargarFacturacionPoint()" style="padding:8px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;outline:none">
+          <option value="">Todos los estados</option>
+          <option value="pendiente">Pendientes</option>
+          <option value="pagado">Pagadas</option>
+          <option value="vencido">Vencidas</option>
+        </select>
+      </div>
+
+      <!-- Lista de facturas -->
+      <div id="facturacion-lista">
+        <div style="padding:40px;text-align:center;color:#aaa">Cargando...</div>
+      </div>
+
+      <!-- Historial de movimientos -->
+      <div class="card-form" style="margin-top:24px">
+        <h2>Historial de movimientos — cuenta corriente</h2>
+        <div style="margin-bottom:14px">
+          <select id="mov-filtro-taller" onchange="cargarMovimientosCuenta()" style="padding:8px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;outline:none">
+            <option value="">Seleccioná un taller...</option>
+          </select>
+        </div>
+        <div id="movimientos-lista">
+          <div style="padding:20px;text-align:center;color:#aaa;font-size:14px">Seleccioná un taller para ver sus movimientos.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         CONFIGURACIÓN GENERAL
+    ══════════════════════════════════════════ -->
+    <div id="panel-configuracion" class="panel">
+      <div class="admin-header">
+        <div class="admin-titulo">Configuración general</div>
+      </div>
+
+      <div class="config-grid">
+        <div class="card">
+          <div class="card-subtitulo">Datos del negocio</div>
+          <div class="form-row"><label>Nombre del negocio</label><input id="cfg-nombre" type="text"></div>
+          <div class="form-row"><label>Teléfono</label><input id="cfg-telefono" type="tel"></div>
+          <div class="form-row"><label>WhatsApp (con código de país)</label><input id="cfg-whatsapp" type="tel" placeholder="5491100000000"></div>
+          <div class="form-row"><label>Email de contacto</label><input id="cfg-email" type="email"></div>
+          <div class="form-row"><label>Dirección</label><input id="cfg-direccion" type="text"></div>
+          <div class="form-row"><label>Horario de atención</label><input id="cfg-horario" type="text" placeholder="Lun–Vie 9–18hs"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-subtitulo">Redes sociales</div>
+          <div class="form-row"><label>Instagram (usuario)</label><input id="cfg-instagram" type="text" placeholder="piezauto"></div>
+          <div class="form-row"><label>Facebook (URL)</label><input id="cfg-facebook" type="url" placeholder="https://facebook.com/piezauto"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-subtitulo">Configuración de envío</div>
+          <div class="form-row"><label>Costo de envío ($)</label><input id="cfg-costo-envio" type="number" min="0"></div>
+          <div class="form-row"><label>Envío gratis a partir de ($)</label><input id="cfg-envio-gratis-desde" type="number" min="0" placeholder="0 = no aplica"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-subtitulo">Integraciones y credenciales</div>
+
+          <div class="form-row">
+            <label>MercadoPago — Public Key <small style="color:#888;font-weight:400">(<a href="https://www.mercadopago.com.ar/settings/account/credentials" target="_blank" style="color:#E63946">obtener en MP</a>)</small></label>
+            <input id="cfg-mp-public-key" type="text" placeholder="APP_USR-...">
+          </div>
+          <div class="form-row">
+            <label>MercadoPago — Access Token <small style="color:#888;font-weight:400">(mantené esto privado)</small></label>
+            <input id="cfg-mp-access-token" type="password" placeholder="APP_USR-...">
+          </div>
+
+          <div class="form-row" style="margin-top:16px">
+            <label>EmailJS — Service ID <small style="color:#888;font-weight:400">(<a href="https://dashboard.emailjs.com/admin" target="_blank" style="color:#E63946">obtener en EmailJS</a>)</small></label>
+            <input id="cfg-emailjs-service" type="text" placeholder="service_xxxxxxx">
+          </div>
+          <div class="form-row">
+            <label>EmailJS — Template ID</label>
+            <input id="cfg-emailjs-template" type="text" placeholder="template_xxxxxxx">
+          </div>
+          <div class="form-row">
+            <label>EmailJS — Public Key</label>
+            <input id="cfg-emailjs-key" type="text" placeholder="xxxxxxxxxxxxxxx">
+          </div>
+
+          <div class="form-row" style="margin-top:16px">
+            <label>WhatsApp flotante — Número (con código de país) <small style="color:#888;font-weight:400">ej: 5491155550000</small></label>
+            <input id="cfg-wa-flotante" type="tel" placeholder="5491155550000">
+          </div>
+
+          <div class="form-row">
+            <label>Google Analytics — Measurement ID <small style="color:#888;font-weight:400">ej: G-XXXXXXXXXX</small></label>
+            <input id="cfg-ga-id" type="text" placeholder="G-XXXXXXXXXX">
+          </div>
+        </div>
+
+        <div class="card" style="grid-column:1/-1">
+          <div class="card-subtitulo">Horarios de atención por día</div>
+          <p style="font-size:13px;color:#888;margin-bottom:14px">Se muestra en la barra superior del sitio. Dejá en blanco los días que no atienden.</p>
+          <div style="overflow-x:auto">
+            <table style="border-collapse:collapse;font-size:13px;width:100%">
+              <thead>
+                <tr>
+                  <th style="padding:8px 12px;background:#f8f8f8;text-align:left;font-weight:700;color:#666">Día</th>
+                  <th style="padding:8px 12px;background:#f8f8f8;text-align:left;font-weight:700;color:#666">Apertura</th>
+                  <th style="padding:8px 12px;background:#f8f8f8;text-align:left;font-weight:700;color:#666">Cierre</th>
+                  <th style="padding:8px 12px;background:#f8f8f8;text-align:left;font-weight:700;color:#666">Cerrado</th>
+                </tr>
+              </thead>
+              <tbody id="horarios-tabla">
+                <tr><td colspan="4" style="padding:20px;text-align:center;color:#aaa">Cargando...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card" style="grid-column:1/-1">
+          <div class="card-subtitulo">Mensaje de bienvenida del chat de WhatsApp</div>
+          <div class="form-row">
+            <label>Texto del mensaje (se completa automáticamente en el widget)</label>
+            <input type="text" id="cfg-wa-mensaje-bienvenida" placeholder="Hola, quería consultar sobre..." oninput="actualizarPreviewHeader()">
+          </div>
+        </div>
+
+        <div class="card" style="grid-column:1/-1">
+          <div class="card-subtitulo" style="margin-bottom:14px">Preview — barra superior del sitio</div>
+          <div id="preview-topbar" style="background:#1a1a1a;color:#ccc;padding:10px 20px;border-radius:8px;font-size:13px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+            <span id="prev-topbar-info">📍 Dirección · Horario de atención</span>
+            <div style="display:flex;gap:16px">
+              <span id="prev-topbar-tel">📞 Teléfono</span>
+              <span style="color:#25d366">💬 WhatsApp</span>
+            </div>
+          </div>
+          <p style="font-size:11px;color:#aaa;margin-top:8px">Este preview se actualiza al escribir. Guardá la configuración para que el sitio lo muestre.</p>
+        </div>
+      </div>
+
+      <!-- Modo mantenimiento -->
+      <div class="card" style="margin-top:16px;border:2px solid #f59e0b">
+        <div class="card-subtitulo" style="color:#92400e">⚠️ Modo mantenimiento</div>
+        <p style="font-size:13px;color:#888;margin-bottom:16px">
+          Cuando está activo, los visitantes del ecommerce ven una pantalla de mantenimiento en lugar del sitio.
+          El admin y Piezauto Point siguen funcionando normalmente.
+        </p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="form-row" style="display:flex;align-items:center;gap:12px">
+            <label class="toggle-switch" style="position:relative;display:inline-block;width:52px;height:28px;flex-shrink:0">
+              <input type="checkbox" id="cfg-mantenimiento" onchange="toggleMantenimiento(this.checked)" style="opacity:0;width:0;height:0">
+              <span style="position:absolute;cursor:pointer;inset:0;background:#ccc;border-radius:28px;transition:.3s" id="toggle-track">
+                <span style="position:absolute;height:20px;width:20px;left:4px;bottom:4px;background:#fff;border-radius:50%;transition:.3s" id="toggle-thumb"></span>
+              </span>
+            </label>
+            <span id="mant-estado-label" style="font-size:14px;font-weight:600;color:#555">Desactivado</span>
+          </div>
+          <div class="form-row">
+            <label>Tiempo estimado de vuelta</label>
+            <input id="cfg-mant-eta" type="text" placeholder="Ej: 2 horas · Hoy 18hs">
+          </div>
+          <div class="form-row full" style="grid-column:1/-1">
+            <label>Mensaje para los visitantes</label>
+            <textarea id="cfg-mant-mensaje" rows="2" placeholder="Estamos haciendo mejoras. Volvemos pronto." style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;resize:none;font-family:inherit"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <button onclick="guardarConfiguracion()" class="btn-primary" style="margin-top:24px;padding:11px 24px;background:var(--rojo);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">Guardar configuración</button>
+      <div id="cfg-msg" style="margin-top:12px;font-size:13px;font-weight:600;min-height:20px"></div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         ESTADO DEL SISTEMA
+    ══════════════════════════════════════════ -->
+    <div id="panel-estado-sistema" class="panel">
+      <div class="admin-header">
+        <div class="admin-titulo">Estado del sistema</div>
+        <button class="btn btn-rojo" onclick="cargarEstadoSistema()">Actualizar</button>
+      </div>
+
+      <div class="stats-grid" id="sistema-stats" style="margin-bottom:24px">
+        <div class="stat-card"><div class="stat-num" id="sis-productos">—</div><div class="stat-label">Productos</div></div>
+        <div class="stat-card"><div class="stat-num" id="sis-pedidos">—</div><div class="stat-label">Pedidos</div></div>
+        <div class="stat-card"><div class="stat-num" id="sis-usuarios">—</div><div class="stat-label">Usuarios</div></div>
+        <div class="stat-card"><div class="stat-num" id="sis-talleres">—</div><div class="stat-label">Talleres</div></div>
+        <div class="stat-card"><div class="stat-num" id="sis-categorias">—</div><div class="stat-label">Categorías</div></div>
+        <div class="stat-card"><div class="stat-num" id="sis-compatibilidades">—</div><div class="stat-label">Compatibilidades</div></div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-subtitulo">Conexión Supabase</div>
+        <div id="sis-conexion" style="font-size:14px;padding:10px 0">Verificando...</div>
+      </div>
+
+      <div class="card">
+        <div class="card-subtitulo">Última importación de proveedor</div>
+        <div id="sis-ultima-importacion" style="font-size:14px;padding:10px 0">—</div>
+      </div>
+    </div>
+
+    <!-- LOGÍSTICA -->
+    <div id="panel-logistica" class="panel">
+      <div class="admin-header">
+        <div class="admin-titulo">Logística de envíos</div>
+      </div>
+
+      <div class="logistica-tabs">
+        <button class="log-tab activo" onclick="filtrarLogistica('confirmado')" id="ltab-confirmado">Confirmados</button>
+        <button class="log-tab" onclick="filtrarLogistica('preparando')" id="ltab-preparando">En preparación</button>
+        <button class="log-tab" onclick="filtrarLogistica('listo_despacho')" id="ltab-listo_despacho">Listos para despacho</button>
+      </div>
+
+      <div id="logistica-lista" class="logistica-lista">
+        <div style="padding:40px;text-align:center;color:#aaa">Cargando pedidos...</div>
+      </div>
+    </div>
+
+    <!-- PAGOS A PROVEEDORES -->
+    <div id="panel-pagos" class="panel">
+      <div class="admin-header">
+        <div class="admin-titulo">💳 Pagos a Proveedores</div>
+        <button class="btn btn-rojo" onclick="abrirFormFactura()">+ Cargar factura</button>
+      </div>
+
+      <!-- Alertas -->
+      <div id="pag-alertas" style="margin-bottom:16px"></div>
+
+      <!-- Stat cards -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px">
+        <div style="background:#fff;border-radius:10px;padding:18px 20px;box-shadow:0 2px 8px rgba(0,0,0,.06)">
+          <div style="font-size:11px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.05em">Total pendiente</div>
+          <div id="pag-total-pendiente" style="font-size:22px;font-weight:900;color:#333;margin-top:6px">—</div>
+        </div>
+        <div style="background:#fff;border-radius:10px;padding:18px 20px;box-shadow:0 2px 8px rgba(0,0,0,.06)">
+          <div style="font-size:11px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.05em">Deuda vencida</div>
+          <div id="pag-total-vencido" style="font-size:22px;font-weight:900;color:#e63946;margin-top:6px">—</div>
+        </div>
+        <div style="background:#fff;border-radius:10px;padding:18px 20px;box-shadow:0 2px 8px rgba(0,0,0,.06)">
+          <div style="font-size:11px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.05em">Facturas vencidas</div>
+          <div id="pag-cant-vencidas" style="font-size:22px;font-weight:900;color:#e63946;margin-top:6px">—</div>
+        </div>
+        <div style="background:#fff;border-radius:10px;padding:18px 20px;box-shadow:0 2px 8px rgba(0,0,0,.06)">
+          <div style="font-size:11px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.05em">Vencen en 7 días</div>
+          <div id="pag-por-vencer" style="font-size:22px;font-weight:900;color:#f59e0b;margin-top:6px">—</div>
+        </div>
+      </div>
+
+      <!-- Formulario nueva factura (oculto por defecto) -->
+      <div id="pag-form-card" style="display:none;background:#fff;border-radius:10px;padding:24px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:24px">
+        <div style="font-size:15px;font-weight:800;color:#333;margin-bottom:18px">Nueva factura</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div>
+            <label style="font-size:12px;font-weight:700;color:#888;display:block;margin-bottom:5px">PROVEEDOR *</label>
+            <select id="fact-proveedor" onchange="calcularVencimientoAuto()" style="width:100%;padding:9px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px">
+              <option value="">— Seleccioná proveedor —</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:700;color:#888;display:block;margin-bottom:5px">NÚMERO DE FACTURA *</label>
+            <input type="text" id="fact-numero" placeholder="0001-00001234" style="width:100%;padding:9px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;box-sizing:border-box">
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:700;color:#888;display:block;margin-bottom:5px">TIPO</label>
+            <select id="fact-tipo" style="width:100%;padding:9px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px">
+              <option value="A">A</option>
+              <option value="B">B</option>
+              <option value="C">C</option>
+              <option value="X">X</option>
+              <option value="remito">Remito</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:700;color:#888;display:block;margin-bottom:5px">MONTO TOTAL *</label>
+            <input type="number" id="fact-monto" placeholder="0.00" min="0" step="0.01" style="width:100%;padding:9px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;box-sizing:border-box">
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:700;color:#888;display:block;margin-bottom:5px">FECHA DE EMISIÓN *</label>
+            <input type="date" id="fact-emision" onchange="calcularVencimientoAuto()" style="width:100%;padding:9px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;box-sizing:border-box">
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:700;color:#888;display:block;margin-bottom:5px">FECHA DE VENCIMIENTO</label>
+            <input type="date" id="fact-vencimiento" style="width:100%;padding:9px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;box-sizing:border-box">
+          </div>
+          <div style="grid-column:1/-1">
+            <label style="font-size:12px;font-weight:700;color:#888;display:block;margin-bottom:5px">NOTAS</label>
+            <textarea id="fact-notas" rows="2" placeholder="Observaciones..." style="width:100%;padding:9px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;box-sizing:border-box;resize:vertical"></textarea>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:18px">
+          <button id="btn-guardar-factura" class="btn btn-rojo" onclick="guardarFactura()">Guardar factura</button>
+          <button class="btn btn-blanco" onclick="cerrarFormFactura()">Cancelar</button>
+        </div>
+      </div>
+
+      <!-- Filtros y tabla -->
+      <div style="background:#fff;border-radius:10px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.06)">
+        <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+          <select id="pag-filtro-estado" onchange="filtrarFacturas()" style="padding:8px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:13px">
+            <option value="">Todos los estados</option>
+            <option value="pendiente">Pendiente</option>
+            <option value="parcial">Parcial</option>
+            <option value="pagada">Pagada</option>
+            <option value="vencida">Vencida</option>
+          </select>
+          <select id="pag-filtro-proveedor" onchange="filtrarFacturas()" style="padding:8px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;min-width:180px">
+            <option value="">Todos los proveedores</option>
+          </select>
+        </div>
+        <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;font-size:13px">
+            <thead>
+              <tr style="background:#f8f8f8;color:#888">
+                <th style="padding:10px 12px;text-align:left;font-weight:700">Factura</th>
+                <th style="padding:10px 12px;text-align:left;font-weight:700">Tipo</th>
+                <th style="padding:10px 12px;text-align:left;font-weight:700">Proveedor</th>
+                <th style="padding:10px 12px;text-align:left;font-weight:700">Emisión</th>
+                <th style="padding:10px 12px;text-align:left;font-weight:700">Vencimiento</th>
+                <th style="padding:10px 12px;text-align:right;font-weight:700">Total</th>
+                <th style="padding:10px 12px;text-align:right;font-weight:700">Saldo</th>
+                <th style="padding:10px 12px;text-align:center;font-weight:700">Estado</th>
+              </tr>
+            </thead>
+            <tbody id="pag-tabla-body">
+              <tr><td colspan="8" style="padding:20px;text-align:center;color:#aaa">Cargando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         MARCAS DE PRODUCTOS
+    ══════════════════════════════════════════ -->
+    <div id="panel-marcas" class="panel">
+      <div class="admin-header">
+        <div class="admin-titulo">🏷️ Marcas de productos</div>
+      </div>
+      <div style="background:#fff;border-radius:10px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:20px">
+        <input type="text" id="marcas-buscar" placeholder="Buscar marca..." oninput="filtrarMarcasPanel()"
+          style="width:100%;padding:10px 14px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;box-sizing:border-box;outline:none">
+      </div>
+      <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.06);overflow:hidden">
+        <table class="tabla-admin" id="tabla-marcas">
+          <thead>
+            <tr>
+              <th>Marca</th>
+              <th style="text-align:center">Productos</th>
+              <th style="text-align:right">Precio promedio</th>
+              <th style="text-align:right">Precio mínimo</th>
+              <th style="text-align:right">Precio máximo</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="tbody-marcas">
+            <tr><td colspan="6" class="loader" style="padding:30px;text-align:center">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         OFERTAS
+    ══════════════════════════════════════════ -->
+    <div id="panel-ofertas" class="panel">
+      <div class="admin-header">
+        <div class="admin-titulo">🔥 Ofertas</div>
+        <button class="btn btn-rojo" onclick="toggleFormOferta()">+ Nueva oferta</button>
+      </div>
+
+      <!-- Formulario nueva oferta -->
+      <div id="oferta-form-wrap" style="display:none;background:#fff;border-radius:10px;padding:24px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:20px">
+        <div style="font-size:15px;font-weight:800;margin-bottom:18px">Nueva oferta</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="form-group full" style="grid-column:1/-1">
+            <label>Producto *</label>
+            <div style="position:relative">
+              <input type="text" id="oferta-prod-buscar" placeholder="Buscar producto por nombre o código..."
+                oninput="buscarProductoOferta()" autocomplete="off"
+                style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;box-sizing:border-box">
+              <div id="oferta-prod-resultados" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #ddd;border-radius:0 0 8px 8px;max-height:200px;overflow-y:auto;z-index:50;box-shadow:0 4px 12px rgba(0,0,0,.12)"></div>
+            </div>
+            <input type="hidden" id="oferta-prod-id">
+            <div id="oferta-prod-sel" style="font-size:12px;color:#1a7a3f;margin-top:4px;min-height:16px"></div>
+          </div>
+          <div class="form-group">
+            <label>Precio oferta ($) *</label>
+            <input type="number" id="oferta-precio" min="0" step="0.01" placeholder="0.00">
+          </div>
+          <div class="form-group">
+            <label>Precio normal</label>
+            <input type="text" id="oferta-precio-normal" disabled style="background:#f8f8f8;color:#999">
+          </div>
+          <div class="form-group">
+            <label>Fecha de inicio *</label>
+            <input type="date" id="oferta-inicio">
+          </div>
+          <div class="form-group">
+            <label>Fecha de fin *</label>
+            <input type="date" id="oferta-fin">
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:16px">
+          <button class="btn btn-rojo" onclick="guardarOferta()">Guardar oferta</button>
+          <button class="btn btn-blanco" onclick="toggleFormOferta()">Cancelar</button>
+          <span id="oferta-msg" style="font-size:13px;font-weight:600;align-self:center"></span>
+        </div>
+      </div>
+
+      <!-- Tabla de ofertas -->
+      <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.06);overflow:hidden">
+        <table class="tabla-admin">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th style="text-align:right">Precio normal</th>
+              <th style="text-align:right">Precio oferta</th>
+              <th style="text-align:center">Descuento</th>
+              <th>Inicio</th>
+              <th>Vencimiento</th>
+              <th style="text-align:center">Estado</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="tbody-ofertas">
+            <tr><td colspan="8" class="loader" style="padding:30px;text-align:center">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         MENSAJES INTERNOS (ADMIN ↔ TALLERES)
+    ══════════════════════════════════════════ -->
+    <div id="panel-mensajes-internos" class="panel">
+      <div class="admin-header">
+        <div class="admin-titulo">💬 Mensajes internos</div>
+        <span id="msg-int-badge-total" style="display:none;background:#e63946;color:#fff;border-radius:12px;padding:2px 10px;font-size:12px;font-weight:700"></span>
+      </div>
+      <div style="display:grid;grid-template-columns:260px 1fr;gap:20px;height:calc(100vh - 160px);min-height:500px">
+
+        <!-- Lista de talleres -->
+        <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.06);overflow-y:auto">
+          <div style="padding:14px 16px;border-bottom:1px solid #f0f0f0;font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em">Talleres</div>
+          <div id="msg-int-talleres-lista">
+            <div class="loader" style="padding:20px;text-align:center">Cargando...</div>
+          </div>
+        </div>
+
+        <!-- Área de chat -->
+        <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.06);display:flex;flex-direction:column">
+          <div id="msg-int-chat-header" style="padding:14px 20px;border-bottom:1px solid #f0f0f0;font-weight:700;color:#333;font-size:15px">
+            Seleccioná un taller para ver la conversación
+          </div>
+          <div id="msg-int-chat-body" style="flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:10px">
+            <div style="text-align:center;color:#aaa;margin-top:40px;font-size:14px">👈 Seleccioná un taller de la lista</div>
+          </div>
+          <div id="msg-int-input-wrap" style="display:none;padding:14px 16px;border-top:1px solid #f0f0f0;display:flex;gap:10px;align-items:flex-end">
+            <textarea id="msg-int-texto" placeholder="Escribí tu respuesta..." rows="2"
+              style="flex:1;padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;font-family:inherit;resize:none;outline:none"
+              onkeydown="if(event.ctrlKey&&event.key==='Enter')enviarMensajeAdmin()"></textarea>
+            <button class="btn btn-rojo" onclick="enviarMensajeAdmin()">Enviar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ══════════════════════════════════════════
+     MODAL CONSULTA
+══════════════════════════════════════════ -->
+<div id="modal-consulta" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:12px;padding:28px;width:520px;max-width:90vw;max-height:80vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div style="font-size:16px;font-weight:800" id="mc-nombre">—</div>
+      <button onclick="cerrarModalConsulta()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#888">✕</button>
+    </div>
+    <div style="font-size:13px;color:#888;margin-bottom:16px" id="mc-meta">—</div>
+    <div style="background:#f8f8f8;border-radius:8px;padding:16px;font-size:14px;color:#333;line-height:1.7;white-space:pre-wrap" id="mc-mensaje">—</div>
+    <div style="margin-top:20px;display:flex;gap:10px">
+      <button class="btn btn-rojo" onclick="marcarLeida(consultaSeleccionadaId)" style="flex:1">Marcar como leída</button>
+      <button class="btn btn-blanco" onclick="cerrarModalConsulta()" style="flex:1">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     MODAL DETALLE PEDIDO
+══════════════════════════════════════════ -->
+<div id="modal-pedido" class="modal-overlay" onclick="cerrarModalPedido(event)">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div>
+        <div class="modal-titulo" id="modal-pedido-titulo">Pedido #</div>
+        <div style="font-size:12px;color:#aaa;margin-top:3px" id="modal-pedido-fecha"></div>
+      </div>
+      <button class="modal-cerrar" onclick="cerrarModal()">✕</button>
+    </div>
+
+    <!-- Info cliente -->
+    <div class="modal-seccion">
+      <h3>Cliente</h3>
+      <div class="modal-grid-2">
+        <div class="info-item"><label>Nombre</label><span id="mp-nombre">—</span></div>
+        <div class="info-item"><label>Email</label>
+          <span id="mp-email">—</span>
+          <a id="mp-email-link" href="#" style="font-size:11px;color:var(--rojo);margin-left:6px" target="_blank">Escribir</a>
+        </div>
+        <div class="info-item"><label>Teléfono</label>
+          <span id="mp-telefono">—</span>
+          <a id="mp-wsp-link" href="#" style="font-size:11px;color:#25d366;margin-left:6px" target="_blank">WhatsApp</a>
+        </div>
+        <div class="info-item"><label>Método de pago</label><span id="mp-pago">—</span></div>
+        <div class="info-item"><label>Dirección de entrega</label><span id="mp-direccion">—</span></div>
+        <div class="info-item"><label>Localidad</label><span id="mp-localidad">—</span></div>
+        <div class="info-item" id="mp-cupon-wrap" style="display:none">
+          <label>Cupón aplicado</label><span id="mp-cupon">—</span>
+        </div>
+        <div class="info-item" id="mp-descuento-wrap" style="display:none">
+          <label>Descuento</label><span id="mp-descuento" style="color:#1a7a3f;font-weight:700">—</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Productos -->
+    <div class="modal-seccion">
+      <h3>Productos</h3>
+      <table class="items-pedido-tabla">
+        <thead><tr><th>Producto</th><th>Cant.</th><th>Precio unit.</th><th>Subtotal</th></tr></thead>
+        <tbody id="mp-items"><tr><td colspan="4" style="text-align:center;color:#aaa">Cargando...</td></tr></tbody>
+      </table>
+      <div style="text-align:right;margin-top:12px;font-size:18px;font-weight:800;color:var(--rojo)">
+        Total: $<span id="mp-total">0</span>
+      </div>
+    </div>
+
+    <!-- Estado y nota -->
+    <div class="modal-seccion">
+      <h3>Estado del pedido</h3>
+      <div class="form-grid" style="grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group">
+          <label>Cambiar estado</label>
+          <select id="mp-estado">
+            <option value="nuevo">Nuevo</option>
+            <option value="confirmado">Confirmado</option>
+            <option value="preparando">Preparando</option>
+            <option value="enviado">Enviado</option>
+            <option value="entregado">Entregado</option>
+            <option value="cancelado">Cancelado</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group" style="margin-top:12px">
+        <label>Nota interna (no visible al cliente)</label>
+        <textarea id="mp-nota" rows="3" placeholder="Ej: Llamar al cliente para coordinar la entrega..."></textarea>
+      </div>
+      <div style="margin-top:14px;display:flex;gap:10px;align-items:center">
+        <button class="btn btn-rojo" onclick="guardarCambiosPedido()">Guardar cambios</button>
+        <span id="mp-msg" style="font-size:13px;font-weight:600"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="compat-modal" class="modal-overlay" onclick="if(event.target===this)cerrarCompatModal()">
+  <div class="modal-box" style="max-width:480px">
+    <div class="modal-header">
+      <div>
+        <div class="modal-titulo" id="compat-modal-titulo">Compatibilidades</div>
+        <div style="font-size:12px;color:#aaa;margin-top:2px">Modelos de autos asignados</div>
+      </div>
+      <button class="modal-cerrar" onclick="cerrarCompatModal()">✕</button>
+    </div>
+    <div style="padding:20px;max-height:400px;overflow-y:auto" id="compat-modal-lista"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     MODAL FACTURA / HISTORIAL PAGOS
+══════════════════════════════════════════ -->
+<div id="modal-factura" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center" onclick="if(event.target===this)cerrarModalFactura()">
+  <div style="background:#fff;border-radius:14px;width:600px;max-width:95vw;max-height:90vh;overflow-y:auto;padding:28px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">
+      <div>
+        <div id="mf-titulo" style="font-size:18px;font-weight:900;color:#333">—</div>
+        <div id="mf-proveedor" style="font-size:13px;color:#888;margin-top:3px">—</div>
+      </div>
+      <button onclick="cerrarModalFactura()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#888">✕</button>
+    </div>
+
+    <!-- Resumen -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">
+      <div style="background:#f8f8f8;border-radius:8px;padding:12px">
+        <div style="font-size:11px;color:#aaa;font-weight:700;text-transform:uppercase">Emisión</div>
+        <div id="mf-emision" style="font-weight:700;color:#333;margin-top:4px">—</div>
+      </div>
+      <div style="background:#f8f8f8;border-radius:8px;padding:12px">
+        <div style="font-size:11px;color:#aaa;font-weight:700;text-transform:uppercase">Vencimiento</div>
+        <div id="mf-vencimiento" style="font-weight:700;color:#333;margin-top:4px">—</div>
+      </div>
+      <div style="background:#f8f8f8;border-radius:8px;padding:12px">
+        <div style="font-size:11px;color:#aaa;font-weight:700;text-transform:uppercase">Estado</div>
+        <div id="mf-estado" style="font-weight:700;color:#333;margin-top:4px;text-transform:capitalize">—</div>
+      </div>
+      <div style="background:#f8f8f8;border-radius:8px;padding:12px">
+        <div style="font-size:11px;color:#aaa;font-weight:700;text-transform:uppercase">Total factura</div>
+        <div id="mf-total" style="font-weight:700;color:#333;margin-top:4px">—</div>
+      </div>
+      <div style="background:#f8f8f8;border-radius:8px;padding:12px">
+        <div style="font-size:11px;color:#aaa;font-weight:700;text-transform:uppercase">Total pagado</div>
+        <div id="mf-pagado" style="font-weight:700;color:#22c55e;margin-top:4px">—</div>
+      </div>
+      <div style="background:#fff3f3;border:1px solid #fcd5d5;border-radius:8px;padding:12px">
+        <div style="font-size:11px;color:#e63946;font-weight:700;text-transform:uppercase">Saldo pendiente</div>
+        <div id="mf-saldo" style="font-weight:900;color:#e63946;margin-top:4px;font-size:16px">—</div>
+      </div>
+    </div>
+
+    <!-- Historial -->
+    <div style="font-size:13px;font-weight:800;color:#555;margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em">Historial de pagos</div>
+    <div id="mf-historial" style="margin-bottom:20px"></div>
+
+    <!-- Registrar pago -->
+    <div style="background:#f8f8f8;border-radius:10px;padding:18px">
+      <div style="font-size:13px;font-weight:800;color:#555;margin-bottom:12px;text-transform:uppercase;letter-spacing:.04em">Registrar pago</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <label style="font-size:11px;font-weight:700;color:#888;display:block;margin-bottom:4px">FECHA *</label>
+          <input type="date" id="pago-fecha" style="width:100%;padding:8px 10px;border:1.5px solid #ddd;border-radius:7px;font-size:13px;box-sizing:border-box">
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:#888;display:block;margin-bottom:4px">MONTO *</label>
+          <input type="number" id="pago-monto" min="0" step="0.01" placeholder="0.00" style="width:100%;padding:8px 10px;border:1.5px solid #ddd;border-radius:7px;font-size:13px;box-sizing:border-box">
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:#888;display:block;margin-bottom:4px">MÉTODO</label>
+          <select id="pago-metodo" onchange="onMetodoPagoChange()" style="width:100%;padding:8px 10px;border:1.5px solid #ddd;border-radius:7px;font-size:13px">
+            <option value="transferencia">Transferencia</option>
+            <option value="cheque">Cheque</option>
+            <option value="efectivo">Efectivo</option>
+            <option value="debito">Débito</option>
+          </select>
+        </div>
+        <div id="pago-cheque-row" style="display:none;grid-template-columns:1fr 1fr;gap:8px">
+          <div>
+            <label style="font-size:11px;font-weight:700;color:#888;display:block;margin-bottom:4px">N° CHEQUE</label>
+            <input type="text" id="pago-cheque" placeholder="12345678" style="width:100%;padding:8px 10px;border:1.5px solid #ddd;border-radius:7px;font-size:13px;box-sizing:border-box">
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:#888;display:block;margin-bottom:4px">BANCO</label>
+            <input type="text" id="pago-banco" placeholder="Banco Nación" style="width:100%;padding:8px 10px;border:1.5px solid #ddd;border-radius:7px;font-size:13px;box-sizing:border-box">
+          </div>
+        </div>
+        <div style="grid-column:1/-1">
+          <label style="font-size:11px;font-weight:700;color:#888;display:block;margin-bottom:4px">NOTAS</label>
+          <input type="text" id="pago-notas" placeholder="Observaciones del pago..." style="width:100%;padding:8px 10px;border:1.5px solid #ddd;border-radius:7px;font-size:13px;box-sizing:border-box">
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:14px">
+        <button id="btn-registrar-pago" class="btn btn-rojo" onclick="registrarPago()">Registrar pago</button>
+        <button id="btn-marcar-pagada" class="btn btn-blanco" onclick="marcarPagadaDesdeModal()">Marcar como pagada</button>
+        <button class="btn btn-blanco" onclick="cerrarModalFactura()" style="margin-left:auto">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.pag-alerta { padding:10px 16px; border-radius:8px; margin-bottom:8px; font-size:13px; }
+.pag-alerta.roja    { background:#fff0f0; border:1px solid #fcd5d5; color:#c0392b; }
+.pag-alerta.amarilla { background:#fffbeb; border:1px solid #fde68a; color:#92400e; }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="../js/supabase.js"></script>
+  <script src="../js/autocomplete.js"></script>
+<script src="pagos.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>

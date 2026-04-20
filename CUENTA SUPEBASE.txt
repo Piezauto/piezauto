@@ -1,0 +1,22 @@
+NOMBRE DEL PROYECTO:
+PIEZAUTO
+
+USUARIO PROYECTO:
+Piezauto
+
+CONTRASEÑA PROYECTO:
+hje28xwm4cmo67-
+
+URL DEL PROYECTO:
+https://mqxowotdeibllkitkije.supabase.co
+
+CLAVE PUBLICABLE
+sb_publishable_kThqV-7io1DtaKML1JAjUg_HULelLPZ
+
+CADENA DE CONEXION DIRECTA
+postgresql://postgres:[YOUR-PASSWORD]@db.mqxowotdeibllkitkije.supabase.co:5432/postgres
+
+COMANDOS DE CONFIGURACION DE LA CLI
+supabase login
+supabase init
+supabase link --project-ref mqxowotdeibllkitkije

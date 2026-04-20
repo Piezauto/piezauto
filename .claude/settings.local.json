@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(live-server --port=3000)",
+      "Bash(awk '{print $NF}')",
+      "Bash(xargs -I{} basename {})",
+      "Bash(grep -E \"\\\\.\\(html|sql|md\\)$\")",
+      "Bash(awk '{print $NF, $5}')",
+      "Bash(node -e \"const fs=require\\('fs'\\);const content=fs.readFileSync\\('c:/Users/feded/OneDrive/Escritorio/piezauto/admin/index.html','utf8'\\);const lines=content.split\\('\\\\n'\\);const scriptStart=1401;let depth=0;let prev=0;for\\(let i=scriptStart;i<lines.length;i++\\){const line=lines[i];for\\(let j=0;j<line.length;j++\\){const c=line[j];if\\(c==='\\\\\\\\x60'\\){depth++;const end=line.indexOf\\('\\\\\\\\x60',j+1\\);if\\(end>j\\){depth--;j=end;}}}if\\(depth!==prev\\){console.log\\('L'+\\(i+1\\)+' d='+depth+': '+line.trim\\(\\).substring\\(0,80\\)\\);prev=depth;}}\")",
+      "Bash(node -e ' *)",
+      "Bash(grep -n 'src=[\"'\"'\"'][^`]*\\\\${' c:/Users/feded/OneDrive/Escritorio/piezauto/admin/index.html)",
+      "Bash(grep -n \"value=[\\\\\"'][^'\\\\\"]*\\\\\\\\\\\\${\" c:/Users/feded/OneDrive/Escritorio/piezauto/admin/index.html)",
+      "Bash(grep -n 'value=\"[$][{]' c:/Users/feded/OneDrive/Escritorio/piezauto/admin/index.html)",
+      "Bash(grep -n 'src=\"\\\\${' c:/Users/feded/OneDrive/Escritorio/piezauto/admin/index.html)",
+      "Bash(grep -n 'value=\"\\\\${' c:/Users/feded/OneDrive/Escritorio/piezauto/admin/index.html)",
+      "Bash(node --check c:/Users/feded/OneDrive/Escritorio/piezauto/admin_js_check.js)",
+      "Bash(echo \"Exit code: $?\")",
+      "Bash(node --check c:/Users/feded/OneDrive/Escritorio/piezauto/admin/admin.js)",
+      "Bash(echo \"Exit: $?\")",
+      "Bash(sed -n 352,1135p c:/Users/feded/OneDrive/Escritorio/piezauto/admin/proveedores.html)",
+      "Bash(sed -n 1065,2489p c:/Users/feded/OneDrive/Escritorio/piezauto/point/dashboard.html)",
+      "Bash(sed -n 348,892p c:/Users/feded/OneDrive/Escritorio/piezauto/index.html)",
+      "Bash(sed -n 428,1064p c:/Users/feded/OneDrive/Escritorio/piezauto/catalogo.html)",
+      "Bash(sed -n 543,855p c:/Users/feded/OneDrive/Escritorio/piezauto/talleres.html)",
+      "Bash(node --check \"C:/Users/feded/OneDrive/Escritorio/piezauto/js/catalogo.js\")",
+      "Bash(node --check \"C:/Users/feded/OneDrive/Escritorio/piezauto/point/dashboard.js\")",
+      "Bash(node --check c:/Users/feded/OneDrive/Escritorio/piezauto/admin/proveedores.js)",
+      "Bash(node --check \"c:\\\\Users\\\\feded\\\\OneDrive\\\\Escritorio\\\\piezauto\\\\admin\\\\proveedores.js\")",
+      "Bash(node --check \"c:\\\\Users\\\\feded\\\\OneDrive\\\\Escritorio\\\\piezauto\\\\admin\\\\admin.js\")",
+      "Bash(grep -E \"\\\\.sql$\")",
+      "Bash(grep -v \"//.*password\\\\|password_hash\\\\|placeholder\\\\|type.*password\\\\|autocomplete\\\\|innerHTML\\\\|textContent\")",
+      "Bash(xargs grep *)"
+    ]
+  }
+}

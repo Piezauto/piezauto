@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test del sistema — Piezauto Admin</title>
+  <link rel="stylesheet" href="../css/estilos.css">
+  <style>
+    body { background: #f0f0f0; padding: 32px; font-family: inherit; }
+    .test-wrap { max-width: 900px; margin: 0 auto; }
+    h1 { font-size: 22px; font-weight: 900; margin-bottom: 6px; }
+    .meta { font-size: 13px; color: #888; margin-bottom: 32px; }
+    .section { background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.07); margin-bottom: 24px; }
+    .section h2 { font-size: 15px; font-weight: 700; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; gap: 8px; }
+    .check-item { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid #f8f8f8; font-size: 14px; }
+    .check-item:last-child { border-bottom: none; }
+    .check-item input[type="checkbox"] { width: 18px; height: 18px; accent-color: #E63946; cursor: pointer; flex-shrink: 0; }
+    .check-item label { flex: 1; cursor: pointer; }
+    .status-dot { width: 10px; height: 10px; border-radius: 50%; background: #ddd; flex-shrink: 0; transition: background 0.3s; }
+    .status-dot.ok { background: #22c55e; }
+    .status-dot.error { background: #E63946; }
+    .status-dot.loading { background: #f59e0b; animation: pulse 1s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+    .btn-test { padding: 6px 14px; background: #1a1a1a; color: #fff; border: none; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; transition: opacity .15s; }
+    .btn-test:hover { opacity: .8; }
+    .btn-test.rojo { background: #E63946; }
+    .stat-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f5f5f5; font-size: 13px; }
+    .stat-row:last-child { border-bottom: none; }
+    .stat-val { font-weight: 800; font-size: 18px; color: #E63946; }
+    .result-box { margin-top: 8px; padding: 8px 12px; background: #f8f8f8; border-radius: 6px; font-size: 12px; font-family: monospace; color: #555; display: none; }
+    .version-tag { display: inline-block; background: #1a1a1a; color: #fff; padding: 3px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+  </style>
+</head>
+<body>
+<script>if (!sessionStorage.getItem('pz_admin')) window.location.replace('login.html');</script>
+
+<div class="test-wrap">
+  <h1>🧪 Test del sistema — Piezauto</h1>
+  <div class="meta">
+    <span class="version-tag">v1.0.0</span>
+    &nbsp; Fecha de build: <strong id="fecha-build">2026-04-20</strong>
+    &nbsp;·&nbsp; Entorno: <strong>Producción</strong>
+    &nbsp;·&nbsp; <a href="index.html" style="color:#E63946">← Volver al panel</a>
+  </div>
+
+  <!-- ESTADO DE SUPABASE -->
+  <div class="section">
+    <h2>🔌 Conexión y tablas de Supabase</h2>
+    <div id="db-stats">
+      <div style="padding:20px;text-align:center;color:#aaa">Cargando...</div>
+    </div>
+    <div style="margin-top:16px">
+      <button class="btn-test" onclick="testConexion()">🔄 Actualizar</button>
+      <span id="db-status" style="font-size:13px;font-weight:600;margin-left:12px"></span>
+    </div>
+  </div>
+
+  <!-- CHECKLIST FUNCIONALIDADES -->
+  <div class="section">
+    <h2>✅ Checklist de funcionalidades — marcá lo que ya probaste</h2>
+
+    <p style="font-size:12px;color:#aaa;margin-bottom:14px">El estado se guarda en este navegador. Tildá cada ítem después de verificarlo manualmente.</p>
+
+    <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Ecommerce — Tienda</div>
+    <div class="check-item"><input type="checkbox" id="chk-1"><label for="chk-1">Home: carga categorías, productos destacados y talleres</label></div>
+    <div class="check-item"><input type="checkbox" id="chk-2"><label for="chk-2">Buscador por auto: selección marca → modelo → año → resultados</label></div>
+    <div class="check-item"><input type="checkbox" id="chk-3"><label for="chk-3">Catálogo: filtros de categoría, marca, precio y auto</label></div>
+    <div class="check-item"><input type="checkbox" id="chk-4"><label for="chk-4">Ficha de producto: imágenes, precio, compatibilidades, reseñas</label></div>
+    <div class="check-item"><input type="checkbox" id="chk-5"><label for="chk-5">Carrito: agregar, modificar cantidad, eliminar producto</label></div>
+    <div class="check-item"><input type="checkbox" id="chk-6"><label for="chk-6">Checkout: formulario completo, validaciones, cupón de descuento</label></div>
+    <div class="check-item"><input type="checkbox" id="chk-7"><label for="chk-7">Checkout: pedido se crea en Supabase correctamente</label></div>
+    <div class="check-item"><input type="checkbox" id="chk-8"><label for="chk-8">Email de confirmación enviado al cliente (EmailJS)</label></div>
+    <div class="check-item"><input type="checkbox" id="chk-9"><label for="chk-9">Seguimiento de pedido: muestra estado y pasos correctamente</label></div>
+    <div class="check-item"><input type="checkbox" id="chk-10"><label for="chk-10">Ofertas: countdown real, filtros, sección liquidación</label></div>
+    <div class="check-item"><input type="checkbox" id="chk-11"><label for="chk-11">WhatsApp widget: abre correctamente en mobile y desktop</label></div>
+    <div class="check-item"><input type="checkbox" id="chk-12"><label for="chk-12">Página 404: se muestra en rutas inexistentes</label></div>
+
+    <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em;margin:16px 0 8px">Usuario</div>
+    <div class="check-item"><input type="checkbox" id="chk-13"><label for="chk-13">Registro e inicio de sesión de usuario</label></div>
+    <div class="check-item"><input type="checkbox" id="chk-14"><label for="chk-14">Perfil: editar datos, ver historial de pedidos</label></div>
+    <div class="check-item"><input type="checkbox" id="chk-15"><label for="chk-15">Fidelización: nivel, beneficios, historial de puntos</label></div>
+    <div class="check-item"><input type="checkbox" id="chk-16"><label for="chk-16">Favoritos: guardar y eliminar productos</label></div>
+    <div class="check-item"><input type="checkbox" id="chk-17"><label for="chk-17">Referidos: código generado, crédito aplicado en checkout</label></div>
+
+    <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em;margin:16px 0 8px">Admin</div>
+    <div class="check-item"><input type="checkbox" id="chk-18"><label for="chk-18">Login de admin: acceso correcto, bloqueo por intentos</label></div>
+    <div class="check-item"><input type="checkbox" id="chk-19"><label for="chk-19">Dashboard: stats correctos, actividad reciente</label></div>
+    <div class="check-item"><input type="checkbox" id="chk-20"><label for="chk-20">Productos: crear, editar, subir imágenes, compatibilidades</label></div>
+    <div class="check-item"><input type="checkbox" id="chk-21"><label for="chk-21">Pedidos: ver detalle, cambiar estado, logística</label></div>
+    <div class="check-item"><input type="checkbox" id="chk-22"><label for="chk-22">Cupones: crear, aplicar en checkout, contar usos</label></div>
+    <div class="check-item"><input type="checkbox" id="chk-23"><label for="chk-23">Talleres: crear, editar, gestionar servicios</label></div>
+    <div class="check-item"><input type="checkbox" id="chk-24"><label for="chk-24">Facturación Point: crear cargo, marcar pagado, ver historial</label></div>
+    <div class="check-item"><input type="checkbox" id="chk-25"><label for="chk-25">Configuración: guardar datos, horarios, preview topbar</label></div>
+    <div class="check-item"><input type="checkbox" id="chk-31"><label for="chk-31">Modo mantenimiento: toggle ON redirige a mantenimiento.html, OFF vuelve al sitio</label></div>
+    <div class="check-item"><input type="checkbox" id="chk-32"><label for="chk-32">Combos: crear combo, agregar productos, precio especial, activar/desactivar</label></div>
+    <div class="check-item"><input type="checkbox" id="chk-33"><label for="chk-33">Devoluciones: buscar pedido, crear devolución, aprobar (revierte stock), rechazar</label></div>
+
+    <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em;margin:16px 0 8px">Point (Talleres)</div>
+    <div class="check-item"><input type="checkbox" id="chk-26"><label for="chk-26">Login de taller: acceso correcto, bloqueo por intentos</label></div>
+    <div class="check-item"><input type="checkbox" id="chk-27"><label for="chk-27">Agenda semanal: turnos visibles, click en bloque, crear desde celda vacía</label></div>
+    <div class="check-item"><input type="checkbox" id="chk-28"><label for="chk-28">Agenda mobile: vista por día, navegación</label></div>
+    <div class="check-item"><input type="checkbox" id="chk-29"><label for="chk-29">Finanzas: estadísticas del mes, gráfico, exportar CSV</label></div>
+    <div class="check-item"><input type="checkbox" id="chk-30"><label for="chk-30">Inventario: agregar pieza, alerta bajo stock</label></div>
+    <div class="check-item"><input type="checkbox" id="chk-34"><label for="chk-34">Bottom nav mobile: swipe lateral entre secciones, pull-to-refresh</label></div>
+    <div class="check-item"><input type="checkbox" id="chk-35"><label for="chk-35">Recuperación de contraseña: código por email, reset exitoso</label></div>
+
+    <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em;margin:16px 0 8px">Puntos y fidelización</div>
+    <div class="check-item"><input type="checkbox" id="chk-36"><label for="chk-36">Puntos visibles en perfil de usuario con equivalente en pesos</label></div>
+    <div class="check-item"><input type="checkbox" id="chk-37"><label for="chk-37">Canje de puntos en checkout: descuento aplicado, historial registrado</label></div>
+
+    <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em;margin:16px 0 8px">PWA y performance</div>
+    <div class="check-item"><input type="checkbox" id="chk-38"><label for="chk-38">PWA manifest válido, ícono se muestra en "Agregar a pantalla de inicio"</label></div>
+    <div class="check-item"><input type="checkbox" id="chk-39"><label for="chk-39">Service worker activo (sw.js), sitio funciona offline para páginas cacheadas</label></div>
+    <div class="check-item"><input type="checkbox" id="chk-40"><label for="chk-40">Core Web Vitals: LCP < 2.5s, CLS < 0.1 (verificar con PageSpeed Insights)</label></div>
+
+    <div style="margin-top:16px;display:flex;gap:10px">
+      <button class="btn-test" onclick="guardarChecklist()">💾 Guardar progreso</button>
+      <button class="btn-test" onclick="resetChecklist()" style="background:#666">Resetear</button>
+      <span id="chk-msg" style="font-size:13px;font-weight:600;margin-left:8px"></span>
+    </div>
+  </div>
+
+  <!-- PRUEBAS TÉCNICAS -->
+  <div class="section">
+    <h2>🔧 Pruebas técnicas</h2>
+    <div class="check-item" style="flex-wrap:wrap;gap:8px">
+      <div style="flex:1;min-width:200px">
+        <strong>Conexión a Supabase</strong>
+        <div style="font-size:12px;color:#888">Verifica que la base de datos responde</div>
+      </div>
+      <div class="status-dot" id="dot-supabase"></div>
+      <button class="btn-test" onclick="probarSupabase()">Probar</button>
+      <div class="result-box" id="res-supabase"></div>
+    </div>
+    <div class="check-item" style="flex-wrap:wrap;gap:8px">
+      <div style="flex:1;min-width:200px">
+        <strong>WhatsApp widget</strong>
+        <div style="font-size:12px;color:#888">Verifica que el número esté configurado</div>
+      </div>
+      <div class="status-dot" id="dot-wa"></div>
+      <button class="btn-test" onclick="probarWA()">Probar</button>
+      <div class="result-box" id="res-wa"></div>
+    </div>
+    <div class="check-item" style="flex-wrap:wrap;gap:8px">
+      <div style="flex:1;min-width:200px">
+        <strong>Configuración general</strong>
+        <div style="font-size:12px;color:#888">Verifica campos críticos completados</div>
+      </div>
+      <div class="status-dot" id="dot-cfg"></div>
+      <button class="btn-test" onclick="probarConfig()">Probar</button>
+      <div class="result-box" id="res-cfg"></div>
+    </div>
+    <div class="check-item" style="flex-wrap:wrap;gap:8px">
+      <div style="flex:1;min-width:200px">
+        <strong>Analytics (dataLayer)</strong>
+        <div style="font-size:12px;color:#888">Verifica que el tracking está listo</div>
+      </div>
+      <div class="status-dot" id="dot-analytics"></div>
+      <button class="btn-test" onclick="probarAnalytics()">Probar</button>
+      <div class="result-box" id="res-analytics"></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+<script src="../js/supabase.js" defer></script>
+<script>
+const TABLAS = [
+  { nombre: 'productos',   label: 'Productos' },
+  { nombre: 'categorias',  label: 'Categorías' },
+  { nombre: 'pedidos',     label: 'Pedidos' },
+  { nombre: 'usuarios',    label: 'Usuarios' },
+  { nombre: 'talleres',    label: 'Talleres' },
+  { nombre: 'cupones',     label: 'Cupones' },
+  { nombre: 'turnos',      label: 'Turnos' },
+  { nombre: 'presupuestos',label: 'Presupuestos' },
+  { nombre: 'marcas_auto', label: 'Marcas de autos' },
+  { nombre: 'modelos_auto',label: 'Modelos de autos' },
+];
+
+async function testConexion() {
+  const el     = document.getElementById('db-stats');
+  const status = document.getElementById('db-status');
+  el.innerHTML = '<div style="padding:16px;text-align:center;color:#aaa">Consultando...</div>';
+  status.textContent = '';
+
+  try {
+    const resultados = await Promise.all(
+      TABLAS.map(t => db.from(t.nombre).select('*', { count: 'exact', head: true }))
+    );
+
+    el.innerHTML = TABLAS.map((t, i) => {
+      const count = resultados[i].count ?? '—';
+      const error = resultados[i].error;
+      return `<div class="stat-row">
+        <span>${t.label}</span>
+        <span class="stat-val" style="color:${error ? '#E63946' : '#E63946'}">${error ? '❌' : count}</span>
+      </div>`;
+    }).join('');
+
+    status.style.color = '#22c55e';
+    status.textContent = '✅ Conexión exitosa — ' + new Date().toLocaleTimeString('es-AR');
+  } catch (e) {
+    el.innerHTML = '<div style="padding:16px;color:#E63946;font-weight:700">❌ Error de conexión: ' + e.message + '</div>';
+    status.style.color = '#E63946';
+    status.textContent = '❌ No se pudo conectar';
+  }
+}
+
+function setDot(id, estado) {
+  const dot = document.getElementById('dot-' + id);
+  if (dot) { dot.className = 'status-dot ' + estado; }
+}
+
+function setRes(id, texto) {
+  const box = document.getElementById('res-' + id);
+  if (box) { box.style.display = 'block'; box.textContent = texto; }
+}
+
+async function probarSupabase() {
+  setDot('supabase', 'loading');
+  try {
+    const { count } = await db.from('productos').select('*', { count: 'exact', head: true });
+    setDot('supabase', 'ok');
+    setRes('supabase', '✅ OK — ' + (count || 0) + ' productos en base de datos');
+  } catch (e) {
+    setDot('supabase', 'error');
+    setRes('supabase', '❌ Error: ' + e.message);
+  }
+}
+
+async function probarWA() {
+  setDot('wa', 'loading');
+  try {
+    const { data } = await db.from('configuracion').select('valor').eq('clave', 'wa_flotante').single();
+    if (data?.valor && data.valor.length > 5) {
+      setDot('wa', 'ok');
+      setRes('wa', '✅ Número configurado: ' + data.valor);
+    } else {
+      setDot('wa', 'error');
+      setRes('wa', '⚠️ Número de WhatsApp no configurado. Ir a Configuración general.');
+    }
+  } catch (e) {
+    setDot('wa', 'error');
+    setRes('wa', '❌ Error: ' + e.message);
+  }
+}
+
+async function probarConfig() {
+  setDot('cfg', 'loading');
+  const clavesCriticas = ['nombre', 'telefono', 'whatsapp', 'email', 'admin_email', 'admin_password_hash'];
+  try {
+    const { data } = await db.from('configuracion').select('clave, valor').in('clave', clavesCriticas);
+    const map = Object.fromEntries((data || []).map(r => [r.clave, r.valor]));
+    const faltantes = clavesCriticas.filter(c => !map[c]);
+    if (!faltantes.length) {
+      setDot('cfg', 'ok');
+      setRes('cfg', '✅ Todos los campos críticos están configurados.');
+    } else {
+      setDot('cfg', 'error');
+      setRes('cfg', '⚠️ Campos sin configurar: ' + faltantes.join(', '));
+    }
+  } catch (e) {
+    setDot('cfg', 'error');
+    setRes('cfg', '❌ Error: ' + e.message);
+  }
+}
+
+function probarAnalytics() {
+  setDot('analytics', 'loading');
+  try {
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({ event: 'test_event', origen: 'admin_test' });
+    setDot('analytics', 'ok');
+    setRes('analytics', '✅ dataLayer activo. Eventos en cola: ' + window.dataLayer.length);
+  } catch (e) {
+    setDot('analytics', 'error');
+    setRes('analytics', '❌ Error: ' + e.message);
+  }
+}
+
+const CHK_KEY = 'pz_admin_checklist';
+
+function cargarChecklist() {
+  const guardado = JSON.parse(localStorage.getItem(CHK_KEY) || '{}');
+  document.querySelectorAll('[id^="chk-"]').forEach(el => {
+    const key = el.id.replace('chk-', '');
+    if (guardado[key]) el.checked = true;
+  });
+}
+
+function guardarChecklist() {
+  const estado = {};
+  document.querySelectorAll('[id^="chk-"]').forEach(el => {
+    const key = el.id.replace('chk-', '');
+    estado[key] = el.checked;
+  });
+  localStorage.setItem(CHK_KEY, JSON.stringify(estado));
+  const total   = Object.keys(estado).length;
+  const listos  = Object.values(estado).filter(Boolean).length;
+  const msg     = document.getElementById('chk-msg');
+  msg.style.color = listos === total ? '#22c55e' : '#555';
+  msg.textContent = `✅ ${listos}/${total} ítems completados`;
+}
+
+function resetChecklist() {
+  if (!confirm('¿Resetear todo el checklist?')) return;
+  localStorage.removeItem(CHK_KEY);
+  document.querySelectorAll('[id^="chk-"]').forEach(el => { el.checked = false; });
+  document.getElementById('chk-msg').textContent = '';
+}
+
+// Auto-run on load
+window.addEventListener('load', () => {
+  cargarChecklist();
+  testConexion();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,548 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mi cuenta — Piezauto</title>
+  <meta name="description" content="Gestioná tu cuenta Piezauto: historial de pedidos, datos personales y vehículos guardados.">
+  <meta name="robots" content="noindex, nofollow">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Piezauto">
+  <meta property="og:title" content="Mi cuenta — Piezauto">
+  <meta property="og:description" content="Gestioná tu cuenta Piezauto: historial de pedidos, datos personales y vehículos guardados.">
+  <meta property="og:image" content="https://piezauto.com.ar/img/og-default.jpg">
+  <meta property="og:url" content="https://piezauto.com.ar/usuario.html">
+  <link rel="canonical" href="https://piezauto.com.ar/usuario.html">
+  <link rel="stylesheet" href="css/estilos.css">
+  <style>
+    .auth-wrap {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f0f0f0;
+      padding: 40px 20px;
+    }
+    .auth-card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 36px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+    }
+    .auth-logo { font-size: 22px; font-weight: 800; text-align: center; margin-bottom: 28px; }
+    .auth-logo span { color: var(--rojo); }
+    .auth-tabs {
+      display: flex;
+      border-bottom: 2px solid #f0f0f0;
+      margin-bottom: 24px;
+    }
+    .auth-tab {
+      flex: 1;
+      padding: 10px;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      color: #aaa;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      transition: all 0.15s;
+    }
+    .auth-tab.activo { color: var(--rojo); border-bottom-color: var(--rojo); }
+    .auth-form { display: none; }
+    .auth-form.activo { display: block; }
+    .form-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+    .form-group label { font-size: 12px; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: 0.04em; }
+    .form-group input {
+      padding: 10px 12px;
+      border: 1.5px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .form-group input:focus { border-color: var(--rojo); }
+    .auth-msg { font-size: 13px; font-weight: 600; margin-top: 12px; min-height: 18px; }
+
+    /* PERFIL LOGUEADO */
+    .perfil-wrap {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+    .perfil-header {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+    .perfil-avatar {
+      width: 68px; height: 68px;
+      border-radius: 50%;
+      background: var(--rojo);
+      color: #fff;
+      font-size: 24px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .perfil-info h2 { font-size: 20px; font-weight: 800; }
+    .perfil-info p  { font-size: 13px; color: #888; margin-top: 3px; }
+    .tabs-nav {
+      display: flex;
+      gap: 0;
+      border-bottom: 2px solid #eee;
+      margin-bottom: 28px;
+    }
+    .tab-nav-item {
+      padding: 10px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #aaa;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      transition: all 0.15s;
+    }
+    .tab-nav-item.activo { color: var(--rojo); border-bottom-color: var(--rojo); }
+    .tab-content { display: none; }
+    .tab-content.activo { display: block; }
+
+    /* PEDIDOS USUARIO */
+    .card-section {
+      background: #fff;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: var(--sombra);
+      margin-bottom: 20px;
+    }
+    .card-section h3 { font-size: 15px; font-weight: 700; margin-bottom: 16px; }
+    .pedido-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid #f5f5f5;
+    }
+    .pedido-row:last-child { border-bottom: none; }
+    .badge-estado {
+      padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;
+    }
+    .badge-nuevo      { background: #e8f0fe; color: #1a56c4; }
+    .badge-confirmado { background: #e6f7ee; color: #1a7a3f; }
+    .badge-preparando { background: #fff3cd; color: #856404; }
+    .badge-enviado    { background: #e0e7ff; color: #3730a3; }
+    .badge-entregado  { background: #d1fae5; color: #065f46; }
+    .badge-cancelado  { background: #fce8e8; color: #c00; }
+
+    /* VEHÍCULOS */
+    .vehiculos-lista { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+    .vehiculo-card { background: #fff; border: 1px solid #e0e0e0; border-radius: 12px; padding: 16px 20px; display: flex; align-items: center; gap: 16px; }
+    .vehiculo-icon { font-size: 32px; }
+    .vehiculo-info { flex: 1; }
+    .vehiculo-nombre { font-size: 16px; font-weight: 700; color: #1a1a1a; }
+    .vehiculo-anio { font-size: 13px; color: #888; margin-top: 2px; }
+    .vehiculo-acciones { display: flex; align-items: center; gap: 8px; }
+    .btn-buscar-repuestos { background: #E63946; color: #fff; padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 700; text-decoration: none; white-space: nowrap; }
+    .btn-buscar-repuestos:hover { background: #c1121f; }
+    .btn-eliminar-vehiculo { background: none; border: 1px solid #e0e0e0; border-radius: 8px; color: #888; cursor: pointer; font-size: 16px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; }
+    .btn-eliminar-vehiculo:hover { border-color: #E63946; color: #E63946; }
+    .vehiculo-form-nuevo { background: #f8f8f8; border-radius: 12px; padding: 20px; margin-top: 20px; }
+    .vehiculo-form-nuevo h3 { font-size: 15px; font-weight: 700; margin-bottom: 16px; color: #1a1a1a; }
+    .vform-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+    @media (max-width: 640px) { .vform-row { grid-template-columns: 1fr; } }
+    .btn-guardar-vehiculo { background: #E63946; color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; }
+
+    @media (max-width: 600px) {
+      .auth-card { padding: 24px 18px; }
+      .pedido-row { flex-direction: column; align-items: flex-start; gap: 8px; }
+    }
+
+    .notif-tab-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      background: #E63946; color: #fff; border-radius: 50%;
+      min-width: 18px; height: 18px; font-size: 11px; font-weight: 700;
+      padding: 0 4px; margin-left: 6px;
+    }
+    .notif-header-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+    .btn-marcar-leidas { font-size: 13px; color: #E63946; background: none; border: 1px solid #E63946; border-radius: 6px; padding: 6px 12px; cursor: pointer; font-weight: 600; }
+    .btn-marcar-leidas:hover { background: #E63946; color: #fff; }
+    .notificaciones-lista { display: flex; flex-direction: column; gap: 8px; }
+    .notif-item {
+      display: flex; align-items: flex-start; gap: 14px;
+      padding: 16px; background: #fff; border: 1px solid #e0e0e0;
+      border-radius: 10px; transition: border-color 0.15s; cursor: pointer;
+    }
+    .notif-item.no-leida { border-left: 3px solid #E63946; background: #fff9f9; }
+    .notif-item:hover { border-color: #ccc; }
+    .notif-icono { font-size: 22px; flex-shrink: 0; margin-top: 2px; }
+    .notif-body { flex: 1; }
+    .notif-titulo { font-size: 14px; font-weight: 700; color: #1a1a1a; margin-bottom: 4px; }
+    .notif-mensaje { font-size: 13px; color: #666; line-height: 1.5; margin-bottom: 6px; }
+    .notif-meta { display: flex; align-items: center; gap: 10px; }
+    .notif-fecha { font-size: 11px; color: #aaa; }
+    .notif-tipo { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .notif-tipo.pedido { background: #e0f2fe; color: #0369a1; }
+    .notif-tipo.producto { background: #dcfce7; color: #15803d; }
+    .notif-tipo.oferta { background: #fff7ed; color: #c2410c; }
+    .notif-tipo.sistema { background: #f3f4f6; color: #374151; }
+    .notif-loading { padding: 40px; text-align: center; color: #aaa; font-size: 14px; }
+    .notif-vacia { padding: 48px 20px; text-align: center; color: #aaa; font-size: 14px; }
+    .notif-vacia .notif-vacia-icon { font-size: 48px; margin-bottom: 12px; }
+  </style>
+
+  <!-- ============================================================
+    GOOGLE ANALYTICS — Agregar antes del lanzamiento a producción
+    Reemplazá G-XXXXXXXXXX con tu Measurement ID real de GA4.
+    Instrucciones completas: analytics_setup.md
+    ============================================================
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-XXXXXXXXXX');
+  </script>
+  ============================================================ -->
+  <link rel="manifest" href="/manifest.json">
+  <script>if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');</script>
+</head>
+<body>
+
+<div class="site-header-wrap">
+  <div class="topbar">
+    <span id="topbar-info">📍 Zona Oeste, AMBA &nbsp;·&nbsp; Lun–Vie 9–18hs &nbsp;·&nbsp; Sáb 9–13hs</span>
+    <div class="topbar-right">
+      <a href="tel:+541143000000" id="topbar-telefono">📞 011 4300-0000</a>
+      <a href="https://wa.me/5491143000000" target="_blank" id="topbar-whatsapp">💬 WhatsApp</a>
+    </div>
+  </div>
+  <header class="header">
+    <a href="index.html" class="header-logo">Piezauto</a>
+    <div class="header-search">
+      <input type="text" id="header-buscar" placeholder="Buscá tu autoparte..." onkeydown="if(event.key==='Enter') buscarDesdeHeader()">
+      <button onclick="buscarDesdeHeader()">🔍</button>
+    </div>
+    <nav class="header-nav">
+      <a href="index.html">Inicio</a>
+      <a href="catalogo.html">Catálogo</a>
+      <a href="ofertas.html">Ofertas</a>
+      <a href="talleres.html">Talleres</a>
+      <a href="nosotros.html">Nosotros</a>
+      <a href="usuario.html" style="color:#fff">Mi cuenta</a>
+    </nav>
+    <div class="header-carrito" onclick="window.location='checkout.html'" style="cursor:pointer">
+      🛒 <span id="carrito-count">0</span>
+    </div>
+    <button class="menu-hamburguesa" onclick="toggleMenu()" aria-label="Abrir menú">
+      <span></span><span></span><span></span>
+    </button>
+    <nav class="header-nav-mobile" id="menu-mobile">
+      <a href="index.html" onclick="toggleMenu()">Inicio</a>
+      <a href="catalogo.html" onclick="toggleMenu()">Catálogo</a>
+      <a href="ofertas.html" onclick="toggleMenu()">Ofertas</a>
+      <a href="talleres.html" onclick="toggleMenu()">Talleres</a>
+      <a href="nosotros.html" onclick="toggleMenu()">Nosotros</a>
+      <a href="usuario.html" onclick="toggleMenu()">Mi cuenta</a>
+    </nav>
+  </header>
+</div>
+
+<!-- PANTALLA AUTH -->
+<div id="pantalla-auth" class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-logo">Piez<span>auto</span></div>
+
+    <div class="auth-tabs">
+      <div class="auth-tab activo" onclick="cambiarTab('login')">Iniciar sesión</div>
+      <div class="auth-tab" onclick="cambiarTab('registro')">Registrarse</div>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="form-login" class="auth-form activo">
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="login-email" placeholder="tu@email.com" autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label>Contraseña</label>
+        <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <button class="btn btn-rojo btn-full" style="margin-top:8px" onclick="iniciarSesion()">Entrar</button>
+      <div class="auth-msg" id="login-msg"></div>
+    </div>
+
+    <!-- REGISTRO -->
+    <div id="form-registro" class="auth-form">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group">
+          <label>Nombre</label>
+          <input type="text" id="reg-nombre" placeholder="Juan">
+        </div>
+        <div class="form-group">
+          <label>Apellido</label>
+          <input type="text" id="reg-apellido" placeholder="Pérez">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="reg-email" placeholder="tu@email.com">
+      </div>
+      <div class="form-group">
+        <label>Contraseña</label>
+        <input type="password" id="reg-password" placeholder="Mínimo 6 caracteres">
+      </div>
+      <div class="form-group">
+        <label>Repetir contraseña</label>
+        <input type="password" id="reg-password2" placeholder="Repetí tu contraseña">
+      </div>
+      <button class="btn btn-rojo btn-full" style="margin-top:8px" onclick="registrarse()">Crear cuenta</button>
+      <div class="auth-msg" id="reg-msg"></div>
+    </div>
+  </div>
+</div>
+
+<!-- PANTALLA PERFIL (logueado) -->
+<div id="pantalla-perfil" style="display:none">
+  <div class="perfil-wrap">
+    <div class="perfil-header">
+      <div class="perfil-avatar" id="perfil-iniciales">?</div>
+      <div class="perfil-info">
+        <h2 id="perfil-nombre-titulo">—</h2>
+        <p id="perfil-email-titulo">—</p>
+      </div>
+      <button class="btn btn-blanco" style="margin-left:auto;font-size:13px" onclick="cerrarSesionUsuario()">Cerrar sesión</button>
+    </div>
+
+    <div class="tabs-nav">
+      <div class="tab-nav-item activo" onclick="verTab('mis-datos')">Mis datos</div>
+      <div class="tab-nav-item" onclick="verTab('mis-pedidos')">Mis pedidos</div>
+      <div class="tab-nav-item" onclick="verTab('mis-vehiculos')">Mis vehículos</div>
+      <div class="tab-nav-item" onclick="verTab('notificaciones')">
+        Notificaciones
+        <span class="notif-tab-badge" id="notif-tab-badge" style="display:none">0</span>
+      </div>
+      <div class="tab-nav-item" onclick="verTab('referidos')">Mi código de referido</div>
+      <div class="tab-nav-item" onclick="verTab('beneficios')">🏆 Mis beneficios</div>
+    </div>
+
+    <!-- TAB: MIS DATOS -->
+    <div id="tab-mis-datos" class="tab-content activo">
+      <div class="card-section">
+        <h3>Datos personales</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="form-group">
+            <label>Nombre</label>
+            <input type="text" id="datos-nombre">
+          </div>
+          <div class="form-group">
+            <label>Apellido</label>
+            <input type="text" id="datos-apellido">
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="datos-email" disabled style="background:#f8f8f8;color:#999">
+          </div>
+          <div class="form-group">
+            <label>Teléfono</label>
+            <input type="tel" id="datos-telefono" placeholder="+54 11...">
+          </div>
+        </div>
+        <button class="btn btn-rojo" style="margin-top:16px" onclick="guardarDatos()">Guardar cambios</button>
+        <span id="datos-msg" style="font-size:13px;font-weight:600;margin-left:12px"></span>
+      </div>
+    </div>
+
+    <!-- TAB: MIS PEDIDOS -->
+    <div id="tab-mis-pedidos" class="tab-content">
+      <div class="card-section">
+        <h3>Historial de pedidos</h3>
+        <div id="lista-pedidos"><div class="loader">Cargando...</div></div>
+      </div>
+    </div>
+
+    <!-- TAB: NOTIFICACIONES -->
+    <div id="tab-notificaciones" class="tab-content">
+      <div class="notif-header-row">
+        <h2 class="panel-titulo">Notificaciones</h2>
+        <button onclick="marcarTodasLeidas()" class="btn-marcar-leidas">Marcar todas como leídas</button>
+      </div>
+      <div id="notificaciones-lista" class="notificaciones-lista">
+        <div class="notif-loading">Cargando notificaciones...</div>
+      </div>
+    </div>
+
+    <!-- TAB: REFERIDOS -->
+    <div id="tab-referidos" class="tab-content">
+      <div class="card-section">
+        <h3>Mi código de referido</h3>
+        <p style="font-size:14px;color:#666;margin-bottom:20px">Compartí tu código con amigos. Cuando se registren en Piezauto con tu código, ambos reciben crédito.</p>
+
+        <div style="background:#f8f8f8;border-radius:12px;padding:24px;text-align:center;margin-bottom:20px">
+          <div style="font-size:11px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Tu código único</div>
+          <div id="ref-codigo" style="font-size:36px;font-weight:900;color:#1a1a1a;letter-spacing:.12em;font-family:monospace">—</div>
+          <button onclick="copiarCodigoReferido()" style="margin-top:14px;background:#1a1a1a;color:#fff;border:none;border-radius:8px;padding:10px 24px;font-size:14px;font-weight:700;cursor:pointer">📋 Copiar código</button>
+          <div id="ref-copiado" style="font-size:12px;color:#22c55e;margin-top:6px;min-height:16px"></div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+          <div style="background:#f8f8f8;border-radius:10px;padding:16px;text-align:center">
+            <div style="font-size:11px;font-weight:700;color:#aaa;text-transform:uppercase">Amigos referidos</div>
+            <div id="ref-cant" style="font-size:28px;font-weight:900;color:#333;margin-top:4px">—</div>
+          </div>
+          <div style="background:#e6f7ee;border-radius:10px;padding:16px;text-align:center">
+            <div style="font-size:11px;font-weight:700;color:#1a7a3f;text-transform:uppercase">Crédito acumulado</div>
+            <div id="ref-credito" style="font-size:28px;font-weight:900;color:#1a7a3f;margin-top:4px">—</div>
+          </div>
+        </div>
+
+        <div>
+          <div style="font-size:13px;font-weight:700;color:#555;margin-bottom:10px">Amigos que se registraron con tu código</div>
+          <div id="ref-lista" style="font-size:13px;color:#888">Cargando...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: BENEFICIOS / FIDELIZACIÓN -->
+    <div id="tab-beneficios" class="tab-content">
+
+      <!-- SALDO DE PUNTOS -->
+      <div class="card-section" id="puntos-card" style="background:linear-gradient(135deg,#E63946,#c1121f);border-radius:12px;padding:20px;margin-bottom:16px;color:#fff;display:none">
+        <div style="font-size:12px;font-weight:700;opacity:.8;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Mis puntos Piezauto</div>
+        <div style="display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap">
+          <div>
+            <div style="font-size:48px;font-weight:900;line-height:1" id="puntos-cantidad">—</div>
+            <div style="font-size:13px;opacity:.8;margin-top:2px">puntos acumulados</div>
+          </div>
+          <div style="padding:10px 16px;background:rgba(255,255,255,.15);border-radius:10px">
+            <div style="font-size:11px;opacity:.7;margin-bottom:2px">Equivalen a</div>
+            <div style="font-size:22px;font-weight:800" id="puntos-pesos">$0</div>
+            <div style="font-size:11px;opacity:.7">de descuento en tu próxima compra</div>
+          </div>
+        </div>
+        <div style="margin-top:12px;font-size:12px;opacity:.7">Cada $100 de compra = 1 punto · 100 puntos = $500 de descuento</div>
+      </div>
+
+      <div id="beneficios-nivel-card"></div>
+      <div class="card-section">
+        <h3>Beneficios por nivel</h3>
+        <div id="beneficios-lista" class="beneficios-lista">
+          <div class="loader">Cargando...</div>
+        </div>
+      </div>
+      <div class="card-section">
+        <h3>Historial de puntos</h3>
+        <div id="beneficios-historial" class="historial-puntos">
+          <div class="loader">Cargando...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: MIS VEHÍCULOS -->
+    <div id="tab-mis-vehiculos" class="tab-content">
+      <!-- Lista de vehículos -->
+      <div class="card-section">
+        <h3>Mis autos</h3>
+        <div id="lista-vehiculos" class="vehiculos-lista"><div class="loader">Cargando...</div></div>
+      </div>
+      <!-- Form agregar vehículo -->
+      <div class="vehiculo-form-nuevo">
+        <h3>Agregar vehículo</h3>
+        <div class="vform-row">
+          <div class="form-group">
+            <label>Marca</label>
+            <select id="veh-marca" onchange="cargarModelosVehiculo()">
+              <option value="">Seleccioná una marca</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Modelo</label>
+            <select id="veh-modelo" disabled onchange="habilitarAnioVehiculo()">
+              <option value="">Primero elegí una marca</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Año</label>
+            <select id="veh-anio" disabled>
+              <option value="">Primero elegí un modelo</option>
+            </select>
+          </div>
+        </div>
+        <button onclick="guardarVehiculo()" class="btn-guardar-vehiculo">Agregar vehículo</button>
+        <div id="vehiculo-msg" style="margin-top:10px;font-size:13px;font-weight:600;min-height:20px"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script src="js/mantenimiento.js" defer></script>
+  <script src="js/notifications.js"></script>
+  <script src="js/autocomplete.js"></script>
+<script src="js/usuario.js"></script>
+
+<footer class="footer-nuevo">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-col">
+        <div class="footer-logo">Piezauto</div>
+        <p>Más de 40 años en el mercado de autopartes del AMBA. Stock real, asesoramiento honesto y precio justo.</p>
+        <div class="footer-social">
+          <a href="https://instagram.com/piezauto" target="_blank" aria-label="Instagram">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+          </a>
+          <a href="https://facebook.com/piezauto" target="_blank" aria-label="Facebook">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+          </a>
+          <a href="https://wa.me/5491143000000" target="_blank" aria-label="WhatsApp">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          </a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>Empresa</h4>
+        <ul>
+          <li><a href="nosotros.html">Nosotros</a></li>
+          <li><a href="nosotros.html">Contacto</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Comprar</h4>
+        <ul>
+          <li><a href="catalogo.html">Catálogo</a></li>
+          <li><a href="ofertas.html">Ofertas</a></li>
+          <li><a href="seguimiento.html">Seguimiento</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Talleres</h4>
+        <ul>
+          <li><a href="talleres.html">Piezauto Point</a></li>
+          <li><a href="unirse-point.html">¿Tenés un taller? Sumate</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Legal</h4>
+        <ul>
+          <li><a href="terminos.html">Términos y condiciones</a></li>
+          <li><a href="privacidad.html">Política de privacidad</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© <span class="footer-year"></span> Piezauto — Zona Oeste, Buenos Aires. Todos los derechos reservados.</p>
+      <p style="margin-top:4px">Precios en pesos argentinos con IVA incluido. Stock sujeto a disponibilidad.</p>
+    </div>
+  </div>
+</footer>
+<script>document.querySelectorAll('.footer-year').forEach(el => el.textContent = new Date().getFullYear());</script>
+<script src="js/config-topbar.js"></script>
+</body>
+</html>

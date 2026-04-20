@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /point/
+
+Sitemap: https://piezauto.com.ar/sitemap.xml

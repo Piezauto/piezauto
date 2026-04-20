@@ -1,0 +1,38 @@
+{
+  "name": "Piezauto",
+  "short_name": "Piezauto",
+  "description": "Tu tienda de autopartes online para el AMBA",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#1a1a1a",
+  "theme_color": "#E63946",
+  "orientation": "portrait-primary",
+  "lang": "es-AR",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["shopping", "automotive"],
+  "shortcuts": [
+    {
+      "name": "Catálogo",
+      "url": "/catalogo.html",
+      "description": "Ver todos los productos"
+    },
+    {
+      "name": "Mi cuenta",
+      "url": "/usuario.html",
+      "description": "Ver mi perfil y pedidos"
+    }
+  ]
+}

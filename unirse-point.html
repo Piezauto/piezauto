@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sumate a la Red Piezauto Point — Para talleres del AMBA</title>
+  <meta name="description" content="¿Tenés un taller? Sumarte a Piezauto Point es gratis. Gestioná turnos, accedé a precios especiales y aparecé en el mapa de talleres del AMBA.">
+  <meta name="robots" content="index, follow">
+  <link rel="stylesheet" href="css/estilos.css">
+  <style>
+    .point-hero {
+      background: linear-gradient(135deg, #1a1a1a 0%, #2d0a0a 60%, #1a1a1a 100%);
+      padding: 70px 24px 60px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .point-hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M20 20c0-5.5-4.5-10-10-10s-10 4.5-10 10 4.5 10 10 10 10-4.5 10-10zm10 0c0-5.5-4.5-10-10-10s-10 4.5-10 10 4.5 10 10 10 10-4.5 10-10z'/%3E%3C/g%3E%3C/svg%3E");
+    }
+    .point-hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--rojo); color: #fff; padding: 6px 18px;
+      border-radius: 20px; font-size: 13px; font-weight: 700;
+      margin-bottom: 20px; letter-spacing: .04em;
+    }
+    .point-hero h1 {
+      font-size: clamp(28px, 5vw, 48px); font-weight: 900; color: #fff;
+      line-height: 1.15; margin-bottom: 16px;
+    }
+    .point-hero h1 span { color: var(--rojo); }
+    .point-hero p { font-size: 17px; color: #bbb; max-width: 560px; margin: 0 auto 32px; line-height: 1.6; }
+    .point-hero-btns { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+
+    .beneficios-section { padding: 70px 0; background: #fff; }
+    .beneficios-section h2 { text-align: center; font-size: 28px; font-weight: 800; margin-bottom: 48px; }
+    .beneficios-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 28px; max-width: 960px; margin: 0 auto;
+    }
+    .beneficio-card {
+      background: var(--gris-claro); border-radius: 14px; padding: 28px 24px;
+      display: flex; flex-direction: column; gap: 12px;
+      border: 1.5px solid #eee;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .beneficio-card:hover { border-color: var(--rojo); box-shadow: 0 6px 24px rgba(230,57,70,.12); }
+    .beneficio-icono { font-size: 36px; }
+    .beneficio-titulo { font-size: 17px; font-weight: 700; color: #1a1a1a; }
+    .beneficio-desc   { font-size: 14px; color: #666; line-height: 1.6; }
+
+    .como-funciona-point { padding: 70px 0; background: var(--gris-claro); }
+    .como-funciona-point h2 { text-align: center; font-size: 28px; font-weight: 800; margin-bottom: 48px; }
+    .pasos-point {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 24px; max-width: 860px; margin: 0 auto;
+    }
+    .paso-point {
+      background: #fff; border-radius: 12px; padding: 24px 20px;
+      text-align: center; box-shadow: var(--sombra);
+    }
+    .paso-point-num {
+      width: 36px; height: 36px; background: var(--rojo); color: #fff;
+      border-radius: 50%; font-size: 16px; font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 14px;
+    }
+    .paso-point h3 { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+    .paso-point p  { font-size: 13px; color: #666; line-height: 1.5; }
+
+    .form-section { padding: 70px 0; background: #fff; }
+    .form-section h2 { text-align: center; font-size: 28px; font-weight: 800; margin-bottom: 8px; }
+    .form-section .subtitulo { text-align: center; color: #666; font-size: 15px; margin-bottom: 40px; }
+    .form-point {
+      max-width: 680px; margin: 0 auto;
+      background: var(--gris-claro); border-radius: 16px; padding: 36px 32px;
+      box-shadow: var(--sombra);
+    }
+    .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 16px; }
+    .form-field label { font-size: 11px; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: .05em; }
+    .form-field input,
+    .form-field select,
+    .form-field textarea {
+      padding: 11px 13px; border: 1.5px solid #ddd; border-radius: 9px;
+      font-size: 14px; outline: none; background: #fff; font-family: inherit;
+      transition: border-color .15s;
+    }
+    .form-field input:focus,
+    .form-field select:focus,
+    .form-field textarea:focus { border-color: var(--rojo); }
+
+    .especialidades-wrap {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+    }
+    .esp-check {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 13px; color: #444; cursor: pointer; padding: 6px 10px;
+      border-radius: 8px; border: 1.5px solid #e0e0e0; background: #fff;
+      transition: border-color .15s, background .15s;
+    }
+    .esp-check:hover { border-color: var(--rojo); background: #fff9f9; }
+    .esp-check input[type="checkbox"] { accent-color: var(--rojo); width: 15px; height: 15px; }
+
+    .btn-enviar-form {
+      background: var(--rojo); color: #fff; border: none; border-radius: 10px;
+      padding: 14px 32px; font-size: 15px; font-weight: 700; cursor: pointer;
+      width: 100%; margin-top: 8px; transition: background .15s;
+    }
+    .btn-enviar-form:hover { background: var(--rojo-dark); }
+    .form-msg { font-size: 14px; font-weight: 600; margin-top: 14px; text-align: center; min-height: 20px; }
+
+    .stats-strip {
+      background: var(--rojo); padding: 48px 24px;
+    }
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 24px; max-width: 800px; margin: 0 auto; text-align: center;
+    }
+    .stat-num  { font-size: 40px; font-weight: 900; color: #fff; line-height: 1; }
+    .stat-label { font-size: 14px; color: rgba(255,255,255,.75); margin-top: 4px; }
+
+    @media (max-width: 640px) {
+      .form-grid-2 { grid-template-columns: 1fr; }
+      .especialidades-wrap { grid-template-columns: 1fr; }
+      .form-point { padding: 24px 18px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="site-header-wrap">
+  <div class="topbar">
+    <span id="topbar-info">📍 Zona Oeste, AMBA &nbsp;·&nbsp; Lun–Vie 9–18hs &nbsp;·&nbsp; Sáb 9–13hs</span>
+    <div class="topbar-right">
+      <a href="tel:+541143000000" id="topbar-telefono">📞 011 4300-0000</a>
+      <a href="https://wa.me/5491143000000" target="_blank" id="topbar-whatsapp">💬 WhatsApp</a>
+    </div>
+  </div>
+  <header class="header">
+    <a href="index.html" class="header-logo">Piezauto</a>
+    <div class="header-search">
+      <input type="text" id="header-buscar" placeholder="Buscá tu autoparte..." aria-label="Buscar autopartes" onkeydown="if(event.key==='Enter'&&this.value.trim()) window.location='busqueda.html?q='+encodeURIComponent(this.value.trim())">
+      <button onclick="var q=document.getElementById('header-buscar').value.trim();if(q)window.location='busqueda.html?q='+encodeURIComponent(q)" aria-label="Buscar">🔍</button>
+    </div>
+    <nav class="header-nav" aria-label="Menú principal">
+      <a href="index.html">Inicio</a>
+      <a href="catalogo.html">Catálogo</a>
+      <a href="talleres.html" style="color:#fff">Talleres</a>
+      <a href="usuario.html">Mi cuenta</a>
+    </nav>
+    <div class="header-carrito" onclick="window.location='checkout.html'" style="cursor:pointer" role="button" aria-label="Ver carrito">
+      🛒 <span id="carrito-count">0</span>
+    </div>
+    <button class="menu-hamburguesa" onclick="document.getElementById('menu-mobile').classList.toggle('open')" aria-label="Abrir menú">
+      <span></span><span></span><span></span>
+    </button>
+    <nav class="header-nav-mobile" id="menu-mobile" aria-label="Menú móvil">
+      <a href="index.html">Inicio</a>
+      <a href="catalogo.html">Catálogo</a>
+      <a href="talleres.html">Talleres</a>
+      <a href="usuario.html">Mi cuenta</a>
+    </nav>
+  </header>
+</div>
+
+<!-- HERO -->
+<section class="point-hero">
+  <div class="point-hero-badge">🔧 Piezauto Point — Red de talleres</div>
+  <h1>Hacé crecer tu taller<br>con <span>Piezauto Point</span></h1>
+  <p>Sumate gratis a la red de talleres asociados del AMBA. Más clientes, mejores precios en repuestos y herramientas digitales para gestionar tu negocio.</p>
+  <div class="point-hero-btns">
+    <a href="#formulario" class="btn btn-rojo">✅ Quiero sumarme</a>
+    <a href="talleres.html" class="btn btn-blanco" style="background:transparent;color:#fff;border-color:#555">Ver talleres en el mapa →</a>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats-strip">
+  <div class="stats-grid">
+    <div>
+      <div class="stat-num">+40</div>
+      <div class="stat-label">Talleres asociados en el AMBA</div>
+    </div>
+    <div>
+      <div class="stat-num">+2.800</div>
+      <div class="stat-label">Clientes que nos visitan por mes</div>
+    </div>
+    <div>
+      <div class="stat-num">$0</div>
+      <div class="stat-label">Costo de inscripción</div>
+    </div>
+    <div>
+      <div class="stat-num">15%</div>
+      <div class="stat-label">Descuento promedio en repuestos</div>
+    </div>
+  </div>
+</div>
+
+<!-- BENEFICIOS -->
+<section class="beneficios-section">
+  <div class="container">
+    <h2>¿Qué obtenés al sumarte?</h2>
+    <div class="beneficios-grid">
+      <div class="beneficio-card">
+        <div class="beneficio-icono" aria-hidden="true">📅</div>
+        <div class="beneficio-titulo">Gestión de turnos digital</div>
+        <div class="beneficio-desc">Panel propio para gestionar turnos, confirmaciones y seguimiento de clientes. Sin planillas, sin papeles.</div>
+      </div>
+      <div class="beneficio-card">
+        <div class="beneficio-icono" aria-hidden="true">💰</div>
+        <div class="beneficio-titulo">Precios especiales en repuestos</div>
+        <div class="beneficio-desc">Accedé a descuentos exclusivos de hasta 15% en todo el catálogo de Piezauto. Más margen, menos costos.</div>
+      </div>
+      <div class="beneficio-card">
+        <div class="beneficio-icono" aria-hidden="true">📍</div>
+        <div class="beneficio-titulo">Visibilidad en el mapa</div>
+        <div class="beneficio-desc">Tu taller aparece en el buscador de Piezauto. Miles de clientes te encuentran cuando buscan un taller cerca.</div>
+      </div>
+      <div class="beneficio-card">
+        <div class="beneficio-icono" aria-hidden="true">📊</div>
+        <div class="beneficio-titulo">Panel de estadísticas</div>
+        <div class="beneficio-desc">Seguí cuántos clientes te contactaron, historial de presupuestos y métricas del negocio desde un solo lugar.</div>
+      </div>
+      <div class="beneficio-card">
+        <div class="beneficio-icono" aria-hidden="true">🤝</div>
+        <div class="beneficio-titulo">Red de presupuestos</div>
+        <div class="beneficio-desc">Los clientes de Piezauto pueden pedir presupuestos directamente a tu taller. Nuevos clientes sin esfuerzo.</div>
+      </div>
+      <div class="beneficio-card">
+        <div class="beneficio-icono" aria-hidden="true">📱</div>
+        <div class="beneficio-titulo">Soporte técnico incluido</div>
+        <div class="beneficio-desc">Te acompañamos en el onboarding y tenés soporte por WhatsApp. No necesitás ser técnico en computación.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CÓMO FUNCIONA -->
+<section class="como-funciona-point">
+  <div class="container">
+    <h2>¿Cómo funciona?</h2>
+    <div class="pasos-point">
+      <div class="paso-point">
+        <div class="paso-point-num" aria-hidden="true">1</div>
+        <h3>Completá el formulario</h3>
+        <p>Nos contás sobre tu taller. El proceso tarda menos de 3 minutos.</p>
+      </div>
+      <div class="paso-point">
+        <div class="paso-point-num" aria-hidden="true">2</div>
+        <h3>Te contactamos</h3>
+        <p>En 24–48 hs te llama uno de nuestros coordinadores para conocerte.</p>
+      </div>
+      <div class="paso-point">
+        <div class="paso-point-num" aria-hidden="true">3</div>
+        <h3>Activamos tu perfil</h3>
+        <p>Creamos tu ficha en el mapa y te damos acceso al panel Point.</p>
+      </div>
+      <div class="paso-point">
+        <div class="paso-point-num" aria-hidden="true">4</div>
+        <h3>Empezás a crecer</h3>
+        <p>Recibís clientes, pedidos de presupuesto y gestionás todo desde tu celular.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FORMULARIO -->
+<section class="form-section" id="formulario">
+  <div class="container">
+    <h2>Pre-registro gratuito</h2>
+    <p class="subtitulo">Completá el formulario y nos ponemos en contacto con vos en menos de 48 hs.</p>
+    <div class="form-point">
+      <div class="form-grid-2">
+        <div class="form-field">
+          <label for="f-nombre-taller">Nombre del taller *</label>
+          <input type="text" id="f-nombre-taller" placeholder="Ej: Taller El Mecánico" required>
+        </div>
+        <div class="form-field">
+          <label for="f-nombre-dueno">Tu nombre *</label>
+          <input type="text" id="f-nombre-dueno" placeholder="Nombre y apellido" required>
+        </div>
+        <div class="form-field">
+          <label for="f-telefono">Teléfono de contacto *</label>
+          <input type="tel" id="f-telefono" placeholder="+54 11 1234-5678" required>
+        </div>
+        <div class="form-field">
+          <label for="f-email">Email *</label>
+          <input type="email" id="f-email" placeholder="taller@ejemplo.com" required>
+        </div>
+        <div class="form-field">
+          <label for="f-localidad">Localidad *</label>
+          <input type="text" id="f-localidad" placeholder="Ej: Morón, Ramos Mejía..." required>
+        </div>
+        <div class="form-field">
+          <label for="f-empleados">Cantidad de mecánicos</label>
+          <select id="f-empleados">
+            <option value="">Seleccioná...</option>
+            <option value="1">Solo yo</option>
+            <option value="2">2 personas</option>
+            <option value="3-5">3 a 5 personas</option>
+            <option value="6-10">6 a 10 personas</option>
+            <option value="10+">Más de 10</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-field">
+        <label>Especialidades del taller</label>
+        <div class="especialidades-wrap" role="group" aria-label="Especialidades">
+          <label class="esp-check"><input type="checkbox" value="mecanica_general" aria-label="Mecánica general"> Mecánica general</label>
+          <label class="esp-check"><input type="checkbox" value="chapa_pintura" aria-label="Chapa y pintura"> Chapa y pintura</label>
+          <label class="esp-check"><input type="checkbox" value="electricidad" aria-label="Electricidad automotriz"> Electricidad automotriz</label>
+          <label class="esp-check"><input type="checkbox" value="gomeria" aria-label="Gomería"> Gomería</label>
+          <label class="esp-check"><input type="checkbox" value="aire_acondicionado" aria-label="Aire acondicionado"> Aire acondicionado</label>
+          <label class="esp-check"><input type="checkbox" value="transmision" aria-label="Transmisión y caja"> Transmisión y caja</label>
+          <label class="esp-check"><input type="checkbox" value="frenos" aria-label="Frenos y suspensión"> Frenos y suspensión</label>
+          <label class="esp-check"><input type="checkbox" value="computacion_automotriz" aria-label="Computación automotriz"> Computación automotriz</label>
+          <label class="esp-check"><input type="checkbox" value="alineacion_balanceo" aria-label="Alineación y balanceo"> Alineación y balanceo</label>
+          <label class="esp-check"><input type="checkbox" value="servicio_rapido" aria-label="Service y cambio de aceite"> Service rápido / aceite</label>
+        </div>
+      </div>
+
+      <div class="form-field">
+        <label for="f-mensaje">Contanos algo más sobre tu taller (opcional)</label>
+        <textarea id="f-mensaje" rows="3" placeholder="Años de experiencia, zona de cobertura, servicios especiales..."></textarea>
+      </div>
+
+      <button class="btn-enviar-form" onclick="enviarSolicitud()" id="btn-enviar">
+        ✅ Enviar solicitud — es gratis
+      </button>
+      <div class="form-msg" id="form-msg"></div>
+    </div>
+  </div>
+</section>
+
+<footer class="footer-nuevo">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-col">
+        <div class="footer-logo">Piezauto</div>
+        <p>Más de 40 años en el mercado de autopartes del AMBA.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Talleres</h4>
+        <ul>
+          <li><a href="talleres.html">Ver mapa de talleres</a></li>
+          <li><a href="unirse-point.html" style="color:var(--rojo);font-weight:700">¿Tenés un taller? Sumate</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Comprar</h4>
+        <ul>
+          <li><a href="catalogo.html">Catálogo</a></li>
+          <li><a href="ofertas.html">Ofertas</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© <span class="footer-year"></span> Piezauto — Zona Oeste, Buenos Aires. Todos los derechos reservados.</p>
+    </div>
+  </div>
+</footer>
+<script>document.querySelectorAll('.footer-year').forEach(el => el.textContent = new Date().getFullYear());</script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script src="js/notifications.js"></script>
+<script src="js/autocomplete.js"></script>
+<script src="js/whatsapp-widget.js"></script>
+<script>
+const carrito = JSON.parse(localStorage.getItem('pz_carrito') || '[]');
+document.getElementById('carrito-count').textContent = carrito.reduce((a,i) => a+i.cantidad, 0);
+
+async function enviarSolicitud() {
+  const btn = document.getElementById('btn-enviar');
+  const msg = document.getElementById('form-msg');
+
+  const nombre_taller = document.getElementById('f-nombre-taller').value.trim();
+  const nombre_dueno  = document.getElementById('f-nombre-dueno').value.trim();
+  const telefono      = document.getElementById('f-telefono').value.trim();
+  const email         = document.getElementById('f-email').value.trim().toLowerCase();
+  const localidad     = document.getElementById('f-localidad').value.trim();
+  const empleados_sel = document.getElementById('f-empleados').value;
+  const mensaje       = document.getElementById('f-mensaje').value.trim();
+
+  if (!nombre_taller || !nombre_dueno || !telefono || !email || !localidad) {
+    msg.textContent = '⚠️ Completá los campos obligatorios.';
+    msg.style.color = '#c00';
+    return;
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    msg.textContent = '⚠️ El email no es válido.';
+    msg.style.color = '#c00';
+    return;
+  }
+
+  const especialidades = Array.from(
+    document.querySelectorAll('.esp-check input[type="checkbox"]:checked')
+  ).map(cb => cb.value);
+
+  const cantidad_empleados = empleados_sel ? empleados_sel : null;
+
+  btn.disabled = true;
+  btn.textContent = 'Enviando...';
+  msg.textContent = '';
+
+  try {
+    const { error } = await db.from('solicitudes_point').insert({
+      nombre_taller,
+      nombre_dueno,
+      telefono,
+      email,
+      localidad,
+      cantidad_empleados,
+      especialidades,
+      mensaje: mensaje || null,
+    });
+
+    if (error) throw error;
+
+    msg.textContent = '✅ ¡Solicitud enviada! Te contactamos en 24–48 hs. Gracias por sumarte a Piezauto Point.';
+    msg.style.color = '#1a7a3f';
+    btn.textContent = '✓ Solicitud enviada';
+
+    // Limpiar campos
+    ['f-nombre-taller','f-nombre-dueno','f-telefono','f-email','f-localidad','f-mensaje'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+    document.getElementById('f-empleados').value = '';
+    document.querySelectorAll('.esp-check input[type="checkbox"]').forEach(cb => cb.checked = false);
+
+  } catch(e) {
+    msg.textContent = '❌ Error al enviar. Intentá de nuevo o contactanos por WhatsApp.';
+    msg.style.color = '#c00';
+    btn.disabled = false;
+    btn.textContent = '✅ Enviar solicitud — es gratis';
+  }
+}
+</script>
+<script src="js/config-topbar.js"></script>
+</body>
+</html>

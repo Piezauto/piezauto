@@ -1,0 +1,379 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nosotros — Piezauto | +40 años de trayectoria</title>
+  <meta name="description" content="Conocé la historia de Piezauto: más de 40 años en el mercado de autopartes de la Zona Oeste del AMBA. Contacto y propuesta de valor.">
+  <meta name="robots" content="index, follow">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Piezauto">
+  <meta property="og:title" content="Nosotros — Piezauto | +40 años de trayectoria">
+  <meta property="og:description" content="Conocé la historia de Piezauto: más de 40 años en el mercado de autopartes de la Zona Oeste del AMBA. Contacto y propuesta de valor.">
+  <meta property="og:image" content="https://piezauto.com.ar/img/og-default.jpg">
+  <meta property="og:url" content="https://piezauto.com.ar/nosotros.html">
+  <link rel="canonical" href="https://piezauto.com.ar/nosotros.html">
+  <link rel="stylesheet" href="css/estilos.css">
+  <style>
+    .nosotros-hero { background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%); color: #fff; padding: 80px 0; text-align: center; }
+    .nosotros-hero h1 { font-size: 36px; font-weight: 800; margin-bottom: 16px; }
+    .nosotros-hero p { font-size: 18px; color: #ccc; max-width: 600px; margin: 0 auto; }
+    .nosotros-seccion { padding: 60px 0; }
+    .nosotros-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: start; }
+    .nosotros-texto h2 { font-size: 28px; font-weight: 800; color: #1a1a1a; margin-bottom: 20px; }
+    .nosotros-texto p { color: #444; line-height: 1.7; margin-bottom: 16px; font-size: 15px; }
+    .nosotros-numeros { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .numero-card { background: #f8f8f8; border-radius: 12px; padding: 24px; text-align: center; }
+    .numero-valor { display: block; font-size: 32px; font-weight: 900; color: #E63946; }
+    .numero-label { display: block; font-size: 13px; color: #666; margin-top: 4px; }
+    .nosotros-valores { background: #f8f8f8; padding: 60px 0; }
+    .valores-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
+    .valor-card { background: #fff; border-radius: 12px; padding: 28px 20px; text-align: center; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+    .valor-icono { font-size: 36px; margin-bottom: 16px; }
+    .valor-card h3 { font-size: 16px; font-weight: 700; color: #1a1a1a; margin-bottom: 10px; }
+    .valor-card p { font-size: 14px; color: #666; line-height: 1.6; margin: 0; }
+
+    .contacto-section {
+      background: var(--gris-claro);
+      padding: 52px 0;
+    }
+    .contacto-box {
+      max-width: 640px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 12px;
+      padding: 36px;
+      box-shadow: var(--sombra);
+    }
+    .contacto-box h2 {
+      font-size: 22px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+    .contacto-box p {
+      font-size: 14px;
+      color: var(--gris-text);
+      margin-bottom: 24px;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    .form-grupo { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+    .form-grupo label { font-size: 13px; font-weight: 600; color: #444; }
+    .form-grupo input,
+    .form-grupo select,
+    .form-grupo textarea {
+      padding: 10px 13px;
+      border: 1.5px solid var(--gris);
+      border-radius: var(--radio);
+      font-size: 14px;
+      outline: none;
+      font-family: inherit;
+      transition: border-color 0.2s;
+    }
+    .form-grupo input:focus,
+    .form-grupo select:focus,
+    .form-grupo textarea:focus { border-color: var(--rojo); }
+    .form-grupo.full { grid-column: 1 / -1; }
+    .contacto-msg { text-align: center; margin-top: 14px; font-size: 14px; font-weight: 600; min-height: 20px; }
+
+    @media (max-width: 768px) {
+      .nosotros-hero h1 { font-size: 26px; }
+      .nosotros-grid { grid-template-columns: 1fr; }
+      .valores-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 480px) {
+      .valores-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 600px) {
+      .form-row { grid-template-columns: 1fr; }
+    }
+  </style>
+
+  <!-- ============================================================
+    GOOGLE ANALYTICS — Agregar antes del lanzamiento a producción
+    Reemplazá G-XXXXXXXXXX con tu Measurement ID real de GA4.
+    Instrucciones completas: analytics_setup.md
+    ============================================================
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-XXXXXXXXXX');
+  </script>
+  ============================================================ -->
+  <link rel="manifest" href="/manifest.json">
+  <script>if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');</script>
+</head>
+<body>
+
+<div class="site-header-wrap">
+  <div class="topbar">
+    <span id="topbar-info">📍 Zona Oeste, AMBA &nbsp;·&nbsp; Lun–Vie 9–18hs &nbsp;·&nbsp; Sáb 9–13hs</span>
+    <div class="topbar-right">
+      <a href="tel:+541143000000" id="topbar-telefono">📞 011 4300-0000</a>
+      <a href="https://wa.me/5491143000000" target="_blank" id="topbar-whatsapp">💬 WhatsApp</a>
+    </div>
+  </div>
+  <header class="header">
+    <a href="index.html" class="header-logo">Piezauto</a>
+    <div class="header-search">
+      <input type="text" id="header-buscar" placeholder="Buscá tu autoparte..." onkeydown="if(event.key==='Enter') buscarDesdeHeader()">
+      <button onclick="buscarDesdeHeader()">🔍</button>
+    </div>
+    <nav class="header-nav">
+      <a href="index.html">Inicio</a>
+      <a href="catalogo.html">Catálogo</a>
+      <a href="ofertas.html">Ofertas</a>
+      <a href="talleres.html">Talleres</a>
+      <a href="nosotros.html" style="color:#fff">Nosotros</a>
+      <a href="usuario.html">Mi cuenta</a>
+    </nav>
+    <div class="header-carrito" onclick="verCarrito()">
+      🛒 <span id="carrito-count">0</span>
+    </div>
+    <button class="menu-hamburguesa" onclick="toggleMenu()" aria-label="Abrir menú">
+      <span></span><span></span><span></span>
+    </button>
+    <nav class="header-nav-mobile" id="menu-mobile">
+      <a href="index.html" onclick="toggleMenu()">Inicio</a>
+      <a href="catalogo.html" onclick="toggleMenu()">Catálogo</a>
+      <a href="ofertas.html" onclick="toggleMenu()">Ofertas</a>
+      <a href="talleres.html" onclick="toggleMenu()">Talleres</a>
+      <a href="nosotros.html" onclick="toggleMenu()">Nosotros</a>
+      <a href="usuario.html" onclick="toggleMenu()">Mi cuenta</a>
+    </nav>
+  </header>
+</div>
+
+<!-- HERO -->
+<section class="nosotros-hero">
+  <div class="container">
+    <h1>Más de 40 años siendo parte del AMBA</h1>
+    <p>Desde los años 80, Piezauto lleva repuestos y autopartes a los mecánicos y conductores de la zona oeste del Gran Buenos Aires.</p>
+  </div>
+</section>
+
+<!-- HISTORIA -->
+<main>
+  <section class="nosotros-seccion">
+    <div class="container nosotros-grid">
+      <div class="nosotros-texto">
+        <h2>Nuestra historia</h2>
+        <p>Piezauto nació en los años 80 en Morón, en pleno corazón del AMBA, como un local familiar dedicado a la venta de repuestos del automóvil. En esa época, conseguir una autoparte de calidad en el oeste del Gran Buenos Aires era toda una hazaña.</p>
+        <p>Con los años, fuimos creciendo junto a nuestros clientes: mecánicos de barrio, talleres familiares y conductores que buscaban piezas confiables a buen precio. Hoy, con más de 40 años de historia, damos el salto al mundo digital sin perder la calidez del trato personal.</p>
+      </div>
+      <div class="nosotros-numeros">
+        <div class="numero-card"><span class="numero-valor">+40</span><span class="numero-label">años de experiencia</span></div>
+        <div class="numero-card"><span class="numero-valor">AMBA</span><span class="numero-label">zona de cobertura</span></div>
+        <div class="numero-card"><span class="numero-valor">Miles</span><span class="numero-label">de clientes satisfechos</span></div>
+        <div class="numero-card"><span class="numero-valor">Morón</span><span class="numero-label">nuestro origen</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="nosotros-valores">
+    <div class="container">
+      <h2 style="text-align:center;margin-bottom:40px">Por qué elegirnos</h2>
+      <div class="valores-grid">
+        <div class="valor-card">
+          <div class="valor-icono">🔧</div>
+          <h3>Experiencia real</h3>
+          <p>Cuatro décadas vendiendo repuestos nos enseñaron a conocer cada pieza, cada marca y cada necesidad de los talleres del AMBA.</p>
+        </div>
+        <div class="valor-card">
+          <div class="valor-icono">✅</div>
+          <h3>Calidad garantizada</h3>
+          <p>Trabajamos solo con marcas reconocidas: Bosch, NGK, Brembo, Gates, Mahle y más. Sin genéricos ni piezas de dudosa procedencia.</p>
+        </div>
+        <div class="valor-card">
+          <div class="valor-icono">🚚</div>
+          <h3>Envío en el AMBA</h3>
+          <p>Despachamos a toda el área metropolitana. Si estás en Morón o alrededores, también podés retirar en nuestro local.</p>
+        </div>
+        <div class="valor-card">
+          <div class="valor-icono">💬</div>
+          <h3>Atención personalizada</h3>
+          <p>Somos personas, no robots. Si tenés una duda o necesitás ayuda para encontrar la pieza correcta, estamos por WhatsApp.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- FORMULARIO DE CONTACTO -->
+<section class="contacto-section">
+  <div class="contacto-box">
+    <h2>¿Tenés alguna consulta?</h2>
+    <p>Mandanos tu mensaje y te respondemos a la brevedad. También podés escribirnos por WhatsApp.</p>
+
+    <div class="form-row">
+      <div class="form-grupo">
+        <label>Nombre *</label>
+        <input type="text" id="c-nombre" placeholder="Tu nombre">
+      </div>
+      <div class="form-grupo">
+        <label>Email *</label>
+        <input type="email" id="c-email" placeholder="tu@email.com">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-grupo">
+        <label>Teléfono</label>
+        <input type="tel" id="c-telefono" placeholder="+54 11 XXXX-XXXX">
+      </div>
+      <div class="form-grupo">
+        <label>Asunto</label>
+        <select id="c-asunto">
+          <option value="">Seleccioná un asunto</option>
+          <option value="Consulta de producto">Consulta de producto</option>
+          <option value="Estado de pedido">Estado de pedido</option>
+          <option value="Reclamo">Reclamo</option>
+          <option value="Quiero ser taller asociado">Quiero ser taller asociado</option>
+          <option value="Otro">Otro</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-grupo full" style="grid-column:1/-1">
+      <label>Mensaje *</label>
+      <textarea id="c-mensaje" rows="4" placeholder="Contanos en qué podemos ayudarte..."></textarea>
+    </div>
+
+    <button class="btn btn-rojo btn-full" onclick="enviarConsulta()" style="margin-top:4px">Enviar mensaje</button>
+    <div class="contacto-msg" id="contacto-msg"></div>
+  </div>
+</section>
+
+<footer class="footer-nuevo">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-col">
+        <div class="footer-logo">Piezauto</div>
+        <p>Más de 40 años en el mercado de autopartes del AMBA. Stock real, asesoramiento honesto y precio justo.</p>
+        <div class="footer-social">
+          <a href="https://instagram.com/piezauto" target="_blank" aria-label="Instagram">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+          </a>
+          <a href="https://facebook.com/piezauto" target="_blank" aria-label="Facebook">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+          </a>
+          <a href="https://wa.me/5491143000000" target="_blank" aria-label="WhatsApp">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          </a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>Empresa</h4>
+        <ul>
+          <li><a href="nosotros.html">Nosotros</a></li>
+          <li><a href="nosotros.html">Contacto</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Comprar</h4>
+        <ul>
+          <li><a href="catalogo.html">Catálogo</a></li>
+          <li><a href="ofertas.html">Ofertas</a></li>
+          <li><a href="seguimiento.html">Seguimiento</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Talleres</h4>
+        <ul>
+          <li><a href="talleres.html">Piezauto Point</a></li>
+          <li><a href="unirse-point.html">¿Tenés un taller? Sumate</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Legal</h4>
+        <ul>
+          <li><a href="terminos.html">Términos y condiciones</a></li>
+          <li><a href="privacidad.html">Política de privacidad</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© <span class="footer-year"></span> Piezauto — Zona Oeste, Buenos Aires. Todos los derechos reservados.</p>
+      <p style="margin-top:4px">Precios en pesos argentinos con IVA incluido. Stock sujeto a disponibilidad.</p>
+    </div>
+  </div>
+</footer>
+<script>document.querySelectorAll('.footer-year').forEach(el => el.textContent = new Date().getFullYear());</script>
+
+<script src="js/whatsapp-widget.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+  <script src="js/notifications.js"></script>
+  <script src="js/autocomplete.js"></script>
+<script>
+
+let carrito = JSON.parse(localStorage.getItem('pz_carrito') || '[]');
+document.getElementById('carrito-count').textContent = carrito.reduce((a, i) => a + i.cantidad, 0);
+function verCarrito() {
+  if (!carrito.length) { alert('Tu carrito está vacío.'); return; }
+  let msg = '🛒 Tu carrito:\n\n', total = 0;
+  carrito.forEach(i => {
+    msg += `• ${i.nombre} x${i.cantidad} = $${(i.precio * i.cantidad).toLocaleString('es-AR')}\n`;
+    total += i.precio * i.cantidad;
+  });
+  alert(msg + `\nTOTAL: $${total.toLocaleString('es-AR')}`);
+}
+
+function buscarDesdeHeader() {
+  const q = document.getElementById('header-buscar').value.trim();
+  if (q) window.location.href = 'busqueda.html?q=' + encodeURIComponent(q);
+}
+function toggleMenu() {
+  document.getElementById('menu-mobile').classList.toggle('open');
+}
+
+async function enviarConsulta() {
+  const nombre  = document.getElementById('c-nombre').value.trim();
+  const email   = document.getElementById('c-email').value.trim();
+  const tel     = document.getElementById('c-telefono').value.trim();
+  const asunto  = document.getElementById('c-asunto').value;
+  const mensaje = document.getElementById('c-mensaje').value.trim();
+  const msgEl   = document.getElementById('contacto-msg');
+
+  if (!nombre || !email || !mensaje) {
+    msgEl.style.color = 'var(--rojo)';
+    msgEl.textContent = 'Completá nombre, email y mensaje.';
+    return;
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    msgEl.style.color = 'var(--rojo)';
+    msgEl.textContent = 'El email no parece válido.';
+    return;
+  }
+
+  msgEl.style.color = '#888';
+  msgEl.textContent = 'Enviando...';
+
+  const row = { nombre, email, mensaje };
+  if (tel)    row.telefono = tel;
+  if (asunto) row.asunto   = asunto;
+
+  const { error } = await db.from('consultas').insert(row);
+
+  if (error) {
+    msgEl.style.color = 'var(--rojo)';
+    msgEl.textContent = 'Hubo un error. Intentá de nuevo o escribinos por WhatsApp.';
+    return;
+  }
+
+  msgEl.style.color = '#22c55e';
+  msgEl.textContent = '✓ Mensaje enviado. Te respondemos a la brevedad, gracias!';
+  ['c-nombre','c-email','c-telefono','c-mensaje'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('c-asunto').value = '';
+}
+
+</script>
+<script src="js/config-topbar.js"></script>
+</body>
+</html>

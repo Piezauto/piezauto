@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Página no encontrada — Piezauto</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="stylesheet" href="css/estilos.css">
+  <style>
+    .error-hero {
+      min-height: 72vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 60px 24px 40px;
+    }
+    .error-icono { font-size: 72px; margin-bottom: 20px; animation: wobble 2.5s ease-in-out infinite; }
+    @keyframes wobble {
+      0%,100% { transform: rotate(-4deg); }
+      50%      { transform: rotate(4deg); }
+    }
+    .error-codigo {
+      font-size: 96px; font-weight: 900; color: var(--rojo);
+      line-height: 1; letter-spacing: -4px; margin-bottom: 12px;
+    }
+    .error-titulo { font-size: 22px; font-weight: 700; color: #1a1a1a; margin-bottom: 10px; }
+    .error-desc   { font-size: 15px; color: #666; max-width: 440px; margin: 0 auto 30px; line-height: 1.6; }
+    .error-btns   { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-bottom: 48px; }
+    .error-sugerencias h2 {
+      font-size: 17px; font-weight: 700; color: #1a1a1a;
+      margin-bottom: 20px; text-align: center;
+    }
+    .grilla-404 {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+      max-width: 960px;
+      margin: 0 auto 60px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="site-header-wrap">
+  <div class="topbar">
+    <span>📍 Zona Oeste, AMBA &nbsp;·&nbsp; Lun–Vie 9–18hs &nbsp;·&nbsp; Sáb 9–13hs</span>
+    <div class="topbar-right">
+      <a href="tel:+541143000000">📞 011 4300-0000</a>
+    </div>
+  </div>
+  <header class="header">
+    <a href="index.html" class="header-logo">Piezauto</a>
+    <div class="header-search">
+      <input type="text" placeholder="Buscá tu autoparte..." onkeydown="if(event.key==='Enter'&&this.value.trim()) window.location='busqueda.html?q='+encodeURIComponent(this.value.trim())" aria-label="Buscar autopartes">
+      <button onclick="var q=this.previousElementSibling.value.trim();if(q)window.location='busqueda.html?q='+encodeURIComponent(q)" aria-label="Buscar">🔍</button>
+    </div>
+    <nav class="header-nav" aria-label="Menú principal">
+      <a href="index.html">Inicio</a>
+      <a href="catalogo.html">Catálogo</a>
+      <a href="ofertas.html">Ofertas</a>
+      <a href="talleres.html">Talleres</a>
+    </nav>
+    <div class="header-carrito" onclick="window.location='checkout.html'" style="cursor:pointer" role="button" aria-label="Ver carrito">
+      🛒 <span id="carrito-count">0</span>
+    </div>
+  </header>
+</div>
+
+<main class="container">
+  <div class="error-hero">
+    <div class="error-icono" aria-hidden="true">🔧</div>
+    <div class="error-codigo" aria-label="Error 404">404</div>
+    <h1 class="error-titulo">Esta página se fue a cambiar el aceite</h1>
+    <p class="error-desc">
+      La página que buscás no existe, fue movida o está en mantenimiento.
+      Pero tranqui — tenemos miles de autopartes que sí funcionan perfectamente.
+    </p>
+    <div class="error-btns">
+      <a href="index.html" class="btn btn-rojo">🏠 Ir al inicio</a>
+      <a href="catalogo.html" class="btn btn-blanco">📦 Ver catálogo</a>
+      <a href="nosotros.html" class="btn btn-blanco">📞 Contactar soporte</a>
+    </div>
+  </div>
+
+  <section class="error-sugerencias">
+    <h2>Mientras tanto, mirá estos productos</h2>
+    <div class="grilla-404" id="grilla-404">
+      <div class="loader" style="grid-column:1/-1;text-align:center;padding:40px">Cargando sugerencias...</div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer-nuevo">
+  <div class="container">
+    <div class="footer-bottom">
+      <p>© <span class="footer-year"></span> Piezauto — Zona Oeste, Buenos Aires. Todos los derechos reservados.</p>
+    </div>
+  </div>
+</footer>
+<script>document.querySelectorAll('.footer-year').forEach(el => el.textContent = new Date().getFullYear());</script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script src="js/whatsapp-widget.js"></script>
+<script>
+const carrito = JSON.parse(localStorage.getItem('pz_carrito') || '[]');
+document.getElementById('carrito-count').textContent = carrito.reduce((a,i) => a+i.cantidad, 0);
+
+async function cargarSugerencias() {
+  const grilla = document.getElementById('grilla-404');
+  try {
+    // Traer 4 productos al azar pidiendo más y tomando los primeros 4
+    const { data } = await db.from('productos')
+      .select('id, nombre, precio, precio_oferta, imagenes, categoria_id')
+      .eq('activo', true)
+      .gt('stock', 0)
+      .limit(40);
+
+    if (!data?.length) { grilla.innerHTML = ''; return; }
+
+    const aleatorios = data.sort(() => Math.random() - 0.5).slice(0, 4);
+
+    grilla.innerHTML = aleatorios.map(p => {
+      const precio = p.precio_oferta || p.precio;
+      const img = p.imagenes?.[0];
+      return `
+        <div class="prod-card" onclick="window.location='producto.html?id=${p.id}'" style="cursor:pointer">
+          <div style="position:relative">
+            ${img
+              ? `<img class="prod-card-img" src="${img}" alt="${p.nombre}" loading="lazy">`
+              : `<div class="prod-card-placeholder">🔩</div>`}
+          </div>
+          <div class="prod-card-body">
+            <div class="prod-card-nombre">${p.nombre}</div>
+            <div class="prod-card-precio">$${Number(precio).toLocaleString('es-AR')}</div>
+            <button class="prod-card-btn" onclick="event.stopPropagation(); agregarAlCarrito({id:'${p.id}',nombre:'${p.nombre.replace(/'/g,"\\'")}',precio:${precio}})">🛒 Agregar</button>
+          </div>
+        </div>`;
+    }).join('');
+  } catch(e) {
+    grilla.innerHTML = '';
+  }
+}
+
+function agregarAlCarrito(producto) {
+  let carrito = JSON.parse(localStorage.getItem('pz_carrito') || '[]');
+  const existe = carrito.find(i => i.id === producto.id);
+  if (existe) { existe.cantidad++; } else { carrito.push({ ...producto, cantidad: 1 }); }
+  localStorage.setItem('pz_carrito', JSON.stringify(carrito));
+  document.getElementById('carrito-count').textContent = carrito.reduce((a,i) => a+i.cantidad, 0);
+  alert('✅ "' + producto.nombre + '" agregado al carrito');
+}
+
+cargarSugerencias();
+</script>
+</body>
+</html>

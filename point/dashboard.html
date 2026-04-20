@@ -1,0 +1,1452 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mi panel — Piezauto Point</title>
+  <link rel="stylesheet" href="../css/estilos.css">
+  <style>
+    body { background: #f0f0f0; }
+    .point-wrap { display: grid; grid-template-columns: 230px 1fr; min-height: 100vh; }
+
+    /* SIDEBAR */
+    .point-sidebar {
+      background: var(--negro);
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+    }
+    .sidebar-header {
+      padding: 20px;
+      border-bottom: 1px solid #222;
+    }
+    .sidebar-logo {
+      font-size: 17px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #E63946 0%, #ff6b6b 50%, #c1121f 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .sidebar-taller-nombre {
+      font-size: 13px;
+      color: #aaa;
+      margin-top: 6px;
+      font-weight: 500;
+    }
+    .sidebar-nav { padding: 12px 0; flex: 1; }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 20px;
+      color: #888;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      border-left: 3px solid transparent;
+      transition: all 0.15s;
+    }
+    .nav-item:hover, .nav-item.activo {
+      background: #1a1a1a;
+      color: #fff;
+      border-left-color: var(--rojo);
+    }
+    .nav-item .nav-icono { font-size: 16px; width: 20px; text-align: center; }
+    .sidebar-badge {
+      background: var(--rojo); color: #fff;
+      border-radius: 50%; min-width: 18px; height: 18px;
+      font-size: 11px; font-weight: 700;
+      display: inline-flex; align-items: center; justify-content: center;
+      margin-left: auto; padding: 0 4px;
+    }
+    .sidebar-footer {
+      padding: 16px 20px;
+      border-top: 1px solid #222;
+    }
+    .btn-salir {
+      width: 100%;
+      padding: 9px;
+      background: transparent;
+      color: #666;
+      border: 1px solid #333;
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-salir:hover { background: #1a1a1a; color: #fff; }
+
+    /* CONTENIDO */
+    .point-content { padding: 28px; overflow-y: auto; }
+    .panel { display: none; }
+    .panel.activo { display: block; }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    .page-titulo { font-size: 20px; font-weight: 800; }
+    .page-sub { font-size: 13px; color: #888; margin-top: 3px; }
+
+    /* CARDS STATS */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 18px;
+      box-shadow: var(--sombra);
+      text-align: center;
+    }
+    .stat-num { font-size: 32px; font-weight: 900; color: var(--rojo); }
+    .stat-label { font-size: 12px; color: #888; margin-top: 4px; }
+
+    /* CARD GENERAL */
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: var(--sombra);
+      margin-bottom: 18px;
+    }
+    .card h3 {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    /* TABLA */
+    .tabla { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .tabla th {
+      text-align: left;
+      padding: 9px 12px;
+      background: #f8f8f8;
+      font-size: 11px;
+      font-weight: 700;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .tabla td { padding: 11px 12px; border-bottom: 1px solid #f5f5f5; vertical-align: middle; }
+    .tabla tr:last-child td { border-bottom: none; }
+
+    /* BADGES ESTADO TURNO */
+    .badge {
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      display: inline-block;
+    }
+    .badge-pendiente  { background: #fff8e0; color: #9a6f00; }
+    .badge-confirmado { background: #e6f7ee; color: #1a7a3f; }
+    .badge-cancelado  { background: #fce8e8; color: #c00; }
+    .badge-completado { background: #e8f0fe; color: #1a56c4; }
+
+    /* FORM */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    .form-group label { font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.04em; }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      padding: 9px 12px;
+      border: 1.5px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+      background: #fff;
+      transition: border-color 0.15s;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus { border-color: var(--rojo); }
+    .form-group.full { grid-column: 1 / -1; }
+
+    /* PERFIL */
+    .perfil-avatar {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: var(--rojo);
+      color: #fff;
+      font-size: 28px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+
+    /* PRESUPUESTOS */
+    .presup-card {
+      border: 1px solid #eee;
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .presup-titulo { font-size: 14px; font-weight: 700; }
+    .presup-info { font-size: 12px; color: #888; margin-top: 3px; }
+
+    /* SERVICIOS */
+    .servicio-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #f5f5f5;
+    }
+    .servicio-row:last-child { border-bottom: none; }
+
+    /* NOTIFICACIONES */
+    .notif-bell-wrap {
+      position: relative;
+      display: inline-block;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    .notif-bell-btn {
+      background: #222;
+      border: 1px solid #333;
+      border-radius: 8px;
+      color: #aaa;
+      font-size: 18px;
+      padding: 6px 10px;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .notif-bell-btn:hover { background: #2a2a2a; color: #fff; }
+    .notif-badge {
+      display: none;
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      background: var(--rojo);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 800;
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      align-items: center;
+      justify-content: center;
+    }
+    .notif-badge.visible { display: flex; }
+    .notif-panel {
+      display: none;
+      position: fixed;
+      top: 0; right: 0; bottom: 0;
+      width: 320px;
+      background: #fff;
+      box-shadow: -4px 0 24px rgba(0,0,0,0.15);
+      z-index: 500;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .notif-panel.visible { display: flex; }
+    .notif-panel-header {
+      padding: 20px;
+      border-bottom: 1px solid #f0f0f0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--negro);
+      color: #fff;
+    }
+    .notif-panel-header h3 { font-size: 15px; font-weight: 700; }
+    .notif-cerrar {
+      background: rgba(255,255,255,0.1);
+      border: none;
+      border-radius: 6px;
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      padding: 4px 8px;
+    }
+    .notif-lista { flex: 1; overflow-y: auto; padding: 12px; }
+    .notif-item {
+      display: flex;
+      gap: 12px;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      background: #f8f8f8;
+      border-left: 3px solid #ddd;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .notif-item:hover { background: #f0f0f0; }
+    .notif-item.nueva { background: #fff8e0; border-left-color: #f4a427; }
+    .notif-item.presup { background: #e8f0fe; border-left-color: #1a56c4; }
+    .notif-icono { font-size: 20px; flex-shrink: 0; }
+    .notif-texto { font-size: 13px; font-weight: 600; }
+    .notif-sub   { font-size: 11px; color: #888; margin-top: 2px; }
+    .notif-marcar {
+      padding: 10px 16px;
+      border-top: 1px solid #f0f0f0;
+    }
+    .notif-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.3);
+      z-index: 499;
+    }
+    .notif-overlay.visible { display: block; }
+
+    /* AGENDA SEMANAL */
+    .agenda-wrap { overflow-x: auto; }
+    .agenda-grid {
+      display: grid;
+      min-width: 700px;
+      border: 1px solid #eee;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .agenda-header-row {
+      display: grid;
+      grid-template-columns: 60px repeat(7, 1fr);
+      background: var(--negro);
+      color: #fff;
+    }
+    .agenda-header-cell {
+      padding: 10px 6px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 700;
+      border-right: 1px solid #333;
+    }
+    .agenda-hour-row {
+      display: grid;
+      grid-template-columns: 60px repeat(7, 1fr);
+      border-bottom: 1px solid #f0f0f0;
+      min-height: 44px;
+    }
+    .agenda-hour-label {
+      font-size: 11px;
+      color: #aaa;
+      padding: 4px 8px;
+      border-right: 1px solid #eee;
+      display: flex;
+      align-items: center;
+    }
+    .agenda-cell {
+      border-right: 1px solid #f0f0f0;
+      padding: 2px;
+      position: relative;
+      cursor: pointer;
+    }
+    .agenda-cell:hover { background: #fafafa; }
+    .agenda-turno-bloque {
+      border-radius: 4px;
+      padding: 3px 6px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      margin-bottom: 2px;
+    }
+
+    @keyframes slideInNotif { from { transform:translateX(120%); opacity:0; } to { transform:translateX(0); opacity:1; } }
+
+    /* INGRESOS */
+    .ingreso-comparativa {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 6px;
+      font-size: 11px;
+    }
+    .ingreso-up   { color: #1a7a3f; font-weight: 700; }
+    .ingreso-down { color: #c00;    font-weight: 700; }
+    .ingreso-igual { color: #888;   font-weight: 600; }
+
+    @media (max-width: 700px) {
+      .point-wrap { grid-template-columns: 1fr; }
+      .point-sidebar { display: none; }
+      .form-grid { grid-template-columns: 1fr; }
+    }
+
+    /* PERFIL — LAYOUT DOS COLUMNAS */
+    .dia-chk-label { display:flex;align-items:center;gap:4px;font-size:13px;padding:5px 10px;border:1.5px solid #ddd;border-radius:20px;cursor:pointer;user-select:none;transition:border-color 0.15s }
+    .dia-chk-label:has(input:checked) { border-color:var(--rojo);background:#fff0f0;color:var(--rojo);font-weight:600 }
+    .perfil-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: start; }
+    @media (max-width: 900px) { .perfil-layout { grid-template-columns: 1fr; } }
+    .perfil-preview-col { position: sticky; top: 24px; }
+    .preview-label { font-size: 12px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 14px; }
+    .taller-card-preview { background: #fff; border-radius: 14px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.12); }
+    .tp-header { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
+    .tp-logo { width: 52px; height: 52px; border-radius: 50%; background: linear-gradient(135deg, #E63946, #c1121f); color: #fff; font-size: 22px; font-weight: 900; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .tp-nombre { font-size: 16px; font-weight: 700; color: #1a1a1a; margin-bottom: 2px; }
+    .tp-ubicacion { font-size: 12px; color: #888; }
+    .tp-desc { font-size: 13px; color: #555; line-height: 1.6; margin-bottom: 12px; }
+    .tp-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; min-height: 24px; }
+    .tp-tag { font-size: 11px; padding: 3px 10px; border-radius: 20px; background: #f0f0f0; color: #555; }
+    .tp-footer { display: flex; align-items: center; justify-content: space-between; padding-top: 12px; border-top: 1px solid #f0f0f0; font-size: 13px; color: #444; }
+    .tp-badge { font-size: 11px; background: #e8f5e9; color: #2e7d32; padding: 3px 10px; border-radius: 20px; font-weight: 600; }
+    .preview-note { font-size: 11px; color: #aaa; text-align: center; margin-top: 10px; }
+
+    /* MENSAJERÍA */
+    .chat-wrap { display: flex; flex-direction: column; height: calc(100vh - 220px); min-height: 400px; }
+    .chat-mensajes { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; background: #f8f8f8; border-radius: 12px; margin-bottom: 16px; }
+    .chat-loading { text-align: center; color: #aaa; font-size: 13px; padding: 40px; }
+    .chat-burbuja { max-width: 75%; padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.5; }
+    .chat-burbuja.enviado { background: #E63946; color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
+    .chat-burbuja.recibido { background: #fff; color: #1a1a1a; align-self: flex-start; border-bottom-left-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    .chat-burbuja-wrap { display: flex; flex-direction: column; gap: 3px; }
+    .chat-burbuja-wrap.enviado { align-items: flex-end; }
+    .chat-burbuja-wrap.recibido { align-items: flex-start; }
+    .chat-hora { font-size: 10px; color: #aaa; padding: 0 4px; }
+    .chat-sin-mensajes { text-align: center; color: #aaa; font-size: 13px; padding: 40px 20px; }
+    .chat-input-wrap { display: flex; gap: 10px; align-items: flex-end; }
+    .chat-textarea { flex: 1; padding: 12px 14px; border: 1.5px solid #ddd; border-radius: 10px; font-size: 14px; resize: none; font-family: inherit; transition: border-color 0.15s; }
+    .chat-textarea:focus { outline: none; border-color: #E63946; }
+    .btn-enviar-msg { background: #E63946; color: #fff; border: none; border-radius: 10px; padding: 12px 18px; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap; transition: background 0.15s; }
+    .btn-enviar-msg:hover { background: #c1121f; }
+
+    /* SERVICIOS — BOTONES Y DRAG */
+    .btn-icon-servicio { background: none; border: 1px solid #ddd; border-radius: 6px; width: 30px; height: 30px; cursor: pointer; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s; }
+    .btn-duplicar:hover { background: #e0f2fe; border-color: #0369a1; color: #0369a1; }
+    .btn-destacar { color: #ccc; }
+    .btn-destacar.activo { color: #f59e0b; border-color: #f59e0b; background: #fffbeb; }
+    .btn-destacar:hover { color: #f59e0b; border-color: #f59e0b; }
+    .drag-handle { cursor: grab; color: #ccc; font-size: 18px; padding: 0 6px; user-select: none; }
+    .drag-handle:active { cursor: grabbing; }
+    .servicio-destacado-badge { font-size: 10px; font-weight: 700; background: #fffbeb; color: #92400e; border: 1px solid #fcd34d; padding: 1px 6px; border-radius: 10px; margin-left: 6px; }
+
+    /* CATÁLOGO PIEZAUTO */
+    .catalogo-pz-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .catalogo-pz-item:last-child { border-bottom: none; }
+    .catalogo-pz-img {
+      width: 60px; height: 60px;
+      object-fit: contain;
+      border-radius: 8px;
+      background: #f8f8f8;
+      flex-shrink: 0;
+      padding: 4px;
+    }
+    .catalogo-pz-img-placeholder {
+      width: 60px; height: 60px;
+      background: #f0f0f0;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; flex-shrink: 0;
+    }
+    .catalogo-pz-info { flex: 1; min-width: 0; }
+    .catalogo-pz-nombre { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .catalogo-pz-codigo { font-size: 12px; color: #aaa; margin-top: 2px; }
+    .catalogo-pz-precio { font-size: 16px; font-weight: 800; color: var(--rojo); margin-top: 4px; }
+    .catalogo-pz-btn {
+      background: #25d366; color: #fff; border: none;
+      border-radius: 8px; padding: 8px 14px; font-size: 12px;
+      font-weight: 700; cursor: pointer; flex-shrink: 0;
+      transition: opacity .15s;
+    }
+    .catalogo-pz-btn:hover { opacity: .85; }
+
+    /* CLIENTES FRECUENTES */
+    .frecuente-card {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: var(--sombra);
+      margin-bottom: 14px;
+      overflow: hidden;
+    }
+    .frecuente-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px; cursor: pointer; gap: 12px;
+      border-bottom: 1px solid transparent; transition: background .15s;
+    }
+    .frecuente-header:hover { background: #fafafa; }
+    .frecuente-header.abierto { border-bottom-color: #f0f0f0; }
+    .frecuente-avatar {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: var(--rojo); color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; font-weight: 800; flex-shrink: 0;
+    }
+    .frecuente-info { flex: 1; min-width: 0; }
+    .frecuente-nombre { font-size: 15px; font-weight: 700; }
+    .frecuente-tel { font-size: 12px; color: #aaa; margin-top: 2px; }
+    .frecuente-visitas {
+      background: #e8f0fe; color: #1a56c4;
+      padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 700;
+      white-space: nowrap; flex-shrink: 0;
+    }
+    .frecuente-acciones { display: flex; gap: 8px; flex-shrink: 0; }
+    .frecuente-historial { display: none; padding: 12px 20px 16px; }
+    .frecuente-historial.abierto { display: block; }
+    .frecuente-turno-row {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 8px 0; border-bottom: 1px solid #f5f5f5; font-size: 13px;
+    }
+    .frecuente-turno-row:last-child { border-bottom: none; }
+    .frecuente-turno-fecha { color: #888; white-space: nowrap; flex-shrink: 0; font-size: 12px; }
+    .frecuente-turno-servicio { flex: 1; }
+    .frecuente-oferta-btn {
+      background: #25d366; color: #fff; border: none; border-radius: 8px;
+      padding: 8px 14px; font-size: 12px; font-weight: 700; cursor: pointer;
+      transition: opacity .15s; white-space: nowrap; flex-shrink: 0;
+    }
+    .frecuente-oferta-btn:hover { opacity: .85; }
+
+    /* ── MOBILE BOTTOM NAV ── */
+    .bottom-nav {
+      display: none;
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: #1a1a1a;
+      border-top: 1px solid #2a2a2a;
+      z-index: 200;
+      padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    }
+    .bottom-nav-inner {
+      display: flex;
+      align-items: stretch;
+    }
+    .bn-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 4px 8px;
+      cursor: pointer;
+      color: #555;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      border: none;
+      background: none;
+      transition: color 0.15s;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      position: relative;
+    }
+    .bn-item .bn-icon { font-size: 22px; margin-bottom: 3px; }
+    .bn-item.activo { color: var(--rojo); }
+    .bn-badge {
+      position: absolute;
+      top: 6px;
+      right: calc(50% - 18px);
+      background: var(--rojo);
+      color: #fff;
+      font-size: 9px;
+      font-weight: 800;
+      border-radius: 50%;
+      min-width: 16px;
+      height: 16px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 0 3px;
+    }
+    .bn-badge.visible { display: flex; }
+
+    /* Pull-to-refresh indicator */
+    #ptr-indicator {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #E63946, #ff6b6b);
+      z-index: 9999;
+      animation: ptr-slide 1s infinite linear;
+    }
+    @keyframes ptr-slide {
+      0%   { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    @media (max-width: 700px) {
+      .point-wrap { grid-template-columns: 1fr !important; }
+      .point-sidebar { display: none !important; }
+      .point-content { padding: 16px 14px 80px; }
+      .bottom-nav { display: block; }
+    }
+  </style>
+
+  <!-- ============================================================
+    GOOGLE ANALYTICS — Agregar antes del lanzamiento a producción
+    Reemplazá G-XXXXXXXXXX con tu Measurement ID real de GA4.
+    Instrucciones completas: analytics_setup.md
+    ============================================================
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-XXXXXXXXXX');
+  </script>
+  ============================================================ -->
+</head>
+<body>
+
+<div class="point-wrap">
+
+  <!-- SIDEBAR -->
+  <aside class="point-sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">Piezauto Point</div>
+      <div class="sidebar-taller-nombre" id="sidebar-nombre">Cargando...</div>
+      <div class="notif-bell-wrap" onclick="abrirNotificaciones()">
+        <button class="notif-bell-btn">🔔 <span id="notif-label" style="font-size:12px;font-weight:600">Alertas</span></button>
+        <span class="notif-badge" id="notif-badge">0</span>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-item activo" onclick="verPanel('dashboard')" id="nav-dashboard">
+        <span class="nav-icono">📊</span> Dashboard
+      </div>
+      <div class="nav-item" onclick="verPanel('calendario')" id="nav-calendario">
+        <span class="nav-icono">🗓️</span> Calendario
+      </div>
+      <div class="nav-item" onclick="verPanel('turnos')" id="nav-turnos">
+        <span class="nav-icono">📅</span> Turnos
+        <span id="badge-turnos" class="sidebar-badge" style="display:none">0</span>
+      </div>
+      <div class="nav-item" onclick="verPanel('nuevo-turno')" id="nav-nuevo-turno">
+        <span class="nav-icono">➕</span> Nuevo turno
+      </div>
+      <div class="nav-item" onclick="verPanel('presupuestos')" id="nav-presupuestos">
+        <span class="nav-icono">📋</span> Presupuestos
+        <span id="badge-presupuestos" class="sidebar-badge" style="display:none">0</span>
+      </div>
+      <div class="nav-item" onclick="verPanel('estadisticas')" id="nav-estadisticas">
+        <span class="nav-icono">📊</span> Estadísticas
+      </div>
+      <div class="nav-item" onclick="verPanel('servicios')" id="nav-servicios">
+        <span class="nav-icono">🔧</span> Mis servicios
+      </div>
+      <div class="nav-item" onclick="verPanel('catalogo-piezauto')" id="nav-catalogo-piezauto">
+        <span class="nav-icono">🛒</span> Productos Piezauto
+      </div>
+      <div class="nav-item" onclick="verPanel('perfil')" id="nav-perfil">
+        <span class="nav-icono">🏪</span> Perfil del taller
+      </div>
+      <div class="nav-item" onclick="verPanel('clientes')" id="nav-clientes">
+        <span class="nav-icono">👥</span> Mis clientes
+      </div>
+      <div class="nav-item" onclick="verPanel('clientes-frecuentes')" id="nav-clientes-frecuentes">
+        <span class="nav-icono">⭐</span> Clientes frecuentes
+        <span id="badge-frecuentes" class="sidebar-badge" style="display:none">0</span>
+      </div>
+      <div class="nav-item" onclick="verPanel('mensajes')" id="nav-mensajes">
+        <span>💬</span> Mensajes
+        <span class="sidebar-badge" id="badge-mensajes" style="display:none">0</span>
+      </div>
+      <div class="nav-item" onclick="verPanel('finanzas')" id="nav-finanzas">
+        <span class="nav-icono">💰</span> Finanzas
+      </div>
+      <div class="nav-item" onclick="verPanel('repuestos')" id="nav-repuestos">
+        <span class="nav-icono">📦</span> Mis repuestos
+        <span id="badge-repuestos-bajo" class="sidebar-badge" style="display:none">!</span>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="btn-salir" onclick="cerrarSesion()">Cerrar sesión</button>
+    </div>
+  </aside>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <main class="point-content">
+
+    <!-- DASHBOARD -->
+    <div id="panel-dashboard" class="panel activo">
+      <div class="page-header">
+        <div>
+          <div class="page-titulo">Bienvenido 👋</div>
+          <div class="page-sub" id="dash-fecha"></div>
+        </div>
+        <button class="btn btn-rojo" onclick="verPanel('nuevo-turno')">+ Nuevo turno</button>
+      </div>
+
+      <!-- Stats de turnos -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-num" id="stat-hoy">—</div>
+          <div class="stat-label">Turnos hoy</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="stat-semana">—</div>
+          <div class="stat-label">Esta semana</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="stat-pendientes">—</div>
+          <div class="stat-label">Pendientes</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="stat-presup">—</div>
+          <div class="stat-label">Presupuestos</div>
+        </div>
+      </div>
+
+      <!-- Stats de ingresos -->
+      <div class="stats-row" style="margin-top:-8px">
+        <div class="stat-card" style="text-align:left">
+          <div style="font-size:11px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">Ingresos este mes</div>
+          <div class="stat-num" id="stat-ingresos-mes" style="font-size:26px">—</div>
+          <div class="ingreso-comparativa">
+            <span id="stat-ingresos-flecha"></span>
+            <span id="stat-ingresos-vs" style="color:#888;font-size:11px">vs. mes anterior</span>
+          </div>
+        </div>
+        <div class="stat-card" style="text-align:left">
+          <div style="font-size:11px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">Servicios completados</div>
+          <div class="stat-num" id="stat-completados-mes" style="font-size:26px">—</div>
+          <div style="font-size:11px;color:#888;margin-top:6px" id="stat-completados-label">este mes</div>
+        </div>
+        <div class="stat-card" style="text-align:left">
+          <div style="font-size:11px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">Promedio por servicio</div>
+          <div class="stat-num" id="stat-promedio-servicio" style="font-size:26px">—</div>
+          <div style="font-size:11px;color:#888;margin-top:6px">ingreso estimado</div>
+        </div>
+      </div>
+
+      <!-- Notificaciones recientes -->
+      <div class="card" id="dash-notif-card" style="display:none">
+        <h3 style="display:flex;align-items:center;gap:10px">
+          🔔 Novedades
+          <span id="dash-notif-count" style="background:var(--rojo);color:#fff;font-size:11px;font-weight:800;border-radius:20px;padding:2px 10px">0</span>
+        </h3>
+        <div id="dash-notif-lista"></div>
+      </div>
+
+      <div class="card">
+        <h3>Turnos de hoy</h3>
+        <div id="turnos-hoy-lista"><div class="loader">Cargando...</div></div>
+      </div>
+
+      <div class="card">
+        <h3>Próximos turnos</h3>
+        <div id="proximos-lista"><div class="loader">Cargando...</div></div>
+      </div>
+    </div>
+
+    <!-- AGENDA SEMANAL -->
+    <div id="panel-calendario" class="panel">
+      <div class="page-header">
+        <div>
+          <div class="page-titulo">Agenda semanal</div>
+          <div class="page-sub" id="agenda-rango"></div>
+        </div>
+        <button class="btn btn-rojo" onclick="verPanel('nuevo-turno')">+ Nuevo turno</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+        <button class="btn btn-blanco" onclick="navegarAgenda(-1)">← Semana anterior</button>
+        <button class="btn btn-blanco" onclick="navegarAgenda(0, true)">Hoy</button>
+        <button class="btn btn-blanco" onclick="navegarAgenda(1)">Semana siguiente →</button>
+      </div>
+      <div id="agenda-contenido"><div class="loader">Cargando agenda...</div></div>
+    </div>
+
+    <!-- TODOS LOS TURNOS -->
+    <div id="panel-turnos" class="panel">
+      <div class="page-header">
+        <div>
+          <div class="page-titulo">Gestión de turnos</div>
+          <div class="page-sub">Todos los turnos registrados</div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <select id="filtro-estado-turno" onchange="cargarTurnos()" style="padding:8px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;outline:none">
+            <option value="">Todos</option>
+            <option value="pendiente">Pendientes</option>
+            <option value="confirmado">Confirmados</option>
+            <option value="completado">Completados</option>
+            <option value="cancelado">Cancelados</option>
+          </select>
+          <button class="btn btn-rojo" onclick="verPanel('nuevo-turno')">+ Nuevo</button>
+        </div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <table class="tabla">
+          <thead>
+            <tr>
+              <th>Fecha y hora</th>
+              <th>Cliente</th>
+              <th>Servicio / Nota interna</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-turnos">
+            <tr><td colspan="5" class="loader">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- NUEVO TURNO -->
+    <div id="panel-nuevo-turno" class="panel">
+      <div class="page-header">
+        <div>
+          <div class="page-titulo" id="turno-form-titulo">Nuevo turno</div>
+          <div class="page-sub">Registrá un turno manualmente</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Nombre del cliente *</label>
+            <input type="text" id="t-nombre" placeholder="Ej: Juan Pérez">
+          </div>
+          <div class="form-group">
+            <label>Teléfono de contacto</label>
+            <input type="tel" id="t-telefono" placeholder="+54 11...">
+          </div>
+          <div class="form-group">
+            <label>Fecha del turno *</label>
+            <input type="date" id="t-fecha">
+          </div>
+          <div class="form-group">
+            <label>Hora *</label>
+            <input type="time" id="t-hora">
+          </div>
+          <div class="form-group">
+            <label>Servicio</label>
+            <select id="t-servicio">
+              <option value="">Sin especificar</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Estado</label>
+            <select id="t-estado">
+              <option value="pendiente">Pendiente</option>
+              <option value="confirmado">Confirmado</option>
+            </select>
+          </div>
+          <div class="form-group full">
+            <label>Descripción del trabajo</label>
+            <textarea id="t-descripcion" rows="3" placeholder="Revisión de frenos, cambio de aceite..."></textarea>
+          </div>
+        </div>
+        <div style="margin-top:18px;display:flex;gap:12px;align-items:center">
+          <button class="btn btn-rojo" onclick="guardarTurno()">Guardar turno</button>
+          <button class="btn btn-blanco" onclick="limpiarTurno(); verPanel('turnos')">Cancelar</button>
+          <span id="turno-msg" style="font-size:13px;font-weight:600"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRESUPUESTOS -->
+    <div id="panel-presupuestos" class="panel">
+      <div class="page-header">
+        <div>
+          <div class="page-titulo">Presupuestos</div>
+          <div class="page-sub">Solicitudes de clientes vía Piezauto</div>
+        </div>
+      </div>
+      <div id="presupuestos-lista"><div class="loader" style="padding:40px">Cargando...</div></div>
+    </div>
+
+    <!-- MIS SERVICIOS -->
+    <div id="panel-servicios" class="panel">
+      <div class="page-header">
+        <div>
+          <div class="page-titulo">Mis servicios</div>
+          <div class="page-sub">Los clientes podrán ver y contratar estos servicios desde Piezauto</div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Agregar servicio</h3>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Nombre del servicio *</label>
+            <input type="text" id="s-nombre" placeholder="Ej: Cambio de aceite y filtro">
+          </div>
+          <div class="form-group">
+            <label>Precio ($)</label>
+            <input type="number" id="s-precio" placeholder="0">
+          </div>
+          <div class="form-group">
+            <label>Duración estimada (minutos)</label>
+            <input type="number" id="s-duracion" placeholder="60">
+          </div>
+          <div class="form-group">
+            <label>Descripción breve</label>
+            <input type="text" id="s-descripcion" placeholder="Incluye...">
+          </div>
+        </div>
+        <div style="margin-top:14px;display:flex;gap:10px;align-items:center">
+          <button class="btn btn-rojo" onclick="guardarServicio()">Agregar servicio</button>
+          <span id="s-msg" style="font-size:13px;font-weight:600"></span>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Servicios publicados</h3>
+        <div id="servicios-lista"><div class="loader">Cargando...</div></div>
+      </div>
+    </div>
+
+    <!-- PERFIL DEL TALLER -->
+    <div id="panel-perfil" class="panel">
+      <div class="page-header">
+        <div>
+          <div class="page-titulo">Perfil del taller</div>
+          <div class="page-sub">Esta información se muestra públicamente en Piezauto</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="perfil-layout">
+          <div class="perfil-form-col">
+            <div id="perfil-avatar" class="perfil-avatar">?</div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Nombre del taller</label>
+                <input type="text" id="p-nombre" placeholder="Nombre visible al público">
+              </div>
+              <div class="form-group">
+                <label>Teléfono</label>
+                <input type="tel" id="p-telefono" placeholder="+54 11...">
+              </div>
+              <div class="form-group">
+                <label>WhatsApp</label>
+                <input type="tel" id="p-whatsapp" placeholder="+54 11...">
+              </div>
+              <div class="form-group">
+                <label>Dirección</label>
+                <input type="text" id="p-direccion" placeholder="Calle 1234, Localidad">
+              </div>
+              <div class="form-group">
+                <label>Zona / Barrio</label>
+                <input type="text" id="p-zona" placeholder="Zona Oeste, Haedo...">
+              </div>
+              <div class="form-group">
+                <label>Localidad</label>
+                <input type="text" id="p-localidad" placeholder="Morón, La Matanza...">
+              </div>
+              <div class="form-group">
+                <label>Horario apertura</label>
+                <input type="time" id="p-apertura">
+              </div>
+              <div class="form-group">
+                <label>Horario cierre</label>
+                <input type="time" id="p-cierre">
+              </div>
+              <div class="form-group full">
+                <label>Descripción del taller</label>
+                <textarea id="p-descripcion" rows="3" placeholder="Contá sobre tu taller, especialidades, años de experiencia..."></textarea>
+              </div>
+              <div class="form-group full">
+                <label>URL del logo (imagen)</label>
+                <input type="url" id="p-logo" placeholder="https://...">
+              </div>
+              <div class="form-group full">
+                <label>Días de atención</label>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px" id="dias-atencion-wrap">
+                  <label class="dia-chk-label"><input type="checkbox" class="dia-chk" value="Lunes" onchange="actualizarPreviewDias()"> Lun</label>
+                  <label class="dia-chk-label"><input type="checkbox" class="dia-chk" value="Martes" onchange="actualizarPreviewDias()"> Mar</label>
+                  <label class="dia-chk-label"><input type="checkbox" class="dia-chk" value="Miércoles" onchange="actualizarPreviewDias()"> Mié</label>
+                  <label class="dia-chk-label"><input type="checkbox" class="dia-chk" value="Jueves" onchange="actualizarPreviewDias()"> Jue</label>
+                  <label class="dia-chk-label"><input type="checkbox" class="dia-chk" value="Viernes" onchange="actualizarPreviewDias()"> Vie</label>
+                  <label class="dia-chk-label"><input type="checkbox" class="dia-chk" value="Sábado" onchange="actualizarPreviewDias()"> Sáb</label>
+                  <label class="dia-chk-label"><input type="checkbox" class="dia-chk" value="Domingo" onchange="actualizarPreviewDias()"> Dom</label>
+                </div>
+              </div>
+            </div>
+            <div style="margin-top:18px;display:flex;gap:12px;align-items:center">
+              <button class="btn btn-rojo" onclick="guardarPerfil()">Guardar cambios</button>
+              <span id="p-msg" style="font-size:13px;font-weight:600"></span>
+            </div>
+          </div>
+          <div class="perfil-preview-col">
+            <div class="preview-label">Vista previa — cómo te ven los clientes</div>
+            <div class="taller-card-preview" id="taller-preview">
+              <div class="tp-header">
+                <div class="tp-logo" id="prev-logo">P</div>
+                <div>
+                  <div class="tp-nombre" id="prev-nombre">Nombre del taller</div>
+                  <div class="tp-ubicacion" id="prev-ubicacion">📍 Dirección</div>
+                </div>
+              </div>
+              <div class="tp-desc" id="prev-desc">Descripción del taller...</div>
+              <div id="prev-dias" style="font-size:12px;color:#666;margin:4px 0"></div>
+              <div class="tp-tags" id="prev-tags"></div>
+              <div class="tp-footer">
+                <span id="prev-tel">📞 Teléfono</span>
+                <span class="tp-badge">Taller verificado</span>
+              </div>
+            </div>
+            <p class="preview-note">El preview se actualiza mientras editás</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ESTADÍSTICAS -->
+    <div id="panel-estadisticas" class="panel">
+      <div class="page-header">
+        <div>
+          <div class="page-titulo">Estadísticas del taller</div>
+          <div class="page-sub">Rendimiento del mes actual</div>
+        </div>
+      </div>
+
+      <!-- Stats rápidas -->
+      <div class="stats-row" id="est-stats-row">
+        <div class="stat-card">
+          <div class="stat-num" id="est-ingresos">—</div>
+          <div class="stat-label">Ingresos estimados este mes</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="est-completados">—</div>
+          <div class="stat-label">Turnos completados este mes</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="est-conversion">—</div>
+          <div class="stat-label">Tasa de conversión presupuestos</div>
+        </div>
+      </div>
+
+      <!-- Gráfico turnos por día de semana -->
+      <div class="card">
+        <h3>Turnos por día de la semana (último mes)</h3>
+        <div style="position:relative;height:240px">
+          <canvas id="chart-dias-semana"></canvas>
+        </div>
+      </div>
+
+      <!-- Detalle conversión presupuestos -->
+      <div class="card">
+        <h3>Conversión de presupuestos</h3>
+        <div id="est-conversion-detalle" style="font-size:14px;color:#555;line-height:1.8"></div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         MIS CLIENTES
+    ══════════════════════════════════════════ -->
+    <div id="panel-clientes" class="panel">
+      <div class="page-header">
+        <div>
+          <div class="page-titulo">Mis clientes</div>
+          <div class="page-sub">Historial de clientes que visitaron el taller</div>
+        </div>
+        <input type="text" id="buscar-cliente" placeholder="🔍 Buscar cliente..."
+          oninput="filtrarClientes()"
+          style="padding:9px 16px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;outline:none;min-width:220px">
+      </div>
+      <div id="clientes-lista"><div class="loader" style="padding:60px;text-align:center">Cargando...</div></div>
+    </div>
+
+    <!-- PANEL: CLIENTES FRECUENTES -->
+    <div id="panel-clientes-frecuentes" class="panel">
+      <div class="page-header">
+        <div>
+          <div class="page-titulo">Clientes frecuentes</div>
+          <div class="page-sub">Clientes con 3 o más visitas — enviá ofertas especiales por WhatsApp</div>
+        </div>
+        <button class="btn btn-rojo" onclick="cargarClientesFrecuentes()">🔄 Actualizar</button>
+      </div>
+
+      <div class="stats-row" id="stats-frecuentes" style="margin-bottom:20px">
+        <!-- Se llena por JS -->
+      </div>
+
+      <div id="frecuentes-lista">
+        <div class="loader" style="padding:60px;text-align:center">Cargando...</div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         CATÁLOGO PIEZAUTO
+    ══════════════════════════════════════════ -->
+    <div id="panel-catalogo-piezauto" class="panel">
+      <div class="page-header">
+        <div>
+          <div class="page-titulo">Productos Piezauto</div>
+          <div class="page-sub">Últimos productos del catálogo — compartí con tus clientes por WhatsApp</div>
+        </div>
+        <button class="btn btn-rojo" onclick="cargarCatalogoPiezauto()">🔄 Actualizar</button>
+      </div>
+
+      <div class="card">
+        <div style="margin-bottom:14px">
+          <input type="text" id="catalogo-buscar" placeholder="Filtrar por nombre o código..." oninput="filtrarCatalogoPiezauto()" style="width:100%;padding:9px 13px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;outline:none">
+        </div>
+        <div id="catalogo-piezauto-lista">
+          <div class="loader" style="padding:40px;text-align:center">Cargando productos...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MENSAJES CON PIEZAUTO -->
+    <div id="panel-mensajes" class="panel" style="display:none">
+      <div class="panel-header">
+        <h2>Mensajes con Piezauto</h2>
+      </div>
+
+      <div class="chat-wrap">
+        <div class="chat-mensajes" id="chat-mensajes">
+          <div class="chat-loading">Cargando mensajes...</div>
+        </div>
+
+        <div class="chat-input-wrap">
+          <textarea id="chat-texto" class="chat-textarea" placeholder="Escribí tu mensaje a Piezauto..." rows="3" onkeydown="if(event.ctrlKey && event.key==='Enter') enviarMensaje()"></textarea>
+          <button onclick="enviarMensaje()" class="btn-enviar-msg">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 2-7 20-4-9-9-4 20-7z"/><path d="m22 2-11 11"/></svg>
+            Enviar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         FINANZAS
+    ══════════════════════════════════════════ -->
+    <div id="panel-finanzas" class="panel">
+      <div class="page-header">
+        <div>
+          <div class="page-titulo">Finanzas del taller</div>
+          <div class="page-sub" id="finanzas-mes-label">Cargando...</div>
+        </div>
+        <button class="btn btn-blanco" onclick="exportarFinanzasCSV()">⬇ Exportar CSV</button>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card" style="text-align:left">
+          <div style="font-size:11px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Ingresos estimados</div>
+          <div class="stat-num" id="fin-ingresos">—</div>
+          <div style="font-size:12px;color:#888;margin-top:4px">servicios completados</div>
+        </div>
+        <div class="stat-card" style="text-align:left">
+          <div style="font-size:11px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Turnos atendidos</div>
+          <div class="stat-num" id="fin-atendidos">—</div>
+          <div style="font-size:12px;color:#888;margin-top:4px">completados este mes</div>
+        </div>
+        <div class="stat-card" style="text-align:left">
+          <div style="font-size:11px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Promedio por turno</div>
+          <div class="stat-num" id="fin-promedio">—</div>
+          <div style="font-size:12px;color:#888;margin-top:4px">ingreso estimado</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Ingresos por semana — mes actual</h3>
+        <div style="position:relative;height:220px">
+          <canvas id="chart-finanzas-semanas"></canvas>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Servicios más realizados</h3>
+        <div id="fin-top-servicios"><div class="loader">Cargando...</div></div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         MIS REPUESTOS (INVENTARIO)
+    ══════════════════════════════════════════ -->
+    <div id="panel-repuestos" class="panel">
+      <div class="page-header">
+        <div>
+          <div class="page-titulo">Mis repuestos</div>
+          <div class="page-sub">Stock propio del taller — usalo en tus presupuestos</div>
+        </div>
+        <button class="btn btn-rojo" onclick="document.getElementById('repuesto-form-card').style.display='block';document.getElementById('r-id').value=''">+ Agregar pieza</button>
+      </div>
+
+      <div id="repuesto-alerta-stock" style="display:none;background:#fff3cd;border:1.5px solid #ffc107;border-radius:10px;padding:14px 18px;margin-bottom:18px;font-size:13px;font-weight:600;color:#856404">
+        ⚠️ <span id="repuesto-alerta-texto"></span>
+      </div>
+
+      <div class="card" id="repuesto-form-card" style="display:none;margin-bottom:18px">
+        <h3 id="repuesto-form-titulo">Agregar pieza</h3>
+        <input type="hidden" id="r-id">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Código / Referencia</label>
+            <input type="text" id="r-codigo" placeholder="Ej: FRN-001">
+          </div>
+          <div class="form-group">
+            <label>Descripción *</label>
+            <input type="text" id="r-descripcion" placeholder="Ej: Pastillas de freno delanteras">
+          </div>
+          <div class="form-group">
+            <label>Cantidad en stock *</label>
+            <input type="number" id="r-cantidad" min="0" placeholder="0">
+          </div>
+          <div class="form-group">
+            <label>Precio de costo ($)</label>
+            <input type="number" id="r-costo" min="0" placeholder="0">
+          </div>
+          <div class="form-group">
+            <label>Precio de venta al cliente ($)</label>
+            <input type="number" id="r-venta" min="0" placeholder="0">
+          </div>
+          <div class="form-group">
+            <label>Unidad</label>
+            <select id="r-unidad">
+              <option value="unidad">Unidad</option>
+              <option value="par">Par</option>
+              <option value="juego">Juego</option>
+              <option value="litro">Litro</option>
+              <option value="metro">Metro</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-top:14px;display:flex;gap:10px;align-items:center">
+          <button class="btn btn-rojo" onclick="guardarRepuesto()">Guardar pieza</button>
+          <button class="btn btn-blanco" onclick="document.getElementById('repuesto-form-card').style.display='none'">Cancelar</button>
+          <span id="r-msg" style="font-size:13px;font-weight:600"></span>
+        </div>
+      </div>
+
+      <div class="card" style="padding:0;overflow:hidden">
+        <table class="tabla">
+          <thead>
+            <tr>
+              <th>Descripción</th>
+              <th>Código</th>
+              <th>Stock</th>
+              <th>Costo</th>
+              <th>Venta cliente</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-repuestos">
+            <tr><td colspan="6" style="padding:30px;text-align:center;color:#aaa">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- PANEL DE NOTIFICACIONES -->
+<div class="notif-overlay" id="notif-overlay" onclick="cerrarNotificaciones()"></div>
+<div class="notif-panel" id="notif-panel">
+  <div class="notif-panel-header">
+    <h3>🔔 Notificaciones</h3>
+    <button class="notif-cerrar" onclick="cerrarNotificaciones()">✕</button>
+  </div>
+  <div class="notif-lista" id="notif-lista">
+    <div class="loader" style="padding:30px">Cargando...</div>
+  </div>
+  <div class="notif-marcar">
+    <button class="btn btn-blanco" style="width:100%;font-size:13px" onclick="marcarTodasLeidas()">Marcar todo como leído</button>
+  </div>
+</div>
+
+<!-- MODAL DÍA COMPLETO -->
+<div id="modal-dia-completo" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center" onclick="if(event.target===this)this.style.display='none'">
+  <div style="background:#fff;border-radius:14px;width:500px;max-width:95vw;max-height:85vh;overflow-y:auto;padding:24px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+      <div id="mdc-titulo" style="font-size:17px;font-weight:900;color:#333">—</div>
+      <button onclick="document.getElementById('modal-dia-completo').style.display='none'" style="background:none;border:none;font-size:22px;cursor:pointer;color:#888">✕</button>
+    </div>
+    <div id="mdc-contenido"></div>
+    <button onclick="document.getElementById('modal-dia-completo').style.display='none'" class="btn btn-blanco" style="width:100%;margin-top:16px">Cerrar</button>
+  </div>
+</div>
+
+<!-- MINI-MODAL DETALLE TURNO AGENDA -->
+<div id="modal-turno-agenda" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:12px;padding:24px;width:360px;max-width:90vw">
+    <div style="font-size:16px;font-weight:800;margin-bottom:16px" id="mta-nombre">—</div>
+    <div style="font-size:13px;color:#666;margin-bottom:12px" id="mta-info">—</div>
+    <div style="margin-bottom:16px">
+      <label style="font-size:12px;font-weight:700;color:#888">Estado</label>
+      <select id="mta-estado" style="width:100%;margin-top:6px;padding:9px;border:1.5px solid #ddd;border-radius:8px;font-size:14px">
+        <option value="pendiente">Pendiente</option>
+        <option value="confirmado">Confirmado</option>
+        <option value="completado">Completado</option>
+        <option value="cancelado">Cancelado</option>
+      </select>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <button class="btn btn-blanco" onclick="document.getElementById('modal-turno-agenda').style.display='none'">Cerrar</button>
+      <button class="btn btn-rojo" onclick="guardarEstadoAgenda()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV (mobile) -->
+<div id="ptr-indicator"></div>
+<nav class="bottom-nav">
+  <div class="bottom-nav-inner">
+    <button class="bn-item activo" id="bn-dashboard" onclick="bnNavegar('dashboard')">
+      <span class="bn-icon">📊</span>Dashboard
+    </button>
+    <button class="bn-item" id="bn-turnos" onclick="bnNavegar('turnos')">
+      <span class="bn-icon">📅</span>Turnos
+      <span class="bn-badge" id="bn-badge-turnos"></span>
+    </button>
+    <button class="bn-item" id="bn-agenda" onclick="bnNavegar('agenda')">
+      <span class="bn-icon">🗓️</span>Agenda
+    </button>
+    <button class="bn-item" id="bn-mensajes" onclick="bnNavegar('mensajes')">
+      <span class="bn-icon">💬</span>Mensajes
+      <span class="bn-badge" id="bn-badge-mensajes"></span>
+    </button>
+    <button class="bn-item" id="bn-perfil" onclick="bnNavegar('perfil')">
+      <span class="bn-icon">👤</span>Perfil
+    </button>
+  </div>
+</nav>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase.js"></script>
+<script src="../js/autocomplete.js"></script>
+<script src="dashboard.js"></script>
+<script>
+// ── BOTTOM NAV ────────────────────────────────
+const BN_MAP = {
+  'dashboard': 'dashboard',
+  'turnos':    'turnos',
+  'agenda':    'agenda',
+  'mensajes':  'mensajes-taller',
+  'perfil':    'perfil',
+};
+
+function bnNavegar(seccion) {
+  document.querySelectorAll('.bn-item').forEach(b => b.classList.remove('activo'));
+  document.getElementById('bn-' + seccion)?.classList.add('activo');
+  const panelId = BN_MAP[seccion] || seccion;
+  verPanel(panelId);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Sincronizar bottom nav cuando se navega desde el sidebar
+const _verPanelOrig = window.verPanel;
+if (typeof _verPanelOrig === 'function') {
+  window.verPanel = function(nombre) {
+    _verPanelOrig(nombre);
+    const inv = Object.entries(BN_MAP).find(([,v]) => v === nombre);
+    if (inv) {
+      document.querySelectorAll('.bn-item').forEach(b => b.classList.remove('activo'));
+      document.getElementById('bn-' + inv[0])?.classList.add('activo');
+    }
+  };
+}
+
+// ── SWIPE LATERAL ─────────────────────────────
+(function () {
+  const PANELES = ['dashboard', 'turnos', 'agenda', 'mensajes', 'perfil'];
+  let panelActual = 0;
+  let startX = 0;
+  let startY = 0;
+
+  document.addEventListener('touchstart', e => {
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+  }, { passive: true });
+
+  document.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = e.changedTouches[0].clientY - startY;
+    if (Math.abs(dx) < 50 || Math.abs(dy) > Math.abs(dx)) return;
+    if (dx < 0 && panelActual < PANELES.length - 1) panelActual++;
+    else if (dx > 0 && panelActual > 0) panelActual--;
+    else return;
+    bnNavegar(PANELES[panelActual]);
+  }, { passive: true });
+})();
+
+// ── PULL TO REFRESH ───────────────────────────
+(function () {
+  let startY = 0;
+  let pulling = false;
+  const ind = document.getElementById('ptr-indicator');
+
+  document.addEventListener('touchstart', e => {
+    if (window.scrollY === 0) startY = e.touches[0].clientY;
+  }, { passive: true });
+
+  document.addEventListener('touchmove', e => {
+    if (!startY) return;
+    const dy = e.touches[0].clientY - startY;
+    if (dy > 60) pulling = true;
+  }, { passive: true });
+
+  document.addEventListener('touchend', () => {
+    if (!pulling) { startY = 0; return; }
+    pulling = false;
+    startY = 0;
+    if (ind) ind.style.display = 'block';
+    // Recargar el panel activo
+    const panelActivo = document.querySelector('.panel.activo');
+    if (panelActivo) {
+      const nombre = panelActivo.id.replace('panel-', '');
+      if (typeof verPanel === 'function') verPanel(nombre);
+    }
+    setTimeout(() => { if (ind) ind.style.display = 'none'; }, 1000);
+  }, { passive: true });
+})();
+
+// ── PUSH NOTIFICATIONS ────────────────────────
+async function solicitarNotificaciones() {
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'granted') return registrarServiceWorker();
+  if (Notification.permission !== 'denied') {
+    const perm = await Notification.requestPermission();
+    if (perm === 'granted') registrarServiceWorker();
+  }
+}
+
+async function registrarServiceWorker() {
+  if (!('serviceWorker' in navigator)) return;
+  try {
+    await navigator.serviceWorker.register('../sw.js');
+  } catch(_) {}
+}
+
+function mostrarNotifLocal(titulo, cuerpo) {
+  if (Notification.permission !== 'granted') return;
+  new Notification(titulo, { body: cuerpo, icon: '/favicon.svg' });
+}
+
+// Solicitar permiso después de login
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(solicitarNotificaciones, 3000);
+});
+
+// Actualizar badges del bottom nav con datos del dashboard
+document.addEventListener('DOMContentLoaded', () => {
+  const _origNotif = window.actualizarBadgeNotif;
+  if (_origNotif) return;
+  // Polling cada 60s para actualizar badges de mensajes
+  setInterval(async () => {
+    try {
+      const taller = JSON.parse(sessionStorage.getItem('pz_taller') || '{}');
+      if (!taller?.id) return;
+      const { count } = await db.from('mensajes_taller')
+        .select('id', { count: 'exact' })
+        .eq('taller_id', taller.id)
+        .eq('leido', false)
+        .eq('origen', 'admin');
+      const badge = document.getElementById('bn-badge-mensajes');
+      if (badge) { badge.textContent = count || ''; badge.className = count ? 'bn-badge visible' : 'bn-badge'; }
+    } catch(_) {}
+  }, 60000);
+});
+</script>
+</body>
+</html>

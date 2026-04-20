@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manual del Administrador — Piezauto</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --rojo: #E63946;
+      --negro: #1a1a1a;
+      --sidebar-w: 260px;
+    }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; color: #222; display: flex; min-height: 100vh; }
+
+    /* Sidebar */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--negro);
+      color: #fff;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      overflow-y: auto;
+      padding: 0 0 32px;
+      z-index: 100;
+    }
+    .sidebar-logo {
+      padding: 24px 20px 20px;
+      border-bottom: 1px solid #2a2a2a;
+    }
+    .sidebar-logo .marca { font-size: 22px; font-weight: 900; color: var(--rojo); }
+    .sidebar-logo .sub { font-size: 11px; color: #888; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.1em; }
+    .sidebar-section { padding: 20px 20px 6px; font-size: 10px; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: 0.12em; }
+    .sidebar a {
+      display: block;
+      padding: 9px 20px;
+      color: #bbb;
+      text-decoration: none;
+      font-size: 13px;
+      border-left: 3px solid transparent;
+      transition: all 0.15s;
+    }
+    .sidebar a:hover, .sidebar a.active { color: #fff; background: #242424; border-left-color: var(--rojo); }
+
+    /* Content */
+    .content {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      padding: 0;
+    }
+    .topbar {
+      background: #fff;
+      border-bottom: 1px solid #e0e0e0;
+      padding: 16px 40px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .topbar h1 { font-size: 18px; font-weight: 700; }
+    .topbar .badge {
+      background: var(--rojo);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 20px;
+    }
+    .page { padding: 40px; max-width: 900px; }
+
+    /* Sections */
+    .section {
+      background: #fff;
+      border-radius: 10px;
+      border: 1px solid #e8e8e8;
+      margin-bottom: 32px;
+      overflow: hidden;
+    }
+    .section-header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #f0f0f0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .section-header .icon { font-size: 22px; }
+    .section-header h2 { font-size: 17px; font-weight: 700; }
+    .section-header p { font-size: 13px; color: #888; margin-top: 2px; }
+    .section-body { padding: 24px 28px; }
+
+    /* Steps */
+    .steps { display: flex; flex-direction: column; gap: 20px; }
+    .step { display: flex; gap: 16px; }
+    .step-num {
+      width: 32px; height: 32px;
+      background: var(--rojo);
+      color: #fff;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700;
+      flex-shrink: 0;
+    }
+    .step-body h4 { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+    .step-body p, .step-body li { font-size: 13px; color: #555; line-height: 1.6; }
+    .step-body ul { padding-left: 18px; }
+    .step-body code {
+      background: #f3f3f3;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-size: 12px;
+      font-family: monospace;
+    }
+
+    /* Screenshot placeholder */
+    .screenshot {
+      background: #f8f8f8;
+      border: 2px dashed #d0d0d0;
+      border-radius: 8px;
+      padding: 40px 20px;
+      text-align: center;
+      margin: 16px 0;
+      color: #999;
+    }
+    .screenshot .ss-icon { font-size: 32px; margin-bottom: 8px; }
+    .screenshot p { font-size: 13px; }
+
+    /* Tables */
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { background: #f5f5f5; padding: 10px 14px; text-align: left; font-weight: 700; color: #555; border-bottom: 2px solid #e0e0e0; }
+    td { padding: 10px 14px; border-bottom: 1px solid #f0f0f0; color: #444; }
+    tr:last-child td { border-bottom: none; }
+
+    /* Tip / warning boxes */
+    .tip, .warn, .info {
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin: 12px 0;
+      font-size: 13px;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    .tip { background: #e8f5e9; border-left: 4px solid #4caf50; }
+    .warn { background: #fff3cd; border-left: 4px solid #f59e0b; }
+    .info { background: #e3f2fd; border-left: 4px solid #2196f3; }
+    .tip .icon, .warn .icon, .info .icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+
+    /* FAQ */
+    .faq-item { border-bottom: 1px solid #f0f0f0; padding: 16px 0; }
+    .faq-item:last-child { border-bottom: none; }
+    .faq-q { font-size: 14px; font-weight: 700; color: #222; margin-bottom: 6px; }
+    .faq-a { font-size: 13px; color: #555; line-height: 1.6; }
+
+    /* Estado badges */
+    .estado {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .estado.nuevo { background: #e3f2fd; color: #1565c0; }
+    .estado.confirmado { background: #e8f5e9; color: #2e7d32; }
+    .estado.preparando { background: #fff3e0; color: #e65100; }
+    .estado.enviado { background: #f3e5f5; color: #6a1b9a; }
+    .estado.entregado { background: #e8f5e9; color: #1b5e20; }
+    .estado.cancelado { background: #ffebee; color: #b71c1c; }
+
+    /* Shortcuts */
+    .shortcut { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; }
+    kbd {
+      background: #f0f0f0;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-size: 11px;
+      font-family: monospace;
+    }
+
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .content { margin-left: 0; }
+      .page { padding: 20px; }
+      .topbar { padding: 14px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="marca">Piezauto</div>
+    <div class="sub">Manual del administrador</div>
+  </div>
+
+  <div class="sidebar-section">Introducción</div>
+  <a href="#acceso">Acceso al panel</a>
+  <a href="#estructura">Estructura del panel</a>
+
+  <div class="sidebar-section">Gestión de productos</div>
+  <a href="#cargar-producto">Cargar producto nuevo</a>
+  <a href="#editar-producto">Editar producto</a>
+  <a href="#compatibilidades">Compatibilidades de vehículos</a>
+  <a href="#imagenes">Imágenes y fotos</a>
+
+  <div class="sidebar-section">Pedidos</div>
+  <a href="#pedidos-lista">Ver y filtrar pedidos</a>
+  <a href="#pedidos-estados">Cambio de estados</a>
+  <a href="#cupones">Cupones de descuento</a>
+
+  <div class="sidebar-section">Talleres (Point)</div>
+  <a href="#talleres-lista">Gestionar talleres</a>
+  <a href="#facturacion">Facturación Point</a>
+
+  <div class="sidebar-section">Configuración</div>
+  <a href="#config-general">Configuración general</a>
+  <a href="#config-horarios">Horarios y contacto</a>
+
+  <div class="sidebar-section">Herramientas</div>
+  <a href="#test-sistema">Test del sistema</a>
+  <a href="#faq">Preguntas frecuentes</a>
+</nav>
+
+<div class="content">
+  <div class="topbar">
+    <h1>Manual del Administrador</h1>
+    <span class="badge">v1.0</span>
+  </div>
+
+  <div class="page">
+
+    <!-- ACCESO -->
+    <div class="section" id="acceso">
+      <div class="section-header">
+        <span class="icon">🔐</span>
+        <div>
+          <h2>Acceso al panel admin</h2>
+          <p>Cómo ingresar y gestionar la sesión</p>
+        </div>
+      </div>
+      <div class="section-body">
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <h4>Ingresá a la URL del panel</h4>
+              <p>Abrí tu navegador y entrá a <code>https://piezauto.com.ar/admin/</code> (o <code>/admin/login.html</code>). Si ya tenés sesión activa, el sistema te redirige directo al panel.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <h4>Ingresá las credenciales</h4>
+              <p>Email y contraseña del administrador. Las credenciales iniciales están en el archivo <code>admin_credenciales.sql</code> que se ejecutó en Supabase durante el setup.</p>
+              <div class="warn">
+                <span class="icon">⚠️</span>
+                <div>El sistema bloquea el acceso por 5 minutos después de 3 intentos fallidos consecutivos. Si te bloqueás, esperá y volvé a intentar.</div>
+              </div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <h4>Cerrá sesión cuando termines</h4>
+              <p>Usá el botón <strong>Cerrar sesión</strong> en la parte inferior del sidebar. La sesión no expira automáticamente mientras la pestaña esté abierta.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="screenshot">
+          <div class="ss-icon">🖼️</div>
+          <p><strong>Captura:</strong> Pantalla de login del admin con campos de email y contraseña</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ESTRUCTURA -->
+    <div class="section" id="estructura">
+      <div class="section-header">
+        <span class="icon">🗂️</span>
+        <div>
+          <h2>Estructura del panel</h2>
+          <p>Secciones disponibles y para qué sirve cada una</p>
+        </div>
+      </div>
+      <div class="section-body">
+        <table>
+          <thead>
+            <tr><th>Sección</th><th>Descripción</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>📦 Productos</td><td>Alta, edición y baja de productos del catálogo. Includes compatibilidades de vehículos.</td></tr>
+            <tr><td>📋 Pedidos</td><td>Ver todos los pedidos, filtrar por estado, actualizar el estado de cada uno.</td></tr>
+            <tr><td>🏪 Talleres</td><td>Gestionar talleres asociados a Piezauto Point: crear, editar, activar/desactivar.</td></tr>
+            <tr><td>🎟️ Cupones</td><td>Crear y administrar cupones de descuento porcentual o fijo.</td></tr>
+            <tr><td>📄 Facturación Point</td><td>Generar cargos a talleres, ver movimientos de cuenta corriente, marcar facturas como pagadas.</td></tr>
+            <tr><td>⚙️ Configuración</td><td>Datos del negocio, horarios, WhatsApp, redes sociales, topbar. Cambios en tiempo real.</td></tr>
+            <tr><td>🧪 Test del sistema</td><td>Checklist de funcionalidades y pruebas técnicas para verificar que todo funcione.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- CARGAR PRODUCTO -->
+    <div class="section" id="cargar-producto">
+      <div class="section-header">
+        <span class="icon">➕</span>
+        <div>
+          <h2>Cargar un producto nuevo</h2>
+          <p>Paso a paso para agregar productos al catálogo</p>
+        </div>
+      </div>
+      <div class="section-body">
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <h4>Abrí el panel de Productos</h4>
+              <p>Hacé clic en <strong>📦 Productos</strong> en el sidebar. Se muestra la lista de productos existentes con buscador y filtro por categoría.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <h4>Clic en "Nuevo producto"</h4>
+              <p>Se abre el formulario en la parte derecha (o debajo en mobile). Completá los campos:</p>
+              <ul>
+                <li><strong>Nombre:</strong> nombre del producto tal como aparecerá en la tienda</li>
+                <li><strong>Categoría:</strong> elegí del listado desplegable</li>
+                <li><strong>Precio:</strong> precio de lista en pesos argentinos (sin símbolo $)</li>
+                <li><strong>Precio oferta:</strong> opcional; si lo completás, se muestra el precio tachado</li>
+                <li><strong>Stock:</strong> cantidad disponible</li>
+                <li><strong>Descripción:</strong> texto breve del producto</li>
+                <li><strong>Universal:</strong> marcá el checkbox si el producto sirve para cualquier vehículo (no requiere compatibilidades)</li>
+              </ul>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <h4>Subí la imagen</h4>
+              <p>Hacé clic en el área de imagen y seleccioná un archivo JPG o PNG. Tamaño recomendado: <code>800×800px</code>. La imagen se sube al Storage de Supabase automáticamente.</p>
+              <div class="tip">
+                <span class="icon">💡</span>
+                <div>Usá imágenes con fondo blanco o neutro para que se vean bien en el catálogo y en la ficha del producto.</div>
+              </div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">4</div>
+            <div class="step-body">
+              <h4>Guardá el producto</h4>
+              <p>Hacé clic en <strong>Guardar</strong>. El producto aparece en la lista y está visible en la tienda de inmediato.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="screenshot">
+          <div class="ss-icon">🖼️</div>
+          <p><strong>Captura:</strong> Formulario de carga de producto con campos completos y área de imagen</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- EDITAR PRODUCTO -->
+    <div class="section" id="editar-producto">
+      <div class="section-header">
+        <span class="icon">✏️</span>
+        <div>
+          <h2>Editar un producto existente</h2>
+          <p>Modificar precio, stock, imagen y demás campos</p>
+        </div>
+      </div>
+      <div class="section-body">
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <h4>Buscá el producto</h4>
+              <p>Usá el buscador en la parte superior de la lista o filtrá por categoría. Podés buscar por nombre o código.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <h4>Clic en ✏️ Editar</h4>
+              <p>El formulario se precarga con los datos actuales del producto. Modificá lo que necesites.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <h4>Guardá los cambios</h4>
+              <p>Los cambios son inmediatos: los usuarios que recarguen la página verán la información actualizada.</p>
+              <div class="info">
+                <span class="icon">ℹ️</span>
+                <div>Si cambiás la imagen, la imagen anterior queda en el Storage de Supabase pero ya no se muestra. No es necesario borrarla manualmente.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tip">
+          <span class="icon">💡</span>
+          <div><strong>Baja de un producto:</strong> Hacé clic en 🗑️ junto al producto. Se te pedirá confirmación. Los productos eliminados desaparecen del catálogo, pero sus referencias en pedidos anteriores se mantienen en la base de datos.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COMPATIBILIDADES -->
+    <div class="section" id="compatibilidades">
+      <div class="section-header">
+        <span class="icon">🚗</span>
+        <div>
+          <h2>Compatibilidades de vehículos</h2>
+          <p>Asociar productos a marcas, modelos y años de autos</p>
+        </div>
+      </div>
+      <div class="section-body">
+        <p style="font-size:13px;color:#555;margin-bottom:16px;">Las compatibilidades permiten que el buscador por auto de la tienda muestre solo los productos que aplican al vehículo del cliente.</p>
+
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <h4>Abrí el editor de compatibilidades</h4>
+              <p>Al editar un producto, hacé clic en la pestaña o sección <strong>Compatibilidades</strong>. Si el producto es <strong>Universal</strong>, esta sección no aplica.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <h4>Seleccioná marca → modelo → año</h4>
+              <p>Elegí en cascada. Podés agregar múltiples combinaciones para el mismo producto. Por ejemplo, una bujía puede ser compatible con "Ford Fiesta 2010-2015" y "Volkswagen Gol 2012-2018".</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <h4>Guardá cada compatibilidad</h4>
+              <p>Cada fila se guarda individualmente. Para borrar una compatibilidad, usá el botón 🗑️ de esa fila.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="warn">
+          <span class="icon">⚠️</span>
+          <div>Si un producto no tiene compatibilidades cargadas y no está marcado como Universal, <strong>no aparecerá en búsquedas por auto</strong>. Sí aparece en el catálogo general.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- IMÁGENES -->
+    <div class="section" id="imagenes">
+      <div class="section-header">
+        <span class="icon">🖼️</span>
+        <div>
+          <h2>Imágenes y fotos</h2>
+          <p>Recomendaciones para las fotos de productos</p>
+        </div>
+      </div>
+      <div class="section-body">
+        <table>
+          <thead>
+            <tr><th>Parámetro</th><th>Recomendación</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Formato</td><td>JPG (fotos) o PNG (fondo transparente)</td></tr>
+            <tr><td>Tamaño</td><td>800×800px mínimo — cuadrado</td></tr>
+            <tr><td>Peso</td><td>Menos de 500 KB (Supabase Storage tiene límite en plan gratuito)</td></tr>
+            <tr><td>Fondo</td><td>Blanco o gris muy claro para uniformidad</td></tr>
+            <tr><td>Contenido</td><td>El producto centrado, bien iluminado, sin texto superpuesto</td></tr>
+          </tbody>
+        </table>
+
+        <div class="tip" style="margin-top:16px">
+          <span class="icon">💡</span>
+          <div>Si no tenés foto del producto, dejá el campo vacío. El sistema muestra un ícono de categoría genérico en su lugar.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PEDIDOS LISTA -->
+    <div class="section" id="pedidos-lista">
+      <div class="section-header">
+        <span class="icon">📋</span>
+        <div>
+          <h2>Ver y filtrar pedidos</h2>
+          <p>Cómo encontrar y revisar pedidos de clientes</p>
+        </div>
+      </div>
+      <div class="section-body">
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <h4>Abrí la sección Pedidos</h4>
+              <p>Clic en <strong>📋 Pedidos</strong> en el sidebar. Se muestran los últimos pedidos ordenados por fecha (más reciente primero).</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <h4>Filtrá por estado</h4>
+              <p>Usá los botones de filtro rápido: <strong>Todos / Nuevos / Confirmados / Preparando / Enviados</strong>. Los pedidos nuevos se destacan con un punto rojo.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <h4>Expandí el detalle</h4>
+              <p>Clic en cualquier fila para ver el detalle: ítems pedidos, datos del cliente, dirección de envío, cupón aplicado (si hay), y total.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="screenshot">
+          <div class="ss-icon">🖼️</div>
+          <p><strong>Captura:</strong> Lista de pedidos con filtros por estado y contadores en el badge del sidebar</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- PEDIDOS ESTADOS -->
+    <div class="section" id="pedidos-estados">
+      <div class="section-header">
+        <span class="icon">🔄</span>
+        <div>
+          <h2>Cambio de estados de pedidos</h2>
+          <p>Flujo de estados y cómo avanzar cada pedido</p>
+        </div>
+      </div>
+      <div class="section-body">
+        <p style="font-size:13px;color:#555;margin-bottom:16px;">El flujo normal de un pedido es:</p>
+
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;align-items:center">
+          <span class="estado nuevo">Nuevo</span>
+          <span style="color:#ccc">→</span>
+          <span class="estado confirmado">Confirmado</span>
+          <span style="color:#ccc">→</span>
+          <span class="estado preparando">Preparando</span>
+          <span style="color:#ccc">→</span>
+          <span class="estado enviado">Enviado</span>
+          <span style="color:#ccc">→</span>
+          <span class="estado entregado">Entregado</span>
+        </div>
+
+        <table>
+          <thead>
+            <tr><th>Estado</th><th>Cuándo usarlo</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><span class="estado nuevo">Nuevo</span></td><td>El pedido acaba de entrar. El cliente está esperando confirmación.</td></tr>
+            <tr><td><span class="estado confirmado">Confirmado</span></td><td>Verificaste el pago o reservaste las piezas. El cliente ya sabe que el pedido fue aceptado.</td></tr>
+            <tr><td><span class="estado preparando">Preparando</span></td><td>Estás armando el paquete o coordinando con el proveedor.</td></tr>
+            <tr><td><span class="estado enviado">Enviado</span></td><td>El paquete ya salió. Idealmente ingresás el número de seguimiento.</td></tr>
+            <tr><td><span class="estado entregado">Entregado</span></td><td>El cliente confirmó la recepción o el correo reporta entrega exitosa.</td></tr>
+            <tr><td><span class="estado cancelado">Cancelado</span></td><td>El pedido no se completa: falta de stock, pago rechazado, solicitud del cliente.</td></tr>
+          </tbody>
+        </table>
+
+        <div class="tip" style="margin-top:16px">
+          <span class="icon">💡</span>
+          <div>Podés cambiar el estado desde el dropdown en el detalle del pedido. El cambio es inmediato y queda registrado con la fecha.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CUPONES -->
+    <div class="section" id="cupones">
+      <div class="section-header">
+        <span class="icon">🎟️</span>
+        <div>
+          <h2>Cupones de descuento</h2>
+          <p>Crear y gestionar códigos de descuento</p>
+        </div>
+      </div>
+      <div class="section-body">
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <h4>Clic en "Nuevo cupón"</h4>
+              <p>En la sección Cupones del panel admin.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <h4>Completá los datos del cupón</h4>
+              <ul>
+                <li><strong>Código:</strong> ej. <code>VERANO20</code> — sin espacios, en mayúsculas</li>
+                <li><strong>Tipo:</strong> porcentaje (%) o fijo ($)</li>
+                <li><strong>Descuento:</strong> valor numérico (ej. 20 para 20% o 5000 para $5.000 fijos)</li>
+                <li><strong>Usos máximos:</strong> cuántas veces se puede usar. Dejá vacío para ilimitado.</li>
+                <li><strong>Vencimiento:</strong> fecha límite. Dejá vacío para sin vencimiento.</li>
+              </ul>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <h4>Guardá y compartí el código</h4>
+              <p>El cupón se activa inmediatamente. Los clientes lo ingresan en el checkout antes de pagar.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="warn">
+          <span class="icon">⚠️</span>
+          <div>El sistema incrementa el contador de usos automáticamente. Si el cupón llegó al máximo de usos, se rechaza en el checkout con el mensaje "Cupón agotado".</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TALLERES LISTA -->
+    <div class="section" id="talleres-lista">
+      <div class="section-header">
+        <span class="icon">🏪</span>
+        <div>
+          <h2>Gestionar talleres</h2>
+          <p>Alta, edición y control de acceso de talleres asociados</p>
+        </div>
+      </div>
+      <div class="section-body">
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <h4>Dar de alta un taller nuevo</h4>
+              <p>En la sección Talleres, clic en <strong>Nuevo taller</strong>. Completá: nombre del taller, email (es su usuario de login), contraseña inicial, dirección, teléfono, y zona.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <h4>El campo "password_hash"</h4>
+              <p>Ingresá la contraseña en texto plano. El sistema la compara directamente (sin hash criptográfico), por lo que podés leerla si la editás. Asegurate de compartirla al taller de forma segura.</p>
+              <div class="warn">
+                <span class="icon">⚠️</span>
+                <div>No compartas contraseñas por canales no seguros como grupos de WhatsApp. Preferí mensaje directo y pedile al taller que la cambie ni bien ingrese.</div>
+              </div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <h4>Activar / desactivar talleres</h4>
+              <p>El campo <code>activo</code> controla si el taller puede hacer login. Un taller inactivo no puede acceder a Piezauto Point aunque tenga las credenciales correctas.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FACTURACIÓN -->
+    <div class="section" id="facturacion">
+      <div class="section-header">
+        <span class="icon">📄</span>
+        <div>
+          <h2>Facturación Point</h2>
+          <p>Generar cargos y gestionar cuenta corriente de talleres</p>
+        </div>
+      </div>
+      <div class="section-body">
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <h4>Seleccioná el taller a facturar</h4>
+              <p>En la sección Facturación Point, elegí el taller del selector desplegable.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <h4>Creá un cargo manual</h4>
+              <p>Completá concepto (ej. "Suscripción abril 2026"), monto, fecha de vencimiento y nota opcional. Clic en <strong>Generar cargo</strong>.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <h4>Marcá facturas como pagas</h4>
+              <p>Cuando el taller pague, buscá la factura en la lista y hacé clic en <strong>Marcar pagada</strong>. Se registra el movimiento en la cuenta corriente y se actualiza el saldo.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">4</div>
+            <div class="step-body">
+              <h4>Ver movimientos de cuenta corriente</h4>
+              <p>El botón <strong>Ver movimientos</strong> muestra el historial completo: cargos, pagos y ajustes con saldo antes y después de cada operación.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="info">
+          <span class="icon">ℹ️</span>
+          <div>El saldo de cuenta corriente se calcula automáticamente. Un saldo positivo indica que el taller tiene deuda; negativo, que tiene crédito a favor.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONFIG GENERAL -->
+    <div class="section" id="config-general">
+      <div class="section-header">
+        <span class="icon">⚙️</span>
+        <div>
+          <h2>Configuración general</h2>
+          <p>Datos del negocio visibles en la tienda</p>
+        </div>
+      </div>
+      <div class="section-body">
+        <table>
+          <thead>
+            <tr><th>Campo</th><th>Qué controla</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Dirección</td><td>Texto visible en el topbar de la tienda y en el footer</td></tr>
+            <tr><td>Teléfono WA flotante</td><td>Número (con código de país, sin +) para el botón flotante de WhatsApp</td></tr>
+            <tr><td>Mensaje bienvenida WA</td><td>Texto preteado del botón "Asesor" del widget de WhatsApp</td></tr>
+            <tr><td>Email de contacto</td><td>Aparece en el footer y en páginas de contacto</td></tr>
+            <tr><td>Instagram / Facebook</td><td>URLs completas — se muestran en el footer con íconos</td></tr>
+          </tbody>
+        </table>
+
+        <div class="tip" style="margin-top:16px">
+          <span class="icon">💡</span>
+          <div>Después de guardar la configuración, la tienda tarda unos segundos en reflejar los cambios porque usa caché del navegador. Recargá con <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd> para ver los cambios inmediatamente.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONFIG HORARIOS -->
+    <div class="section" id="config-horarios">
+      <div class="section-header">
+        <span class="icon">🕐</span>
+        <div>
+          <h2>Horarios y topbar</h2>
+          <p>Configurar horarios de atención y vista previa del header</p>
+        </div>
+      </div>
+      <div class="section-body">
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <h4>Configurá horarios por día</h4>
+              <p>La tabla de horarios muestra cada día de la semana (Lunes a Sábado). Para cada día podés ingresar horario de apertura y cierre, o tildar <strong>Cerrado</strong>.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <h4>Revisá la vista previa del topbar</h4>
+              <p>El sistema genera automáticamente un texto compacto (ej. "Lun–Sáb 09:00–18:00hs") que se muestra en el topbar de la tienda. La vista previa se actualiza al guardar.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <h4>Guardá la configuración</h4>
+              <p>Clic en <strong>Guardar configuración</strong>. Los cambios se guardan en Supabase y se aplican en la tienda en el próximo acceso de los usuarios.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="screenshot">
+          <div class="ss-icon">🖼️</div>
+          <p><strong>Captura:</strong> Grilla de horarios por día con vista previa del topbar en tiempo real</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- TEST SISTEMA -->
+    <div class="section" id="test-sistema">
+      <div class="section-header">
+        <span class="icon">🧪</span>
+        <div>
+          <h2>Test del sistema</h2>
+          <p>Verificar que todo funcione antes del lanzamiento</p>
+        </div>
+      </div>
+      <div class="section-body">
+        <p style="font-size:13px;color:#555;margin-bottom:16px;">Accedé a <strong>🧪 Test del sistema</strong> en el sidebar del admin. Esta herramienta incluye:</p>
+
+        <ul style="font-size:13px;color:#555;line-height:2;padding-left:20px">
+          <li><strong>Estadísticas de tablas:</strong> muestra cantidad de registros en cada tabla principal de Supabase</li>
+          <li><strong>Checklist de 30 ítems:</strong> verificaciones manuales de todas las funcionalidades de la tienda, admin y talleres. El estado se guarda en el navegador.</li>
+          <li><strong>Tests técnicos:</strong> prueba de conexión a Supabase, carga del widget de WhatsApp, lectura de configuración, y sistema de analytics</li>
+        </ul>
+
+        <div class="tip" style="margin-top:16px">
+          <span class="icon">💡</span>
+          <div>Hacé los tests técnicos antes del lanzamiento. Si alguno falla, el botón indica el problema específico para que puedas solucionarlo.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FAQ -->
+    <div class="section" id="faq">
+      <div class="section-header">
+        <span class="icon">❓</span>
+        <div>
+          <h2>Preguntas frecuentes</h2>
+          <p>Situaciones comunes y cómo resolverlas</p>
+        </div>
+      </div>
+      <div class="section-body">
+        <div class="faq-item">
+          <div class="faq-q">¿Por qué no puedo hacer login al admin después de varios intentos?</div>
+          <div class="faq-a">El sistema bloquea el acceso por 5 minutos después de 3 intentos incorrectos. Esperá 5 minutos y volvé a intentar. El bloqueo se guarda en el navegador, por lo que podés probar desde otro navegador o en modo incógnito si necesitás acceso inmediato.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">Un cliente dice que su cupón no funciona. ¿Qué reviso?</div>
+          <div class="faq-a">Verificá en el panel de Cupones: (1) que el código esté escrito exactamente igual (distingue mayúsculas/minúsculas), (2) que no haya vencido, (3) que no haya alcanzado el máximo de usos. Si todo parece correcto, pedile al cliente que limpie el caché del navegador.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">¿Cómo cambio la contraseña del admin?</div>
+          <div class="faq-a">Entrá a Supabase Dashboard → Table Editor → tabla <code>configuracion</code> → editá el registro con <code>clave = 'admin_password_hash'</code> y cambiá el <code>valor</code> por la nueva contraseña. El cambio es efectivo inmediatamente.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">Un producto no aparece en la búsqueda por auto aunque tiene compatibilidades.</div>
+          <div class="faq-a">Revisá que el modelo del auto seleccionado por el cliente coincida exactamente con la compatibilidad cargada. Si el cliente eligió "Volkswagen Gol 2013" y la compatibilidad es para "Volkswagen Gol 2012", no coincide. Fijate también que el producto tenga stock mayor a 0 si filtrás por disponibilidad.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">¿Cómo accede un taller nuevo a Piezauto Point?</div>
+          <div class="faq-a">Creá el taller en el panel admin (sección Talleres) con el email y contraseña que le vayas a dar. Verificá que esté marcado como <code>activo = true</code>. El taller accede a <code>https://piezauto.com.ar/point/</code> con esas credenciales.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">¿Qué pasa si Supabase está caído?</div>
+          <div class="faq-a">La tienda mostrará mensajes de error al cargar productos y el checkout no funcionará. La mayoría de los textos estáticos siguen visibles. Supabase tiene un status público en <code>status.supabase.com</code>. No hay fallback local implementado actualmente.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">¿Cómo agrego una categoría nueva?</div>
+          <div class="faq-a">Las categorías se gestionan directamente en Supabase: Table Editor → tabla <code>categorias</code>. Asegurate de completar los campos <code>nombre</code> y <code>slug</code> (el slug es la versión URL del nombre, ej. "frenos" para la categoría "Frenos"). El slug se usa en las URLs del catálogo.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">¿Hay copias de seguridad de la base de datos?</div>
+          <div class="faq-a">Supabase en el plan gratuito hace backups automáticos diarios. En planes pagos, los backups son más frecuentes y se pueden restaurar desde el dashboard. Adicionalmente, podés exportar las tablas manualmente desde Supabase → Table Editor → Export to CSV.</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="text-align:center;padding:20px 0;color:#bbb;font-size:12px">
+      Piezauto — Manual del Administrador v1.0 — Última actualización: abril 2026
+    </div>
+
+  </div><!-- /page -->
+</div><!-- /content -->
+
+<script>
+  // Resaltado activo en sidebar según scroll
+  const sections = document.querySelectorAll('.section');
+  const links = document.querySelectorAll('.sidebar a');
+
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        links.forEach(l => l.classList.remove('active'));
+        const a = document.querySelector(`.sidebar a[href="#${e.target.id}"]`);
+        if (a) a.classList.add('active');
+      }
+    });
+  }, { threshold: 0.3 });
+
+  sections.forEach(s => io.observe(s));
+</script>
+
+</body>
+</html>

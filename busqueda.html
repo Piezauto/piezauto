@@ -1,0 +1,950 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resultados de búsqueda — Piezauto</title>
+  <meta name="description" content="Resultados de búsqueda de autopartes y repuestos en Piezauto.">
+  <meta name="robots" content="noindex, follow">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Piezauto">
+  <meta property="og:title" content="Resultados de búsqueda — Piezauto">
+  <meta property="og:description" content="Resultados de búsqueda de autopartes y repuestos en Piezauto.">
+  <meta property="og:image" content="https://piezauto.com.ar/img/og-default.jpg">
+  <meta property="og:url" content="https://piezauto.com.ar/busqueda.html">
+  <link rel="canonical" href="https://piezauto.com.ar/busqueda.html">
+  <link rel="stylesheet" href="css/estilos.css">
+  <style>
+    #slider-min, #slider-max { pointer-events: auto; }
+    #slider-min::-webkit-slider-thumb, #slider-max::-webkit-slider-thumb {
+      -webkit-appearance: none; appearance: none;
+      width: 16px; height: 16px; border-radius: 50%;
+      background: var(--rojo); cursor: pointer; position: relative; z-index: 2;
+    }
+    #slider-min::-moz-range-thumb, #slider-max::-moz-range-thumb {
+      width: 16px; height: 16px; border-radius: 50%; background: var(--rojo); cursor: pointer; border: none;
+    }
+    .busqueda-wrap {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 24px;
+      margin: 28px 0;
+    }
+    .busqueda-sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .sidebar-card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 18px 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .sidebar-titulo {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: #888;
+      margin-bottom: 12px;
+    }
+    .sidebar-input {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1.5px solid #ddd;
+      border-radius: 8px;
+      font-size: 13px;
+      outline: none;
+      box-sizing: border-box;
+    }
+    .sidebar-input:focus { border-color: var(--rojo); }
+    .sidebar-select {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1.5px solid #ddd;
+      border-radius: 8px;
+      font-size: 13px;
+      outline: none;
+      box-sizing: border-box;
+      background: #fff;
+    }
+    .sidebar-select:focus { border-color: var(--rojo); }
+    .cat-check-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 0;
+      font-size: 13px;
+      color: #444;
+      cursor: pointer;
+    }
+    .cat-check-item input[type=checkbox] { accent-color: var(--rojo); width: 15px; height: 15px; }
+    .busqueda-contenido { min-width: 0; }
+    .busqueda-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .resultado-txt { font-size: 14px; color: #555; }
+    .resultado-txt strong { color: var(--rojo); }
+    .buscador-grande {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+    .buscador-grande input {
+      flex: 1;
+      padding: 13px 16px;
+      border: 2px solid #ddd;
+      border-radius: 10px;
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .buscador-grande input:focus { border-color: var(--rojo); }
+    .buscador-grande button {
+      padding: 13px 24px;
+      background: var(--rojo);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: opacity 0.2s;
+    }
+    .buscador-grande button:hover { opacity: 0.88; }
+    .paginacion {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 32px;
+      flex-wrap: wrap;
+    }
+    .pag-btn {
+      min-width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      border: 1.5px solid #ddd;
+      background: #fff;
+      font-size: 14px;
+      cursor: pointer;
+      font-weight: 600;
+      color: #555;
+      transition: all .15s;
+      padding: 0 10px;
+    }
+    .pag-btn:hover { border-color: var(--rojo); color: var(--rojo); }
+    .pag-btn.activo { background: var(--rojo); border-color: var(--rojo); color: #fff; }
+    .pag-btn:disabled { opacity: .4; cursor: not-allowed; }
+    .sin-resultados {
+      text-align: center;
+      padding: 60px 20px;
+      color: #888;
+    }
+    .sin-resultados .icono { font-size: 52px; margin-bottom: 16px; }
+    .sin-resultados h3 { font-size: 20px; font-weight: 700; color: #444; margin-bottom: 8px; }
+    .sin-resultados p { font-size: 14px; line-height: 1.7; }
+    .cats-sugeridas {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    .cat-sugerida-btn {
+      padding: 7px 16px;
+      background: #f0f0f0;
+      border: none;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      color: #444;
+      transition: background 0.15s;
+    }
+    .cat-sugerida-btn:hover { background: var(--rojo); color: #fff; }
+    mark { background: #ffe066; border-radius: 3px; padding: 0 2px; }
+    .breadcrumb { font-size: 13px; color: #999; margin-bottom: 20px; }
+    .breadcrumb a { color: var(--rojo); text-decoration: none; }
+    @media (max-width: 700px) {
+      .busqueda-wrap { grid-template-columns: 1fr; }
+      .buscador-grande input { font-size: 14px; }
+    }
+
+    /* SITE HEADER WRAP */
+    .site-header-wrap { position: sticky; top: 0; z-index: 200; }
+    .topbar {
+      background: #111; padding: 6px 24px;
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 12px; color: #aaa;
+    }
+    .topbar a { color: #aaa; transition: color .15s; }
+    .topbar a:hover { color: #fff; }
+    .topbar-right { display: flex; gap: 16px; }
+    .header {
+      background: var(--negro); height: 62px;
+      display: flex; align-items: center; padding: 0 24px; gap: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.35); position: relative;
+    }
+    .header-logo { font-size: 22px; font-weight: 800; color: #fff; letter-spacing: -.5px; flex-shrink: 0; }
+    .header-logo span { color: var(--rojo); }
+    .header-search {
+      flex: 1; max-width: 460px; display: flex;
+      background: #2a2a2a; border-radius: 8px; overflow: hidden; margin: 0 auto;
+    }
+    .header-search input {
+      flex: 1; background: transparent; border: none; outline: none;
+      color: #fff; padding: 9px 14px; font-size: 14px;
+    }
+    .header-search input::placeholder { color: #777; }
+    .header-search button {
+      background: var(--rojo); border: none; color: #fff;
+      padding: 0 16px; cursor: pointer; font-size: 15px; flex-shrink: 0;
+    }
+    .header-nav { display: flex; align-items: center; gap: 20px; margin-left: auto; }
+    .header-nav a { color: #ccc; font-size: 13px; font-weight: 500; transition: color .15s; white-space: nowrap; }
+    .header-nav a:hover { color: #fff; }
+    .header-carrito {
+      background: var(--rojo); color: #fff; padding: 7px 14px;
+      border-radius: var(--radio); font-size: 13px; font-weight: 600;
+      display: flex; align-items: center; gap: 6px; cursor: pointer; flex-shrink: 0;
+    }
+    .menu-hamburguesa {
+      display: none; flex-direction: column; gap: 5px;
+      background: transparent; border: none; cursor: pointer; padding: 4px; flex-shrink: 0;
+    }
+    .menu-hamburguesa span { display: block; width: 22px; height: 2px; background: #fff; border-radius: 2px; }
+    .header-nav-mobile {
+      display: none; flex-direction: column;
+      background: var(--negro); border-top: 1px solid #2a2a2a;
+      position: absolute; top: 62px; left: 0; right: 0; z-index: 199;
+    }
+    .header-nav-mobile.open { display: flex; }
+    .header-nav-mobile a {
+      color: #ccc; padding: 14px 24px; font-size: 15px;
+      border-bottom: 1px solid #222; transition: color .15s, background .15s;
+    }
+    .header-nav-mobile a:hover { color: #fff; background: #222; }
+
+    /* FOOTER NUEVO */
+    .footer-nuevo { background: #111; color: #aaa; padding: 52px 24px 0; margin-top: 60px; font-size: 13px; }
+    .footer-grid {
+      display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr; gap: 32px;
+      max-width: 1200px; margin: 0 auto; padding-bottom: 40px; border-bottom: 1px solid #222;
+    }
+    .footer-col h4 { color: #fff; font-size: 13px; font-weight: 700; margin-bottom: 14px; text-transform: uppercase; letter-spacing: .05em; }
+    .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .footer-col ul li a { color: #aaa; transition: color .15s; }
+    .footer-col ul li a:hover { color: var(--rojo); }
+    .footer-logo { font-size: 20px; font-weight: 800; color: #fff; margin-bottom: 10px; }
+    .footer-logo span { color: var(--rojo); }
+    .footer-col > p { line-height: 1.7; margin-bottom: 16px; }
+    .footer-social { display: flex; gap: 12px; margin-top: 4px; }
+    .footer-social a { width: 36px; height: 36px; border-radius: 50%; background: #222; display: flex; align-items: center; justify-content: center; transition: background .15s; }
+    .footer-social a svg { width: 18px; height: 18px; }
+    .footer-social a:hover { background: var(--rojo); }
+    .footer-bottom { max-width: 1200px; margin: 0 auto; padding: 20px 0; text-align: center; font-size: 12px; }
+
+    /* BADGES */
+    .prod-badges { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 6px; }
+    .badge-oferta { background: var(--rojo); color: #fff; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 20px; }
+    .badge-nuevo  { background: #22c55e; color: #fff; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 20px; }
+    .badge-sin-stock { background: #888; color: #fff; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px; }
+    .prod-precio-wrap { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+    .prod-precio-original { font-size: 13px; color: #bbb; text-decoration: line-through; }
+    .prod-resenas { font-size: 12px; color: #aaa; margin-top: 3px; }
+    .prod-resenas .stars { color: #f4a427; }
+    .prod-card-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .card-badges { position: absolute; top: 8px; left: 8px; display: flex; flex-direction: column; gap: 4px; z-index: 2; }
+    .badge { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .badge.badge-sin-stock { background: #E63946; border-radius: 4px; padding: 3px 8px; font-size: 11px; }
+    .badge.badge-nuevo { background: #22c55e; border-radius: 4px; padding: 3px 8px; font-size: 11px; }
+    .badge.badge-oferta { background: #f97316; color: #fff; border-radius: 4px; padding: 3px 8px; font-size: 11px; }
+    .card-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; margin-bottom: 6px; }
+    .card-tag { font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 20px; background: #1a1a1a; color: #aaa; border: 1px solid #333; }
+
+    /* RESPONSIVE HEADER */
+    @media (max-width: 900px) {
+      .header-nav { display: none; }
+      .header-search { max-width: 300px; }
+    }
+    @media (max-width: 600px) {
+      .topbar .topbar-right { display: none; }
+      .header-search { display: none; }
+      .menu-hamburguesa { display: flex; }
+      .header { height: 56px; }
+      .header-nav-mobile { top: 56px; }
+      .footer-grid { grid-template-columns: 1fr 1fr; gap: 24px; }
+      .footer-grid > .footer-col:first-child { grid-column: 1 / -1; }
+    }
+
+    /* BARRA FLOTANTE COMPARACIÓN */
+    .comparar-barra {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: var(--negro); color: #fff;
+      padding: 12px 24px; z-index: 500;
+      display: flex; align-items: center; gap: 16px;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
+      flex-wrap: wrap;
+    }
+    .comparar-barra-items { display: flex; gap: 10px; flex: 1; flex-wrap: wrap; }
+    .comparar-barra-item {
+      background: #2a2a2a; border-radius: 8px; padding: 7px 12px;
+      font-size: 13px; display: flex; align-items: center; gap: 8px; cursor: pointer;
+      transition: background .15s;
+    }
+    .comparar-barra-item:hover { background: #333; }
+    .comparar-barra-x { color: #aaa; font-size: 16px; }
+    .comparar-barra-titulo { font-size: 13px; font-weight: 700; color: #aaa; flex-shrink: 0; white-space: nowrap; }
+    .comparar-limpiar { background: transparent; border: none; color: #666; cursor: pointer; font-size: 20px; padding: 0 4px; }
+
+    /* BOTÓN COMPARAR EN CARD */
+    .btn-comparar {
+      width: 100%; padding: 7px; background: #f0f0f0; color: #444;
+      border: none; border-radius: var(--radio); font-weight: 600; font-size: 12px;
+      cursor: pointer; margin-top: 6px; transition: background .15s;
+    }
+    .btn-comparar:hover { background: #e0e0e0; }
+    .btn-comparar.activo { background: #e8f0fe; color: #1a56c4; }
+  </style>
+
+  <!-- ============================================================
+    GOOGLE ANALYTICS — Agregar antes del lanzamiento a producción
+    Reemplazá G-XXXXXXXXXX con tu Measurement ID real de GA4.
+    Instrucciones completas: analytics_setup.md
+    ============================================================
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-XXXXXXXXXX');
+  </script>
+  ============================================================ -->
+  <link rel="manifest" href="/manifest.json">
+  <script>if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');</script>
+</head>
+<body>
+
+<div class="site-header-wrap">
+  <div class="topbar">
+    <span id="topbar-info">📍 Zona Oeste, AMBA &nbsp;·&nbsp; Lun–Vie 9–18hs &nbsp;·&nbsp; Sáb 9–13hs</span>
+    <div class="topbar-right">
+      <a href="tel:+541143000000" id="topbar-telefono">📞 011 4300-0000</a>
+      <a href="https://wa.me/5491143000000" target="_blank" id="topbar-whatsapp">💬 WhatsApp</a>
+    </div>
+  </div>
+  <header class="header">
+    <a href="index.html" class="header-logo">Piezauto</a>
+    <div class="header-search">
+      <input type="text" id="header-buscar" placeholder="Buscá tu autoparte..." onkeydown="if(event.key==='Enter') buscarDesdeHeader()">
+      <button onclick="buscarDesdeHeader()">🔍</button>
+    </div>
+    <nav class="header-nav">
+      <a href="index.html">Inicio</a>
+      <a href="catalogo.html">Catálogo</a>
+      <a href="marcas.html">Marcas</a>
+      <a href="ofertas.html">Ofertas</a>
+      <a href="talleres.html">Talleres</a>
+      <a href="nosotros.html">Nosotros</a>
+      <a href="usuario.html">Mi cuenta</a>
+    </nav>
+    <div class="header-carrito" onclick="verCarrito()">
+      🛒 <span id="carrito-count">0</span>
+    </div>
+    <button class="menu-hamburguesa" onclick="toggleMenu()" aria-label="Abrir menú">
+      <span></span><span></span><span></span>
+    </button>
+    <nav class="header-nav-mobile" id="menu-mobile">
+      <a href="index.html" onclick="toggleMenu()">Inicio</a>
+      <a href="catalogo.html" onclick="toggleMenu()">Catálogo</a>
+      <a href="marcas.html" onclick="toggleMenu()">Marcas</a>
+      <a href="ofertas.html" onclick="toggleMenu()">Ofertas</a>
+      <a href="talleres.html" onclick="toggleMenu()">Talleres</a>
+      <a href="nosotros.html" onclick="toggleMenu()">Nosotros</a>
+      <a href="usuario.html" onclick="toggleMenu()">Mi cuenta</a>
+    </nav>
+  </header>
+</div>
+
+<main class="container">
+
+  <div class="breadcrumb">
+    <a href="index.html">Inicio</a> › Búsqueda
+  </div>
+
+  <div class="buscador-grande">
+    <input type="text" id="q-input" placeholder="Buscá por nombre, código o descripción..." autocomplete="off">
+    <button onclick="ejecutarBusqueda()">Buscar</button>
+  </div>
+
+  <div class="busqueda-wrap">
+
+    <!-- SIDEBAR FILTROS -->
+    <aside class="busqueda-sidebar">
+
+      <div class="sidebar-card">
+        <div class="sidebar-titulo">Categorías</div>
+        <div id="filtro-categorias">
+          <div class="loader" style="font-size:12px;padding:8px 0">Cargando...</div>
+        </div>
+      </div>
+
+      <div class="sidebar-card">
+        <div class="sidebar-titulo">Precio</div>
+        <div style="display:flex;gap:6px;margin-bottom:10px">
+          <input type="number" id="precio-min" class="sidebar-input" placeholder="Desde $" min="0" oninput="sincronizarSliders()">
+          <input type="number" id="precio-max" class="sidebar-input" placeholder="Hasta $" min="0" oninput="sincronizarSliders()">
+        </div>
+        <div style="position:relative;height:20px;margin-bottom:6px">
+          <input type="range" id="slider-min" min="0" max="500000" step="1000" value="0"
+            style="position:absolute;width:100%;pointer-events:none;appearance:none;-webkit-appearance:none;height:4px;background:transparent;outline:none"
+            oninput="onSliderMin(this.value)">
+          <input type="range" id="slider-max" min="0" max="500000" step="1000" value="500000"
+            style="position:absolute;width:100%;pointer-events:none;appearance:none;-webkit-appearance:none;height:4px;background:transparent;outline:none"
+            oninput="onSliderMax(this.value)">
+          <div id="slider-track" style="position:absolute;top:8px;left:0;right:0;height:4px;background:#e0e0e0;border-radius:2px">
+            <div id="slider-fill" style="position:absolute;height:100%;background:var(--rojo);border-radius:2px"></div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:#aaa;margin-bottom:10px">
+          <span>$0</span><span>$500.000</span>
+        </div>
+        <button class="btn btn-rojo" style="width:100%" onclick="ejecutarBusqueda()">Aplicar</button>
+      </div>
+
+      <div class="sidebar-card">
+        <div class="sidebar-titulo">Disponibilidad</div>
+        <label class="cat-check-item">
+          <input type="checkbox" id="solo-stock" onchange="ejecutarBusqueda()">
+          Solo con stock
+        </label>
+      </div>
+
+      <div class="sidebar-card">
+        <div class="sidebar-titulo">Ordenar por</div>
+        <select id="orden" class="sidebar-select" onchange="ejecutarBusqueda()">
+          <option value="relevancia">Relevancia</option>
+          <option value="menor-precio">Menor precio</option>
+          <option value="mayor-precio">Mayor precio</option>
+          <option value="nuevo">Más nuevo</option>
+        </select>
+      </div>
+
+    </aside>
+
+    <!-- RESULTADOS -->
+    <div class="busqueda-contenido">
+      <div class="busqueda-header">
+        <div class="resultado-txt" id="resultado-txt">Ingresá un término para buscar</div>
+      </div>
+      <div class="grilla-productos" id="grilla-resultados">
+      </div>
+      <div class="paginacion" id="paginacion"></div>
+    </div>
+
+  </div>
+</main>
+
+<footer class="footer-nuevo">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-col">
+        <div class="footer-logo">Piezauto</div>
+        <p>Más de 40 años en el mercado de autopartes del AMBA. Stock real, asesoramiento honesto y precio justo.</p>
+        <div class="footer-social">
+          <a href="https://instagram.com/piezauto" target="_blank" aria-label="Instagram">
+            <svg viewBox="0 0 24 24"><path fill="#fff" d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+          </a>
+          <a href="https://facebook.com/piezauto" target="_blank" aria-label="Facebook">
+            <svg viewBox="0 0 24 24"><path fill="#fff" d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+          </a>
+          <a href="https://wa.me/5491143000000" target="_blank" aria-label="WhatsApp">
+            <svg viewBox="0 0 24 24"><path fill="#fff" d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          </a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>Empresa</h4>
+        <ul>
+          <li><a href="nosotros.html">Nosotros</a></li>
+          <li><a href="nosotros.html">Contacto</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Comprar</h4>
+        <ul>
+          <li><a href="catalogo.html">Catálogo</a></li>
+          <li><a href="marcas.html">Marcas</a></li>
+          <li><a href="ofertas.html">Ofertas</a></li>
+          <li><a href="seguimiento.html">Seguimiento</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Talleres</h4>
+        <ul>
+          <li><a href="talleres.html">Piezauto Point</a></li>
+          <li><a href="unirse-point.html">¿Tenés un taller? Sumate</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Legal</h4>
+        <ul>
+          <li><a href="terminos.html">Términos y condiciones</a></li>
+          <li><a href="privacidad.html">Política de privacidad</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© <span class="footer-year"></span> Piezauto — Zona Oeste, Buenos Aires. Todos los derechos reservados.</p>
+      <p style="margin-top:4px">Precios en pesos argentinos con IVA incluido. Stock sujeto a disponibilidad.</p>
+    </div>
+  </div>
+</footer>
+<script>document.querySelectorAll('.footer-year').forEach(el => el.textContent = new Date().getFullYear());</script>
+
+<!-- BARRA COMPARACIÓN -->
+<div class="comparar-barra" id="comparar-barra" style="display:none">
+  <span class="comparar-barra-titulo">⚖️ Comparar:</span>
+  <div class="comparar-barra-items" id="comparar-items"></div>
+  <a href="comparar.html" class="btn btn-rojo" style="white-space:nowrap;flex-shrink:0;font-size:13px">Ver comparación →</a>
+  <button class="comparar-limpiar" onclick="limpiarComparacion()" title="Limpiar">×</button>
+</div>
+
+<script src="js/whatsapp-widget.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script src="js/mantenimiento.js" defer></script><script src="js/analytics.js" defer></script>
+  <script src="js/notifications.js"></script>
+  <script src="js/autocomplete.js"></script>
+<script>
+
+function esNuevo(fechaISO) {
+  if (!fechaISO) return false;
+  return (Date.now() - new Date(fechaISO).getTime()) < 30 * 24 * 60 * 60 * 1000;
+}
+
+function buscarDesdeHeader() {
+  const q = document.getElementById('header-buscar').value.trim();
+  if (!q) return;
+  const mainInput = document.getElementById('q-input');
+  if (mainInput) { mainInput.value = q; }
+  history.pushState({}, '', '?q=' + encodeURIComponent(q));
+  ejecutarBusqueda(1);
+}
+function toggleMenu() {
+  document.getElementById('menu-mobile').classList.toggle('open');
+}
+function verCarrito() { window.location.href = 'checkout.html'; }
+
+function obtenerComparacion() {
+  return JSON.parse(localStorage.getItem('pz_comparar') || '[]');
+}
+function estaEnComparacion(id) {
+  return obtenerComparacion().some(p => p.id === id);
+}
+function toggleComparar(producto) {
+  var lista = obtenerComparacion();
+  var idx = lista.findIndex(function(p) { return p.id === producto.id; });
+  if (idx >= 0) {
+    lista.splice(idx, 1);
+  } else {
+    if (lista.length >= 3) {
+      alert('Podés comparar hasta 3 productos a la vez. Quitá uno para agregar otro.');
+      return;
+    }
+    lista.push(producto);
+  }
+  localStorage.setItem('pz_comparar', JSON.stringify(lista));
+  actualizarBarraComparar();
+}
+function limpiarComparacion() {
+  localStorage.removeItem('pz_comparar');
+  actualizarBarraComparar();
+}
+function actualizarBarraComparar() {
+  var lista = obtenerComparacion();
+  var barra = document.getElementById('comparar-barra');
+  var itemsEl = document.getElementById('comparar-items');
+  if (!barra) return;
+  if (!lista.length) { barra.style.display = 'none'; return; }
+  barra.style.display = 'flex';
+  itemsEl.innerHTML = lista.map(function(p) {
+    return '<div class="comparar-barra-item" onclick="toggleComparar({id:\'' + p.id + '\',nombre:\'' + p.nombre.replace(/'/g, "\\'") + '\',precio:' + p.precio + ',imagen:\'' + (p.imagen || '') + '\'})">' +
+      '<span>' + (p.nombre.length > 28 ? p.nombre.slice(0,28) + '…' : p.nombre) + '</span>' +
+      '<span class="comparar-barra-x">×</span>' +
+    '</div>';
+  }).join('');
+  document.querySelectorAll('[data-comparar-id]').forEach(function(btn) {
+    var id = btn.dataset.compararId;
+    btn.classList.toggle('activo', lista.some(function(p) { return p.id === id; }));
+    btn.textContent = lista.some(function(p) { return p.id === id; }) ? '✓ En comparación' : '⚖️ Comparar';
+  });
+}
+
+var iconos = {
+  'motor':'⚙️','frenos':'🔴','suspension':'🔧','transmision':'⚡',
+  'electricidad':'💡','filtros':'🌀','refrigeracion':'❄️','carroceria':'🚗',
+  'iluminacion':'💡','accesorios':'✨','escape':'💨','direccion':'🎯'
+};
+
+var POR_PAGINA    = 20;
+var paginaActual  = 1;
+var totalTotal    = 0;
+var terminoBusqueda = '';
+var categoriasSeleccionadas = [];
+var todasLasCategorias = [];
+var _catMap = {};
+
+// Carrito
+var carrito = JSON.parse(localStorage.getItem('pz_carrito') || '[]');
+actualizarContadorCarrito();
+
+function actualizarContadorCarrito() {
+  var total = carrito.reduce(function(a, i) { return a + i.cantidad; }, 0);
+  document.getElementById('carrito-count').textContent = total;
+}
+
+function agregarAlCarrito(producto) {
+  var existe = carrito.find(function(i) { return i.id === producto.id; });
+  if (existe) {
+    existe.cantidad++;
+  } else {
+    carrito.push({ id: producto.id, nombre: producto.nombre, precio: producto.precio, cantidad: 1 });
+  }
+  localStorage.setItem('pz_carrito', JSON.stringify(carrito));
+  actualizarContadorCarrito();
+  alert('✅ "' + producto.nombre + '" agregado al carrito');
+}
+
+function imgOIcono(p) {
+  var slug  = _catMap[p.categoria_id] || '';
+  var icono = iconos[slug] || '🔩';
+  if (p.imagenes && p.imagenes[0]) {
+    return '<img class="prod-card-img" src="' + p.imagenes[0] + '" alt="' + p.nombre + '" loading="lazy" ' +
+      'onerror="this.outerHTML=\'<div class=\\\'prod-card-placeholder\\\'>' + icono + '</div>\'">';
+  }
+  return '<div class="prod-card-placeholder">' + icono + '</div>';
+}
+
+function resaltarTermino(texto, termino) {
+  if (!termino) return texto;
+  var re = new RegExp('(' + termino.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+  return texto.replace(re, '<mark style="background:#ffe066;border-radius:3px;padding:0 2px">$1</mark>');
+}
+
+async function cargarCategorias() {
+  var res = await db.from('categorias').select('*').order('nombre');
+  if (res.error || !res.data) return;
+  todasLasCategorias = res.data;
+  _catMap = {};
+  res.data.forEach(function(c) { _catMap[c.id] = c.slug; });
+
+  var contenedor = document.getElementById('filtro-categorias');
+  contenedor.innerHTML = res.data.map(function(cat) {
+    return '<label class="cat-check-item">' +
+      '<input type="checkbox" class="cat-check" value="' + cat.id + '" onchange="onCatChange()">' +
+      (iconos[cat.slug] || '🔩') + ' ' + cat.nombre +
+    '</label>';
+  }).join('');
+}
+
+function onCatChange() {
+  categoriasSeleccionadas = [];
+  document.querySelectorAll('.cat-check:checked').forEach(function(ch) {
+    categoriasSeleccionadas.push(ch.value);
+  });
+  ejecutarBusqueda();
+}
+
+async function cargarResenas(ids) {
+  if (!ids.length) return {};
+  try {
+    var res = await db.from('vista_promedio_resenas').select('producto_id, promedio, cantidad').in('producto_id', ids);
+    if (!res.data) return {};
+    var map = {};
+    res.data.forEach(function(r) { map[r.producto_id] = { promedio: r.promedio, cantidad: r.cantidad }; });
+    return map;
+  } catch(e) { return {}; }
+}
+
+async function ejecutarBusqueda(pagina) {
+  if (pagina === undefined) pagina = 1;
+  paginaActual = pagina;
+
+  var texto    = document.getElementById('q-input').value.trim();
+  var precioMin = document.getElementById('precio-min').value;
+  var precioMax = document.getElementById('precio-max').value;
+  var soloStock = document.getElementById('solo-stock').checked;
+  var orden     = document.getElementById('orden').value;
+
+  terminoBusqueda = texto;
+  if (window.trackSearch && texto) trackSearch(texto);
+
+  if (!texto && !categoriasSeleccionadas.length) {
+    document.getElementById('resultado-txt').textContent = 'Ingresá un término para buscar';
+    document.getElementById('grilla-resultados').innerHTML = '';
+    document.getElementById('paginacion').innerHTML = '';
+    // Actualizar URL sin q
+    history.replaceState(null, '', 'busqueda.html');
+    return;
+  }
+
+  // Actualizar URL y título
+  if (texto) {
+    history.replaceState(null, '', 'busqueda.html?q=' + encodeURIComponent(texto));
+    document.title = `"${texto}" — Búsqueda Piezauto`;
+  }
+
+  document.getElementById('grilla-resultados').innerHTML = '<div class="loader">Buscando...</div>';
+  document.getElementById('paginacion').innerHTML = '';
+
+  var desde = (pagina - 1) * POR_PAGINA;
+  var hasta  = pagina * POR_PAGINA - 1;
+
+  var q = db.from('productos')
+    .select('*, categorias(nombre, slug)', { count: 'exact' })
+    .eq('activo', true);
+
+  if (texto) {
+    q = q.or('nombre.ilike.%' + texto + '%,descripcion.ilike.%' + texto + '%,codigo_pieza.ilike.%' + texto + '%');
+  }
+
+  if (categoriasSeleccionadas.length) {
+    q = q.in('categoria_id', categoriasSeleccionadas);
+  }
+
+  if (precioMin !== '') q = q.gte('precio', Number(precioMin));
+  if (precioMax !== '') q = q.lte('precio', Number(precioMax));
+  if (soloStock)        q = q.gt('stock', 0);
+
+  if (orden === 'menor-precio') q = q.order('precio', { ascending: true });
+  else if (orden === 'mayor-precio') q = q.order('precio', { ascending: false });
+  else if (orden === 'nuevo')   q = q.order('creado_en', { ascending: false });
+  else                          q = q.order('nombre', { ascending: true });
+
+  q = q.range(desde, hasta);
+
+  var res = await q;
+  var data  = res.data;
+  var error = res.error;
+  var count = res.count;
+
+  if (error) {
+    document.getElementById('grilla-resultados').innerHTML = '<p class="vacio">Error al buscar productos. Intentá de nuevo.</p>';
+    return;
+  }
+
+  totalTotal = count || 0;
+
+  var conteoTxt = '';
+  if (texto) {
+    conteoTxt = '<strong>' + totalTotal.toLocaleString('es-AR') + '</strong> resultado' +
+      (totalTotal !== 1 ? 's' : '') + ' para <em>"' + texto + '"</em>';
+  } else {
+    conteoTxt = '<strong>' + totalTotal.toLocaleString('es-AR') + '</strong> producto' +
+      (totalTotal !== 1 ? 's' : '') + ' encontrado' + (totalTotal !== 1 ? 's' : '');
+  }
+  document.getElementById('resultado-txt').innerHTML = conteoTxt;
+
+  if (!data || !data.length) {
+    mostrarSinResultados(texto);
+    return;
+  }
+
+  var resenaMap = await cargarResenas(data.map(function(p) { return p.id; }));
+
+  var ahora = new Date();
+  document.getElementById('grilla-resultados').innerHTML = data.map(function(p) {
+    var nombreResaltado = resaltarTermino(p.nombre, texto);
+    var esNuevo = p.creado_en && (ahora - new Date(p.creado_en)) < 30 * 24 * 3600 * 1000;
+    var tieneOferta = p.precio_oferta && (!p.fecha_fin_oferta || new Date(p.fecha_fin_oferta) >= ahora);
+    var sinStock = p.stock === 0;
+    var pct = tieneOferta ? Math.round(((p.precio - p.precio_oferta) / p.precio) * 100) : 0;
+    var precioFinal = tieneOferta ? Number(p.precio_oferta) : Number(p.precio);
+
+    var badgesHtml = '<div class="prod-badges">' +
+      (tieneOferta ? '<span class="badge-oferta">-' + pct + '% OFF</span>' : '') +
+      (esNuevo && !tieneOferta ? '<span class="badge-nuevo">NUEVO</span>' : '') +
+      (sinStock ? '<span class="badge-sin-stock">Sin stock</span>' : '') +
+      '</div>';
+
+    var precioHtml = tieneOferta
+      ? '<div class="prod-precio-wrap"><span class="prod-precio-original">$' + Number(p.precio).toLocaleString('es-AR') + '</span><span class="prod-card-precio">$' + Number(p.precio_oferta).toLocaleString('es-AR') + '</span></div>'
+      : '<div class="prod-card-precio">$' + Number(p.precio).toLocaleString('es-AR') + '</div>';
+
+    var resData = resenaMap[p.id];
+    var resenasHtml = resData
+      ? '<div class="prod-resenas"><span class="stars">' + '★'.repeat(Math.round(resData.promedio)) + '☆'.repeat(5 - Math.round(resData.promedio)) + '</span> ' + resData.promedio.toFixed(1) + ' (' + resData.cantidad + ')</div>'
+      : '';
+
+    var btnHtml = sinStock
+      ? '<button class="prod-card-btn" disabled>Sin stock</button>'
+      : '<button class="prod-card-btn" onclick="event.stopPropagation();agregarAlCarrito({id:\'' + p.id + '\',nombre:\'' + p.nombre.replace(/'/g, "\\'") + '\',precio:' + precioFinal + '})">🛒 Agregar</button>';
+
+    var imgUrl = p.imagenes && p.imagenes[0] ? p.imagenes[0] : '';
+    var comparando = estaEnComparacion(p.id);
+    var btnComparar = '<button class="btn-comparar ' + (comparando ? 'activo' : '') + '" data-comparar-id="' + p.id + '" onclick="event.stopPropagation();toggleComparar({id:\'' + p.id + '\',nombre:\'' + p.nombre.replace(/'/g, "\\'") + '\',precio:' + precioFinal + ',imagen:\'' + imgUrl + '\'})">' + (comparando ? '✓ En comparación' : '⚖️ Comparar') + '</button>';
+
+    var cardBadgesHtml = '<div class="card-badges">' +
+      (sinStock ? '<span class="badge badge-sin-stock">Sin stock</span>' : '') +
+      (esNuevo && !tieneOferta ? '<span class="badge badge-nuevo">Nuevo</span>' : '') +
+      (tieneOferta ? '<span class="badge badge-oferta">Oferta</span>' : '') +
+      '</div>';
+
+    var tagsHtml = (p.tags && p.tags.length)
+      ? '<div class="card-tags">' + p.tags.map(function(t) { return '<span class="card-tag">' + t + '</span>'; }).join('') + '</div>'
+      : '';
+
+    return '<div class="prod-card" onclick="window.location=\'producto.html?id=' + p.id + '\'">' +
+      '<div style="position:relative">' +
+        imgOIcono(p) +
+        cardBadgesHtml +
+      '</div>' +
+      '<div class="prod-card-body">' +
+        badgesHtml +
+        '<div class="prod-card-nombre">' + nombreResaltado + '</div>' +
+        tagsHtml +
+        '<div class="prod-card-codigo">' + (p.codigo_pieza ? 'Cód: ' + p.codigo_pieza : '') + '</div>' +
+        resenasHtml +
+        precioHtml +
+        btnHtml +
+        btnComparar +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  renderPaginacion(totalTotal);
+}
+
+function onSliderMin(val) {
+  var max = parseInt(document.getElementById('slider-max').value);
+  val = Math.min(parseInt(val), max - 1000);
+  document.getElementById('slider-min').value = val;
+  document.getElementById('precio-min').value = val > 0 ? val : '';
+  actualizarSliderFill();
+}
+function onSliderMax(val) {
+  var min = parseInt(document.getElementById('slider-min').value);
+  val = Math.max(parseInt(val), min + 1000);
+  document.getElementById('slider-max').value = val;
+  document.getElementById('precio-max').value = val < 500000 ? val : '';
+  actualizarSliderFill();
+}
+function sincronizarSliders() {
+  var min = parseInt(document.getElementById('precio-min').value) || 0;
+  var max = parseInt(document.getElementById('precio-max').value) || 500000;
+  document.getElementById('slider-min').value = min;
+  document.getElementById('slider-max').value = max;
+  actualizarSliderFill();
+}
+function actualizarSliderFill() {
+  var min = parseInt(document.getElementById('slider-min').value);
+  var max = parseInt(document.getElementById('slider-max').value);
+  var pct1 = (min / 500000) * 100;
+  var pct2 = (max / 500000) * 100;
+  document.getElementById('slider-fill').style.left = pct1 + '%';
+  document.getElementById('slider-fill').style.width = (pct2 - pct1) + '%';
+}
+
+async function mostrarSinResultados(texto) {
+  var sugerencias = todasLasCategorias.slice(0, 6).map(function(cat) {
+    return '<button class="cat-sugerida-btn" onclick="window.location=\'categoria.html?slug=' + cat.slug + '\'">' +
+      (iconos[cat.slug] || '🔩') + ' ' + cat.nombre +
+    '</button>';
+  }).join('');
+
+  var popularesHtml = '';
+  try {
+    var res = await db.from('productos').select('*').eq('activo', true).order('creado_en', { ascending: false }).limit(4);
+    var populares = res.data;
+    if (populares && populares.length) {
+      popularesHtml = '<div style="margin-top:24px;text-align:left">' +
+        '<p style="font-weight:700;font-size:14px;margin-bottom:12px;color:#333">También te puede interesar:</p>' +
+        '<div class="grilla-productos" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr))">' +
+        populares.map(function(p) {
+          return '<div class="prod-card" onclick="window.location=\'producto.html?id=' + p.id + '\'" style="cursor:pointer">' +
+            (p.imagenes && p.imagenes[0]
+              ? '<img class="prod-card-img" src="' + p.imagenes[0] + '" alt="' + p.nombre + '" loading="lazy" style="height:120px">'
+              : '<div class="prod-card-placeholder" style="height:120px">🔩</div>') +
+            '<div class="prod-card-body">' +
+              '<div class="prod-card-nombre" style="font-size:13px">' + p.nombre + '</div>' +
+              '<div class="prod-card-precio">$' + Number(p.precio_oferta || p.precio).toLocaleString('es-AR') + '</div>' +
+            '</div></div>';
+        }).join('') +
+        '</div></div>';
+    }
+  } catch(e) {}
+
+  document.getElementById('grilla-resultados').innerHTML =
+    '<div class="sin-resultados">' +
+      '<div class="icono">🔍</div>' +
+      '<h3>Sin resultados para "' + texto + '"</h3>' +
+      '<p>No encontramos productos que coincidan con tu búsqueda.<br>Probá con otras palabras o buscá por categoría.</p>' +
+      (sugerencias ? '<div class="cats-sugeridas">' + sugerencias + '</div>' : '') +
+      popularesHtml +
+    '</div>';
+}
+
+function renderPaginacion(total) {
+  var totalPaginas = Math.ceil(total / POR_PAGINA);
+  var contenedor   = document.getElementById('paginacion');
+  if (totalPaginas <= 1) { contenedor.innerHTML = ''; return; }
+
+  var html = '';
+  html += '<button class="pag-btn" onclick="irPagina(' + (paginaActual - 1) + ')" ' + (paginaActual === 1 ? 'disabled' : '') + '>← Anterior</button>';
+
+  var inicio = Math.max(1, paginaActual - 2);
+  var fin    = Math.min(totalPaginas, inicio + 4);
+  if (fin - inicio < 4) { inicio = Math.max(1, fin - 4); }
+
+  for (var i = inicio; i <= fin; i++) {
+    html += '<button class="pag-btn ' + (i === paginaActual ? 'activo' : '') + '" onclick="irPagina(' + i + ')">' + i + '</button>';
+  }
+
+  html += '<button class="pag-btn" onclick="irPagina(' + (paginaActual + 1) + ')" ' + (paginaActual === totalPaginas ? 'disabled' : '') + '>Siguiente →</button>';
+  contenedor.innerHTML = html;
+}
+
+function irPagina(n) {
+  var totalPaginas = Math.ceil(totalTotal / POR_PAGINA);
+  if (n < 1 || n > totalPaginas) return;
+  ejecutarBusqueda(n);
+  document.querySelector('.busqueda-contenido').scrollIntoView({ behavior: 'smooth' });
+}
+
+// Leer ?q= al cargar
+document.addEventListener('DOMContentLoaded', function() {
+  var params = new URLSearchParams(window.location.search);
+  var q = params.get('q') || '';
+  if (q) {
+    document.getElementById('q-input').value = q;
+  }
+  cargarCategorias().then(function() {
+    if (q) ejecutarBusqueda(1);
+  });
+  actualizarBarraComparar();
+});
+
+// Enter en el buscador grande
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('q-input').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') ejecutarBusqueda(1);
+  });
+});
+
+</script>
+<script src="js/mini-carrito.js"></script>
+<script src="js/config-topbar.js"></script>
+</body>
+</html>
