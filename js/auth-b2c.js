@@ -69,12 +69,22 @@ async function registrarCliente(datos, codigo) {
   }
 
   const nuevosUsos = validacion.invitacion.usos_actuales + 1;
-  await dbB2C.from('cat_invitaciones_b2c').update({
-    usos_actuales: nuevosUsos,
-    usado: nuevosUsos >= validacion.invitacion.max_usos,
-    usado_por: datos.email.trim().toLowerCase(),
-    usado_at: new Date().toISOString(),
-  }).eq('id', validacion.invitacion.id);
+  const { error: updateError, count } = await dbB2C
+    .from('cat_invitaciones_b2c')
+    .update({
+      usos_actuales: nuevosUsos,
+      usado: nuevosUsos >= validacion.invitacion.max_usos,
+      usado_por: datos.email.trim().toLowerCase(),
+      usado_at: new Date().toISOString(),
+    })
+    .eq('id', validacion.invitacion.id)
+    .select('id');
+
+  if (updateError || count === 0) {
+    // No bloqueamos el registro — el usuario ya fue creado correctamente.
+    // El contador fallido se detecta en el smoke test y requiere policy RLS.
+    console.warn('[auth-b2c] No se pudo incrementar usos_actuales:', updateError?.message ?? 'RLS bloqueó el UPDATE (0 filas)');
+  }
 
   return { ok: true, user: authData.user, session: authData.session };
 }
