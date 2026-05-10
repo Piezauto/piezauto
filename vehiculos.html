@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mis vehículos — Piezauto</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="stylesheet" href="css/estilos.css">
+  <style>
+    .vehiculos-page { min-height: 100vh; background: var(--gris-claro); }
+
+    .page-header {
+      background: var(--negro);
+      padding: 20px 24px;
+      color: var(--blanco);
+    }
+    .page-header-inner {
+      max-width: 720px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .back-link {
+      color: #aaa;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .back-link:hover { color: var(--blanco); }
+    .page-titulo {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .vehiculos-body {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 24px 16px 48px;
+    }
+
+    .card {
+      background: var(--blanco);
+      border-radius: 12px;
+      box-shadow: var(--sombra);
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+    .card-header {
+      padding: 18px 20px 16px;
+      border-bottom: 1px solid var(--gris);
+    }
+    .card-titulo {
+      font-size: 15px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-body { padding: 20px; }
+
+    .form-grupo { margin-bottom: 16px; }
+    .form-grupo label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--gris-text);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-bottom: 5px;
+    }
+    .form-grupo input,
+    .form-grupo select {
+      width: 100%;
+      padding: 10px 13px;
+      border: 1.5px solid var(--gris);
+      border-radius: var(--radio);
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+      background: var(--blanco);
+      color: var(--negro);
+    }
+    .form-grupo input:focus,
+    .form-grupo select:focus { border-color: var(--rojo); }
+    .form-grupo .hint {
+      font-size: 11px;
+      color: var(--gris-text);
+      margin-top: 4px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .form-row-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+    }
+
+    .checkbox-grupo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 4px 0 20px;
+      cursor: pointer;
+    }
+    .checkbox-grupo input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--rojo);
+      cursor: pointer;
+    }
+    .checkbox-grupo span {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .alerta {
+      padding: 11px 14px;
+      border-radius: var(--radio);
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: none;
+    }
+    .alerta.error   { background: #fff0f0; color: #c1121f; border: 1px solid #ffd0d0; }
+    .alerta.success { background: #f0fff4; color: #166534; border: 1px solid #bbf7d0; }
+    .alerta.visible { display: block; }
+
+    .btn-guardar {
+      background: var(--rojo);
+      color: var(--blanco);
+      border: none;
+      border-radius: var(--radio);
+      padding: 11px 22px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .btn-guardar:hover { opacity: 0.88; }
+    .btn-guardar:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-cancelar {
+      background: none;
+      border: 1.5px solid var(--gris);
+      border-radius: var(--radio);
+      padding: 10px 18px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--negro);
+      display: none;
+    }
+    .btn-cancelar:hover { border-color: #999; }
+    .form-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+    /* Lista */
+    .vehiculo-row {
+      border: 1.5px solid var(--gris);
+      border-radius: var(--radio);
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      transition: border-color 0.2s;
+    }
+    .vehiculo-row:last-child { margin-bottom: 0; }
+    .vehiculo-info { flex: 1; min-width: 0; }
+    .vehiculo-titulo {
+      font-size: 15px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+    .vversion {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--gris-text);
+    }
+    .badge-principal {
+      background: var(--rojo);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 20px;
+      text-transform: uppercase;
+    }
+    .vehiculo-detalles {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .vehiculo-detalles span {
+      font-size: 12px;
+      color: var(--gris-text);
+    }
+    .vehiculo-acciones { display: flex; gap: 8px; flex-shrink: 0; }
+
+    @media (max-width: 540px) {
+      .form-row   { grid-template-columns: 1fr; gap: 0; }
+      .form-row-3 { grid-template-columns: 1fr 1fr; gap: 8px; }
+      .vehiculo-row { flex-direction: column; align-items: flex-start; }
+      .vehiculo-acciones { width: 100%; }
+    }
+  </style>
+</head>
+<body class="vehiculos-page">
+
+<header class="header">
+  <a href="index.html" class="header-logo">Piezauto</a>
+  <nav class="header-nav">
+    <a href="perfil.html" style="color:#fff">Mi perfil</a>
+  </nav>
+</header>
+
+<div class="page-header">
+  <div class="page-header-inner">
+    <a href="perfil.html" class="back-link">← Volver al perfil</a>
+    <span style="color:#555">·</span>
+    <span class="page-titulo">🚗 Mis vehículos</span>
+  </div>
+</div>
+
+<div class="vehiculos-body">
+
+  <!-- Formulario alta/edición -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-titulo" id="form-titulo">Agregar vehículo</div>
+    </div>
+    <div class="card-body">
+      <div class="alerta error"   id="alerta-vehiculo-error"></div>
+      <div class="alerta success" id="alerta-vehiculo-ok"></div>
+
+      <form id="form-vehiculo" novalidate>
+
+        <div class="form-row">
+          <div class="form-grupo">
+            <label for="marca">Marca *</label>
+            <select id="marca" name="marca" required>
+              <option value="">Seleccioná...</option>
+            </select>
+          </div>
+          <div class="form-grupo">
+            <label for="modelo">Modelo *</label>
+            <input type="text" id="modelo" name="modelo" placeholder="Ej: Corsa, Gol, Focus" required>
+          </div>
+        </div>
+
+        <div class="form-row-3">
+          <div class="form-grupo">
+            <label for="anio">Año *</label>
+            <input type="number" id="anio" name="anio" placeholder="2010"
+                   min="1950" max="2030" required inputmode="numeric">
+          </div>
+          <div class="form-grupo">
+            <label for="version">Versión</label>
+            <input type="text" id="version" name="version" placeholder="1.6 GNC">
+            <p class="hint">Opcional</p>
+          </div>
+          <div class="form-grupo">
+            <label for="patente">Patente</label>
+            <input type="text" id="patente" name="patente" placeholder="ABC123"
+                   maxlength="8" style="text-transform:uppercase;">
+            <p class="hint">Opcional</p>
+          </div>
+        </div>
+
+        <div class="form-grupo" style="max-width:240px;">
+          <label for="color">Color</label>
+          <input type="text" id="color" name="color" placeholder="Gris plata">
+        </div>
+
+        <label class="checkbox-grupo">
+          <input type="checkbox" id="principal" name="principal">
+          <span>Marcar como vehículo principal</span>
+        </label>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-guardar" id="btn-submit">Guardar vehículo</button>
+          <button type="button" class="btn-cancelar" id="btn-cancelar-edicion">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Listado -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-titulo">Mis autos guardados</div>
+    </div>
+    <div class="card-body" id="vehiculos-lista">
+      <p style="color:var(--gris-text);font-size:13px;">Cargando...</p>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script src="js/auth-b2c.js"></script>
+<script src="js/vehiculos.js"></script>
+</body>
+</html>

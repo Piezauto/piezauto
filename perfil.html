@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mi perfil — Piezauto</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="stylesheet" href="css/estilos.css">
+  <style>
+    .perfil-page { min-height: 100vh; background: var(--gris-claro); }
+
+    .perfil-hero {
+      background: var(--negro);
+      padding: 32px 24px;
+      color: var(--blanco);
+    }
+    .perfil-hero-inner {
+      max-width: 720px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .perfil-avatar {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: var(--rojo);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+    .perfil-hero-datos { flex: 1; }
+    .perfil-hero-nombre {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+    .perfil-hero-email {
+      font-size: 13px;
+      color: #aaa;
+    }
+    .btn-logout {
+      background: rgba(255,255,255,0.1);
+      color: var(--blanco);
+      border: 1px solid rgba(255,255,255,0.2);
+      padding: 8px 16px;
+      border-radius: var(--radio);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.2s;
+    }
+    .btn-logout:hover { background: rgba(255,255,255,0.2); }
+
+    .creditos-banner {
+      max-width: 720px;
+      margin: 20px auto 0;
+      background: linear-gradient(135deg, #E63946, #c1121f);
+      border-radius: var(--radio);
+      padding: 14px 18px;
+      display: none;
+      align-items: center;
+      gap: 12px;
+      color: var(--blanco);
+    }
+    .creditos-icono { font-size: 22px; }
+    .creditos-texto { flex: 1; font-size: 14px; }
+    .creditos-monto { font-size: 20px; font-weight: 800; }
+
+    .perfil-body {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 24px 16px 48px;
+    }
+
+    .seccion-card {
+      background: var(--blanco);
+      border-radius: 12px;
+      box-shadow: var(--sombra);
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+    .seccion-card-header {
+      padding: 18px 20px 16px;
+      border-bottom: 1px solid var(--gris);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .seccion-card-titulo {
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .seccion-card-body {
+      padding: 20px;
+    }
+
+    .form-grupo {
+      margin-bottom: 16px;
+    }
+    .form-grupo label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--gris-text);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-bottom: 5px;
+    }
+    .form-grupo input,
+    .form-grupo select {
+      width: 100%;
+      padding: 10px 13px;
+      border: 1.5px solid var(--gris);
+      border-radius: var(--radio);
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+      background: var(--blanco);
+      color: var(--negro);
+    }
+    .form-grupo input:focus,
+    .form-grupo select:focus { border-color: var(--rojo); }
+
+    .form-grupo .hint {
+      font-size: 11px;
+      color: var(--gris-text);
+      margin-top: 4px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .alerta {
+      padding: 11px 14px;
+      border-radius: var(--radio);
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: none;
+    }
+    .alerta.error   { background: #fff0f0; color: #c1121f; border: 1px solid #ffd0d0; }
+    .alerta.success { background: #f0fff4; color: #166534; border: 1px solid #bbf7d0; }
+    .alerta.visible { display: block; }
+
+    .btn-guardar {
+      background: var(--rojo);
+      color: var(--blanco);
+      border: none;
+      border-radius: var(--radio);
+      padding: 10px 22px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .btn-guardar:hover { opacity: 0.88; }
+    .btn-guardar:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Vehículos */
+    .vehiculos-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .vehiculos-count {
+      font-size: 12px;
+      color: var(--gris-text);
+      font-weight: 500;
+    }
+    .vehiculo-card {
+      border: 1.5px solid var(--gris);
+      border-radius: var(--radio);
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .vehiculo-card.principal {
+      border-color: var(--rojo);
+      background: #fff8f8;
+    }
+    .vehiculo-info { flex: 1; min-width: 0; }
+    .vehiculo-nombre {
+      font-size: 14px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .vehiculo-version {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--gris-text);
+    }
+    .badge-principal {
+      background: var(--rojo);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .vehiculo-meta {
+      font-size: 12px;
+      color: var(--gris-text);
+      margin-top: 3px;
+    }
+    .vehiculo-acciones {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    @media (max-width: 540px) {
+      .form-row { grid-template-columns: 1fr; gap: 0; }
+      .vehiculo-card { flex-direction: column; align-items: flex-start; }
+      .vehiculo-acciones { width: 100%; }
+      .perfil-hero-inner { flex-wrap: wrap; }
+    }
+  </style>
+</head>
+<body class="perfil-page">
+
+<header class="header">
+  <a href="index.html" class="header-logo">Piezauto</a>
+  <nav class="header-nav">
+    <a href="catalogo.html">Catálogo</a>
+    <a href="talleres.html">Talleres</a>
+    <a href="perfil.html" style="color:#fff">Mi perfil</a>
+  </nav>
+  <div class="header-carrito" onclick="location.href='checkout.html'">
+    🛒
+  </div>
+</header>
+
+<div class="perfil-hero">
+  <div class="perfil-hero-inner">
+    <div class="perfil-avatar" id="perfil-avatar">?</div>
+    <div class="perfil-hero-datos">
+      <div class="perfil-hero-nombre" id="perfil-nombre-display">Cargando...</div>
+      <div class="perfil-hero-email"  id="perfil-email-display"></div>
+    </div>
+    <button class="btn-logout" id="btn-logout">Cerrar sesión</button>
+  </div>
+
+  <div class="creditos-banner" id="creditos-wrap">
+    <div class="creditos-icono">💰</div>
+    <div class="creditos-texto">Tenés crédito disponible en tu cuenta</div>
+    <div class="creditos-monto" id="creditos-monto">$0</div>
+  </div>
+</div>
+
+<div class="perfil-body">
+
+  <!-- Datos personales -->
+  <div class="seccion-card">
+    <div class="seccion-card-header">
+      <span class="seccion-card-titulo">📋 Mis datos</span>
+    </div>
+    <div class="seccion-card-body">
+      <div class="alerta error"   id="alerta-perfil-error"></div>
+      <div class="alerta success" id="alerta-perfil-ok"></div>
+
+      <form id="form-perfil" novalidate>
+        <div class="form-row">
+          <div class="form-grupo">
+            <label for="edit-nombre">Nombre</label>
+            <input type="text" id="edit-nombre" placeholder="Juan" autocomplete="given-name">
+          </div>
+          <div class="form-grupo">
+            <label for="edit-apellido">Apellido</label>
+            <input type="text" id="edit-apellido" placeholder="García" autocomplete="family-name">
+          </div>
+        </div>
+
+        <div class="form-grupo">
+          <label>Email</label>
+          <input type="email" id="perfil-email-input" disabled style="background:#f5f5f5;color:var(--gris-text);">
+          <p class="hint">El email no se puede cambiar desde acá.</p>
+        </div>
+
+        <div class="form-grupo">
+          <label for="edit-telefono">Teléfono</label>
+          <input type="tel" id="edit-telefono" placeholder="011 15-1234-5678" autocomplete="tel">
+        </div>
+
+        <div class="form-row">
+          <div class="form-grupo">
+            <label for="edit-localidad">Localidad</label>
+            <input type="text" id="edit-localidad" placeholder="Morón" autocomplete="address-level2">
+          </div>
+          <div class="form-grupo">
+            <label for="edit-provincia">Provincia</label>
+            <select id="edit-provincia" autocomplete="address-level1">
+              <option value="">Seleccioná...</option>
+              <option value="Buenos Aires">Buenos Aires</option>
+              <option value="CABA">CABA</option>
+              <option value="Catamarca">Catamarca</option>
+              <option value="Chaco">Chaco</option>
+              <option value="Chubut">Chubut</option>
+              <option value="Córdoba">Córdoba</option>
+              <option value="Corrientes">Corrientes</option>
+              <option value="Entre Ríos">Entre Ríos</option>
+              <option value="Formosa">Formosa</option>
+              <option value="Jujuy">Jujuy</option>
+              <option value="La Pampa">La Pampa</option>
+              <option value="La Rioja">La Rioja</option>
+              <option value="Mendoza">Mendoza</option>
+              <option value="Misiones">Misiones</option>
+              <option value="Neuquén">Neuquén</option>
+              <option value="Río Negro">Río Negro</option>
+              <option value="Salta">Salta</option>
+              <option value="San Juan">San Juan</option>
+              <option value="San Luis">San Luis</option>
+              <option value="Santa Cruz">Santa Cruz</option>
+              <option value="Santa Fe">Santa Fe</option>
+              <option value="Santiago del Estero">Santiago del Estero</option>
+              <option value="Tierra del Fuego">Tierra del Fuego</option>
+              <option value="Tucumán">Tucumán</option>
+            </select>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-guardar" id="btn-guardar">Guardar cambios</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Mis vehículos -->
+  <div class="seccion-card">
+    <div class="seccion-card-header">
+      <span class="seccion-card-titulo">🚗 Mis vehículos</span>
+      <div class="vehiculos-header-actions">
+        <span class="vehiculos-count"><span id="vehiculos-count">0</span> vehículo(s)</span>
+        <a href="vehiculos.html" class="btn btn-rojo" style="font-size:13px;padding:8px 14px;">+ Agregar</a>
+      </div>
+    </div>
+    <div class="seccion-card-body">
+      <div id="vehiculos-lista">
+        <p style="color:var(--gris-text);font-size:13px;">Cargando...</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script src="js/auth-b2c.js"></script>
+<script src="js/perfil.js"></script>
+<script>
+  // Inicializar avatar con inicial del nombre
+  const _origRender = renderPerfil;
+  window.renderPerfil = function(cliente) {
+    _origRender(cliente);
+    const inicial = (cliente.nombre || '?')[0].toUpperCase();
+    document.getElementById('perfil-avatar').textContent = inicial;
+    const emailInput = document.getElementById('perfil-email-input');
+    if (emailInput) emailInput.value = cliente.email || '';
+  };
+</script>
+</body>
+</html>
