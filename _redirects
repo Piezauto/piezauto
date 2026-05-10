@@ -1,0 +1,3 @@
+/admin/* /admin/:splat 200
+/point/* /point/:splat 200
+/* /:splat 200
