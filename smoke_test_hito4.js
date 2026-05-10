@@ -1,22 +1,26 @@
 /**
  * Smoke test Hito 4 Fase 1 — Auth B2C + perfil + vehículos
  * Ejecutar: node smoke_test_hito4.js
- * Solo usa fetch nativo (Node >= 18) — sin dependencias externas.
  *
- * Estrategia de auth:
- *   - cat_invitaciones_b2c INSERT: intenta con anon key (requiere RLS permisiva).
- *     Si falla → necesitás service role key (Supabase Dashboard > Settings > API).
- *   - cat_clientes_finales, cat_clientes_vehiculos: usa JWT del signUp (RLS auth.uid()).
+ * Variables de entorno requeridas:
+ *   SUPABASE_URL            — URL del proyecto Supabase
+ *   SUPABASE_ANON_KEY       — clave pública (anon)
+ *   SUPABASE_SERVICE_ROLE_KEY — clave secreta (para cleanup de auth.users)
+ *
+ * En local: crear .env con esas vars y ejecutar con:
+ *   node --env-file=.env smoke_test_hito4.js
+ * En CI: configurar GitHub Secrets y el workflow los inyecta.
  */
 
-const SUPABASE_URL = 'https://mqxowotdeibllkitkije.supabase.co';
-const ANON_KEY     = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xeG93b3RkZWlibGxraXRraWplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxMzgxNDYsImV4cCI6MjA5MTcxNDE0Nn0.V_Pr0elBurAK7OPKFL3OoZwBmb-bI-Mcz8N1U8yblG8';
-const REST         = `${SUPABASE_URL}/rest/v1`;
-const AUTH         = `${SUPABASE_URL}/auth/v1`;
+const SUPABASE_URL      = process.env.SUPABASE_URL      || 'https://mqxowotdeibllkitkije.supabase.co';
+const ANON_KEY          = process.env.SUPABASE_ANON_KEY  || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xeG93b3RkZWlibGxraXRraWplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxMzgxNDYsImV4cCI6MjA5MTcxNDE0Nn0.V_Pr0elBurAK7OPKFL3OoZwBmb-bI-Mcz8N1U8yblG8';
+const SERVICE_ROLE_KEY  = process.env.SUPABASE_SERVICE_ROLE_KEY || null;
+const REST              = `${SUPABASE_URL}/rest/v1`;
+const AUTH              = `${SUPABASE_URL}/auth/v1`;
 
-const TS    = Date.now();
-const EMAIL = `smoketest${TS}@yopmail.com`;
-const PASS  = 'SmokeTest2026!';
+const TS     = Date.now();
+const EMAIL  = `smoketest${TS}@yopmail.com`;
+const PASS   = 'SmokeTest2026!';
 const CODIGO = 'BETA-TEST01';
 
 const report = [];
@@ -25,347 +29,241 @@ let authUserId   = null;
 let clienteId    = null;
 let vehiculoId   = null;
 let invitacionId = null;
+let invUsosBefore = 0;
 
-function ok(label, detail='')   { report.push({s:'✅', label, detail}); console.log(`  ✅ ${label}${detail ? ' → '+detail : ''}`); }
-function fail(label, detail='') { report.push({s:'❌', label, detail}); console.log(`  ❌ ${label}${detail ? ' → '+detail : ''}`); }
-function warn(label, detail='') { report.push({s:'⚠️', label, detail}); console.log(`  ⚠️  ${label}${detail ? ' → '+detail : ''}`); }
-function info(msg) { console.log(`     ${msg}`); }
+function ok(label, detail='')   { report.push({s:'✅',label,detail}); console.log(`  ✅ ${label}${detail?' → '+detail:''}`); }
+function fail(label, detail='') { report.push({s:'❌',label,detail}); console.log(`  ❌ ${label}${detail?' → '+detail:''}`); }
+function warn(label, detail='') { report.push({s:'⚠️',label,detail}); console.log(`  ⚠️  ${label}${detail?' → '+detail:''}`); }
 
-// ── HTTP helpers ─────────────────────────────────────────────────────────────
-
-function headers(jwt=null) {
-  const h = { 'apikey': ANON_KEY, 'Content-Type': 'application/json' };
-  if (jwt) h['Authorization'] = `Bearer ${jwt}`;
-  else     h['Authorization'] = `Bearer ${ANON_KEY}`;
-  return h;
+function headers(jwt=null, extra={}) {
+  const key = jwt || ANON_KEY;
+  return { apikey:ANON_KEY, Authorization:`Bearer ${key}`, 'Content-Type':'application/json', ...extra };
 }
 
 async function restGet(table, params='', jwt=null) {
-  const res = await fetch(`${REST}/${table}?${params}`, { headers: headers(jwt) });
-  return { status: res.status, data: await res.json() };
+  const r = await fetch(`${REST}/${table}?${params}`, { headers: headers(jwt) });
+  return { status:r.status, data: await r.json() };
 }
-
-async function restPost(table, body, jwt=null, extra={}) {
-  const res = await fetch(`${REST}/${table}`, {
-    method: 'POST',
-    headers: { ...headers(jwt), 'Prefer': 'return=representation', ...extra },
-    body: JSON.stringify(body),
+async function restPost(table, body, jwt=null) {
+  const r = await fetch(`${REST}/${table}`, {
+    method:'POST', headers: headers(jwt, {'Prefer':'return=representation'}), body: JSON.stringify(body)
   });
-  return { status: res.status, data: await res.json() };
+  return { status:r.status, data: await r.json() };
 }
-
 async function restPatch(table, params, body, jwt=null) {
-  const res = await fetch(`${REST}/${table}?${params}`, {
-    method: 'PATCH',
-    headers: { ...headers(jwt), 'Prefer': 'return=representation' },
-    body: JSON.stringify(body),
+  const r = await fetch(`${REST}/${table}?${params}`, {
+    method:'PATCH', headers: headers(jwt, {'Prefer':'return=representation'}), body: JSON.stringify(body)
   });
-  return { status: res.status, data: await res.json() };
+  return { status:r.status, data: await r.json() };
 }
-
 async function restDelete(table, params, jwt=null) {
-  const res = await fetch(`${REST}/${table}?${params}`, {
-    method: 'DELETE',
-    headers: headers(jwt),
-  });
-  return { status: res.status };
+  const r = await fetch(`${REST}/${table}?${params}`, { method:'DELETE', headers: headers(jwt) });
+  return { status:r.status };
 }
-
-async function authReq(path, body) {
-  const res = await fetch(`${AUTH}/${path}`, {
-    method: 'POST',
-    headers: { 'apikey': ANON_KEY, 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
+async function authReq(path, body, jwt=null) {
+  const r = await fetch(`${AUTH}/${path}`, {
+    method:'POST', headers: headers(jwt), body: JSON.stringify(body)
   });
-  return res.json();
+  return r.json();
 }
-
-// ── Main ─────────────────────────────────────────────────────────────────────
 
 async function run() {
+  const t0 = Date.now();
   console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log('  SMOKE TEST — Hito 4 Fase 1 — Piezauto  ');
+  console.log(`  SERVICE_ROLE disponible: ${SERVICE_ROLE_KEY ? 'SÍ' : 'NO (cleanup manual)'}`);
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
-  // ── 1. INSERT código de invitación (anon key — testea RLS) ───────────────
-  console.log('[ PASO 1 ] INSERT cat_invitaciones_b2c');
-  {
-    const r = await restPost('cat_invitaciones_b2c', {
-      codigo: CODIGO, max_usos: 10, usos_actuales: 0,
-      generado_por: 'sistema', usado: false,
-    });
-    if (r.status === 201) {
-      const row = Array.isArray(r.data) ? r.data[0] : r.data;
-      invitacionId = row?.id;
-      ok('INSERT cat_invitaciones_b2c', `id=${invitacionId} (nueva)`);
-    } else if (r.status === 409) {
-      // Ya existe — la buscamos
-      const sel = await restGet('cat_invitaciones_b2c', `codigo=eq.${CODIGO}&select=id,codigo,max_usos,usos_actuales,usado`);
-      if (sel.data?.length > 0) {
-        invitacionId = sel.data[0].id;
-        ok('INSERT cat_invitaciones_b2c', `ya existía — id=${invitacionId} | usos=${sel.data[0].usos_actuales}/${sel.data[0].max_usos}`);
-      } else {
-        fail('INSERT cat_invitaciones_b2c', 'conflict pero no se pudo leer la fila existente');
-      }
-    } else {
-      const errMsg = r.data?.message || r.data?.hint || JSON.stringify(r.data);
-      if (r.status === 403 || r.status === 401 || (r.data?.code === '42501')) {
-        fail('INSERT cat_invitaciones_b2c',
-          `BLOQUEADO POR RLS (HTTP ${r.status}) — necesitás ejecutar el SQL manualmente en Supabase Dashboard o proveer service_role key. Error: ${errMsg}`);
-        warn('ACCIÓN REQUERIDA', 'Ejecutá hito4_invitacion_test.sql en Supabase SQL Editor y volvé a correr el test');
-      } else {
-        fail('INSERT cat_invitaciones_b2c', `HTTP ${r.status} — ${errMsg}`);
-      }
-      // Intentamos recuperar si ya existe de todas formas
-      const sel = await restGet('cat_invitaciones_b2c', `codigo=eq.${CODIGO}&select=id,usos_actuales,max_usos`);
-      if (Array.isArray(sel.data) && sel.data.length > 0) {
-        invitacionId = sel.data[0].id;
-        info(`Código ${CODIGO} ya existe (id=${invitacionId}), continúo smoke test`);
-      } else {
-        info('No hay código de invitación — el resto del test que depende de él fallará');
-      }
-    }
-  }
-
-  // ── 2. Validar código ────────────────────────────────────────────────────
-  console.log('\n[ PASO 2 ] Validar código BETA-TEST01');
+  // ── 1. Validar código BETA-TEST01 ────────────────────────────────────────
+  console.log('[ 1 ] Validación código');
   {
     const r = await restGet('cat_invitaciones_b2c',
       `codigo=eq.${CODIGO}&usado=eq.false&select=id,codigo,max_usos,usos_actuales`);
     if (!Array.isArray(r.data) || r.data.length === 0) {
-      fail('Validación código BETA-TEST01', 'No encontrado, ya usado, o RLS bloquea lectura anon');
+      fail('Validación código BETA-TEST01', `HTTP ${r.status} — ${JSON.stringify(r.data).slice(0,100)}`);
     } else {
       const row = r.data[0];
       if (row.usos_actuales >= row.max_usos) {
-        fail('Validación código BETA-TEST01', `usos_actuales(${row.usos_actuales}) >= max_usos(${row.max_usos})`);
+        fail('Validación código BETA-TEST01', `agotado ${row.usos_actuales}/${row.max_usos}`);
       } else {
+        invitacionId = row.id;
+        invUsosBefore = row.usos_actuales;
         ok('Validación código BETA-TEST01', `usos=${row.usos_actuales}/${row.max_usos}`);
       }
     }
   }
 
-  // ── 3. Introspección cat_clientes_vehiculos ──────────────────────────────
-  console.log('\n[ PASO 3 ] Introspección schema cat_clientes_vehiculos');
-  let vehiculosCols = [];
+  // ── 2. signUp ────────────────────────────────────────────────────────────
+  console.log('\n[ 2 ] signUp');
   {
-    // Usamos el endpoint de OpenAPI de Supabase para ver columns
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/cat_clientes_vehiculos?limit=0`, {
-      method: 'GET',
-      headers: { ...headers(), 'Accept': 'application/openapi+json' },
-    });
-    // Fallback: hacemos un select que retorne 0 filas y leemos el error/headers
-    // En su lugar chequeamos con un GET que retorne schema via Prefer: schema
-    const res2 = await fetch(`${REST}/cat_clientes_vehiculos?limit=0`, {
-      headers: { ...headers(), 'Prefer': 'count=exact' },
-    });
-    // Supabase no expone column list via REST sin datos — inferimos via INSERT fallido
-    // Hacemos un INSERT con campos incorrectos para ver el error de schema
-    const testInsert = await restPost('cat_clientes_vehiculos', { _schema_probe: true });
-    const errText = JSON.stringify(testInsert.data);
-    info(`Schema probe response (HTTP ${testInsert.status}): ${errText.slice(0, 200)}`);
-
-    // Detectar si menciona marca_terminal_id o marca_nombre en el error
-    const hasMarcaTerminalId = errText.includes('marca_terminal_id');
-    const hasMarcaNombre     = errText.includes('marca_nombre');
-    if (hasMarcaTerminalId) {
-      warn('Schema cat_clientes_vehiculos', 'DDL usa marca_terminal_id (UUID FK) — js/vehiculos.js asume marca_nombre → BUG');
-      vehiculosCols.push('marca_terminal_id');
-    } else if (hasMarcaNombre) {
-      ok('Schema cat_clientes_vehiculos', 'Columna marca_nombre existe — js/vehiculos.js compatible');
-      vehiculosCols.push('marca_nombre');
+    const d = await authReq('signup', { email:EMAIL, password:PASS });
+    if (d.error || (!d.id && !d.user)) {
+      fail('signUp Supabase Auth', d.error?.message || JSON.stringify(d).slice(0,150));
     } else {
-      info('No se pudo detectar columna de marca del probe — se asume marca_nombre y se verifica en INSERT real');
+      authUserId = d.id || d.user?.id;
+      userJwt    = d.access_token || null;
+      ok('signUp Supabase Auth', `uid=${authUserId} | sesión=${userJwt ? 'activa ✓' : 'INACTIVA (email confirm ON?)'}`);
     }
   }
 
-  // ── 4. signUp ────────────────────────────────────────────────────────────
-  console.log('\n[ PASO 4 ] signUp Supabase Auth');
+  // ── 3. signIn ────────────────────────────────────────────────────────────
+  console.log('\n[ 3 ] signIn');
   {
-    const data = await authReq('signup', { email: EMAIL, password: PASS });
-    if (data.error || (!data.id && !data.user)) {
-      fail('signUp Supabase Auth', data.error?.message || data.msg || JSON.stringify(data).slice(0,200));
+    const d = await authReq('token?grant_type=password', { email:EMAIL, password:PASS });
+    if (d.error || !d.access_token) {
+      fail('signIn Supabase Auth', d.error?.message || JSON.stringify(d).slice(0,150));
     } else {
-      authUserId = data.id || data.user?.id;
-      userJwt    = data.access_token || null;
-      const sessionInfo = userJwt ? 'sesión activa (email confirm OFF ✓)' : 'sin sesión — email confirm está ON → activalo en Supabase Dashboard > Auth > Settings';
-      ok('signUp Supabase Auth', `user_id=${authUserId} | ${sessionInfo}`);
-    }
-  }
-
-  // ── 5. signIn (verificar credenciales) ──────────────────────────────────
-  console.log('\n[ PASO 5 ] signIn Supabase Auth');
-  {
-    const data = await authReq('token?grant_type=password', { email: EMAIL, password: PASS });
-    if (data.error || !data.access_token) {
-      fail('signIn Supabase Auth', data.error?.message || data.msg || JSON.stringify(data).slice(0,200));
-    } else {
-      userJwt = data.access_token; // actualizar con token fresco
-      ok('signIn Supabase Auth', `token OK | user_id=${data.user?.id}`);
+      userJwt = d.access_token;
+      ok('signIn Supabase Auth', `token OK`);
     }
   }
 
   if (!userJwt) {
-    warn('SKIP pasos 6-8', 'Sin JWT activo (email confirmation ON) — no se puede testear inserción con RLS');
-  } else {
-
-    // ── 6. INSERT cat_clientes_finales ───────────────────────────────────
-    console.log('\n[ PASO 6 ] INSERT cat_clientes_finales (con JWT)');
-    {
-      const r = await restPost('cat_clientes_finales', {
-        auth_user_id: authUserId,
-        email:     EMAIL,
-        nombre:    'Smoke',
-        apellido:  'Test',
-        telefono:  '01112345678',
-        localidad: 'Morón',
-        provincia: 'Buenos Aires',
-      }, userJwt);
-      if (r.status === 201) {
-        const row = Array.isArray(r.data) ? r.data[0] : r.data;
-        clienteId = row?.id;
-        ok('INSERT cat_clientes_finales', `cliente_id=${clienteId}`);
-      } else {
-        fail('INSERT cat_clientes_finales', `HTTP ${r.status} — ${JSON.stringify(r.data).slice(0,200)}`);
-      }
-    }
-
-    // ── 7. UPDATE invitación ─────────────────────────────────────────────
-    console.log('\n[ PASO 7 ] UPDATE cat_invitaciones_b2c (usos_actuales++)');
-    if (invitacionId) {
-      // Leemos el valor actual primero
-      const cur = await restGet('cat_invitaciones_b2c', `id=eq.${invitacionId}&select=usos_actuales,max_usos`);
-      const currentUsos = cur.data?.[0]?.usos_actuales ?? 0;
-      const maxUsos     = cur.data?.[0]?.max_usos     ?? 10;
-      const nuevosUsos  = currentUsos + 1;
-      const r = await restPatch('cat_invitaciones_b2c', `id=eq.${invitacionId}`, {
-        usos_actuales: nuevosUsos,
-        usado: nuevosUsos >= maxUsos,
-        usado_por: EMAIL,
-        usado_at: new Date().toISOString(),
-      });
-      if (r.status === 200 || r.status === 204) {
-        ok('UPDATE cat_invitaciones_b2c', `usos_actuales → ${nuevosUsos}/${maxUsos}`);
-      } else {
-        fail('UPDATE cat_invitaciones_b2c', `HTTP ${r.status} — ${JSON.stringify(r.data).slice(0,200)}`);
-      }
-    } else {
-      warn('UPDATE cat_invitaciones_b2c', 'SKIP — invitacionId no disponible');
-    }
-
-    // ── 8. INSERT cat_clientes_vehiculos ─────────────────────────────────
-    console.log('\n[ PASO 8 ] INSERT cat_clientes_vehiculos');
-    if (!clienteId) {
-      fail('INSERT cat_clientes_vehiculos', 'SKIP — sin cliente_id');
-    } else {
-      // Obtener una marca real
-      const marcasRes = await restGet('cat_marcas_terminales', 'activo=eq.true&select=id,nombre&limit=1', userJwt);
-      const primeraMarca = marcasRes.data?.[0];
-
-      // Intentar primero con marca_terminal_id (DDL real)
-      let payload, usedCol;
-      if (primeraMarca) {
-        payload  = { cliente_id: clienteId, marca_terminal_id: primeraMarca.id, modelo: 'Test Modelo', anio: 2020, version: '1.6 GNC', principal: true };
-        usedCol  = `marca_terminal_id=${primeraMarca.id} (${primeraMarca.nombre})`;
-      } else {
-        payload  = { cliente_id: clienteId, marca_nombre: 'Ford', modelo: 'Test Modelo', anio: 2020, version: '1.6 GNC', principal: true };
-        usedCol  = 'marca_nombre=Ford (fallback — sin marcas en cat_marcas_terminales)';
-      }
-
-      const r = await restPost('cat_clientes_vehiculos', payload, userJwt);
-
-      if (r.status === 201) {
-        const row = Array.isArray(r.data) ? r.data[0] : r.data;
-        vehiculoId = row?.id;
-        ok(`INSERT cat_clientes_vehiculos (${usedCol})`, `vehiculo_id=${vehiculoId}`);
-
-        // Verificar SELECT
-        const check = await restGet('cat_clientes_vehiculos', `id=eq.${vehiculoId}`, userJwt);
-        if (check.data?.length > 0) {
-          ok('SELECT cat_clientes_vehiculos', JSON.stringify(check.data[0]).slice(0, 120));
-        }
-      } else {
-        const errMsg = JSON.stringify(r.data).slice(0, 300);
-
-        // Detectar schema mismatch
-        if (errMsg.includes('marca_terminal_id') && primeraMarca) {
-          fail('INSERT cat_clientes_vehiculos',
-            `SCHEMA MISMATCH — DDL no tiene marca_terminal_id. Columna incorrecta. Error: ${errMsg}`);
-          // Retry con marca_nombre
-          const r2 = await restPost('cat_clientes_vehiculos',
-            { cliente_id: clienteId, marca_nombre: primeraMarca.nombre, modelo: 'Test Modelo', anio: 2020, version: '1.6 GNC', principal: true },
-            userJwt);
-          if (r2.status === 201) {
-            const row2 = Array.isArray(r2.data) ? r2.data[0] : r2.data;
-            vehiculoId = row2?.id;
-            ok('INSERT cat_clientes_vehiculos RETRY (marca_nombre)', `vehiculo_id=${vehiculoId} — js/vehiculos.js es CORRECTO, no hay bug`);
-          } else {
-            fail('INSERT cat_clientes_vehiculos RETRY (marca_nombre)', `HTTP ${r2.status} — ${JSON.stringify(r2.data).slice(0,200)}`);
-          }
-        } else if (errMsg.includes('marca_nombre')) {
-          fail('INSERT cat_clientes_vehiculos',
-            `BUG CONFIRMADO — DDL usa marca_nombre (texto) pero insertamos marca_terminal_id (UUID). Corregir payload. Error: ${errMsg}`);
-        } else {
-          fail('INSERT cat_clientes_vehiculos', `HTTP ${r.status} — ${errMsg}`);
-        }
-      }
-    }
-
-  } // end if userJwt
-
-  // ── 9. CLEANUP ───────────────────────────────────────────────────────────
-  console.log('\n[ PASO 9 ] Cleanup');
-  {
-    if (vehiculoId && userJwt) {
-      const r = await restDelete('cat_clientes_vehiculos', `id=eq.${vehiculoId}`, userJwt);
-      info(`Vehículo ${vehiculoId} eliminado (HTTP ${r.status})`);
-    }
-    if (clienteId && userJwt) {
-      const r = await restDelete('cat_clientes_finales', `id=eq.${clienteId}`, userJwt);
-      info(`Cliente ${clienteId} eliminado (HTTP ${r.status})`);
-    }
-    if (invitacionId) {
-      // Decrementar usos_actuales si los incrementamos
-      const cur = await restGet('cat_invitaciones_b2c', `id=eq.${invitacionId}&select=usos_actuales`);
-      const currentUsos = cur.data?.[0]?.usos_actuales ?? 1;
-      await restPatch('cat_invitaciones_b2c', `id=eq.${invitacionId}`, {
-        usos_actuales: Math.max(0, currentUsos - 1),
-        usado: false, usado_por: null, usado_at: null,
-      });
-      info(`Invitación ${invitacionId} decrementada`);
-    }
-    // auth.users solo se puede borrar con service_role — lo dejamos y avisamos
-    if (authUserId) {
-      info(`auth.users ${authUserId} — no se puede borrar sin service_role key. Borralo manualmente en Supabase Dashboard > Authentication > Users`);
-    }
-    ok('Cleanup BD (parcial)', 'cliente y vehículo eliminados; usuario auth requiere limpieza manual');
+    warn('SKIP pasos 4-7', 'Sin JWT — activá email confirmation OFF en Supabase Dashboard');
+    await cleanup(); printReport(Date.now()-t0); return;
   }
 
-  printReport();
+  // ── 4. INSERT cat_clientes_finales ───────────────────────────────────────
+  console.log('\n[ 4 ] INSERT cat_clientes_finales');
+  {
+    const r = await restPost('cat_clientes_finales', {
+      auth_user_id:authUserId, email:EMAIL, nombre:'Smoke', apellido:'Test',
+      telefono:'01112345678', localidad:'Morón', provincia:'Buenos Aires'
+    }, userJwt);
+    if (r.status === 201) {
+      const row = Array.isArray(r.data)?r.data[0]:r.data;
+      clienteId = row?.id;
+      ok('INSERT cat_clientes_finales', `id=${clienteId}`);
+    } else {
+      fail('INSERT cat_clientes_finales', `HTTP ${r.status} — ${JSON.stringify(r.data).slice(0,150)}`);
+    }
+  }
+
+  // ── 5. UPDATE invitación (usado_por = clienteId UUID) ───────────────────
+  console.log('\n[ 5 ] UPDATE cat_invitaciones_b2c');
+  if (!invitacionId || !clienteId) {
+    warn('UPDATE invitación', 'SKIP — falta invitacionId o clienteId');
+  } else {
+    const r = await restPatch('cat_invitaciones_b2c', `id=eq.${invitacionId}`, {
+      usos_actuales: invUsosBefore+1,
+      usado: invUsosBefore+1 >= 10,
+      usado_por: clienteId,
+      usado_at: new Date().toISOString(),
+    }, userJwt);
+    if (r.status===200 && Array.isArray(r.data) && r.data.length>0) {
+      ok('UPDATE cat_invitaciones_b2c', `usos_actuales → ${invUsosBefore+1}`);
+    } else {
+      fail('UPDATE cat_invitaciones_b2c', `HTTP ${r.status} rows=${Array.isArray(r.data)?r.data.length:'?'} ${JSON.stringify(r.data).slice(0,100)}`);
+    }
+  }
+
+  // ── 6. INSERT cat_clientes_vehiculos ─────────────────────────────────────
+  console.log('\n[ 6 ] INSERT cat_clientes_vehiculos');
+  if (!clienteId) {
+    fail('INSERT cat_clientes_vehiculos', 'SKIP — sin clienteId');
+  } else {
+    const marcaR = await restGet('cat_marcas_terminales','activo=eq.true&select=id,nombre&limit=1', userJwt);
+    const marca = marcaR.data?.[0];
+    if (!marca) { fail('INSERT cat_clientes_vehiculos','sin marcas en cat_marcas_terminales'); }
+    else {
+      const r = await restPost('cat_clientes_vehiculos', {
+        cliente_id:clienteId, marca_terminal_id:marca.id,
+        modelo:'Test Modelo', anio:2020, version:'1.6 GNC', principal:true
+      }, userJwt);
+      if (r.status===201) {
+        const row = Array.isArray(r.data)?r.data[0]:r.data;
+        vehiculoId = row?.id;
+        ok(`INSERT cat_clientes_vehiculos`, `id=${vehiculoId} marca=${marca.nombre}`);
+      } else {
+        fail('INSERT cat_clientes_vehiculos', `HTTP ${r.status} — ${JSON.stringify(r.data).slice(0,150)}`);
+      }
+    }
+  }
+
+  // ── 7. SELECT vehículo ───────────────────────────────────────────────────
+  console.log('\n[ 7 ] SELECT cat_clientes_vehiculos');
+  if (vehiculoId) {
+    const r = await restGet('cat_clientes_vehiculos',`id=eq.${vehiculoId}&select=*`, userJwt);
+    if (r.data?.[0]) {
+      ok('SELECT cat_clientes_vehiculos', `modelo=${r.data[0].modelo} anio=${r.data[0].anio}`);
+    } else {
+      fail('SELECT cat_clientes_vehiculos', `HTTP ${r.status}`);
+    }
+  }
+
+  // ── 8. Verificar contador de invitación ──────────────────────────────────
+  console.log('\n[ 8 ] Verificar usos_actuales final');
+  {
+    const r = await restGet('cat_invitaciones_b2c',`codigo=eq.${CODIGO}&select=usos_actuales`);
+    const actual = r.data?.[0]?.usos_actuales;
+    if (actual === invUsosBefore+1) {
+      ok('Verificar usos_actuales', `${invUsosBefore} → ${actual} ✓`);
+    } else {
+      fail('Verificar usos_actuales', `esperado=${invUsosBefore+1} actual=${actual} — contador NO incrementó`);
+    }
+  }
+
+  await cleanup();
+  printReport(Date.now()-t0);
 }
 
-function printReport() {
-  const fails = report.filter(r => r.s.startsWith('❌'));
-  const warns = report.filter(r => r.s.startsWith('⚠️'));
+async function cleanup() {
+  console.log('\n[ CLEANUP ]');
+  // Orden crítico: primero limpiar FK de invitación (usado_por → cliente),
+  // luego el vehículo (FK cliente_id → cliente), finalmente el cliente.
+  if (invitacionId && userJwt) {
+    await restPatch('cat_invitaciones_b2c',`id=eq.${invitacionId}`,
+      {usos_actuales:invUsosBefore, usado:false, usado_por:null, usado_at:null}, userJwt);
+    console.log(`  🔄 invitación decrementada a ${invUsosBefore}`);
+  }
+  if (vehiculoId && userJwt) {
+    const r = await restDelete('cat_clientes_vehiculos',`id=eq.${vehiculoId}`,userJwt);
+    console.log(`  🗑  vehículo ${vehiculoId} (HTTP ${r.status})`);
+  }
+  if (clienteId && userJwt) {
+    const r = await restDelete('cat_clientes_finales',`id=eq.${clienteId}`,userJwt);
+    console.log(`  🗑  cliente ${clienteId} (HTTP ${r.status})`);
+  }
+  if (authUserId) {
+    if (SERVICE_ROLE_KEY) {
+      const r = await fetch(`${AUTH}/admin/users/${authUserId}`, {
+        method:'DELETE',
+        headers:{apikey:ANON_KEY, Authorization:`Bearer ${SERVICE_ROLE_KEY}`}
+      });
+      console.log(`  🗑  auth.users ${authUserId} (HTTP ${r.status})`);
+      report.push({s:'✅',label:'Cleanup auth.users',detail:`${authUserId} eliminado`});
+    } else {
+      console.log(`  ⚠️  auth.users ${authUserId} — borrá manualmente en Dashboard > Authentication > Users`);
+      report.push({s:'⚠️',label:'Cleanup auth.users',detail:`manual — ${authUserId}`});
+    }
+  }
+}
 
+function printReport(ms) {
+  const fails = report.filter(r=>r.s.startsWith('❌'));
+  const warns = report.filter(r=>r.s.startsWith('⚠️'));
   console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log('  REPORTE FINAL');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+  // GitHub Actions job summary
+  if (process.env.GITHUB_STEP_SUMMARY) {
+    const { appendFileSync } = require('fs');
+    let summary = '## Smoke Test Hito 4 Fase 1\n\n| Check | Resultado | Detalle |\n|---|---|---|\n';
+    report.forEach(r => { summary += `| ${r.label} | ${r.s} | ${r.detail} |\n`; });
+    summary += `\n**Total:** ${report.length} | ❌ ${fails.length} | ⚠️ ${warns.length} | ⏱ ${ms}ms\n`;
+    appendFileSync(process.env.GITHUB_STEP_SUMMARY, summary);
+  }
+
   report.forEach(r => {
-    const d = r.detail ? `  → ${r.detail}` : '';
-    console.log(`${r.s} ${r.label}${d}`);
+    console.log(`${r.s} ${r.label}${r.detail?' → '+r.detail:''}`);
   });
   console.log('─────────────────────────────────────────');
-  console.log(`Total: ${report.length} checks | ❌ ${fails.length} | ⚠️  ${warns.length}`);
-  if (fails.length === 0 && warns.length === 0) {
-    console.log('🎉 Todo OK — listo para go-live');
-  } else if (fails.length > 0) {
-    console.log('🚨 HAY ERRORES — revisar antes del go-live');
-  } else {
-    console.log('⚠️  Hay warnings — revisar antes del go-live');
-  }
+  console.log(`Total: ${report.length} | ❌ ${fails.length} | ⚠️ ${warns.length} | ⏱ ${ms}ms`);
+  if (fails.length===0) console.log('🎉 Todo OK');
+  else console.log('🚨 HAY ERRORES');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
-
-  process.exit(fails.length > 0 ? 1 : 0);
+  process.exit(fails.length>0 ? 1 : 0);
 }
 
-run().catch(e => { fail('Error inesperado', e.message); printReport(); });
+run().catch(e => { fail('Error inesperado', e.message); printReport(0); });

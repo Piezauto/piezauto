@@ -54,36 +54,38 @@ async function registrarCliente(datos, codigo) {
     return { ok: false, error: 'No se pudo crear la cuenta. Intentá de nuevo.' };
   }
 
-  const { error: insertError } = await dbB2C.from('cat_clientes_finales').insert({
-    auth_user_id: authData.user.id,
-    email: datos.email.trim().toLowerCase(),
-    nombre: datos.nombre.trim(),
-    apellido: datos.apellido.trim(),
-    telefono: datos.telefono ? datos.telefono.trim() : null,
-    localidad: datos.localidad ? datos.localidad.trim() : null,
-    provincia: datos.provincia || null,
-  });
+  const { data: clienteData, error: insertError } = await dbB2C
+    .from('cat_clientes_finales')
+    .insert({
+      auth_user_id: authData.user.id,
+      email: datos.email.trim().toLowerCase(),
+      nombre: datos.nombre.trim(),
+      apellido: datos.apellido.trim(),
+      telefono: datos.telefono ? datos.telefono.trim() : null,
+      localidad: datos.localidad ? datos.localidad.trim() : null,
+      provincia: datos.provincia || null,
+    })
+    .select('id');
 
-  if (insertError) {
-    return { ok: false, error: 'Error al crear el perfil: ' + insertError.message };
+  if (insertError || !clienteData?.length) {
+    return { ok: false, error: 'Error al crear el perfil: ' + (insertError?.message ?? 'sin datos') };
   }
 
+  const clienteId = clienteData[0].id;
   const nuevosUsos = validacion.invitacion.usos_actuales + 1;
-  const { error: updateError, count } = await dbB2C
+  const { data: updateData, error: updateError } = await dbB2C
     .from('cat_invitaciones_b2c')
     .update({
       usos_actuales: nuevosUsos,
       usado: nuevosUsos >= validacion.invitacion.max_usos,
-      usado_por: datos.email.trim().toLowerCase(),
+      usado_por: clienteId,                 // UUID FK a cat_clientes_finales.id
       usado_at: new Date().toISOString(),
     })
     .eq('id', validacion.invitacion.id)
     .select('id');
 
-  if (updateError || count === 0) {
-    // No bloqueamos el registro — el usuario ya fue creado correctamente.
-    // El contador fallido se detecta en el smoke test y requiere policy RLS.
-    console.warn('[auth-b2c] No se pudo incrementar usos_actuales:', updateError?.message ?? 'RLS bloqueó el UPDATE (0 filas)');
+  if (updateError || !updateData?.length) {
+    console.warn('[auth-b2c] No se pudo incrementar usos_actuales:', updateError?.message ?? '0 filas afectadas');
   }
 
   return { ok: true, user: authData.user, session: authData.session };
