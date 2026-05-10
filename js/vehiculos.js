@@ -31,8 +31,9 @@ async function cargarMarcas() {
 
   data.forEach(m => {
     const opt = document.createElement('option');
-    opt.value = m.nombre;
+    opt.value = m.id;           // UUID FK → marca_terminal_id
     opt.textContent = m.nombre;
+    opt.dataset.nombre = m.nombre;
     select.appendChild(opt);
   });
 }
@@ -43,7 +44,7 @@ async function cargarListaVehiculos() {
 
   const { data, error } = await dbB2C
     .from('cat_clientes_vehiculos')
-    .select('id, marca_nombre, modelo, anio, version, patente, color, principal, created_at')
+    .select('id, marca_terminal_id, cat_marcas_terminales!marca_terminal_id(nombre), modelo, anio, version, patente, color, principal, created_at')
     .eq('cliente_id', clienteActual.id)
     .order('principal', { ascending: false })
     .order('created_at', { ascending: false });
@@ -67,7 +68,7 @@ async function cargarListaVehiculos() {
     <div class="vehiculo-row" id="vrow-${v.id}">
       <div class="vehiculo-info">
         <div class="vehiculo-titulo">
-          ${v.marca_nombre || ''} ${v.modelo || ''}
+          ${v.cat_marcas_terminales?.nombre || ''} ${v.modelo || ''}
           ${v.version ? `<span class="vversion">${v.version}</span>` : ''}
           ${v.principal ? '<span class="badge-principal">Principal</span>' : ''}
         </div>
@@ -98,18 +99,7 @@ async function abrirEdicion(id) {
   editandoId = id;
 
   const marcaSelect = document.getElementById('marca');
-  // Intentar seleccionar la marca existente, si no existe agregarla temporalmente
-  let marcaEncontrada = false;
-  for (const opt of marcaSelect.options) {
-    if (opt.value === data.marca_nombre) { marcaEncontrada = true; break; }
-  }
-  if (!marcaEncontrada && data.marca_nombre) {
-    const opt = document.createElement('option');
-    opt.value = data.marca_nombre;
-    opt.textContent = data.marca_nombre;
-    marcaSelect.appendChild(opt);
-  }
-  marcaSelect.value = data.marca_nombre || '';
+  marcaSelect.value = data.marca_terminal_id || '';
 
   document.getElementById('modelo').value   = data.modelo || '';
   document.getElementById('anio').value     = data.anio || '';
@@ -183,8 +173,8 @@ async function guardarVehiculo(e) {
   }
 
   const payload = {
-    cliente_id:   clienteActual.id,
-    marca_nombre: marca,
+    cliente_id:       clienteActual.id,
+    marca_terminal_id: marca,   // UUID FK a cat_marcas_terminales
     modelo,
     anio,
     version,

@@ -36,7 +36,7 @@ async function cargarVehiculos(clienteId) {
 
   const { data, error } = await dbB2C
     .from('cat_clientes_vehiculos')
-    .select('id, marca_nombre, modelo, anio, version, patente, color, principal')
+    .select('id, marca_terminal_id, cat_marcas_terminales!marca_terminal_id(nombre), modelo, anio, version, patente, color, principal')
     .eq('cliente_id', clienteId)
     .order('principal', { ascending: false })
     .order('created_at', { ascending: false });
@@ -57,7 +57,7 @@ async function cargarVehiculos(clienteId) {
     <div class="vehiculo-card ${v.principal ? 'principal' : ''}">
       <div class="vehiculo-info">
         <div class="vehiculo-nombre">
-          ${v.marca_nombre || ''} ${v.modelo || ''} ${v.anio ? v.anio : ''}
+          ${v.cat_marcas_terminales?.nombre || ''} ${v.modelo || ''} ${v.anio ? v.anio : ''}
           ${v.version ? `<span class="vehiculo-version">${v.version}</span>` : ''}
           ${v.principal ? '<span class="badge-principal">Principal</span>' : ''}
         </div>
