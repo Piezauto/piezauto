@@ -18,14 +18,13 @@ async function validarCodigoInvitacion(codigo) {
 
   const { data, error } = await dbB2C
     .from('cat_invitaciones_b2c')
-    .select('id, codigo, max_usos, usos_actuales, expires_at, activo')
+    .select('id, codigo, max_usos, usos_actuales, expira_at')
     .eq('codigo', codigoNorm)
     .single();
 
   if (error || !data) return { valido: false, error: 'Código de invitación inválido.' };
-  if (data.activo === false) return { valido: false, error: 'Este código de invitación fue desactivado.' };
   if (data.usos_actuales >= data.max_usos) return { valido: false, error: 'Este código ya alcanzó su límite de usos.' };
-  if (data.expires_at && new Date(data.expires_at) < new Date()) {
+  if (data.expira_at && new Date(data.expira_at) < new Date()) {
     return { valido: false, error: 'Este código de invitación venció.' };
   }
 
