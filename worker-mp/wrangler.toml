@@ -1,0 +1,7 @@
+name = "piezauto-mp-proxy"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+
+[vars]
+# Los secrets se agregan con: npx wrangler secret put MP_ACCESS_TOKEN
+# NO poner valores reales aquí — este archivo va al repo

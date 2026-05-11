@@ -311,47 +311,26 @@ async function buscarPorAuto() {
   const modeloNombre = selModelo.options[selModelo.selectedIndex]?.text || '';
   const autoTexto    = `${marcaNombre} ${modeloNombre}${anio ? ' ' + anio : ''}`;
 
-  console.log('[buscarPorAuto] modelo_id:', modeloId, '| año:', anio, '| auto:', autoTexto);
-
-  document.getElementById('grilla-productos').innerHTML = '<div class="loader">Buscando...</div>';
+  const grilla = document.getElementById('grilla-productos');
+  grilla.innerHTML = '<div class="loader">Buscando...</div>';
   document.getElementById('auto-seleccionado').textContent = autoTexto;
   sessionStorage.setItem('pz_auto_seleccionado', JSON.stringify({ marca: marcaNombre, modelo: modeloNombre, anio: anio || '' }));
   document.getElementById('banner-auto-texto').textContent = autoTexto;
   document.getElementById('banner-auto').style.display = 'block';
 
-  // PASO 1 — buscar compatibilidades por modelo_id y año
-  let compatQuery = db.from('compatibilidades')
-    .select('producto_id')
-    .eq('modelo_id', modeloId);
+  let query = dbB2C.from('cat_skus')
+    .select('id, codigo_piezauto, descripcion, precio_lista, familia, proveedor')
+    .eq('activo', true)
+    .eq('activo_venta', true)
+    .order('descripcion');
 
-  if (anio) {
-    compatQuery = compatQuery
-      .lte('anio_desde', anio)
-      .or(`anio_hasta.is.null,anio_hasta.gte.${anio}`);
+  if (marcaNombre) {
+    query = query.ilike('aplicaciones', `%${marcaNombre}%`);
   }
 
-  const { data: compat, error: compatError } = await compatQuery;
-  console.log('[buscarPorAuto] PASO 1 - compatibilidades:', compat, '| error:', compatError);
+  const { data: skus, error } = await query;
 
-  const idsCompat = compat ? [...new Set(compat.map(c => c.producto_id))] : [];
-  console.log('[buscarPorAuto] IDs por compatibilidad:', idsCompat);
-
-  // PASO 2 — buscar productos universales
-  const { data: universales, error: univError } = await db.from('productos')
-    .select('id')
-    .eq('activo', true)
-    .eq('universal', true);
-  console.log('[buscarPorAuto] PASO 2 - universales:', universales, '| error:', univError);
-
-  const idsUniversales = universales ? universales.map(p => p.id) : [];
-
-  // PASO 3 — combinar IDs sin duplicados
-  const todosIds = [...new Set([...idsCompat, ...idsUniversales])];
-  console.log('[buscarPorAuto] PASO 3 - IDs combinados:', todosIds);
-
-  const grilla = document.getElementById('grilla-productos');
-
-  if (!todosIds.length) {
+  if (error || !skus || !skus.length) {
     grilla.innerHTML = `
       <p class="vacio">
         No encontramos productos compatibles con <strong>${autoTexto}</strong>.<br>
@@ -361,58 +340,16 @@ async function buscarPorAuto() {
     return;
   }
 
-  // PASO 4 — traer los productos
-  const { data: productos, error: prodError } = await db.from('productos')
-    .select('*')
-    .eq('activo', true)
-    .in('id', todosIds)
-    .order('nombre');
-  console.log('[buscarPorAuto] PASO 4 - productos:', productos, '| error:', prodError);
-
-  if (!productos || !productos.length) {
-    grilla.innerHTML = `<p class="vacio">No encontramos productos compatibles con ${autoTexto}.</p>`;
-    grilla.scrollIntoView({ behavior: 'smooth' });
-    return;
-  }
-
-  productosCache = [...productosCache.filter(x => !productos.find(d => d.id === x.id)), ...productos];
-
   const counter = `<p style="font-size:13px;color:#888;margin-bottom:16px">
-    <strong style="color:var(--rojo)">${productos.length} producto${productos.length !== 1 ? 's' : ''}</strong>
+    <strong style="color:var(--rojo)">${skus.length} producto${skus.length !== 1 ? 's' : ''}</strong>
     compatibles con ${autoTexto}
   </p>`;
 
-  grilla.innerHTML = counter + productos.map(p => {
-    const esFav = esFavorito(p.id);
-    const imgSrc = p.imagenes && p.imagenes[0] ? p.imagenes[0] : 'https://placehold.co/300x200?text=Sin+imagen';
-    return `
-    <div class="prod-card" onclick="window.location='producto.html?id=${p.id}'">
-      <div style="position:relative">
-        <img class="prod-card-img" src="${imgSrc}" alt="${p.nombre}" loading="lazy">
-        <div class="card-badges">
-          ${p.stock === 0 ? '<span class="badge badge-sin-stock">Sin stock</span>' : ''}
-          ${esNuevo(p.creado_en) ? '<span class="badge badge-nuevo">Nuevo</span>' : ''}
-          ${p.precio_oferta ? '<span class="badge badge-oferta">Oferta</span>' : ''}
-        </div>
-        <button id="fav-${p.id}"
-          onclick="event.stopPropagation(); toggleFavoritoById('${p.id}')"
-          style="position:absolute;top:8px;right:8px;background:rgba(255,255,255,0.9);border:none;border-radius:50%;width:32px;height:32px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.1)"
-        >${esFav ? '❤️' : '🤍'}</button>
-      </div>
-      <div class="prod-card-body">
-        <div class="prod-card-nombre">${p.nombre}</div>
-        <div class="prod-card-codigo">${p.codigo_pieza ? 'Cód: ' + p.codigo_pieza : ''}</div>
-        <div class="prod-card-precio">$${Number(p.precio).toLocaleString('es-AR')}</div>
-        ${p.stock === 0
-          ? '<button class="prod-card-btn" disabled style="background:#555;cursor:not-allowed;opacity:0.7">Sin stock</button>'
-          : `<button class="prod-card-btn" onclick="event.stopPropagation(); agregarAlCarrito({id:'${p.id}', nombre:'${p.nombre.replace(/'/g,"\\'")}', precio:${p.precio}})">Agregar al carrito</button>`}
-      </div>
-    </div>`;
-  }).join('');
+  grilla.innerHTML = counter + skus.map(p => _renderSkuCard(p)).join('');
 
   document.getElementById('titulo-seccion-productos').textContent = 'Productos compatibles con tu auto';
   document.getElementById('link-ver-todos').href =
-    `catalogo.html?modelo_id=${encodeURIComponent(modeloId)}&anio=${anio || ''}&marca_nombre=${encodeURIComponent(marcaNombre)}&modelo_nombre=${encodeURIComponent(modeloNombre)}`;
+    `buscar.html?marca=${encodeURIComponent(marcaNombre)}`;
 
   grilla.scrollIntoView({ behavior: 'smooth' });
 }
