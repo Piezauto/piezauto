@@ -22,7 +22,8 @@ async function initBuscar() {
   if (familia) _filtros.familia = familia;
   if (marca) _filtros.marca = marca;
 
-  document.getElementById('buscador-input').value = q;
+  const inputBuscador = document.getElementById('hb2c-q');
+  if (inputBuscador) inputBuscador.value = q;
 
   const cliente = await getClienteActual();
   if (cliente) {
@@ -39,10 +40,8 @@ async function initBuscar() {
     mostrarEstadoVacio();
   }
 
-  document.getElementById('buscador-input').addEventListener('keydown', e => {
-    if (e.key === 'Enter') buscarDesdeInput();
-  });
-  document.getElementById('btn-buscar').addEventListener('click', buscarDesdeInput);
+  // La búsqueda desde el input del header la maneja hb2cBuscar() en header-b2c.js.
+  // Solo necesitamos el listener si hay un input de búsqueda secundario en la página.
   document.getElementById('sel-familia').addEventListener('change', e => {
     _filtros.familia = e.target.value;
     _pagina = 1;
@@ -143,7 +142,7 @@ function actualizarSelectMarca() {
 }
 
 function buscarDesdeInput() {
-  const q = document.getElementById('buscador-input').value.trim();
+  const q = (document.getElementById('hb2c-q')?.value || '').trim();
   _queryActual = q;
   _pagina = 1;
   actualizarURL();

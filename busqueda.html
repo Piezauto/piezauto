@@ -8,6 +8,12 @@
   <title>Resultados de búsqueda — Piezauto</title>
   <meta name="description" content="Resultados de búsqueda de autopartes y repuestos en Piezauto.">
   <meta name="robots" content="noindex, follow">
+  <script>
+    // /busqueda.html → ruta legada. La ruta canónica es /buscar.html
+    const _p = new URLSearchParams(window.location.search);
+    const _q = _p.get('q') || '';
+    window.location.replace('/buscar.html' + (_q ? '?q=' + encodeURIComponent(_q) : ''));
+  </script>
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Piezauto">
   <meta property="og:title" content="Resultados de búsqueda — Piezauto">
