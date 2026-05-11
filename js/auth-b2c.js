@@ -18,8 +18,9 @@ async function validarCodigoInvitacion(codigo) {
 
   const { data, error } = await dbB2C
     .from('cat_invitaciones_b2c')
-    .select('id, codigo, max_usos, usos_actuales, expira_at')
+    .select('id, codigo, max_usos, usos_actuales, expira_at, usado')
     .eq('codigo', codigoNorm)
+    .eq('usado', false)
     .single();
 
   if (error || !data) return { valido: false, error: 'Código de invitación inválido.' };
