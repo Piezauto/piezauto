@@ -26,15 +26,35 @@ async function initHeaderB2C() {
           ${cant > 0 ? `<span class="hb2c-badge">${cant > 99 ? '99+' : cant}</span>` : ''}
         </a>
         ${cliente
-          ? `<a href="/perfil.html" class="hb2c-user">
-               <span class="hb2c-avatar">${(cliente.nombre||'U')[0].toUpperCase()}</span>
-               <span class="hb2c-nombre">${cliente.nombre}</span>
-             </a>`
+          ? `<div class="hb2c-user-menu" style="position:relative">
+               <a href="/perfil.html" class="hb2c-user" title="Mi cuenta">
+                 <span class="hb2c-avatar">${(cliente.nombre||'U')[0].toUpperCase()}</span>
+                 <span class="hb2c-nombre">${cliente.nombre}</span>
+               </a>
+               <div class="hb2c-dropdown" style="display:none;position:absolute;right:0;top:100%;margin-top:6px;background:#fff;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.12);min-width:170px;z-index:200;overflow:hidden">
+                 <a href="/perfil.html"     style="display:block;padding:11px 16px;font-size:13px;color:#333;text-decoration:none;border-bottom:1px solid #f5f5f5" onmouseover="this.style.background='#f8f8f8'" onmouseout="this.style.background=''">👤 Mi perfil</a>
+                 <a href="/operaciones.html" style="display:block;padding:11px 16px;font-size:13px;color:#333;text-decoration:none;border-bottom:1px solid #f5f5f5" onmouseover="this.style.background='#f8f8f8'" onmouseout="this.style.background=''">📦 Mis operaciones</a>
+                 <a href="#" onclick="dbB2C.auth.signOut().then(()=>window.location.reload())" style="display:block;padding:11px 16px;font-size:13px;color:#c00;text-decoration:none" onmouseover="this.style.background='#f8f8f8'" onmouseout="this.style.background=''">Cerrar sesión</a>
+               </div>
+             </div>`
           : `<a href="/login.html" class="hb2c-btn-login">Ingresar</a>`
         }
       </div>
     </div>
   `;
+
+  // Dropdown toggle
+  document.addEventListener('click', e => {
+    const menu = document.querySelector('.hb2c-user-menu');
+    if (!menu) return;
+    const dd = menu.querySelector('.hb2c-dropdown');
+    if (!dd) return;
+    if (menu.contains(e.target)) {
+      dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+    } else {
+      dd.style.display = 'none';
+    }
+  });
 
   const input = document.getElementById('hb2c-q');
   if (input) {

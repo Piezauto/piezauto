@@ -187,13 +187,24 @@ async function confirmarPedido() {
   }
 
   const { subtotal, total } = calcularTotales();
+  const notasCliente = document.getElementById('f-notas').value.trim() || null;
 
-  // notas JSON con metodo_pago + taller
+  // notas JSON (solo para notas del cliente — taller_id y metodo_pago van en columnas propias)
   const notas = JSON.stringify({
-    metodo_pago:    _metodoPago,
-    taller:         _tallerSel || null,
-    notas_cliente:  document.getElementById('f-notas').value.trim() || null,
+    metodo_pago:   _metodoPago,
+    taller:        _tallerSel || null,
+    notas_cliente: notasCliente,
   });
+
+  const updatePayload = {
+    subtotal, total, descuento: 0,
+    direccion_entrega: direccion,
+    metodo_pago: _metodoPago,
+    taller_id:   _tallerSel?.id || null,
+    pendiente_aprobacion_taller: !!_tallerSel,
+    notas,
+    updated_at: new Date().toISOString(),
+  };
 
   // Buscar operación pendiente existente (creada por carrito.js)
   const { data: borradores } = await dbB2C
@@ -207,24 +218,13 @@ async function confirmarPedido() {
   let operacionId = borradores?.[0]?.id;
 
   if (operacionId) {
-    await dbB2C.from('cat_operaciones_b2c').update({
-      subtotal, total, descuento: 0,
-      direccion_entrega: direccion,
-      notas,
-      updated_at: new Date().toISOString(),
-    }).eq('id', operacionId);
+    await dbB2C.from('cat_operaciones_b2c').update(updatePayload).eq('id', operacionId);
   } else {
     // Crear operación si no existe (ej: carrito nunca sincronizó)
     const items = cargarCarritoLocal();
     const { data: nueva } = await dbB2C
       .from('cat_operaciones_b2c')
-      .insert({
-        cliente_id: _cliente.id,
-        estado: 'pendiente',
-        subtotal, total, descuento: 0,
-        direccion_entrega: direccion,
-        notas,
-      })
+      .insert({ cliente_id: _cliente.id, estado: 'pendiente', ...updatePayload })
       .select('id')
       .single();
 
@@ -246,6 +246,17 @@ async function confirmarPedido() {
   }
 
   _operacionId = operacionId;
+
+  // Notificar al taller si fue seleccionado
+  if (_tallerSel?.id) {
+    await dbB2C.from('cat_notificaciones_talleres').insert({
+      taller_id:    _tallerSel.id,
+      operacion_id: operacionId,
+      tipo:         'nueva_operacion',
+      mensaje:      `Nueva operación asignada — $${total.toLocaleString('es-AR')} · ${direccion}`,
+      leida:        false,
+    });
+  }
 
   // Limpiar carrito local
   localStorage.removeItem('piezauto_carrito_b2c');

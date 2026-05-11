@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — Panel Taller Piezauto</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="stylesheet" href="../css/estilos.css">
+  <style>
+    body { background: var(--gris-claro); }
+    .wrap { max-width: 1000px; margin: 0 auto; padding: 28px 16px 60px; }
+    .page-title { font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+    .page-sub   { font-size: 13px; color: #888; margin-bottom: 28px; }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 28px; }
+    @media(max-width:600px) { .stats-grid { grid-template-columns: 1fr 1fr; } }
+
+    .stat-card {
+      background: #fff; border-radius: 12px; padding: 20px 18px;
+      box-shadow: var(--sombra); display: flex; flex-direction: column; gap: 4px;
+    }
+    .stat-label { font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: .04em; }
+    .stat-value { font-size: 32px; font-weight: 800; color: var(--negro); line-height: 1; }
+    .stat-sub   { font-size: 12px; color: #aaa; }
+    .stat-card.alert .stat-value { color: var(--rojo); }
+    .stat-card.ok    .stat-value { color: #22c55e; }
+
+    .section-title { font-size: 15px; font-weight: 700; margin: 24px 0 12px; display: flex; align-items: center; gap: 8px; }
+    .section-title span { font-size: 18px; }
+
+    .op-list { display: flex; flex-direction: column; gap: 12px; }
+    .op-card {
+      background: #fff; border-radius: 12px; padding: 18px 20px;
+      box-shadow: var(--sombra); display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center;
+      border-left: 4px solid transparent; transition: box-shadow .2s;
+    }
+    .op-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,.12); }
+    .op-card.pendiente { border-left-color: #f59e0b; }
+    .op-card.pagado    { border-left-color: #3b82f6; }
+    .op-card.entregado { border-left-color: #22c55e; }
+    .op-card.cancelado { border-left-color: #ef4444; }
+
+    .op-num    { font-weight: 800; font-size: 14px; margin-bottom: 3px; }
+    .op-cliente { font-size: 13px; color: #555; }
+    .op-meta    { font-size: 12px; color: #aaa; margin-top: 4px; }
+    .op-total   { font-size: 16px; font-weight: 800; color: var(--rojo); white-space: nowrap; }
+    .op-actions { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+
+    .badge {
+      display: inline-block; padding: 3px 10px; border-radius: 20px;
+      font-size: 11px; font-weight: 700;
+    }
+    .badge-pendiente { background: #fff8e1; color: #b45309; }
+    .badge-pagado    { background: #dbeafe; color: #1d4ed8; }
+    .badge-enviado   { background: #ede9fe; color: #7c3aed; }
+    .badge-entregado { background: #dcfce7; color: #15803d; }
+    .badge-cancelado { background: #fee2e2; color: #dc2626; }
+
+    .btn-sm {
+      padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 700;
+      cursor: pointer; border: none; transition: background .2s; white-space: nowrap;
+    }
+    .btn-aprobar  { background: #22c55e; color: #fff; }
+    .btn-aprobar:hover  { background: #16a34a; }
+    .btn-rechazar { background: #ef4444; color: #fff; }
+    .btn-rechazar:hover { background: #dc2626; }
+    .btn-detalle  { background: #f0f0f0; color: #333; }
+    .btn-detalle:hover  { background: #e0e0e0; }
+
+    .empty { text-align: center; color: #aaa; padding: 30px; font-size: 14px; }
+    .spinner-wrap { display: flex; justify-content: center; padding: 30px; }
+    .spinner { width: 32px; height: 32px; border: 3px solid #eee; border-top-color: var(--rojo); border-radius: 50%; animation: spin .8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase.js"></script>
+<script src="../js/auth-b2c.js"></script>
+
+<div id="taller-header"></div>
+<script src="auth-taller.js"></script>
+
+<div class="wrap">
+  <div id="loading-page" class="spinner-wrap"><div class="spinner"></div></div>
+  <div id="page-contenido" style="display:none">
+    <div class="page-title" id="dash-titulo">Dashboard</div>
+    <div class="page-sub" id="dash-sub">Cargando...</div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card alert">
+        <div class="stat-label">Pendientes de aprobar</div>
+        <div class="stat-value" id="stat-pendiente">—</div>
+        <div class="stat-sub">Requieren acción</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">En curso (pagadas)</div>
+        <div class="stat-value" id="stat-pagado">—</div>
+        <div class="stat-sub">Coordinar instalación</div>
+      </div>
+      <div class="stat-card ok">
+        <div class="stat-label">Cerradas (este mes)</div>
+        <div class="stat-value" id="stat-entregado">—</div>
+        <div class="stat-sub">Entregadas</div>
+      </div>
+    </div>
+
+    <!-- Notificaciones no leídas -->
+    <div id="notif-section" style="display:none">
+      <div class="section-title"><span>🔔</span> Notificaciones nuevas</div>
+      <div id="notif-list" class="op-list"></div>
+    </div>
+
+    <!-- Operaciones pendientes -->
+    <div class="section-title"><span>⏳</span> Operaciones pendientes de aprobación</div>
+    <div id="ops-pendientes" class="op-list">
+      <div class="spinner-wrap"><div class="spinner"></div></div>
+    </div>
+
+    <!-- Operaciones en curso -->
+    <div class="section-title"><span>🔧</span> Operaciones en curso (pagadas)</div>
+    <div id="ops-pagado" class="op-list">
+      <div class="spinner-wrap"><div class="spinner"></div></div>
+    </div>
+
+    <div style="margin-top:24px;text-align:center">
+      <a href="/taller/operaciones.html" style="color:var(--rojo);font-size:13px;font-weight:700;text-decoration:none">Ver historial completo →</a>
+    </div>
+  </div>
+</div>
+
+<script>
+async function initDashboard() {
+  const auth = await requireTallerAuth();
+  if (!auth) return;
+  const meta = getTallerMeta();
+
+  await initTallerHeader();
+  document.getElementById('dash-titulo').textContent = `Bienvenido, ${meta.taller_nombre || 'Taller'}`;
+  document.getElementById('dash-sub').textContent    = `Panel de operaciones asignadas a tu taller · ${new Date().toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' })}`;
+
+  document.getElementById('loading-page').style.display    = 'none';
+  document.getElementById('page-contenido').style.display  = 'block';
+
+  await Promise.all([
+    cargarStats(meta.taller_id),
+    cargarNotificaciones(meta.taller_id),
+    cargarOpsPendientes(meta.taller_id),
+    cargarOpsEnCurso(meta.taller_id),
+  ]);
+}
+
+async function cargarStats(tallerId) {
+  const { data } = await dbB2C
+    .from('cat_operaciones_b2c')
+    .select('estado')
+    .eq('taller_id', tallerId);
+
+  if (!data) return;
+  const pendiente  = data.filter(o => o.estado === 'pendiente').length;
+  const pagado     = data.filter(o => o.estado === 'pagado' || o.estado === 'enviado').length;
+  const entregado  = data.filter(o => o.estado === 'entregado').length;
+
+  document.getElementById('stat-pendiente').textContent = pendiente;
+  document.getElementById('stat-pagado').textContent    = pagado;
+  document.getElementById('stat-entregado').textContent = entregado;
+}
+
+async function cargarNotificaciones(tallerId) {
+  const { data } = await dbB2C
+    .from('cat_notificaciones_talleres')
+    .select('id, tipo, mensaje, created_at, operacion_id')
+    .eq('taller_id', tallerId)
+    .eq('leida', false)
+    .order('created_at', { ascending: false })
+    .limit(5);
+
+  if (!data?.length) return;
+  document.getElementById('notif-section').style.display = 'block';
+  document.getElementById('notif-list').innerHTML = data.map(n => `
+    <div class="op-card pendiente" style="border-left-color:#f59e0b;cursor:pointer" onclick="abrirOperacion('${n.operacion_id}', '${n.id}')">
+      <div>
+        <div class="op-num">🔔 Nueva operación asignada</div>
+        <div class="op-cliente">${n.mensaje || 'Tenés una nueva operación para aprobar.'}</div>
+        <div class="op-meta">${new Date(n.created_at).toLocaleString('es-AR')}</div>
+      </div>
+      <div class="op-actions">
+        <span class="badge badge-pendiente">Sin leer</span>
+      </div>
+    </div>`).join('');
+}
+
+async function cargarOpsPendientes(tallerId) {
+  const { data } = await dbB2C
+    .from('cat_operaciones_b2c')
+    .select('id, estado, total, direccion_entrega, created_at, notas, cat_clientes_finales!cliente_id(nombre, apellido, telefono)')
+    .eq('taller_id', tallerId)
+    .eq('estado', 'pendiente')
+    .order('created_at', { ascending: false })
+    .limit(10);
+
+  renderOpCards('ops-pendientes', data, true);
+}
+
+async function cargarOpsEnCurso(tallerId) {
+  const { data } = await dbB2C
+    .from('cat_operaciones_b2c')
+    .select('id, estado, total, direccion_entrega, created_at, notas, cat_clientes_finales!cliente_id(nombre, apellido, telefono)')
+    .eq('taller_id', tallerId)
+    .in('estado', ['pagado','enviado'])
+    .order('created_at', { ascending: false })
+    .limit(10);
+
+  renderOpCards('ops-pagado', data, false);
+}
+
+function renderOpCards(containerId, ops, showActions) {
+  const wrap = document.getElementById(containerId);
+  if (!ops?.length) { wrap.innerHTML = '<div class="empty">Sin operaciones en este estado.</div>'; return; }
+  wrap.innerHTML = ops.map(op => {
+    const cliente = op.cat_clientes_finales;
+    const nombre  = cliente ? `${cliente.nombre || ''} ${cliente.apellido || ''}`.trim() : '—';
+    const tel     = cliente?.telefono || '';
+    const num     = op.id.slice(0,8).toUpperCase();
+    const fecha   = new Date(op.created_at).toLocaleDateString('es-AR');
+    const diasEsp = Math.floor((Date.now() - new Date(op.created_at)) / 86400000);
+    const badge   = `<span class="badge badge-${op.estado}">${op.estado}</span>`;
+    const waLink  = tel ? `<a href="https://wa.me/54${tel.replace(/\D/g,'')}" target="_blank" style="color:#22c55e;font-size:11px;font-weight:700;text-decoration:none">WA</a>` : '';
+    const actions = showActions
+      ? `<button class="btn-sm btn-aprobar"  onclick="aprobar('${op.id}',event)">✓ Aprobar</button>
+         <button class="btn-sm btn-rechazar" onclick="rechazar('${op.id}',event)">✕ Rechazar</button>`
+      : '';
+    return `<div class="op-card ${op.estado}" onclick="abrirOperacion('${op.id}', null)">
+      <div>
+        <div class="op-num">#${escH(num)} ${badge}</div>
+        <div class="op-cliente">${escH(nombre)} ${waLink}</div>
+        <div class="op-meta">${fecha} · $${Number(op.total).toLocaleString('es-AR')} · ${diasEsp === 0 ? 'hoy' : diasEsp + 'd esperando'}</div>
+        ${op.direccion_entrega ? `<div class="op-meta">📍 ${escH(op.direccion_entrega)}</div>` : ''}
+      </div>
+      <div class="op-actions">
+        ${actions}
+        <button class="btn-sm btn-detalle" onclick="abrirOperacion('${op.id}', null)">Ver detalle</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function aprobar(opId, evt) {
+  evt?.stopPropagation();
+  if (!confirm('¿Confirmás la aprobación de esta operación?')) return;
+  await dbB2C.from('cat_operaciones_b2c').update({ estado: 'pagado', pendiente_aprobacion_taller: false, updated_at: new Date().toISOString() }).eq('id', opId);
+  // Marcar notificación como leída
+  await dbB2C.from('cat_notificaciones_talleres').update({ leida: true }).eq('operacion_id', opId);
+  initDashboard();
+}
+
+async function rechazar(opId, evt) {
+  evt?.stopPropagation();
+  if (!confirm('¿Rechazás esta operación? Quedará cancelada.')) return;
+  await dbB2C.from('cat_operaciones_b2c').update({ estado: 'cancelado', pendiente_aprobacion_taller: false, updated_at: new Date().toISOString() }).eq('id', opId);
+  await dbB2C.from('cat_notificaciones_talleres').update({ leida: true }).eq('operacion_id', opId);
+  initDashboard();
+}
+
+function abrirOperacion(opId, notifId) {
+  if (notifId) {
+    dbB2C.from('cat_notificaciones_talleres').update({ leida: true }).eq('id', notifId).then(() => {});
+  }
+  window.location.href = `/taller/operaciones.html?id=${opId}`;
+}
+
+function escH(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+document.addEventListener('DOMContentLoaded', initDashboard);
+</script>
+</body>
+</html>

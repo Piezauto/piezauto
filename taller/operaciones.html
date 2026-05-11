@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Operaciones — Panel Taller Piezauto</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="stylesheet" href="../css/estilos.css">
+  <style>
+    body { background: var(--gris-claro); }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 28px 16px 60px; }
+    .page-title { font-size: 20px; font-weight: 800; margin-bottom: 20px; }
+
+    /* Filtros */
+    .filtros { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+    .filtros select, .filtros input {
+      padding: 8px 12px; border: 1.5px solid #ddd; border-radius: 8px;
+      font-size: 13px; outline: none; background: #fff;
+    }
+    .filtros select:focus, .filtros input:focus { border-color: var(--rojo); }
+
+    /* Lista */
+    .op-list { display: flex; flex-direction: column; gap: 10px; }
+
+    /* Tarjeta */
+    .op-card {
+      background: #fff; border-radius: 12px; padding: 18px 20px;
+      box-shadow: var(--sombra); border-left: 4px solid transparent;
+      cursor: pointer; transition: box-shadow .2s;
+    }
+    .op-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,.12); }
+    .op-card.pendiente { border-left-color: #f59e0b; }
+    .op-card.pagado    { border-left-color: #3b82f6; }
+    .op-card.enviado   { border-left-color: #8b5cf6; }
+    .op-card.entregado { border-left-color: #22c55e; }
+    .op-card.cancelado { border-left-color: #ef4444; }
+
+    .op-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .op-info { flex: 1; }
+    .op-num    { font-weight: 800; font-size: 14px; margin-bottom: 4px; }
+    .op-meta   { font-size: 12px; color: #777; margin-top: 3px; }
+    .op-right  { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+    .op-total  { font-size: 18px; font-weight: 800; color: var(--rojo); }
+
+    .badge {
+      display: inline-block; padding: 3px 10px; border-radius: 20px;
+      font-size: 11px; font-weight: 700;
+    }
+    .badge-pendiente { background: #fff8e1; color: #b45309; }
+    .badge-pagado    { background: #dbeafe; color: #1d4ed8; }
+    .badge-enviado   { background: #ede9fe; color: #7c3aed; }
+    .badge-entregado { background: #dcfce7; color: #15803d; }
+    .badge-cancelado { background: #fee2e2; color: #dc2626; }
+
+    .btn-sm { padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; border: none; transition: background .2s; }
+    .btn-aprobar  { background: #22c55e; color: #fff; }
+    .btn-rechazar { background: #ef4444; color: #fff; }
+
+    /* Panel detalle */
+    .detalle-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 100; display: none; align-items: flex-start; justify-content: flex-end; overflow-y: auto; }
+    .detalle-overlay.open { display: flex; }
+    .detalle-panel {
+      background: #fff; width: 100%; max-width: 480px; min-height: 100vh;
+      padding: 28px 24px; box-shadow: -4px 0 30px rgba(0,0,0,.15); position: relative;
+    }
+    .detalle-close { position: absolute; top: 16px; right: 16px; background: #f0f0f0; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; }
+    .detalle-title { font-size: 18px; font-weight: 800; margin-bottom: 20px; padding-right: 40px; }
+    .info-row { display: flex; gap: 10px; padding: 8px 0; font-size: 13px; border-bottom: 1px solid #f5f5f5; }
+    .info-row:last-child { border-bottom: none; }
+    .info-label { color: #888; min-width: 120px; flex-shrink: 0; }
+    .info-val { color: #333; font-weight: 600; }
+    .item-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 13px; border-bottom: 1px solid #f8f8f8; }
+    .detalle-section { margin-top: 18px; }
+    .detalle-section h3 { font-size: 13px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 10px; }
+    .detalle-actions { display: flex; gap: 10px; margin-top: 20px; }
+    .detalle-actions button { flex: 1; padding: 12px; border-radius: 8px; font-weight: 700; font-size: 14px; cursor: pointer; border: none; }
+    .btn-det-aprobar  { background: #22c55e; color: #fff; }
+    .btn-det-rechazar { background: #ef4444; color: #fff; }
+    .nota-form { margin-top: 16px; }
+    .nota-form textarea { width: 100%; padding: 10px 12px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 13px; font-family: inherit; outline: none; box-sizing: border-box; resize: vertical; }
+    .nota-form textarea:focus { border-color: var(--rojo); }
+    .nota-form button { margin-top: 8px; width: 100%; padding: 10px; background: var(--negro); color: #fff; border: none; border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer; }
+
+    .spinner-wrap { display: flex; justify-content: center; padding: 30px; }
+    .spinner { width: 32px; height: 32px; border: 3px solid #eee; border-top-color: var(--rojo); border-radius: 50%; animation: spin .8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .empty { text-align: center; color: #aaa; padding: 40px; }
+  </style>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase.js"></script>
+<script src="../js/auth-b2c.js"></script>
+
+<div id="taller-header"></div>
+<script src="auth-taller.js"></script>
+
+<div class="wrap">
+  <div class="page-title">Todas las operaciones</div>
+
+  <div class="filtros">
+    <select id="filtro-estado" onchange="cargarOps()">
+      <option value="">Todos los estados</option>
+      <option value="pendiente">Pendiente</option>
+      <option value="pagado">Pagado</option>
+      <option value="enviado">Enviado</option>
+      <option value="entregado">Entregado</option>
+      <option value="cancelado">Cancelado</option>
+    </select>
+    <input type="text" id="filtro-buscar" placeholder="Buscar cliente..." oninput="cargarOps()">
+  </div>
+
+  <div id="ops-lista" class="op-list">
+    <div class="spinner-wrap"><div class="spinner"></div></div>
+  </div>
+</div>
+
+<!-- Panel detalle lateral -->
+<div class="detalle-overlay" id="detalle-overlay" onclick="cerrarDetalle(event)">
+  <div class="detalle-panel" id="detalle-panel">
+    <button class="detalle-close" onclick="cerrarDetalle()">✕</button>
+    <div class="detalle-title" id="det-titulo">Cargando...</div>
+    <div id="det-contenido"></div>
+  </div>
+</div>
+
+<script>
+let _ops = [];
+let _tallerId = null;
+
+async function initPage() {
+  const auth = await requireTallerAuth();
+  if (!auth) return;
+  _tallerId = getTallerMeta().taller_id;
+  await initTallerHeader();
+
+  // Si viene con ?id= abrir directo el detalle
+  const params = new URLSearchParams(window.location.search);
+  const opId   = params.get('id');
+  await cargarOps();
+  if (opId) abrirDetalle(opId);
+}
+
+async function cargarOps() {
+  const estado = document.getElementById('filtro-estado').value;
+  const buscar = document.getElementById('filtro-buscar').value.trim().toLowerCase();
+
+  let q = dbB2C
+    .from('cat_operaciones_b2c')
+    .select('id, estado, total, direccion_entrega, created_at, notas, cat_clientes_finales!cliente_id(nombre, apellido, telefono)')
+    .eq('taller_id', _tallerId)
+    .order('created_at', { ascending: false })
+    .limit(100);
+
+  if (estado) q = q.eq('estado', estado);
+
+  const { data } = await q;
+  let ops = data || [];
+
+  if (buscar) {
+    ops = ops.filter(op => {
+      const c = op.cat_clientes_finales;
+      return `${c?.nombre} ${c?.apellido}`.toLowerCase().includes(buscar);
+    });
+  }
+
+  _ops = ops;
+  renderLista(ops);
+}
+
+function renderLista(ops) {
+  const wrap = document.getElementById('ops-lista');
+  if (!ops.length) { wrap.innerHTML = '<div class="empty">Sin operaciones en este estado.</div>'; return; }
+  wrap.innerHTML = ops.map(op => {
+    const c    = op.cat_clientes_finales;
+    const nom  = c ? `${c.nombre || ''} ${c.apellido || ''}`.trim() : '—';
+    const tel  = c?.telefono || '';
+    const num  = op.id.slice(0,8).toUpperCase();
+    const fecha = new Date(op.created_at).toLocaleDateString('es-AR');
+    const badge = `<span class="badge badge-${op.estado}">${op.estado}</span>`;
+    const wa    = tel ? ` · <a href="https://wa.me/54${tel.replace(/\D/g,'')}" target="_blank" style="color:#22c55e;font-weight:700;text-decoration:none;font-size:12px" onclick="event.stopPropagation()">WhatsApp</a>` : '';
+    const btns  = op.estado === 'pendiente'
+      ? `<button class="btn-sm btn-aprobar"  onclick="aprobar('${op.id}',event)">✓</button>
+         <button class="btn-sm btn-rechazar" onclick="rechazar('${op.id}',event)">✕</button>`
+      : '';
+    return `<div class="op-card ${op.estado}" onclick="abrirDetalle('${op.id}')">
+      <div class="op-row">
+        <div class="op-info">
+          <div class="op-num">#${escH(num)} ${badge}</div>
+          <div class="op-meta">${escH(nom)}${wa}</div>
+          <div class="op-meta">${fecha} · 📍 ${escH(op.direccion_entrega || '—')}</div>
+        </div>
+        <div class="op-right">
+          <div class="op-total">$${Number(op.total).toLocaleString('es-AR')}</div>
+          <div style="display:flex;gap:6px">${btns}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function abrirDetalle(opId) {
+  document.getElementById('detalle-overlay').classList.add('open');
+  document.getElementById('det-titulo').textContent  = 'Cargando...';
+  document.getElementById('det-contenido').innerHTML = '<div class="spinner-wrap"><div class="spinner"></div></div>';
+
+  // Marcar notificaciones como leídas
+  dbB2C.from('cat_notificaciones_talleres').update({ leida: true }).eq('operacion_id', opId).then(() => {});
+
+  const { data: op } = await dbB2C
+    .from('cat_operaciones_b2c')
+    .select('id, estado, total, subtotal, descuento, notas, direccion_entrega, created_at, updated_at, cat_clientes_finales!cliente_id(nombre, apellido, telefono, email, localidad)')
+    .eq('id', opId).single();
+
+  const { data: items } = await dbB2C
+    .from('cat_operaciones_b2c_items')
+    .select('cantidad, precio_unitario, subtotal, cat_skus!sku_id(codigo_piezauto, descripcion, descripcion_corta)')
+    .eq('operacion_id', opId);
+
+  if (!op) {
+    document.getElementById('det-titulo').textContent  = 'Error';
+    document.getElementById('det-contenido').innerHTML = '<p style="color:#c00">No se pudo cargar la operación.</p>';
+    return;
+  }
+
+  const c     = op.cat_clientes_finales || {};
+  const notas = parseNotas(op.notas);
+  const num   = op.id.slice(0,8).toUpperCase();
+  const badge = `<span class="badge badge-${op.estado}">${op.estado}</span>`;
+  document.getElementById('det-titulo').innerHTML = `#${num} ${badge}`;
+
+  const est_label = { pendiente:'Pendiente de aprobación', pagado:'Pagado — coordinar instalación', enviado:'Enviado', entregado:'Entregado', cancelado:'Cancelado' };
+
+  const waLink = c.telefono ? `<a href="https://wa.me/54${c.telefono.replace(/\D/g,'')}" target="_blank" style="color:#22c55e;font-weight:700">WhatsApp</a>` : '';
+
+  const itemsHtml = (items || []).map(i => {
+    const sku = i.cat_skus || {};
+    const desc = sku.descripcion_corta || sku.descripcion || 'Autoparte';
+    return `<div class="item-row">
+      <span>${escH(desc)} <span style="color:#aaa;font-size:11px">${escH(sku.codigo_piezauto || '')}</span> x${i.cantidad}</span>
+      <strong>$${Number(i.subtotal).toLocaleString('es-AR')}</strong>
+    </div>`;
+  }).join('');
+
+  const acciones = op.estado === 'pendiente'
+    ? `<div class="detalle-actions">
+        <button class="btn-det-aprobar"  onclick="aprobar('${op.id}')">✓ Aprobar operación</button>
+        <button class="btn-det-rechazar" onclick="rechazar('${op.id}')">✕ Rechazar</button>
+       </div>`
+    : op.estado === 'pagado'
+      ? `<div class="detalle-actions">
+          <button style="flex:1;padding:12px;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;border:none;background:#8b5cf6;color:#fff" onclick="marcarEnviado('${op.id}')">📦 Marcar instalada</button>
+         </div>`
+      : '';
+
+  document.getElementById('det-contenido').innerHTML = `
+    <div class="detalle-section">
+      <h3>Estado del pedido</h3>
+      <div class="info-row"><span class="info-label">Estado</span><span class="info-val">${est_label[op.estado] || op.estado}</span></div>
+      <div class="info-row"><span class="info-label">Total</span><span class="info-val" style="color:var(--rojo);font-size:16px">$${Number(op.total).toLocaleString('es-AR')}</span></div>
+      <div class="info-row"><span class="info-label">Fecha</span><span class="info-val">${new Date(op.created_at).toLocaleString('es-AR')}</span></div>
+      ${notas.metodo_pago ? `<div class="info-row"><span class="info-label">Pago</span><span class="info-val">${notas.metodo_pago}</span></div>` : ''}
+    </div>
+
+    <div class="detalle-section">
+      <h3>Cliente</h3>
+      <div class="info-row"><span class="info-label">Nombre</span><span class="info-val">${escH(`${c.nombre||''} ${c.apellido||''}`.trim())}</span></div>
+      <div class="info-row"><span class="info-label">Teléfono</span><span class="info-val">${escH(c.telefono||'—')} ${waLink}</span></div>
+      <div class="info-row"><span class="info-label">Email</span><span class="info-val">${escH(c.email||'—')}</span></div>
+      <div class="info-row"><span class="info-label">Localidad</span><span class="info-val">${escH(c.localidad||'—')}</span></div>
+      <div class="info-row"><span class="info-label">Entrega en</span><span class="info-val">${escH(op.direccion_entrega||'—')}</span></div>
+      ${notas.notas_cliente ? `<div class="info-row"><span class="info-label">Notas cliente</span><span class="info-val">${escH(notas.notas_cliente)}</span></div>` : ''}
+    </div>
+
+    <div class="detalle-section">
+      <h3>Piezas (${items?.length || 0})</h3>
+      ${itemsHtml || '<div style="color:#aaa;font-size:13px">Sin items.</div>'}
+    </div>
+
+    ${acciones}
+
+    <div class="detalle-section nota-form">
+      <h3>Agregar nota interna</h3>
+      <textarea id="nota-taller-txt" rows="3" placeholder="Ej: cliente aceptó turno el martes 10hs, la pieza llega el lunes..."></textarea>
+      <button onclick="guardarNota('${op.id}')">Guardar nota</button>
+      <div id="nota-msg" style="font-size:12px;color:#888;margin-top:6px"></div>
+    </div>`;
+}
+
+async function guardarNota(opId) {
+  const txt = document.getElementById('nota-taller-txt').value.trim();
+  const msg = document.getElementById('nota-msg');
+  if (!txt) { msg.textContent = 'Escribí algo antes de guardar.'; return; }
+  const { data: op } = await dbB2C.from('cat_operaciones_b2c').select('notas').eq('id', opId).single();
+  const notas = parseNotas(op?.notas);
+  notas.nota_taller = txt;
+  notas.nota_taller_at = new Date().toISOString();
+  await dbB2C.from('cat_operaciones_b2c').update({ notas: JSON.stringify(notas), updated_at: new Date().toISOString() }).eq('id', opId);
+  msg.textContent = '✅ Nota guardada.'; msg.style.color = '#22c55e';
+}
+
+function cerrarDetalle(evt) {
+  if (evt && evt.target !== document.getElementById('detalle-overlay')) return;
+  document.getElementById('detalle-overlay').classList.remove('open');
+}
+
+async function aprobar(opId, evt) {
+  evt?.stopPropagation();
+  if (!confirm('¿Confirmás la aprobación?')) return;
+  await dbB2C.from('cat_operaciones_b2c').update({ estado: 'pagado', pendiente_aprobacion_taller: false, updated_at: new Date().toISOString() }).eq('id', opId);
+  await dbB2C.from('cat_notificaciones_talleres').update({ leida: true }).eq('operacion_id', opId);
+  cerrarDetalle();
+  await cargarOps();
+}
+
+async function rechazar(opId, evt) {
+  evt?.stopPropagation();
+  if (!confirm('¿Rechazás esta operación? Quedará cancelada.')) return;
+  await dbB2C.from('cat_operaciones_b2c').update({ estado: 'cancelado', pendiente_aprobacion_taller: false, updated_at: new Date().toISOString() }).eq('id', opId);
+  await dbB2C.from('cat_notificaciones_talleres').update({ leida: true }).eq('operacion_id', opId);
+  cerrarDetalle();
+  await cargarOps();
+}
+
+async function marcarEnviado(opId) {
+  if (!confirm('¿Marcás la pieza como instalada/entregada?')) return;
+  await dbB2C.from('cat_operaciones_b2c').update({ estado: 'entregado', updated_at: new Date().toISOString() }).eq('id', opId);
+  cerrarDetalle();
+  await cargarOps();
+}
+
+function parseNotas(n) { if (!n) return {}; try { return JSON.parse(n); } catch { return {}; } }
+function escH(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+document.addEventListener('DOMContentLoaded', initPage);
+</script>
+</body>
+</html>
