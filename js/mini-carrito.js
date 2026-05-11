@@ -42,7 +42,7 @@
   function actualizarMiniCarrito() {
     const dropdown = document.getElementById('mini-carrito-dropdown');
     if (!dropdown) return;
-    const carrito = JSON.parse(localStorage.getItem('pz_carrito') || '[]');
+    const carrito = JSON.parse(localStorage.getItem('piezauto_carrito_b2c') || '[]');
 
     if (!carrito.length) {
       dropdown.innerHTML = `
@@ -55,7 +55,8 @@
       return;
     }
 
-    const total = carrito.reduce((s, i) => s + i.precio * i.cantidad, 0);
+    const precio = i => i.precio_lista ?? i.precio ?? 0;
+    const total = carrito.reduce((s, i) => s + precio(i) * i.cantidad, 0);
     const totalItems = carrito.reduce((s, i) => s + i.cantidad, 0);
 
     dropdown.innerHTML = `
@@ -64,13 +65,11 @@
         ${carrito.map(i => `
           <div class="mini-carrito-item">
             <div class="mini-carrito-img">
-              ${i.imagen
-                ? `<img src="${i.imagen}" alt="${i.nombre}" style="width:44px;height:44px;object-fit:contain;border-radius:6px;background:#f8f8f8">`
-                : `<div style="width:44px;height:44px;background:#f0f0f0;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🔩</div>`}
+              <div style="width:44px;height:44px;background:#f0f0f0;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🔩</div>
             </div>
-            <div class="mini-carrito-nombre">${i.nombre}</div>
+            <div class="mini-carrito-nombre">${i.descripcion || i.nombre || ''}</div>
             <div style="text-align:right;flex-shrink:0">
-              <div class="mini-carrito-precio">$${Number(i.precio * i.cantidad).toLocaleString('es-AR')}</div>
+              <div class="mini-carrito-precio">$${Number((i.precio_lista ?? i.precio ?? 0) * i.cantidad).toLocaleString('es-AR')}</div>
               <div class="mini-carrito-qty">x${i.cantidad}</div>
             </div>
           </div>`).join('')}

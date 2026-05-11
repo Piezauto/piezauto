@@ -45,14 +45,16 @@ const iconos = {
   'herrajes':      _svg('<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/><circle cx="12" cy="16" r="1.5" fill="#888" stroke="none"/>'),
 };
 
-// ── CARRITO (guardado en el navegador) ────────
-let carrito = JSON.parse(localStorage.getItem('pz_carrito') || '[]');
+// ── CARRITO (key unificada con sistema B2C) ───
+const _CARRITO_KEY = 'piezauto_carrito_b2c';
+let carrito = JSON.parse(localStorage.getItem(_CARRITO_KEY) || '[]');
 let productosCache = [];
 actualizarContadorCarrito();
 
 function actualizarContadorCarrito() {
   const total = carrito.reduce((acc, i) => acc + i.cantidad, 0);
-  document.getElementById('carrito-count').textContent = total;
+  const el = document.getElementById('carrito-count');
+  if (el) el.textContent = total;
 }
 
 function agregarAlCarrito(producto, originEl) {
@@ -60,9 +62,15 @@ function agregarAlCarrito(producto, originEl) {
   if (existe) {
     existe.cantidad++;
   } else {
-    carrito.push({ ...producto, cantidad: 1 });
+    carrito.push({
+      id:              producto.id,
+      codigo_piezauto: producto.codigo_piezauto || '',
+      descripcion:     producto.descripcion     || producto.nombre || '',
+      precio_lista:    producto.precio_lista     ?? producto.precio ?? null,
+      cantidad:        1,
+    });
   }
-  localStorage.setItem('pz_carrito', JSON.stringify(carrito));
+  localStorage.setItem(_CARRITO_KEY, JSON.stringify(carrito));
   actualizarContadorCarrito();
   if (window.trackAddToCart) trackAddToCart(producto);
   if (!document.querySelector('link[rel="prefetch"][href="checkout.html"]')) {
