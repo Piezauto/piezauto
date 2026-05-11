@@ -167,20 +167,13 @@ async function cargarProductos(filtros = {}) {
   const grilla = document.getElementById('grilla-productos');
   grilla.innerHTML = skeletonProductos(8);
 
-  let query = db.from('cat_skus')
-    .select('id, codigo_piezauto, descripcion, descripcion_corta, precio_lista, activo_venta, familia_id, cat_familias!familia_id(nombre)')
+  const { data, error } = await dbB2C
+    .from('cat_skus')
+    .select('id, codigo_piezauto, descripcion, precio_lista, familia, proveedor')
     .eq('activo', true)
     .eq('activo_venta', true)
+    .order('created_at', { ascending: false })
     .limit(8);
-
-  if (filtros.texto) {
-    query = query.or(`descripcion.ilike.%${filtros.texto}%,codigo_piezauto.ilike.%${filtros.texto}%`);
-  }
-  if (filtros.familia_id) {
-    query = query.eq('familia_id', filtros.familia_id);
-  }
-
-  const { data, error } = await query.order('created_at', { ascending: false });
 
   if (error) {
     grilla.innerHTML = '<p class="vacio">Error al cargar productos.</p>';
@@ -192,26 +185,7 @@ async function cargarProductos(filtros = {}) {
     return;
   }
 
-  productosCache = [...productosCache.filter(x => !data.find(d => d.id === x.id)), ...data];
-  grilla.innerHTML = data.map(p => {
-    const nombre = p.descripcion_corta || p.descripcion;
-    const precio = p.precio_lista ? Number(p.precio_lista).toLocaleString('es-AR') : null;
-    return `
-    <div class="prod-card" onclick="window.location='producto.html?id=${p.id}'">
-      <div style="position:relative">
-        <div class="prod-card-placeholder">🔩</div>
-        <div class="prod-card-img-overlay" onclick="event.stopPropagation(); window.location='producto.html?id=${p.id}'" aria-label="Ver detalles de ${nombre}">
-          <span>🔍 Ver detalles</span>
-        </div>
-      </div>
-      <div class="prod-card-body">
-        <div class="prod-card-nombre">${nombre}</div>
-        <div class="prod-card-codigo">${p.codigo_piezauto ? 'Cód: ' + p.codigo_piezauto : ''}</div>
-        <div class="prod-card-precio">${precio ? '$' + precio : 'Consultar'}</div>
-        <a href="producto.html?id=${p.id}" class="prod-card-btn" onclick="event.stopPropagation()">Ver producto</a>
-      </div>
-    </div>`;
-  }).join('');
+  grilla.innerHTML = data.map(p => _renderSkuCard(p)).join('');
 }
 
 // ── CARGAR TALLERES ───────────────────────────
@@ -554,121 +528,58 @@ function limpiarVistos(e) {
 
 // ── OFERTAS DESTACADAS ────────────────────────
 async function cargarOfertasDestacadas() {
-  const { data } = await db.from('cat_skus')
-    .select('id, codigo_piezauto, descripcion, descripcion_corta, precio_lista, precio_neto')
+  const { data } = await dbB2C
+    .from('cat_skus')
+    .select('id, codigo_piezauto, descripcion, precio_lista, familia, proveedor')
     .eq('activo', true)
     .eq('activo_venta', true)
-    .not('precio_neto', 'is', null)
-    .order('precio_neto', { ascending: true })
     .limit(4);
   if (!data?.length) return;
   document.getElementById('seccion-ofertas-dest').style.display = 'block';
-  document.getElementById('grilla-ofertas-dest').innerHTML = data.map(p => {
-    const nombre = p.descripcion_corta || p.descripcion;
-    const precioNeto = Number(p.precio_neto).toLocaleString('es-AR');
-    const precioLista = p.precio_lista ? Number(p.precio_lista).toLocaleString('es-AR') : null;
-    return `
-    <div class="prod-card" onclick="window.location='producto.html?id=${p.id}'">
-      <div style="position:relative">
-        <div class="prod-card-placeholder">🔩</div>
-        <div class="card-badges"><span class="badge badge-oferta">Oferta</span></div>
-      </div>
-      <div class="prod-card-body">
-        <div class="prod-card-nombre">${nombre}</div>
-        <div style="display:flex;gap:8px;align-items:baseline">
-          <div class="prod-card-precio" style="color:var(--rojo)">$${precioNeto}</div>
-          ${precioLista ? `<div style="font-size:12px;color:#aaa;text-decoration:line-through">$${precioLista}</div>` : ''}
-        </div>
-        <a href="producto.html?id=${p.id}" class="prod-card-btn" onclick="event.stopPropagation()">Ver producto</a>
-      </div>
-    </div>`;
-  }).join('');
+  document.getElementById('grilla-ofertas-dest').innerHTML = data.map(p => _renderSkuCard(p)).join('');
 }
 
 // ── NUEVOS INGRESOS ───────────────────────────
 async function cargarNuevosDestacados() {
   const grilla = document.getElementById('grilla-nuevos-dest');
-  const { data } = await db.from('cat_skus')
-    .select('id, codigo_piezauto, descripcion, descripcion_corta, precio_lista')
+  const { data } = await dbB2C
+    .from('cat_skus')
+    .select('id, codigo_piezauto, descripcion, precio_lista, familia, proveedor')
     .eq('activo', true)
     .eq('activo_venta', true)
     .order('created_at', { ascending: false })
     .limit(4);
   if (!data?.length) { grilla.innerHTML = ''; return; }
-  productosCache = [...productosCache.filter(x => !data.find(d => d.id === x.id)), ...data];
-  grilla.innerHTML = data.map(p => {
-    const nombre = p.descripcion_corta || p.descripcion;
-    const precio = p.precio_lista ? '$' + Number(p.precio_lista).toLocaleString('es-AR') : 'Consultar';
-    return `
-    <div class="prod-card" onclick="window.location='producto.html?id=${p.id}'">
-      <div style="position:relative">
-        <div class="prod-card-placeholder">🔩</div>
-        <div class="card-badges"><span class="badge badge-nuevo">Nuevo</span></div>
-      </div>
-      <div class="prod-card-body">
-        <div class="prod-card-nombre">${nombre}</div>
-        <div class="prod-card-precio">${precio}</div>
-        <a href="producto.html?id=${p.id}" class="prod-card-btn" onclick="event.stopPropagation()">Ver producto</a>
-      </div>
-    </div>`;
-  }).join('');
+  grilla.innerHTML = data.map(p => _renderSkuCard(p)).join('');
 }
 
 // ── MÁS VENDIDOS ──────────────────────────────
 async function cargarMasVendidos() {
   const grilla = document.getElementById('grilla-vendidos-dest');
-  // Más vendidos: traer cat_skus con más operaciones confirmadas
-  const { data: lineas } = await db.from('cat_operaciones_b2c_items')
-    .select('sku_id, cantidad')
-    .limit(500);
-  if (!lineas?.length) {
-    // Fallback: mostrar SKUs recientes si no hay historial de ventas aún
-    const { data } = await db.from('cat_skus')
-      .select('id, codigo_piezauto, descripcion, descripcion_corta, precio_lista')
-      .eq('activo', true)
-      .eq('activo_venta', true)
-      .order('created_at', { ascending: false })
-      .limit(4);
-    if (!data?.length) { grilla.innerHTML = ''; return; }
-    grilla.innerHTML = _renderSkuCards(data);
-    return;
-  }
-
-  const conteo = {};
-  lineas.forEach(i => { conteo[i.sku_id] = (conteo[i.sku_id] || 0) + i.cantidad; });
-  const topIds = Object.entries(conteo)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 4)
-    .map(([id]) => id);
-
-  if (!topIds.length) { grilla.innerHTML = ''; return; }
-  const { data } = await db.from('cat_skus')
-    .select('id, codigo_piezauto, descripcion, descripcion_corta, precio_lista')
+  const { data } = await dbB2C
+    .from('cat_skus')
+    .select('id, codigo_piezauto, descripcion, precio_lista, familia, proveedor')
     .eq('activo', true)
-    .in('id', topIds);
+    .eq('activo_venta', true)
+    .limit(4);
   if (!data?.length) { grilla.innerHTML = ''; return; }
-
-  const ordenados = topIds.map(id => data.find(p => p.id === id)).filter(Boolean);
-  productosCache = [...productosCache.filter(x => !ordenados.find(d => d.id === x.id)), ...ordenados];
-  grilla.innerHTML = _renderSkuCards(ordenados);
+  grilla.innerHTML = data.map(p => _renderSkuCard(p)).join('');
 }
 
-function _renderSkuCards(skus) {
-  return skus.map(p => {
-    const nombre = p.descripcion_corta || p.descripcion;
-    const precio = p.precio_lista ? '$' + Number(p.precio_lista).toLocaleString('es-AR') : 'Consultar';
-    return `
-    <div class="prod-card" onclick="window.location='producto.html?id=${p.id}'">
-      <div style="position:relative">
-        <div class="prod-card-placeholder">🔩</div>
-      </div>
-      <div class="prod-card-body">
-        <div class="prod-card-nombre">${nombre}</div>
-        <div class="prod-card-precio">${precio}</div>
-        <a href="producto.html?id=${p.id}" class="prod-card-btn" onclick="event.stopPropagation()">Ver producto</a>
-      </div>
-    </div>`;
-  }).join('');
+function _renderSkuCard(p) {
+  const precio = p.precio_lista ? '$' + Number(p.precio_lista).toLocaleString('es-AR') : 'Consultar';
+  return `
+  <div class="prod-card" onclick="window.location='producto.html?id=${p.id}'">
+    <div style="position:relative">
+      <div class="prod-card-placeholder">🔩</div>
+    </div>
+    <div class="prod-card-body">
+      <div class="prod-card-nombre">${p.descripcion || ''}</div>
+      <div class="prod-card-codigo">${p.codigo_piezauto ? 'Cód: ' + p.codigo_piezauto : ''}</div>
+      <div class="prod-card-precio">${precio}</div>
+      <a href="/producto.html?id=${p.id}" class="prod-card-btn" onclick="event.stopPropagation()">Ver producto</a>
+    </div>
+  </div>`;
 }
 
 cargarSlider();
