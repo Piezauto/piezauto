@@ -1,4 +1,4 @@
-# Schema Reference — Fase 2 (verificado vía PostgREST probe 2026-05-10)
+# Schema Reference — Fase 2 (verificado vía PostgREST probe 2026-05-10 · RLS aplicado 2026-05-10)
 
 Columnas verificadas directamente contra la BD de producción.
 Método: probe de columna a columna vía PostgREST error 42703.
