@@ -167,57 +167,48 @@ async function cargarProductos(filtros = {}) {
   const grilla = document.getElementById('grilla-productos');
   grilla.innerHTML = skeletonProductos(8);
 
-  let query = db.from('productos')
-    .select('*, categorias(slug)')
+  let query = db.from('cat_skus')
+    .select('id, codigo_piezauto, descripcion, descripcion_corta, precio_lista, activo_venta, familia_id, cat_familias!familia_id(nombre)')
     .eq('activo', true)
+    .eq('activo_venta', true)
     .limit(8);
 
   if (filtros.texto) {
-    query = query.or(`nombre.ilike.%${filtros.texto}%,codigo_pieza.ilike.%${filtros.texto}%,descripcion.ilike.%${filtros.texto}%`);
+    query = query.or(`descripcion.ilike.%${filtros.texto}%,codigo_piezauto.ilike.%${filtros.texto}%`);
   }
-  if (filtros.categoria_id) {
-    query = query.eq('categoria_id', filtros.categoria_id);
+  if (filtros.familia_id) {
+    query = query.eq('familia_id', filtros.familia_id);
   }
 
-  const { data, error } = await query.order('creado_en', { ascending: false });
+  const { data, error } = await query.order('created_at', { ascending: false });
 
   if (error) {
     grilla.innerHTML = '<p class="vacio">Error al cargar productos.</p>';
     return;
   }
 
-  if (!data.length) {
+  if (!data || !data.length) {
     grilla.innerHTML = '<p class="vacio">No se encontraron productos.</p>';
     return;
   }
 
   productosCache = [...productosCache.filter(x => !data.find(d => d.id === x.id)), ...data];
   grilla.innerHTML = data.map(p => {
-    const esFav = esFavorito(p.id);
+    const nombre = p.descripcion_corta || p.descripcion;
+    const precio = p.precio_lista ? Number(p.precio_lista).toLocaleString('es-AR') : null;
     return `
     <div class="prod-card" onclick="window.location='producto.html?id=${p.id}'">
       <div style="position:relative">
-        ${imgOIcono(p)}
-        <div class="prod-card-img-overlay" onclick="event.stopPropagation(); window.location='producto.html?id=${p.id}'" aria-label="Ver detalles de ${p.nombre}">
+        <div class="prod-card-placeholder">🔩</div>
+        <div class="prod-card-img-overlay" onclick="event.stopPropagation(); window.location='producto.html?id=${p.id}'" aria-label="Ver detalles de ${nombre}">
           <span>🔍 Ver detalles</span>
         </div>
-        <div class="card-badges">
-          ${p.stock === 0 ? '<span class="badge badge-sin-stock">Sin stock</span>' : ''}
-          ${esNuevo(p.creado_en) ? '<span class="badge badge-nuevo">Nuevo</span>' : ''}
-          ${p.precio_oferta ? '<span class="badge badge-oferta">Oferta</span>' : ''}
-        </div>
-        <button id="fav-${p.id}"
-          onclick="event.stopPropagation(); toggleFavoritoById('${p.id}')"
-          style="position:absolute;top:8px;right:8px;background:rgba(255,255,255,0.9);border:none;border-radius:50%;width:32px;height:32px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.1)"
-        >${esFav ? '❤️' : '🤍'}</button>
       </div>
       <div class="prod-card-body">
-        <div class="prod-card-nombre">${p.nombre}</div>
-        <div class="prod-card-codigo">${p.codigo_pieza ? 'Cód: ' + p.codigo_pieza : ''}</div>
-        <div class="prod-card-precio">$${Number(p.precio).toLocaleString('es-AR')}</div>
-        ${p.stock === 0
-          ? '<button class="prod-card-btn" disabled style="background:#555;cursor:not-allowed;opacity:0.7">Sin stock</button>'
-          : `<button class="prod-card-btn" onclick="event.stopPropagation(); agregarAlCarrito({id:'${p.id}', nombre:'${p.nombre.replace(/'/g,"\\'")}', precio:${p.precio}})">Agregar al carrito</button>`}
+        <div class="prod-card-nombre">${nombre}</div>
+        <div class="prod-card-codigo">${p.codigo_piezauto ? 'Cód: ' + p.codigo_piezauto : ''}</div>
+        <div class="prod-card-precio">${precio ? '$' + precio : 'Consultar'}</div>
+        <a href="producto.html?id=${p.id}" class="prod-card-btn" onclick="event.stopPropagation()">Ver producto</a>
       </div>
     </div>`;
   }).join('');
@@ -563,31 +554,32 @@ function limpiarVistos(e) {
 
 // ── OFERTAS DESTACADAS ────────────────────────
 async function cargarOfertasDestacadas() {
-  const { data } = await db.from('productos')
-    .select('*, categorias(slug)')
+  const { data } = await db.from('cat_skus')
+    .select('id, codigo_piezauto, descripcion, descripcion_corta, precio_lista, precio_neto')
     .eq('activo', true)
-    .not('precio_oferta', 'is', null)
-    .order('precio_oferta', { ascending: true })
+    .eq('activo_venta', true)
+    .not('precio_neto', 'is', null)
+    .order('precio_neto', { ascending: true })
     .limit(4);
   if (!data?.length) return;
   document.getElementById('seccion-ofertas-dest').style.display = 'block';
   document.getElementById('grilla-ofertas-dest').innerHTML = data.map(p => {
-    const descuento = Math.round((1 - p.precio_oferta / p.precio) * 100);
+    const nombre = p.descripcion_corta || p.descripcion;
+    const precioNeto = Number(p.precio_neto).toLocaleString('es-AR');
+    const precioLista = p.precio_lista ? Number(p.precio_lista).toLocaleString('es-AR') : null;
     return `
     <div class="prod-card" onclick="window.location='producto.html?id=${p.id}'">
       <div style="position:relative">
-        ${imgOIcono(p)}
-        <div class="card-badges">
-          <span class="badge badge-oferta">-${descuento}%</span>
-        </div>
+        <div class="prod-card-placeholder">🔩</div>
+        <div class="card-badges"><span class="badge badge-oferta">Oferta</span></div>
       </div>
       <div class="prod-card-body">
-        <div class="prod-card-nombre">${p.nombre}</div>
+        <div class="prod-card-nombre">${nombre}</div>
         <div style="display:flex;gap:8px;align-items:baseline">
-          <div class="prod-card-precio" style="color:var(--rojo)">$${Number(p.precio_oferta).toLocaleString('es-AR')}</div>
-          <div style="font-size:12px;color:#aaa;text-decoration:line-through">$${Number(p.precio).toLocaleString('es-AR')}</div>
+          <div class="prod-card-precio" style="color:var(--rojo)">$${precioNeto}</div>
+          ${precioLista ? `<div style="font-size:12px;color:#aaa;text-decoration:line-through">$${precioLista}</div>` : ''}
         </div>
-        <button class="prod-card-btn" onclick="event.stopPropagation(); agregarAlCarrito({id:'${p.id}',nombre:'${p.nombre.replace(/'/g,"\\'")}',precio:${p.precio_oferta}})">Agregar al carrito</button>
+        <a href="producto.html?id=${p.id}" class="prod-card-btn" onclick="event.stopPropagation()">Ver producto</a>
       </div>
     </div>`;
   }).join('');
@@ -596,62 +588,87 @@ async function cargarOfertasDestacadas() {
 // ── NUEVOS INGRESOS ───────────────────────────
 async function cargarNuevosDestacados() {
   const grilla = document.getElementById('grilla-nuevos-dest');
-  const { data } = await db.from('productos')
-    .select('*, categorias(slug)')
+  const { data } = await db.from('cat_skus')
+    .select('id, codigo_piezauto, descripcion, descripcion_corta, precio_lista')
     .eq('activo', true)
-    .order('creado_en', { ascending: false })
+    .eq('activo_venta', true)
+    .order('created_at', { ascending: false })
     .limit(4);
   if (!data?.length) { grilla.innerHTML = ''; return; }
   productosCache = [...productosCache.filter(x => !data.find(d => d.id === x.id)), ...data];
-  grilla.innerHTML = data.map(p => `
+  grilla.innerHTML = data.map(p => {
+    const nombre = p.descripcion_corta || p.descripcion;
+    const precio = p.precio_lista ? '$' + Number(p.precio_lista).toLocaleString('es-AR') : 'Consultar';
+    return `
     <div class="prod-card" onclick="window.location='producto.html?id=${p.id}'">
       <div style="position:relative">
-        ${imgOIcono(p)}
+        <div class="prod-card-placeholder">🔩</div>
         <div class="card-badges"><span class="badge badge-nuevo">Nuevo</span></div>
       </div>
       <div class="prod-card-body">
-        <div class="prod-card-nombre">${p.nombre}</div>
-        <div class="prod-card-precio">$${Number(p.precio).toLocaleString('es-AR')}</div>
-        <button class="prod-card-btn" onclick="event.stopPropagation(); agregarAlCarrito({id:'${p.id}',nombre:'${p.nombre.replace(/'/g,"\\'")}',precio:${p.precio_oferta || p.precio}})">Agregar al carrito</button>
+        <div class="prod-card-nombre">${nombre}</div>
+        <div class="prod-card-precio">${precio}</div>
+        <a href="producto.html?id=${p.id}" class="prod-card-btn" onclick="event.stopPropagation()">Ver producto</a>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 // ── MÁS VENDIDOS ──────────────────────────────
 async function cargarMasVendidos() {
   const grilla = document.getElementById('grilla-vendidos-dest');
-  const { data: items } = await db.from('items_pedido')
-    .select('producto_id, cantidad')
+  // Más vendidos: traer cat_skus con más operaciones confirmadas
+  const { data: lineas } = await db.from('cat_operaciones_b2c_items')
+    .select('sku_id, cantidad')
     .limit(500);
-  if (!items?.length) { grilla.innerHTML = ''; return; }
+  if (!lineas?.length) {
+    // Fallback: mostrar SKUs recientes si no hay historial de ventas aún
+    const { data } = await db.from('cat_skus')
+      .select('id, codigo_piezauto, descripcion, descripcion_corta, precio_lista')
+      .eq('activo', true)
+      .eq('activo_venta', true)
+      .order('created_at', { ascending: false })
+      .limit(4);
+    if (!data?.length) { grilla.innerHTML = ''; return; }
+    grilla.innerHTML = _renderSkuCards(data);
+    return;
+  }
 
   const conteo = {};
-  items.forEach(i => { conteo[i.producto_id] = (conteo[i.producto_id] || 0) + i.cantidad; });
+  lineas.forEach(i => { conteo[i.sku_id] = (conteo[i.sku_id] || 0) + i.cantidad; });
   const topIds = Object.entries(conteo)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 4)
     .map(([id]) => id);
 
   if (!topIds.length) { grilla.innerHTML = ''; return; }
-  const { data } = await db.from('productos')
-    .select('*, categorias(slug)')
+  const { data } = await db.from('cat_skus')
+    .select('id, codigo_piezauto, descripcion, descripcion_corta, precio_lista')
     .eq('activo', true)
     .in('id', topIds);
   if (!data?.length) { grilla.innerHTML = ''; return; }
 
   const ordenados = topIds.map(id => data.find(p => p.id === id)).filter(Boolean);
   productosCache = [...productosCache.filter(x => !ordenados.find(d => d.id === x.id)), ...ordenados];
-  grilla.innerHTML = ordenados.map(p => `
+  grilla.innerHTML = _renderSkuCards(ordenados);
+}
+
+function _renderSkuCards(skus) {
+  return skus.map(p => {
+    const nombre = p.descripcion_corta || p.descripcion;
+    const precio = p.precio_lista ? '$' + Number(p.precio_lista).toLocaleString('es-AR') : 'Consultar';
+    return `
     <div class="prod-card" onclick="window.location='producto.html?id=${p.id}'">
       <div style="position:relative">
-        ${imgOIcono(p)}
+        <div class="prod-card-placeholder">🔩</div>
       </div>
       <div class="prod-card-body">
-        <div class="prod-card-nombre">${p.nombre}</div>
-        <div class="prod-card-precio">$${Number(p.precio_oferta || p.precio).toLocaleString('es-AR')}</div>
-        <button class="prod-card-btn" onclick="event.stopPropagation(); agregarAlCarrito({id:'${p.id}',nombre:'${p.nombre.replace(/'/g,"\\'")}',precio:${p.precio_oferta || p.precio}})">Agregar al carrito</button>
+        <div class="prod-card-nombre">${nombre}</div>
+        <div class="prod-card-precio">${precio}</div>
+        <a href="producto.html?id=${p.id}" class="prod-card-btn" onclick="event.stopPropagation()">Ver producto</a>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 cargarSlider();
