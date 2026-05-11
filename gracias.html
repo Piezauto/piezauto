@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pedido confirmado — Piezauto</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="stylesheet" href="css/estilos.css">
+  <style>
+    body { background: var(--gris-claro); }
+    .gracias-wrap {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 40px 16px 80px;
+    }
+    .hero-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 36px 32px;
+      box-shadow: var(--sombra);
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .hero-check { font-size: 56px; margin-bottom: 12px; animation: pop .4s ease; }
+    @keyframes pop { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .hero-titulo { font-size: 24px; font-weight: 800; color: var(--negro); margin-bottom: 8px; }
+    .hero-sub { font-size: 14px; color: #666; line-height: 1.6; }
+    .hero-num { display: inline-block; margin-top: 14px; padding: 8px 20px; background: var(--gris-claro); border-radius: 20px; font-size: 13px; font-weight: 700; color: var(--negro); letter-spacing: .04em; }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 22px;
+      box-shadow: var(--sombra);
+      margin-bottom: 16px;
+    }
+    .card-title { font-size: 14px; font-weight: 700; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; gap: 8px; }
+    .card-title span { font-size: 18px; }
+
+    .item-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; font-size: 13px; border-bottom: 1px solid #f8f8f8; }
+    .item-row:last-child { border-bottom: none; }
+    .item-desc { flex: 1; color: #333; }
+    .item-qty  { color: #888; margin-right: 12px; font-size: 12px; }
+    .item-price { font-weight: 700; }
+
+    .info-row { display: flex; gap: 10px; padding: 8px 0; font-size: 13px; border-bottom: 1px solid #f8f8f8; }
+    .info-row:last-child { border-bottom: none; }
+    .info-label { color: #888; min-width: 130px; flex-shrink: 0; }
+    .info-val { color: #333; font-weight: 600; }
+
+    .total-row { display: flex; justify-content: space-between; font-size: 18px; font-weight: 800; color: var(--rojo); margin-top: 12px; padding-top: 12px; border-top: 2px solid #f0f0f0; }
+
+    .taller-notice { background: #e8f5e9; border: 1px solid #a5d6a7; border-radius: 10px; padding: 16px; display: flex; gap: 12px; align-items: flex-start; }
+    .taller-notice .icon { font-size: 24px; flex-shrink: 0; }
+    .taller-notice .text { font-size: 13px; color: #1a7a3f; line-height: 1.6; }
+    .taller-notice strong { display: block; margin-bottom: 3px; }
+
+    .pago-notice { background: #fff8e1; border: 1px solid #ffe082; border-radius: 10px; padding: 16px; font-size: 13px; color: #795548; line-height: 1.6; }
+
+    .acciones { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+    .btn-primary { display: block; text-align: center; background: var(--rojo); color: #fff; padding: 14px; border-radius: 10px; font-weight: 700; font-size: 15px; text-decoration: none; transition: background .2s; }
+    .btn-primary:hover { background: var(--rojo-dark); }
+    .btn-secondary { display: block; text-align: center; background: #fff; color: var(--negro); padding: 13px; border-radius: 10px; font-weight: 600; font-size: 14px; text-decoration: none; border: 2px solid #e8e8e8; transition: border-color .2s; }
+    .btn-secondary:hover { border-color: #ccc; }
+
+    /* Spinner */
+    .spinner-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 0; gap: 14px; }
+    .spinner { width: 36px; height: 36px; border: 3px solid #eee; border-top-color: var(--rojo); border-radius: 50%; animation: spin .8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script src="js/auth-b2c.js"></script>
+
+<div id="header-b2c-root"></div>
+<script src="js/header-b2c.js"></script>
+
+<div class="gracias-wrap">
+
+  <div id="loading-wrap" style="display:block">
+    <div class="spinner-wrap"><div class="spinner"></div></div>
+  </div>
+
+  <div id="gracias-contenido" style="display:none">
+
+    <div class="hero-card">
+      <div class="hero-check">✅</div>
+      <div class="hero-titulo">¡Pedido confirmado!</div>
+      <div class="hero-sub">Recibimos tu pedido y ya lo estamos procesando.<br>Te contactamos a la brevedad para coordinar el envío o retiro.</div>
+      <div class="hero-num" id="num-operacion">—</div>
+    </div>
+
+    <!-- Items -->
+    <div class="card">
+      <div class="card-title"><span>📦</span> Piezas pedidas</div>
+      <div id="items-lista"></div>
+      <div class="total-row">
+        <span>Total</span>
+        <span id="total-op">—</span>
+      </div>
+    </div>
+
+    <!-- Info del pedido -->
+    <div class="card">
+      <div class="card-title"><span>📋</span> Detalles del pedido</div>
+      <div id="info-pedido"></div>
+    </div>
+
+    <!-- Taller (si aplica) -->
+    <div id="taller-section" style="display:none">
+      <div class="taller-notice">
+        <div class="icon">🔧</div>
+        <div class="text">
+          <strong id="taller-nombre-notice">Taller asignado</strong>
+          <span id="taller-texto-notice"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Instrucciones de pago -->
+    <div id="pago-section" style="margin-top:16px">
+      <div class="pago-notice" id="pago-notice"></div>
+    </div>
+
+    <!-- Acciones -->
+    <div class="acciones">
+      <a href="buscar.html" class="btn-primary">Seguir comprando</a>
+      <a href="perfil.html" class="btn-secondary">Ver mi perfil</a>
+    </div>
+
+  </div>
+</div>
+
+<script src="js/confirmacion-b2c.js"></script>
+</body>
+</html>

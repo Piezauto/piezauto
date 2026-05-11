@@ -458,10 +458,8 @@ function confirmarVaciar() {
 
 function irACheckout() {
   const items = cargarCarritoLocal();
-  if (items.length === 0) return;
-  // Por ahora redirige al checkout legacy con los items en localStorage
-  // En Fase 3 se implementa el checkout B2C completo
-  alert('El checkout completo se habilita en Fase 3. Por ahora podés consultar por WhatsApp o continuar con la versión clásica.');
+  if (!items.length) return;
+  window.location.href = 'checkout-b2c.html';
 }
 
 initPaginaCarrito();

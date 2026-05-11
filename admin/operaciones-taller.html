@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Operaciones con taller — Admin Piezauto</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="stylesheet" href="../css/estilos.css">
+  <style>
+    body { background: var(--gris-claro); font-family: inherit; }
+    .admin-wrap { max-width: 1100px; margin: 0 auto; padding: 28px 16px 60px; }
+    h1 { font-size: 20px; font-weight: 800; margin-bottom: 4px; }
+    .sub { font-size: 13px; color: #888; margin-bottom: 24px; }
+
+    .filtros { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+    .filtros select, .filtros input {
+      padding: 8px 12px; border: 1.5px solid #ddd; border-radius: 8px;
+      font-size: 13px; outline: none; background: #fff; cursor: pointer;
+    }
+    .filtros select:focus, .filtros input:focus { border-color: var(--rojo); }
+
+    .tabla-wrap { background: #fff; border-radius: 12px; box-shadow: var(--sombra); overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { background: var(--negro); color: #fff; padding: 12px 14px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; font-weight: 700; white-space: nowrap; }
+    td { padding: 13px 14px; border-bottom: 1px solid #f5f5f5; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fafafa; }
+
+    .badge {
+      display: inline-block; padding: 3px 10px; border-radius: 20px;
+      font-size: 11px; font-weight: 700; white-space: nowrap;
+    }
+    .badge-pendiente { background: #fff8e1; color: #795548; }
+    .badge-pagado    { background: #e8f5e9; color: #1a7a3f; }
+    .badge-enviado   { background: #e3f2fd; color: #1565c0; }
+    .badge-entregado { background: #f3e5f5; color: #6a1b9a; }
+    .badge-cancelado { background: #ffebee; color: #c62828; }
+
+    .btn-sm {
+      padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 700;
+      cursor: pointer; border: none; transition: background .2s;
+    }
+    .btn-aprobar  { background: #22c55e; color: #fff; }
+    .btn-aprobar:hover  { background: #16a34a; }
+    .btn-rechazar { background: #ef4444; color: #fff; margin-left: 6px; }
+    .btn-rechazar:hover { background: #dc2626; }
+    .btn-credito  { background: #3b82f6; color: #fff; margin-left: 6px; }
+    .btn-credito:hover  { background: #2563eb; }
+
+    .empty { text-align: center; padding: 40px; color: #888; }
+    .spinner-wrap { display: flex; justify-content: center; align-items: center; padding: 40px; }
+    .spinner { width: 32px; height: 32px; border: 3px solid #eee; border-top-color: var(--rojo); border-radius: 50%; animation: spin .8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Modal crédito */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 1000; display: none; align-items: center; justify-content: center; }
+    .modal-overlay.open { display: flex; }
+    .modal-box { background: #fff; border-radius: 14px; padding: 28px; width: 100%; max-width: 420px; }
+    .modal-title { font-size: 16px; font-weight: 800; margin-bottom: 16px; }
+    .form-row { margin-bottom: 14px; }
+    .form-row label { display: block; font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase; margin-bottom: 5px; }
+    .form-row input, .form-row select, .form-row textarea {
+      width: 100%; padding: 9px 12px; border: 1.5px solid #ddd; border-radius: 8px;
+      font-size: 13px; outline: none; box-sizing: border-box; font-family: inherit;
+    }
+    .form-row input:focus, .form-row select:focus { border-color: var(--rojo); }
+    .modal-btns { display: flex; gap: 10px; margin-top: 18px; }
+    .modal-btns button { flex: 1; padding: 11px; border-radius: 8px; font-weight: 700; font-size: 14px; cursor: pointer; border: none; }
+    #modal-btn-ok { background: #3b82f6; color: #fff; }
+    #modal-btn-cancel { background: #f0f0f0; color: #333; }
+    #modal-msg { font-size: 12px; margin-top: 10px; min-height: 16px; }
+  </style>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase.js"></script>
+<script src="../js/auth-b2c.js"></script>
+
+<div class="admin-wrap">
+  <h1>🔧 Operaciones con Taller</h1>
+  <p class="sub">Pedidos que el cliente asignó a un taller del Paquete. Podés aprobar, rechazar y acreditar el diferencial al cliente.</p>
+
+  <div class="filtros">
+    <select id="filtro-estado" onchange="cargarOperaciones()">
+      <option value="">Todos los estados</option>
+      <option value="pendiente" selected>Pendiente</option>
+      <option value="pagado">Pagado</option>
+      <option value="enviado">Enviado</option>
+      <option value="entregado">Entregado</option>
+      <option value="cancelado">Cancelado</option>
+    </select>
+    <input type="text" id="filtro-buscar" placeholder="Buscar por taller o cliente..." oninput="cargarOperaciones()">
+  </div>
+
+  <div class="tabla-wrap">
+    <div id="loading" class="spinner-wrap"><div class="spinner"></div></div>
+    <div id="tabla-contenido" style="display:none">
+      <table>
+        <thead>
+          <tr>
+            <th>Pedido</th>
+            <th>Fecha</th>
+            <th>Cliente</th>
+            <th>Taller</th>
+            <th>Total</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tabla-body"></tbody>
+      </table>
+      <div id="tabla-empty" class="empty" style="display:none">No hay operaciones con taller en este estado.</div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal acreditar crédito -->
+<div class="modal-overlay" id="modal-credito">
+  <div class="modal-box">
+    <div class="modal-title">Acreditar crédito al cliente</div>
+    <input type="hidden" id="modal-op-id">
+    <input type="hidden" id="modal-cliente-id">
+    <div class="form-row">
+      <label>Monto a acreditar (ARS)</label>
+      <input type="number" id="modal-monto" min="1" placeholder="Ej: 5000">
+    </div>
+    <div class="form-row">
+      <label>Tipo de crédito</label>
+      <select id="modal-tipo">
+        <option value="diferencial_taller">Diferencial precio taller</option>
+        <option value="ajuste_manual">Ajuste manual</option>
+        <option value="bonificacion">Bonificación</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Concepto</label>
+      <input type="text" id="modal-concepto" placeholder="Ej: Diferencial precio mostrador - neto">
+    </div>
+    <div id="modal-msg" style="color:#888"></div>
+    <div class="modal-btns">
+      <button id="modal-btn-cancel" onclick="cerrarModal()">Cancelar</button>
+      <button id="modal-btn-ok" onclick="acreditarCredito()">Acreditar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://mqxowotdeibllkitkije.supabase.co';
+const ANON_KEY     = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xeG93b3RkZWlibGxraXRraWplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxMzgxNDYsImV4cCI6MjA5MTcxNDE0Nn0.V_Pr0elBurAK7OPKFL3OoZwBmb-bI-Mcz8N1U8yblG8';
+
+let _ops = [];
+
+async function cargarOperaciones() {
+  document.getElementById('loading').style.display          = 'flex';
+  document.getElementById('tabla-contenido').style.display  = 'none';
+
+  const estado = document.getElementById('filtro-estado').value;
+  const buscar = document.getElementById('filtro-buscar').value.trim().toLowerCase();
+
+  let q = dbB2C
+    .from('cat_operaciones_b2c')
+    .select('id, estado, total, subtotal, notas, direccion_entrega, created_at, cliente_id, cat_clientes_finales!cliente_id(nombre, apellido, email, telefono)')
+    .not('notas', 'is', null)
+    .order('created_at', { ascending: false })
+    .limit(100);
+
+  if (estado) q = q.eq('estado', estado);
+
+  const { data, error } = await q;
+
+  // Filtrar solo los que tienen taller en el notas JSON
+  let ops = (data || []).filter(op => {
+    try {
+      const n = JSON.parse(op.notas || '{}');
+      return !!n.taller?.nombre;
+    } catch { return false; }
+  });
+
+  if (buscar) {
+    ops = ops.filter(op => {
+      const n = JSON.parse(op.notas || '{}');
+      const taller  = (n.taller?.nombre || '').toLowerCase();
+      const cliente = `${op.cat_clientes_finales?.nombre} ${op.cat_clientes_finales?.apellido}`.toLowerCase();
+      return taller.includes(buscar) || cliente.includes(buscar);
+    });
+  }
+
+  _ops = ops;
+  renderTabla(ops);
+
+  document.getElementById('loading').style.display         = 'none';
+  document.getElementById('tabla-contenido').style.display = 'block';
+  document.getElementById('tabla-empty').style.display     = ops.length ? 'none' : 'block';
+}
+
+function renderTabla(ops) {
+  const tbody = document.getElementById('tabla-body');
+  tbody.innerHTML = ops.map(op => {
+    const n       = parseNotas(op.notas);
+    const taller  = n.taller?.nombre || '—';
+    const cliente = op.cat_clientes_finales;
+    const nombre  = cliente ? `${cliente.nombre || ''} ${cliente.apellido || ''}`.trim() : '—';
+    const tel     = cliente?.telefono || '';
+    const fecha   = new Date(op.created_at).toLocaleDateString('es-AR');
+    const badge   = `<span class="badge badge-${op.estado}">${op.estado}</span>`;
+    const num     = op.id.slice(0,8).toUpperCase();
+    const total   = '$' + Number(op.total || 0).toLocaleString('es-AR');
+
+    const btnAprobar  = op.estado === 'pendiente'
+      ? `<button class="btn-sm btn-aprobar" onclick="aprobarOp('${op.id}')">✓ Aprobar</button>` : '';
+    const btnRechazar = op.estado === 'pendiente'
+      ? `<button class="btn-sm btn-rechazar" onclick="rechazarOp('${op.id}')">✕ Rechazar</button>` : '';
+    const btnCredito  = (op.estado === 'pagado' || op.estado === 'entregado')
+      ? `<button class="btn-sm btn-credito" onclick="abrirModalCredito('${op.id}','${op.cliente_id}','${taller}')">+ Crédito</button>` : '';
+
+    const wa = tel ? `<div style="font-size:11px;margin-top:2px"><a href="https://wa.me/54${tel.replace(/\D/g,'')}" target="_blank" style="color:#22c55e;font-weight:600">WhatsApp</a></div>` : '';
+
+    return `<tr>
+      <td><strong>#${escHtml(num)}</strong><div style="font-size:11px;color:#aaa">${fecha}</div></td>
+      <td>${fecha}</td>
+      <td>${escHtml(nombre)}${wa}</td>
+      <td>${escHtml(taller)}<div style="font-size:11px;color:#aaa">${escHtml(n.taller?.localidad || '')}</div></td>
+      <td>${total}</td>
+      <td>${badge}</td>
+      <td>${btnAprobar}${btnRechazar}${btnCredito}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function aprobarOp(id) {
+  if (!confirm('¿Confirmás la aprobación de esta operación?')) return;
+  await dbB2C.from('cat_operaciones_b2c').update({ estado: 'pagado', updated_at: new Date().toISOString() }).eq('id', id);
+  cargarOperaciones();
+}
+
+async function rechazarOp(id) {
+  if (!confirm('¿Rechazás esta operación? Va a quedar como cancelada.')) return;
+  await dbB2C.from('cat_operaciones_b2c').update({ estado: 'cancelado', updated_at: new Date().toISOString() }).eq('id', id);
+  cargarOperaciones();
+}
+
+function abrirModalCredito(opId, clienteId, tallerNombre) {
+  document.getElementById('modal-op-id').value      = opId;
+  document.getElementById('modal-cliente-id').value  = clienteId;
+  document.getElementById('modal-concepto').value    = `Diferencial precio taller — ${tallerNombre}`;
+  document.getElementById('modal-monto').value       = '';
+  document.getElementById('modal-msg').textContent   = '';
+  document.getElementById('modal-credito').classList.add('open');
+}
+
+function cerrarModal() {
+  document.getElementById('modal-credito').classList.remove('open');
+}
+
+async function acreditarCredito() {
+  const opId      = document.getElementById('modal-op-id').value;
+  const clienteId = document.getElementById('modal-cliente-id').value;
+  const monto     = Number(document.getElementById('modal-monto').value);
+  const tipo      = document.getElementById('modal-tipo').value;
+  const concepto  = document.getElementById('modal-concepto').value.trim();
+  const msg       = document.getElementById('modal-msg');
+
+  if (!monto || monto <= 0) { msg.style.color = '#c00'; msg.textContent = 'Ingresá un monto válido.'; return; }
+  if (!concepto)             { msg.style.color = '#c00'; msg.textContent = 'Completá el concepto.'; return; }
+
+  msg.style.color = '#888'; msg.textContent = 'Acreditando...';
+  document.getElementById('modal-btn-ok').disabled = true;
+
+  const { error } = await dbB2C.from('cat_creditos_clientes').insert({
+    cliente_id:   clienteId,
+    operacion_id: opId,
+    monto,
+    tipo,
+    concepto,
+  });
+
+  if (error) {
+    msg.style.color = '#c00';
+    msg.textContent = 'Error: ' + error.message;
+    document.getElementById('modal-btn-ok').disabled = false;
+    return;
+  }
+
+  cerrarModal();
+  cargarOperaciones();
+}
+
+function parseNotas(notas) {
+  if (!notas) return {};
+  try { return JSON.parse(notas); } catch { return {}; }
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  cargarOperaciones();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout — Piezauto</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="stylesheet" href="css/estilos.css">
+  <style>
+    body { background: var(--gris-claro); }
+    .checkout-grid {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 24px;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 32px 16px 60px;
+    }
+    @media(max-width:720px) {
+      .checkout-grid { grid-template-columns: 1fr; }
+      .col-resumen { order: -1; }
+    }
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 22px;
+      box-shadow: var(--sombra);
+      margin-bottom: 18px;
+    }
+    .card-title {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #f0f0f0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-title span { color: var(--rojo); font-size: 18px; }
+    .form-row { margin-bottom: 14px; }
+    .form-row label { display: block; font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 5px; }
+    .form-row input, .form-row textarea, .form-row select {
+      width: 100%; padding: 10px 12px; border: 1.5px solid #ddd;
+      border-radius: 8px; font-size: 14px; outline: none; box-sizing: border-box;
+      font-family: inherit; transition: border-color .2s;
+    }
+    .form-row input:focus, .form-row textarea:focus, .form-row select:focus { border-color: var(--rojo); }
+    .form-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    /* Taller cards */
+    .taller-list { display: flex; flex-direction: column; gap: 10px; }
+    .taller-card {
+      border: 2px solid #e8e8e8; border-radius: 10px; padding: 14px;
+      cursor: pointer; transition: border-color .2s, background .2s;
+      display: flex; gap: 12px; align-items: flex-start;
+    }
+    .taller-card.selected { border-color: var(--rojo); background: #fff5f5; }
+    .taller-card input[type=radio] { margin-top: 3px; accent-color: var(--rojo); flex-shrink: 0; }
+    .taller-info { flex: 1; }
+    .taller-nombre { font-weight: 700; font-size: 14px; margin-bottom: 3px; }
+    .taller-dir { font-size: 12px; color: #666; }
+    .taller-loc { font-size: 11px; color: #aaa; margin-top: 2px; }
+    .taller-wa { display: inline-flex; align-items: center; gap: 4px; margin-top: 6px; font-size: 11px; font-weight: 600; color: #22c55e; }
+    .taller-sin { border: 2px dashed #e8e8e8; border-radius: 10px; padding: 12px 14px; cursor: pointer; transition: border-color .2s; }
+    .taller-sin.selected { border-color: #aaa; background: #fafafa; }
+    .taller-sin label { cursor: pointer; font-size: 13px; color: #666; display: flex; align-items: center; gap: 8px; }
+    .taller-mano { font-size: 11px; color: #888; margin-top: 8px; padding: 8px 10px; background: #f8f8f8; border-radius: 6px; line-height: 1.5; }
+
+    /* Pago buttons */
+    .pago-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .pago-btn {
+      border: 2px solid #e8e8e8; border-radius: 10px; padding: 14px 12px;
+      cursor: pointer; text-align: center; transition: border-color .2s, background .2s;
+      background: #fff;
+    }
+    .pago-btn:hover { border-color: #ccc; }
+    .pago-btn.selected { border-color: var(--rojo); background: #fff5f5; }
+    .pago-btn .pago-icon { font-size: 22px; margin-bottom: 4px; }
+    .pago-btn .pago-label { font-size: 12px; font-weight: 700; display: block; }
+    .pago-btn .pago-sub { font-size: 10px; color: #888; display: block; margin-top: 2px; }
+    .pago-info { margin-top: 12px; font-size: 12px; color: #555; line-height: 1.6; padding: 10px 12px; background: #f8f8f8; border-radius: 8px; }
+
+    /* Resumen */
+    .resumen-item { display: flex; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid #f5f5f5; }
+    .resumen-item:last-child { border-bottom: none; }
+    .resumen-item-desc { flex: 1; font-size: 13px; }
+    .resumen-item-code { font-size: 10px; color: #aaa; margin-top: 1px; }
+    .resumen-item-qty { font-size: 12px; color: #888; white-space: nowrap; }
+    .resumen-item-precio { font-size: 13px; font-weight: 700; white-space: nowrap; }
+    .resumen-totales { margin-top: 14px; }
+    .resumen-row { display: flex; justify-content: space-between; font-size: 13px; padding: 5px 0; }
+    .resumen-row.total { font-weight: 800; font-size: 18px; color: var(--rojo); border-top: 2px solid #f0f0f0; margin-top: 8px; padding-top: 12px; }
+
+    /* Sticky resumen */
+    .col-resumen .card { position: sticky; top: 80px; }
+
+    /* Botón confirmar */
+    #btn-confirmar {
+      width: 100%; padding: 16px; background: var(--rojo); color: #fff;
+      border: none; border-radius: 10px; font-size: 16px; font-weight: 800;
+      cursor: pointer; transition: background .2s; margin-top: 12px;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    #btn-confirmar:hover:not(:disabled) { background: var(--rojo-dark); }
+    #btn-confirmar:disabled { opacity: 0.6; cursor: default; }
+    #checkout-msg { font-size: 13px; margin-top: 10px; text-align: center; min-height: 18px; }
+
+    /* Loading */
+    .spinner-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 0; gap: 14px; }
+    .spinner { width: 36px; height: 36px; border: 3px solid #eee; border-top-color: var(--rojo); border-radius: 50%; animation: spin .8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Breadcrumb */
+    .breadcrumb { font-size: 13px; color: #888; padding: 16px 16px 0; max-width: 960px; margin: 0 auto; display: flex; align-items: center; gap: 6px; }
+    .breadcrumb a { color: var(--rojo); text-decoration: none; }
+
+    /* Mano de obra nota */
+    .nota-mano-obra { background: #fff8e1; border: 1px solid #ffe082; border-radius: 8px; padding: 12px 14px; font-size: 12px; color: #795548; line-height: 1.6; margin-top: 14px; }
+  </style>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script src="js/auth-b2c.js"></script>
+
+<div id="header-b2c-root"></div>
+<script src="js/header-b2c.js"></script>
+
+<div class="breadcrumb">
+  <a href="carrito.html">← Carrito</a>
+  <span>›</span>
+  <strong>Checkout</strong>
+</div>
+
+<div id="loading-wrap" class="checkout-grid" style="grid-template-columns:1fr">
+  <div class="spinner-wrap">
+    <div class="spinner"></div>
+    <div style="color:#888;font-size:13px">Cargando checkout...</div>
+  </div>
+</div>
+
+<div id="checkout-contenido" class="checkout-grid" style="display:none">
+
+  <!-- Columna izquierda -->
+  <div class="col-form">
+
+    <!-- Datos del cliente -->
+    <div class="card">
+      <div class="card-title"><span>👤</span> Tus datos</div>
+      <div class="form-2col">
+        <div class="form-row">
+          <label>Nombre</label>
+          <input type="text" id="f-nombre" placeholder="Juan">
+        </div>
+        <div class="form-row">
+          <label>Apellido</label>
+          <input type="text" id="f-apellido" placeholder="Pérez">
+        </div>
+      </div>
+      <div class="form-2col">
+        <div class="form-row">
+          <label>Teléfono</label>
+          <input type="tel" id="f-telefono" placeholder="11 1234-5678">
+        </div>
+        <div class="form-row">
+          <label>Email</label>
+          <input type="email" id="f-email" readonly style="background:#fafafa;color:#888">
+        </div>
+      </div>
+      <div class="form-row">
+        <label>Dirección de entrega</label>
+        <input type="text" id="f-direccion" placeholder="Av. Ejemplo 1234, Piso 3°, Morón">
+      </div>
+    </div>
+
+    <!-- Taller -->
+    <div class="card">
+      <div class="card-title"><span>🔧</span> Taller de instalación (opcional)</div>
+      <p style="font-size:13px;color:#555;margin-bottom:14px;line-height:1.6">
+        Si querés que un taller del Paquete Piezauto instale la pieza, seleccioná uno.
+        El taller va a confirmar el turno con vos directamente.
+      </p>
+      <div id="taller-list" class="taller-list">
+        <div class="spinner-wrap" style="padding:20px 0"><div class="spinner"></div></div>
+      </div>
+      <div class="nota-mano-obra">
+        <strong>Nota:</strong> el precio de la pieza es el que ves en el resumen. La mano de obra se coordina directamente con el taller y se abona por separado.
+      </div>
+    </div>
+
+    <!-- Medio de pago -->
+    <div class="card">
+      <div class="card-title"><span>💳</span> Medio de pago</div>
+      <div class="pago-grid">
+        <div class="pago-btn selected" id="pago-manual" onclick="seleccionarPago('manual')">
+          <div class="pago-icon">🏦</div>
+          <span class="pago-label">Transferencia</span>
+          <span class="pago-sub">Pago manual</span>
+        </div>
+        <div class="pago-btn" id="pago-efectivo" onclick="seleccionarPago('efectivo')">
+          <div class="pago-icon">💵</div>
+          <span class="pago-label">Efectivo</span>
+          <span class="pago-sub">Al retirar</span>
+        </div>
+        <div class="pago-btn" id="pago-mp" onclick="seleccionarPago('mercadopago')">
+          <div class="pago-icon">📱</div>
+          <span class="pago-label">MercadoPago</span>
+          <span class="pago-sub">Próximamente</span>
+        </div>
+        <div class="pago-btn" id="pago-debito" onclick="seleccionarPago('debito')">
+          <div class="pago-icon">💳</div>
+          <span class="pago-label">Débito/Crédito</span>
+          <span class="pago-sub">Próximamente</span>
+        </div>
+      </div>
+      <div id="pago-info" class="pago-info">
+        📋 <strong>Transferencia bancaria:</strong> te enviamos el CBU/alias por WhatsApp al confirmar. El pedido se activa una vez que confirmamos el pago.
+      </div>
+    </div>
+
+    <!-- Notas -->
+    <div class="card">
+      <div class="card-title"><span>📝</span> Notas para el pedido (opcional)</div>
+      <div class="form-row">
+        <textarea id="f-notas" rows="3" placeholder="Ej: necesito el envío urgente, tengo disponibilidad solo por las mañanas..."></textarea>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Columna derecha — Resumen -->
+  <div class="col-resumen">
+    <div class="card">
+      <div class="card-title"><span>🛒</span> Tu pedido</div>
+      <div id="resumen-items"></div>
+      <div class="resumen-totales">
+        <div class="resumen-row">
+          <span>Subtotal</span>
+          <span id="res-subtotal">$0</span>
+        </div>
+        <div class="resumen-row">
+          <span>Envío</span>
+          <span style="color:#888;font-size:12px">A coordinar</span>
+        </div>
+        <div class="resumen-row total">
+          <span>Total</span>
+          <span id="res-total">$0</span>
+        </div>
+      </div>
+      <button id="btn-confirmar" onclick="confirmarPedido()">
+        Confirmar pedido →
+      </button>
+      <div id="checkout-msg"></div>
+    </div>
+  </div>
+
+</div>
+
+<script src="js/carrito.js"></script>
+<script src="js/checkout-b2c.js"></script>
+</body>
+</html>
