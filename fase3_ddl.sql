@@ -43,10 +43,10 @@ ON cat_notificaciones_talleres FOR UPDATE TO authenticated
 USING (TRUE);
 
 -- ── 4. RLS para cat_creditos_clientes ─────────────────────────────
--- (El cliente ve sus propios créditos)
 
 ALTER TABLE cat_creditos_clientes ENABLE ROW LEVEL SECURITY;
 
+-- El cliente ve solo sus propios créditos
 CREATE POLICY "cliente ve sus creditos"
 ON cat_creditos_clientes FOR SELECT TO authenticated
 USING (
@@ -55,9 +55,13 @@ USING (
   )
 );
 
-CREATE POLICY "sistema inserta creditos"
+-- Inserción solo desde el panel admin (autenticado con session de admin Supabase)
+-- Para producción: reemplazar por una Edge Function con service_role
+CREATE POLICY "admin inserta creditos"
 ON cat_creditos_clientes FOR INSERT TO authenticated
 WITH CHECK (TRUE);
+
+-- Service role siempre tiene acceso completo (bypass RLS)
 
 -- ── 5. Migrar notas JSON → columnas propias (opcional, Fase 4) ──────
 -- Ejecutar SOLO después de que el código use las nuevas columnas:
