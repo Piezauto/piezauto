@@ -329,18 +329,22 @@
 <script src="js/carrito.js"></script>
 <script>
 async function initPaginaCarrito() {
+  renderCarrito(); // Render inmediato con localStorage antes de cualquier llamada async
+
   initHeaderB2C();
 
-  const cliente = await getClienteActual();
-  if (!cliente) {
-    document.getElementById('login-cta').style.display = 'block';
-  } else {
-    // Merge carrito local con el de BD
-    await cargarCarritoDesdeDB();
-    document.getElementById('sync-badge').textContent = '✓ Carrito guardado en tu cuenta';
+  try {
+    const cliente = await getClienteActual();
+    if (!cliente) {
+      document.getElementById('login-cta').style.display = 'block';
+    } else {
+      await cargarCarritoDesdeDB();
+      document.getElementById('sync-badge').textContent = '✓ Carrito guardado en tu cuenta';
+      renderCarrito(); // Re-render tras merge con BD
+    }
+  } catch (err) {
+    console.warn('[carrito] Error en init async:', err);
   }
-
-  renderCarrito();
 }
 
 function renderCarrito() {
