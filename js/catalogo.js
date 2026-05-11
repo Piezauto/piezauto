@@ -25,7 +25,7 @@ function toggleComparar(producto) {
     lista.splice(idx, 1);
   } else {
     if (lista.length >= 3) {
-      alert('Podés comparar hasta 3 productos a la vez. Quitá uno para agregar otro.');
+      mostrarNotificacion('Podés comparar hasta 3 productos a la vez. Quitá uno para agregar otro.', 'error');
       return;
     }
     lista.push(producto);
@@ -73,7 +73,7 @@ function agregarAlCarrito(producto) {
   if (existe) { existe.cantidad++; } else { carrito.push({ ...producto, cantidad: 1 }); }
   localStorage.setItem('pz_carrito', JSON.stringify(carrito));
   actualizarContadorCarrito();
-  alert(`✅ "${producto.nombre}" agregado al carrito`);
+  mostrarNotificacion(`"${producto.nombre}" agregado al carrito`, 'success');
 }
 function verCarrito() { window.location.href = 'checkout.html'; }
 actualizarContadorCarrito();
@@ -524,7 +524,7 @@ function cargarAniosCatalogo() {
 function aplicarFiltroAuto() {
   const selModelo = document.getElementById('cat-modelo-auto');
   const modeloId = selModelo.value;
-  if (!modeloId) { alert('Seleccioná un modelo para filtrar.'); return; }
+  if (!modeloId) { mostrarNotificacion('Seleccioná un modelo para filtrar.', 'error'); return; }
   const anio = document.getElementById('cat-anio-auto').value;
   filtros.modelo_id = modeloId;
   filtros.anio = anio ? parseInt(anio) : null;

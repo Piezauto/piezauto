@@ -79,7 +79,7 @@ function agregarAlCarrito(producto, originEl) {
     document.head.appendChild(l);
   }
   if (originEl && window.flyAlCarrito) window.flyAlCarrito(originEl);
-  else alert(`✅ "${producto.nombre}" agregado al carrito`);
+  else mostrarNotificacion(`"${producto.nombre || producto.descripcion}" agregado al carrito`, 'success');
 }
 
 function verCarrito() {
@@ -305,7 +305,7 @@ async function buscarPorAuto() {
   const modeloId  = selModelo.value;
   const anio      = parseInt(document.getElementById('filtro-anio').value) || null;
 
-  if (!modeloId) { alert('Seleccioná un modelo de auto.'); return; }
+  if (!modeloId) { mostrarNotificacion('Seleccioná un modelo de auto.', 'error'); return; }
 
   const marcaNombre  = selMarca.options[selMarca.selectedIndex]?.text || '';
   const modeloNombre = selModelo.options[selModelo.selectedIndex]?.text || '';

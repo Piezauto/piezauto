@@ -287,7 +287,7 @@ async function volverAComprar(pedidoId) {
   const { data: items } = await db.from('items_pedido')
     .select('producto_id, cantidad, precio_unitario, productos(nombre, imagenes)')
     .eq('pedido_id', pedidoId);
-  if (!items?.length) { alert('No se encontraron productos en este pedido.'); return; }
+  if (!items?.length) { mostrarNotificacion('No se encontraron productos en este pedido.', 'error'); return; }
 
   let carrito = JSON.parse(localStorage.getItem('pz_carrito') || '[]');
   items.forEach(i => {
@@ -296,9 +296,9 @@ async function volverAComprar(pedidoId) {
     else { carrito.push({ id: i.producto_id, nombre: i.productos?.nombre || 'Producto', precio: i.precio_unitario, cantidad: i.cantidad }); }
   });
   localStorage.setItem('pz_carrito', JSON.stringify(carrito));
-  if (confirm(`✅ ${items.length} producto(s) agregados al carrito. ¿Ir al carrito ahora?`)) {
+  mostrarConfirm(`${items.length} producto(s) agregados al carrito. ¿Ir al carrito ahora?`, function() {
     window.location.href = 'checkout.html';
-  }
+  });
 }
 
 // ── VEHÍCULOS DEL USUARIO ─────────────────────
@@ -415,10 +415,11 @@ function marcarPrincipal(id) {
 }
 
 async function eliminarVehiculo(id) {
-  if (!confirm('¿Eliminás este vehículo?')) return;
-  await db.from('vehiculos_usuario').delete().eq('id', id);
-  if (localStorage.getItem('pz_vehiculo_principal') === id) localStorage.removeItem('pz_vehiculo_principal');
-  await cargarVehiculosUsuario();
+  mostrarConfirm('¿Eliminás este vehículo?', async function() {
+    await db.from('vehiculos_usuario').delete().eq('id', id);
+    if (localStorage.getItem('pz_vehiculo_principal') === id) localStorage.removeItem('pz_vehiculo_principal');
+    await cargarVehiculosUsuario();
+  });
 }
 
 // ── NOTIFICACIONES ────────────────────────────

@@ -19,13 +19,9 @@ function actualizarContadorCarrito() {
   document.getElementById('carrito-count').textContent = total;
 }
 function verCarrito() {
-  if (!carrito.length) { alert('Tu carrito está vacío.'); return; }
-  let msg = '🛒 Tu carrito:\n\n', total = 0;
-  carrito.forEach(i => {
-    msg += `• ${i.nombre} x${i.cantidad} = $${(i.precio * i.cantidad).toLocaleString('es-AR')}\n`;
-    total += i.precio * i.cantidad;
-  });
-  alert(msg + `\nTOTAL: $${total.toLocaleString('es-AR')}`);
+  if (!carrito.length) { mostrarNotificacion('Tu carrito está vacío.', 'error'); return; }
+  const total = carrito.reduce((s, i) => s + i.precio * i.cantidad, 0);
+  mostrarNotificacion(`${carrito.length} artículo(s) en el carrito — Total: $${total.toLocaleString('es-AR')}`, 'info');
 }
 
 // ── CARGAR TALLERES ───────────────────────────
@@ -343,7 +339,7 @@ function agregarMarcadores() {
 
 function mostrarUbicacion(e) {
   e.preventDefault();
-  if (!navigator.geolocation) { alert('Tu navegador no soporta geolocalización.'); return; }
+  if (!navigator.geolocation) { mostrarNotificacion('Tu navegador no soporta geolocalización.', 'error'); return; }
   navigator.geolocation.getCurrentPosition(pos => {
     const lat = pos.coords.latitude;
     const lng = pos.coords.longitude;
@@ -360,7 +356,7 @@ function mostrarUbicacion(e) {
       .map(t => ({ ...t, dist: Math.hypot(t.latitud - lat, t.longitud - lng) }))
       .sort((a, b) => a.dist - b.dist);
     if (conDist.length) renderTalleres(conDist);
-  }, () => { alert('No pudimos obtener tu ubicación. Verificá que diste permiso al navegador.'); });
+  }, () => { mostrarNotificacion('No pudimos obtener tu ubicación. Verificá que diste permiso al navegador.', 'error'); });
 }
 
 cargarTalleres();

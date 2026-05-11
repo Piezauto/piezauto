@@ -75,14 +75,15 @@ async function cargarVehiculos(clienteId) {
 }
 
 async function eliminarVehiculo(id) {
-  if (!confirm('¿Seguro que querés eliminar este vehículo?')) return;
-  const { error } = await dbB2C.from('cat_clientes_vehiculos').delete().eq('id', id);
-  if (error) {
-    alert('Error al eliminar: ' + error.message);
-    return;
-  }
-  const cliente = await getClienteActual();
-  if (cliente) await cargarVehiculos(cliente.id);
+  mostrarConfirm('¿Seguro que querés eliminar este vehículo?', async function() {
+    const { error } = await dbB2C.from('cat_clientes_vehiculos').delete().eq('id', id);
+    if (error) {
+      mostrarNotificacion('Error al eliminar: ' + error.message, 'error');
+      return;
+    }
+    const cliente = await getClienteActual();
+    if (cliente) await cargarVehiculos(cliente.id);
+  });
 }
 
 async function guardarPerfil(e) {

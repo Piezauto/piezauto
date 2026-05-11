@@ -243,7 +243,7 @@
     const anio     = selAnio?.value;
     const marcaOpt = selMarca?.options[selMarca.selectedIndex];
     const modeloOpt = selMod?.options[selMod.selectedIndex];
-    if (!modeloId) { alert('Seleccioná un modelo.'); return; }
+    if (!modeloId) { mostrarNotificacion('Seleccioná un modelo.', 'error'); return; }
     const isAdmin = window.location.pathname.includes('/admin') || window.location.pathname.includes('/point');
     const base = isAdmin ? '../' : '';
     const params = new URLSearchParams({
