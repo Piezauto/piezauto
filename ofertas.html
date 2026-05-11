@@ -337,6 +337,11 @@
 </footer>
 <script>document.querySelectorAll('.footer-year').forEach(el => el.textContent = new Date().getFullYear());</script>
 
+<script>
+  // /ofertas.html usa la tabla legada 'productos' — redirigir al catálogo B2C
+  window.location.replace('/buscar.html');
+</script>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase.js"></script>
 <script src="js/mantenimiento.js" defer></script>
