@@ -22,9 +22,6 @@ async function initBuscar() {
   if (familia) _filtros.familia = familia;
   if (marca) _filtros.marca = marca;
 
-  const inputBuscador = document.getElementById('hb2c-q');
-  if (inputBuscador) inputBuscador.value = q;
-
   const cliente = await getClienteActual();
   if (cliente) {
     await cargarVehiculoPrincipal(cliente.id);
@@ -40,8 +37,6 @@ async function initBuscar() {
     mostrarEstadoVacio();
   }
 
-  // La búsqueda desde el input del header la maneja hb2cBuscar() en header-b2c.js.
-  // Solo necesitamos el listener si hay un input de búsqueda secundario en la página.
   document.getElementById('sel-familia').addEventListener('change', e => {
     _filtros.familia = e.target.value;
     _pagina = 1;
@@ -139,14 +134,6 @@ function actualizarSelectMarca() {
     if (m.id === _filtros.marca) opt.selected = true;
     sel.appendChild(opt);
   });
-}
-
-function buscarDesdeInput() {
-  const q = (document.getElementById('hb2c-q')?.value || '').trim();
-  _queryActual = q;
-  _pagina = 1;
-  actualizarURL();
-  ejecutarBusqueda();
 }
 
 function limpiarFiltros() {
