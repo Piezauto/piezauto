@@ -1,1222 +1,202 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <link rel="apple-touch-icon" href="/favicon.svg">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title id="page-title">Producto — Piezauto</title>
-  <meta name="description" id="meta-desc" content="Autoparte disponible en Piezauto">
-  <meta property="og:title" id="og-title" content="Producto — Piezauto">
-  <meta property="og:description" id="og-desc" content="Autoparte disponible en Piezauto">
-  <meta property="og:image" id="og-image" content="https://piezauto.com.ar/img/og-default.jpg">
-  <meta property="og:url" id="og-url" content="https://piezauto.com.ar/producto.html">
-  <meta property="og:type" content="product">
-  <meta property="og:site_name" content="Piezauto">
-  <meta name="robots" content="index, follow">
-  <link rel="canonical" id="canonical" href="https://piezauto.com.ar/producto.html">
+  <title>Producto — Piezauto</title>
   <link rel="stylesheet" href="css/estilos.css">
   <style>
-    .ficha-wrap {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 40px;
-      padding: 40px 0;
-    }
-    .ficha-galeria { display: flex; flex-direction: column; gap: 12px; }
-    .galeria-principal {
-      position: relative; overflow: hidden; border-radius: 12px;
-      background: #f8f8f8; cursor: zoom-in;
-      aspect-ratio: 1 / 1;
-      border: 1px solid #e0e0e0;
-    }
-    .galeria-principal img {
-      width: 100%; height: 100%; object-fit: contain;
-      transition: transform 0.15s ease; display: block;
-    }
-    .galeria-thumbs { display: flex; gap: 8px; flex-wrap: wrap; }
-    .thumb {
-      width: 68px; height: 68px; border-radius: 8px; overflow: hidden;
-      border: 2px solid #e0e0e0; cursor: pointer; transition: border-color 0.15s;
-      background: #f8f8f8;
-    }
-    .thumb:hover, .thumb.activo { border-color: var(--rojo); }
-    .thumb img { width: 100%; height: 100%; object-fit: cover; }
-    .img-placeholder {
-      aspect-ratio: 1 / 1; background: #f8f8f8; border-radius: 12px;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      gap: 12px; color: #bbb; border: 2px dashed #e0e0e0;
-    }
-    .img-placeholder svg { width: 64px; height: 64px; }
-    .img-placeholder span { font-size: 13px; font-weight: 500; }
-    .ficha-info { display: flex; flex-direction: column; gap: 14px; }
-    .ficha-breadcrumb { font-size: 13px; color: #999; }
-    .ficha-breadcrumb a { color: var(--rojo); }
-    .ficha-nombre { font-size: 26px; font-weight: 800; line-height: 1.3; }
-    .ficha-codigo { font-size: 13px; color: #888; background: #f0f0f0; display: inline-block; padding: 3px 10px; border-radius: 20px; }
-    .ficha-precio { font-size: 36px; font-weight: 900; color: var(--rojo); }
-    .ficha-stock-ok  { font-size: 13px; color: #1a7a3f; font-weight: 600; }
-    .ficha-stock-no  { font-size: 13px; color: #c00; font-weight: 600; }
-    .ficha-descripcion { font-size: 14px; color: #555; line-height: 1.7; }
-    .ficha-qty-wrap { display: flex; align-items: center; gap: 12px; }
-    .qty-btn {
-      width: 36px; height: 36px; border-radius: 8px;
-      border: 1.5px solid #ccc; background: #fff;
-      font-size: 20px; cursor: pointer; font-weight: 700;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .qty-input {
-      width: 52px; text-align: center;
-      border: 1.5px solid #ccc; border-radius: 8px;
-      padding: 6px; font-size: 16px; font-weight: 600;
-    }
-    .ficha-acciones { display: flex; flex-direction: column; gap: 10px; }
-    .ficha-whatsapp {
-      display: flex; align-items: center; justify-content: center; gap: 8px;
-      background: #25d366; color: #fff;
-      padding: 12px; border-radius: 8px;
-      font-weight: 700; font-size: 15px; cursor: pointer;
-      border: none;
-    }
-    .compat-tabla { width: 100%; border-collapse: collapse; font-size: 13px; }
-    .compat-tabla th { background: #f0f0f0; padding: 8px 12px; text-align: left; font-weight: 600; }
-    .compat-tabla td { padding: 8px 12px; border-bottom: 1px solid #eee; }
-    .tab-btns { display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 2px solid #eee; }
-    .tab-btn {
-      padding: 10px 20px; border: none; background: none;
-      font-size: 14px; font-weight: 600; color: #888;
-      cursor: pointer; border-bottom: 2px solid transparent;
-      margin-bottom: -2px;
-    }
-    .tab-btn.activo { color: var(--rojo); border-bottom-color: var(--rojo); }
-    .tab-panel { display: none; }
-    .tab-panel.activo { display: block; }
-    @media (max-width: 700px) {
-      .ficha-wrap { grid-template-columns: 1fr; gap: 20px; }
-    }
-    .resenas-section { margin-top: 40px; padding-top: 32px; border-top: 2px solid #f0f0f0; }
-    .resenas-section h2 { font-size: 18px; font-weight: 800; margin-bottom: 20px; }
-    .promedio-stars { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
-    .stars-grande { font-size: 28px; color: #f4a427; letter-spacing: 2px; }
-    .promedio-num { font-size: 36px; font-weight: 900; color: #1a1a1a; }
-    .promedio-sub { font-size: 13px; color: #888; }
-    .resena-card { background: #f8f8f8; border-radius: 10px; padding: 16px; margin-bottom: 12px; }
-    .resena-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-    .resena-autor { font-size: 14px; font-weight: 700; }
-    .resena-fecha { font-size: 12px; color: #aaa; }
-    .resena-stars { color: #f4a427; font-size: 16px; margin-bottom: 6px; }
-    .resena-texto { font-size: 14px; color: #555; line-height: 1.6; }
-    .form-resena { background: #fff; border: 1.5px solid #eee; border-radius: 10px; padding: 20px; margin-top: 24px; }
-    .form-resena h3 { font-size: 15px; font-weight: 700; margin-bottom: 16px; }
-    .stars-selector { display: flex; gap: 6px; margin-bottom: 14px; }
-    .star-btn { font-size: 28px; background: none; border: none; cursor: pointer; color: #ddd; transition: color .15s; padding: 0; }
-    .star-btn.activa { color: #f4a427; }
-    .star-btn:hover { color: #f4a427; }
+    body { background: var(--gris-claro); }
 
-    .faq-seccion { margin-top: 48px; padding-top: 32px; border-top: 1px solid #e0e0e0; }
-    .faq-lista { display: flex; flex-direction: column; gap: 12px; margin-bottom: 32px; }
-    .faq-item { background: #f8f8f8; border-radius: 10px; overflow: hidden; }
-    .faq-pregunta-wrap { display: flex; align-items: flex-start; gap: 12px; padding: 16px; cursor: pointer; user-select: none; }
-    .faq-q-icon { font-size: 18px; font-weight: 800; color: #E63946; flex-shrink: 0; line-height: 1.4; }
-    .faq-pregunta-texto { flex: 1; font-size: 14px; font-weight: 600; color: #1a1a1a; line-height: 1.5; }
-    .faq-toggle { color: #aaa; font-size: 18px; flex-shrink: 0; transition: transform 0.2s; }
-    .faq-item.abierto .faq-toggle { transform: rotate(180deg); }
-    .faq-respuesta { padding: 0 16px 16px 46px; font-size: 14px; color: #555; line-height: 1.7; display: none; }
-    .faq-item.abierto .faq-respuesta { display: block; }
-    .faq-sin-resultados { color: #aaa; font-size: 14px; padding: 16px 0; }
-    .faq-hacer-pregunta { background: #f8f8f8; border-radius: 12px; padding: 24px; }
-    .faq-form-titulo { font-size: 16px; font-weight: 700; color: #1a1a1a; margin-bottom: 16px; }
-    .faq-textarea { width: 100%; padding: 12px 14px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 14px; resize: vertical; font-family: inherit; transition: border-color 0.15s; box-sizing: border-box; }
-    .faq-textarea:focus { outline: none; border-color: #E63946; }
-    .faq-btn-enviar { margin-top: 10px; background: #E63946; color: #fff; border: none; border-radius: 8px; padding: 10px 20px; font-size: 14px; font-weight: 700; cursor: pointer; transition: background 0.15s; }
-    .faq-btn-enviar:hover { background: #c1121f; }
+    /* ── Header B2C ── */
+    #header-b2c { background:var(--negro); position:sticky; top:0; z-index:100; box-shadow:0 2px 8px rgba(0,0,0,0.3); }
+    .hb2c-inner { max-width:1100px; margin:0 auto; padding:12px 16px; display:flex; align-items:center; gap:12px; }
+    .hb2c-logo { text-decoration:none; font-size:20px; font-weight:900; flex-shrink:0; }
+    .hb2c-logo-pz { color:var(--blanco); }
+    .hb2c-logo-auto { color:var(--rojo); }
+    .hb2c-search { flex:1; display:flex; background:rgba(255,255,255,0.1); border-radius:8px; overflow:hidden; max-width:600px; }
+    .hb2c-search input { flex:1; background:transparent; border:none; outline:none; padding:10px 14px; color:var(--blanco); font-size:14px; }
+    .hb2c-search input::placeholder { color:#888; }
+    .hb2c-search button { background:var(--rojo); border:none; padding:0 16px; cursor:pointer; color:var(--blanco); display:flex; align-items:center; }
+    .hb2c-actions { display:flex; align-items:center; gap:12px; flex-shrink:0; }
+    .hb2c-carrito { position:relative; color:var(--blanco); text-decoration:none; display:flex; }
+    .hb2c-badge { position:absolute; top:-7px; right:-7px; background:var(--rojo); color:var(--blanco); border-radius:50%; min-width:18px; height:18px; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; padding:0 2px; }
+    .hb2c-user { display:flex; align-items:center; gap:8px; text-decoration:none; color:var(--blanco); }
+    .hb2c-avatar { width:32px; height:32px; background:var(--rojo); border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; }
+    .hb2c-nombre { font-size:13px; font-weight:600; }
+    .hb2c-btn-login { background:var(--rojo); color:var(--blanco); text-decoration:none; padding:8px 16px; border-radius:var(--radio); font-size:13px; font-weight:600; }
+    @media (max-width:480px) { .hb2c-nombre { display:none; } }
 
-    .compat-buscador {
-      display: flex; align-items: center; gap: 10px; margin-bottom: 16px;
-    }
-    .compat-buscador input {
-      flex: 1; padding: 9px 13px; border: 1.5px solid #ddd;
-      border-radius: 8px; font-size: 14px; outline: none;
-    }
-    .compat-buscador input:focus { border-color: var(--rojo); }
-    .compat-total { font-size: 13px; color: #888; white-space: nowrap; }
+    /* ── Layout ── */
+    .producto-layout { max-width:900px; margin:0 auto; padding:20px 16px 60px; }
 
-    .compat-acordeon { display: flex; flex-direction: column; gap: 8px; }
-    .compat-marca-row {
-      background: #f5f5f5; border-radius: 8px; padding: 12px 16px;
-      display: flex; align-items: center; justify-content: space-between;
-      cursor: pointer; user-select: none; transition: background .15s;
-    }
-    .compat-marca-row:hover { background: #ececec; }
-    .compat-marca-nombre { font-size: 14px; font-weight: 700; }
-    .compat-marca-count { font-size: 12px; color: #888; }
-    .compat-marca-flecha { color: #aaa; font-size: 12px; transition: transform .2s; }
-    .compat-marca-row.abierto .compat-marca-flecha { transform: rotate(180deg); }
+    /* ── Breadcrumb ── */
+    #breadcrumb { font-size:13px; color:var(--gris-text); margin-bottom:16px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+    #breadcrumb a { color:var(--gris-text); text-decoration:none; }
+    #breadcrumb a:hover { color:var(--rojo); }
+    #breadcrumb span:last-child { color:var(--negro); font-weight:600; }
 
-    .compat-modelos-list { display: none; padding: 8px 0 4px 16px; }
-    .compat-modelos-list.abierto { display: block; }
-    .compat-modelo-item {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 6px 12px; font-size: 13px; border-bottom: 1px solid #f0f0f0;
-    }
-    .compat-modelo-item:last-child { border-bottom: none; }
-    .compat-modelo-anios { color: #888; font-size: 12px; }
+    /* ── Loader ── */
+    #loader-producto { display:flex; justify-content:center; align-items:center; gap:10px; padding:80px; color:var(--gris-text); }
+    .spinner { width:22px; height:22px; border:2px solid var(--gris); border-top-color:var(--rojo); border-radius:50%; animation:spin 0.7s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    #error-producto { display:none; text-align:center; padding:48px; color:var(--gris-text); font-size:16px; }
+    #ficha-container { display:none; }
 
-    .compat-btn-auto {
-      display: inline-flex; align-items: center; gap: 6px;
-      background: var(--negro); color: #fff; padding: 9px 18px;
-      border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;
-      border: none; margin-top: 16px; transition: background .15s;
-    }
-    .compat-btn-auto:hover { background: #333; }
+    /* ── Ficha grid ── */
+    .ficha-grid { display:grid; grid-template-columns:1fr 320px; gap:20px; align-items:start; }
+    @media (max-width:700px) { .ficha-grid { grid-template-columns:1fr; } }
 
-    /* SITE HEADER WRAP */
-    .site-header-wrap { position: sticky; top: 0; z-index: 200; }
-    .topbar {
-      background: #111; padding: 6px 24px;
-      display: flex; justify-content: space-between; align-items: center;
-      font-size: 12px; color: #aaa;
-    }
-    .topbar a { color: #aaa; transition: color .15s; }
-    .topbar a:hover { color: #fff; }
-    .topbar-right { display: flex; gap: 16px; }
-    .header {
-      background: var(--negro); height: 62px;
-      display: flex; align-items: center; padding: 0 24px; gap: 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.35); position: relative;
-    }
-    .header-logo { font-size: 22px; font-weight: 800; color: #fff; letter-spacing: -.5px; flex-shrink: 0; }
-    .header-logo span { color: var(--rojo); }
-    .header-search {
-      flex: 1; max-width: 460px; display: flex;
-      background: #2a2a2a; border-radius: 8px; overflow: hidden; margin: 0 auto;
-    }
-    .header-search input {
-      flex: 1; background: transparent; border: none; outline: none;
-      color: #fff; padding: 9px 14px; font-size: 14px;
-    }
-    .header-search input::placeholder { color: #777; }
-    .header-search button {
-      background: var(--rojo); border: none; color: #fff;
-      padding: 0 16px; cursor: pointer; font-size: 15px; flex-shrink: 0;
-    }
-    .header-nav { display: flex; align-items: center; gap: 20px; margin-left: auto; }
-    .header-nav a { color: #ccc; font-size: 13px; font-weight: 500; transition: color .15s; white-space: nowrap; }
-    .header-nav a:hover { color: #fff; }
-    .header-carrito {
-      background: var(--rojo); color: #fff; padding: 7px 14px;
-      border-radius: var(--radio); font-size: 13px; font-weight: 600;
-      display: flex; align-items: center; gap: 6px; cursor: pointer; flex-shrink: 0;
-    }
-    .menu-hamburguesa {
-      display: none; flex-direction: column; gap: 5px;
-      background: transparent; border: none; cursor: pointer; padding: 4px; flex-shrink: 0;
-    }
-    .menu-hamburguesa span { display: block; width: 22px; height: 2px; background: #fff; border-radius: 2px; }
-    .header-nav-mobile {
-      display: none; flex-direction: column;
-      background: var(--negro); border-top: 1px solid #2a2a2a;
-      position: absolute; top: 62px; left: 0; right: 0; z-index: 199;
-    }
-    .header-nav-mobile.open { display: flex; }
-    .header-nav-mobile a {
-      color: #ccc; padding: 14px 24px; font-size: 15px;
-      border-bottom: 1px solid #222; transition: color .15s, background .15s;
-    }
-    .header-nav-mobile a:hover { color: #fff; background: #222; }
+    .ficha-card { background:var(--blanco); border-radius:12px; box-shadow:var(--sombra); padding:24px; }
+    #sku-familia { font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--rojo); margin-bottom:6px; }
+    #sku-titulo { font-size:20px; font-weight:700; color:var(--negro); line-height:1.3; margin-bottom:8px; }
+    #sku-codigo { font-size:13px; color:var(--gris-text); font-family:monospace; margin-bottom:6px; }
+    #sku-proveedor, #sku-fabricante { display:none; font-size:13px; color:var(--gris-text); margin-bottom:4px; }
+    #sku-tags { display:flex; gap:8px; flex-wrap:wrap; margin:12px 0; }
+    .tag { background:#f0f0f0; color:#555; padding:4px 10px; border-radius:20px; font-size:12px; font-weight:600; }
+    #sku-oem-container { display:none; margin-bottom:12px; }
+    .oem-label { font-size:12px; font-weight:700; color:var(--gris-text); text-transform:uppercase; letter-spacing:0.4px; }
+    #sku-oem { font-family:monospace; font-size:13px; color:#333; margin-top:3px; }
 
-    /* FOOTER NUEVO */
-    .footer-nuevo { background: #111; color: #aaa; padding: 52px 24px 0; margin-top: 60px; font-size: 13px; }
-    .footer-grid {
-      display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr; gap: 32px;
-      max-width: 1200px; margin: 0 auto; padding-bottom: 40px; border-bottom: 1px solid #222;
-    }
-    .footer-col h4 { color: #fff; font-size: 13px; font-weight: 700; margin-bottom: 14px; text-transform: uppercase; letter-spacing: .05em; }
-    .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
-    .footer-col ul li a { color: #aaa; transition: color .15s; }
-    .footer-col ul li a:hover { color: var(--rojo); }
-    .footer-logo { font-size: 20px; font-weight: 800; color: #fff; margin-bottom: 10px; }
-    .footer-logo span { color: var(--rojo); }
-    .footer-col > p { line-height: 1.7; margin-bottom: 16px; }
-    .footer-social { display: flex; gap: 12px; margin-top: 4px; }
-    .footer-social a { width: 36px; height: 36px; border-radius: 50%; background: #222; display: flex; align-items: center; justify-content: center; transition: background .15s; }
-    .footer-social a svg { width: 18px; height: 18px; }
-    .footer-social a:hover { background: var(--rojo); }
-    .footer-bottom { max-width: 1200px; margin: 0 auto; padding: 20px 0; text-align: center; font-size: 12px; }
+    /* Atributos */
+    #tabla-atributos { display:none; margin-top:16px; }
+    .attr-fila { display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px solid var(--gris); font-size:13px; }
+    .attr-fila:last-child { border-bottom:none; }
+    .attr-key { color:var(--gris-text); font-weight:600; }
+    .attr-val { color:var(--negro); text-align:right; }
 
-    /* RESPONSIVE HEADER */
-    @media (max-width: 900px) {
-      .header-nav { display: none; }
-      .header-search { max-width: 300px; }
-    }
-    @media (max-width: 600px) {
-      .topbar .topbar-right { display: none; }
-      .header-search { display: none; }
-      .menu-hamburguesa { display: flex; }
-      .header { height: 56px; }
-      .header-nav-mobile { top: 56px; }
-      .footer-grid { grid-template-columns: 1fr 1fr; gap: 24px; }
-      .footer-grid > .footer-col:first-child { grid-column: 1 / -1; }
-    }
+    /* Panel compra */
+    .compra-card { background:var(--blanco); border-radius:12px; box-shadow:var(--sombra); padding:24px; position:sticky; top:74px; }
+    #sku-precio { font-size:32px; font-weight:900; color:var(--rojo); margin-bottom:4px; }
+    #sku-precio.precio-consultar { font-size:20px; color:var(--gris-text); }
+    .precio-nota { font-size:12px; color:var(--gris-text); margin-bottom:20px; }
+    .cantidad-row { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+    .cantidad-row label { font-size:13px; font-weight:600; color:var(--gris-text); }
+    .cantidad-ctrl { display:flex; align-items:center; border:1px solid var(--gris); border-radius:var(--radio); overflow:hidden; }
+    .cantidad-ctrl button { background:var(--gris-claro); border:none; width:36px; height:36px; font-size:18px; cursor:pointer; font-weight:700; }
+    .cantidad-ctrl button:hover { background:var(--gris); }
+    #cantidad-input { width:46px; text-align:center; border:none; outline:none; font-size:15px; font-weight:700; padding:0 4px; height:36px; }
+    #btn-agregar-carrito { width:100%; padding:14px; background:var(--rojo); color:var(--blanco); border:none; border-radius:var(--radio); font-size:15px; font-weight:700; cursor:pointer; transition:background 0.15s; }
+    #btn-agregar-carrito:hover { background:var(--rojo-dark); }
+    .whatsapp-link { display:flex; align-items:center; justify-content:center; gap:8px; margin-top:12px; padding:11px; border:1px solid var(--gris); border-radius:var(--radio); text-decoration:none; color:#25D366; font-size:13px; font-weight:600; }
+    .whatsapp-link:hover { background:#f0fdf4; }
+
+    /* Aplicaciones */
+    .aplicaciones-seccion { background:var(--blanco); border-radius:12px; box-shadow:var(--sombra); padding:24px; margin-top:20px; display:none; }
+    .sec-titulo { font-size:15px; font-weight:700; margin-bottom:14px; color:var(--negro); }
+    #aplicaciones-lista { list-style:none; padding:0; margin:0; columns:2; column-gap:16px; }
+    #aplicaciones-lista li { font-size:13px; color:#444; padding:4px 0; border-bottom:1px solid #f5f5f5; break-inside:avoid; }
+    .apps-mas { color:var(--gris-text); font-style:italic; }
+    @media (max-width:480px) { #aplicaciones-lista { columns:1; } }
+
+    /* Observaciones */
+    .obs-seccion { background:#fffbec; border:1px solid #f0e68c; border-radius:var(--radio); padding:14px 18px; margin-top:16px; font-size:13px; color:#7a6a00; display:none; }
+
+    /* Alternativas */
+    #alternativas-seccion { display:none; margin-top:28px; }
+    .alt-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+    .alt-motivo { font-size:12px; color:var(--gris-text); }
+    #alternativas-lista { display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:12px; }
+    .alt-tarjeta { background:var(--blanco); border-radius:10px; box-shadow:var(--sombra); padding:14px; text-decoration:none; color:inherit; border:1px solid transparent; transition:border-color 0.15s, box-shadow 0.15s; }
+    .alt-tarjeta:hover { border-color:var(--rojo); box-shadow:0 4px 14px rgba(0,0,0,0.1); }
+    .alt-desc { font-size:13px; font-weight:600; color:var(--negro); margin-bottom:4px; }
+    .alt-meta { font-size:12px; color:var(--gris-text); margin-bottom:6px; }
+    .alt-precio { font-size:15px; font-weight:800; color:var(--rojo); }
+
+    @keyframes fadeInUp { from { opacity:0; transform:translateX(-50%) translateY(10px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }
   </style>
-
-  <!-- ============================================================
-    GOOGLE ANALYTICS — Agregar antes del lanzamiento a producción
-    Reemplazá G-XXXXXXXXXX con tu Measurement ID real de GA4.
-    Instrucciones completas: analytics_setup.md
-    ============================================================
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-XXXXXXXXXX');
-  </script>
-  ============================================================ -->
-  <link rel="manifest" href="/manifest.json">
-  <script>if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');</script>
 </head>
 <body>
 
-<div class="site-header-wrap">
-  <div class="topbar">
-    <span id="topbar-info">📍 Zona Oeste, AMBA &nbsp;·&nbsp; Lun–Vie 9–18hs &nbsp;·&nbsp; Sáb 9–13hs</span>
-    <div class="topbar-right">
-      <a href="tel:+541143000000" id="topbar-telefono">📞 011 4300-0000</a>
-      <a href="https://wa.me/5491143000000" target="_blank" id="topbar-whatsapp">💬 WhatsApp</a>
-    </div>
-  </div>
-  <header class="header">
-    <a href="index.html" class="header-logo">Piezauto</a>
-    <div class="header-search">
-      <input type="text" id="header-buscar" placeholder="Buscá tu autoparte..." onkeydown="if(event.key==='Enter') buscarDesdeHeader()">
-      <button onclick="buscarDesdeHeader()">🔍</button>
-    </div>
-    <nav class="header-nav">
-      <a href="index.html">Inicio</a>
-      <a href="catalogo.html">Catálogo</a>
-      <a href="ofertas.html">Ofertas</a>
-      <a href="talleres.html">Talleres</a>
-      <a href="nosotros.html">Nosotros</a>
-      <a href="usuario.html">Mi cuenta</a>
-    </nav>
-    <div class="header-carrito" onclick="verCarrito()">
-      🛒 <span id="carrito-count">0</span>
-    </div>
-    <button class="menu-hamburguesa" onclick="toggleMenu()" aria-label="Abrir menú">
-      <span></span><span></span><span></span>
-    </button>
-    <nav class="header-nav-mobile" id="menu-mobile">
-      <a href="index.html" onclick="toggleMenu()">Inicio</a>
-      <a href="catalogo.html" onclick="toggleMenu()">Catálogo</a>
-      <a href="ofertas.html" onclick="toggleMenu()">Ofertas</a>
-      <a href="talleres.html" onclick="toggleMenu()">Talleres</a>
-      <a href="nosotros.html" onclick="toggleMenu()">Nosotros</a>
-      <a href="usuario.html" onclick="toggleMenu()">Mi cuenta</a>
-    </nav>
-  </header>
-</div>
+<header id="header-b2c"></header>
 
-<main class="container">
-  <div id="contenido-producto">
-    <div class="loader" style="padding:80px">Cargando producto...</div>
-  </div>
-</main>
+<main class="producto-layout">
 
-<footer class="footer-nuevo">
-  <div class="container">
-    <div class="footer-grid">
-      <div class="footer-col">
-        <div class="footer-logo">Piezauto</div>
-        <p>Más de 40 años en el mercado de autopartes del AMBA. Stock real, asesoramiento honesto y precio justo.</p>
-        <div class="footer-social">
-          <a href="https://instagram.com/piezauto" target="_blank" aria-label="Instagram">
-            <svg viewBox="0 0 24 24"><path fill="#fff" d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
-          </a>
-          <a href="https://facebook.com/piezauto" target="_blank" aria-label="Facebook">
-            <svg viewBox="0 0 24 24"><path fill="#fff" d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-          </a>
-          <a href="https://wa.me/5491143000000" target="_blank" aria-label="WhatsApp">
-            <svg viewBox="0 0 24 24"><path fill="#fff" d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+  <div id="breadcrumb"></div>
+
+  <div id="loader-producto">
+    <div class="spinner"></div>
+    Cargando producto…
+  </div>
+  <p id="error-producto"></p>
+
+  <div id="ficha-container">
+    <div class="ficha-grid">
+
+      <!-- Datos -->
+      <div>
+        <div class="ficha-card">
+          <div id="sku-familia"></div>
+          <h1 id="sku-titulo"></h1>
+          <div id="sku-codigo"></div>
+          <div id="sku-proveedor"></div>
+          <div id="sku-fabricante"></div>
+          <div id="sku-tags"></div>
+          <div id="sku-oem-container">
+            <div class="oem-label">Código OEM</div>
+            <div id="sku-oem"></div>
+          </div>
+          <div id="tabla-atributos"></div>
+        </div>
+
+        <div class="aplicaciones-seccion" id="aplicaciones-seccion">
+          <div class="sec-titulo">Vehículos compatibles</div>
+          <ul id="aplicaciones-lista"></ul>
+        </div>
+
+        <div class="obs-seccion" id="obs-seccion">
+          <strong>Nota:</strong> <span id="sku-observaciones"></span>
+        </div>
+      </div>
+
+      <!-- Compra -->
+      <div>
+        <div class="compra-card">
+          <div id="sku-precio"></div>
+          <div class="precio-nota">Precio público · IVA incluido</div>
+          <div class="cantidad-row">
+            <label>Cantidad</label>
+            <div class="cantidad-ctrl">
+              <button onclick="cambiarCantidad(-1)">−</button>
+              <input type="number" id="cantidad-input" value="1" min="1" max="99">
+              <button onclick="cambiarCantidad(1)">+</button>
+            </div>
+          </div>
+          <button id="btn-agregar-carrito">Agregar al carrito</button>
+          <a href="https://wa.me/5491122548257" target="_blank" class="whatsapp-link">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+            Consultar por WhatsApp
           </a>
         </div>
       </div>
-      <div class="footer-col">
-        <h4>Empresa</h4>
-        <ul>
-          <li><a href="nosotros.html">Nosotros</a></li>
-          <li><a href="nosotros.html">Contacto</a></li>
-        </ul>
-      </div>
-      <div class="footer-col">
-        <h4>Comprar</h4>
-        <ul>
-          <li><a href="catalogo.html">Catálogo</a></li>
-          <li><a href="ofertas.html">Ofertas</a></li>
-          <li><a href="seguimiento.html">Seguimiento</a></li>
-        </ul>
-      </div>
-      <div class="footer-col">
-        <h4>Talleres</h4>
-        <ul>
-          <li><a href="talleres.html">Piezauto Point</a></li>
-          <li><a href="unirse-point.html">¿Tenés un taller? Sumate</a></li>
-        </ul>
-      </div>
-      <div class="footer-col">
-        <h4>Legal</h4>
-        <ul>
-          <li><a href="terminos.html">Términos y condiciones</a></li>
-          <li><a href="privacidad.html">Política de privacidad</a></li>
-        </ul>
-      </div>
-    </div>
-    <div class="footer-bottom">
-      <p>© <span class="footer-year"></span> Piezauto — Zona Oeste, Buenos Aires. Todos los derechos reservados.</p>
-      <p style="margin-top:4px">Precios en pesos argentinos con IVA incluido. Stock sujeto a disponibilidad.</p>
-    </div>
-  </div>
-</footer>
-<script>document.querySelectorAll('.footer-year').forEach(el => el.textContent = new Date().getFullYear());</script>
 
-<!-- MODAL CONSULTA DISPONIBILIDAD -->
-<div id="modal-consulta" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center">
-  <div style="background:#fff;border-radius:12px;padding:28px;max-width:420px;width:90%;position:relative">
-    <button onclick="cerrarModalConsulta()" style="position:absolute;top:12px;right:14px;background:none;border:none;font-size:20px;cursor:pointer;color:#aaa">✕</button>
-    <h3 style="font-size:17px;font-weight:800;margin-bottom:6px">Consultar disponibilidad</h3>
-    <p style="font-size:13px;color:#666;margin-bottom:18px">Te avisamos cuando el producto esté disponible nuevamente.</p>
-    <div style="display:flex;flex-direction:column;gap:10px">
-      <input id="consulta-nombre" type="text" placeholder="Tu nombre *" style="padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;outline:none">
-      <input id="consulta-telefono" type="tel" placeholder="Teléfono (opcional)" style="padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;outline:none">
-      <input id="consulta-email" type="email" placeholder="Tu email *" style="padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;outline:none">
+    </div><!-- /ficha-grid -->
+
+    <div id="alternativas-seccion">
+      <div class="alt-header">
+        <h2 class="sec-titulo" style="margin:0">Alternativas disponibles</h2>
+        <span class="alt-motivo" id="alternativas-motivo"></span>
+      </div>
+      <div id="alternativas-lista"></div>
     </div>
-    <button onclick="enviarConsultaDisponibilidad()" class="btn btn-rojo" style="width:100%;margin-top:16px;padding:12px">Enviar consulta</button>
-    <div id="consulta-msg" style="margin-top:8px;font-size:13px;font-weight:600;min-height:18px;text-align:center"></div>
-  </div>
-</div>
+
+  </div><!-- /ficha-container -->
+</main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase.js"></script>
-<script src="js/mantenimiento.js" defer></script><script src="js/analytics.js" defer></script>
-  <script src="js/notifications.js"></script>
-  <script src="js/autocomplete.js"></script>
+<script src="js/auth-b2c.js"></script>
+<script src="js/header-b2c.js"></script>
+<script src="js/carrito.js"></script>
+<script src="js/producto.js"></script>
 <script>
-
-function buscarDesdeHeader() {
-  const q = document.getElementById('header-buscar').value.trim();
-  if (q) window.location.href = 'busqueda.html?q=' + encodeURIComponent(q);
-}
-function toggleMenu() {
-  document.getElementById('menu-mobile').classList.toggle('open');
-}
-
-let productoActual = null;
-let carrito = JSON.parse(localStorage.getItem('pz_carrito') || '[]');
-actualizarContadorCarrito();
-
-function actualizarContadorCarrito() {
-  const total = carrito.reduce((a, i) => a + i.cantidad, 0);
-  document.getElementById('carrito-count').textContent = total;
-}
-
-function agregarAlCarrito(e) {
-  const qty = parseInt(document.getElementById('qty-input').value) || 1;
-  const existe = carrito.find(i => i.id === productoActual.id);
-  if (existe) {
-    existe.cantidad += qty;
-  } else {
-    carrito.push({ ...productoActual, cantidad: qty });
+  function cambiarCantidad(delta) {
+    const input = document.getElementById('cantidad-input');
+    input.value = Math.max(1, Math.min(99, (parseInt(input.value) || 1) + delta));
   }
-  localStorage.setItem('pz_carrito', JSON.stringify(carrito));
-  actualizarContadorCarrito();
-  const btn = e?.currentTarget || document.querySelector('.btn-rojo[onclick*="agregarAlCarrito"]');
-  if (btn && window.flyAlCarrito) window.flyAlCarrito(btn);
-  else alert(`✅ ${qty} unidad(es) de "${productoActual.nombre}" agregadas al carrito.`);
-}
-
-function verCarrito() {
-  window.location.href = 'checkout.html';
-}
-
-function cambiarImagen(url, thumbEl) {
-  document.getElementById('img-principal').src = url;
-  document.querySelectorAll('.thumb').forEach(t => t.classList.remove('activo'));
-  thumbEl.classList.add('activo');
-}
-
-function renderGaleria(imagenes) {
-  const thumbsEl = document.getElementById('galeria-thumbs');
-  if (!thumbsEl) return;
-  if (!imagenes || imagenes.length <= 1) {
-    thumbsEl.style.display = 'none';
-    return;
-  }
-  thumbsEl.innerHTML = imagenes.map((url, i) => `
-    <div class="thumb ${i === 0 ? 'activo' : ''}" onclick="cambiarImagen('${url}', this)">
-      <img src="${url}" alt="Imagen ${i + 1}" loading="lazy">
-    </div>
-  `).join('');
-}
-
-function initZoom() {
-  const img = document.getElementById('img-principal');
-  if (!img) return;
-  img.addEventListener('mousemove', (e) => {
-    const rect = img.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width * 100).toFixed(1);
-    const y = ((e.clientY - rect.top) / rect.height * 100).toFixed(1);
-    img.style.transformOrigin = `${x}% ${y}%`;
-    img.style.transform = 'scale(1.8)';
-  });
-  img.addEventListener('mouseleave', () => {
-    img.style.transform = 'scale(1)';
-    img.style.transformOrigin = 'center center';
-  });
-}
-
-function cambiarQty(delta) {
-  const input = document.getElementById('qty-input');
-  const nuevo = Math.max(1, (parseInt(input.value) || 1) + delta);
-  input.value = nuevo;
-}
-
-function abrirTab(nombre) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('activo'));
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('activo'));
-  document.getElementById('tab-btn-' + nombre).classList.add('activo');
-  document.getElementById('tab-' + nombre).classList.add('activo');
-}
-
-async function cargarProducto() {
-  const params = new URLSearchParams(window.location.search);
-  const id = params.get('id');
-
-  if (!id) {
-    document.getElementById('contenido-producto').innerHTML =
-      '<p class="vacio" style="padding:80px">Producto no encontrado. <a href="index.html" style="color:var(--rojo)">Volver al inicio</a></p>';
-    return;
-  }
-
-  const { data: p, error } = await db
-    .from('productos')
-    .select('*, categorias(nombre, slug)')
-    .eq('id', id)
-    .single();
-
-  if (error || !p) {
-    document.getElementById('contenido-producto').innerHTML =
-      '<p class="vacio" style="padding:80px">Producto no encontrado. <a href="index.html" style="color:var(--rojo)">Volver al inicio</a></p>';
-    return;
-  }
-
-  productoActual = p;
-  document.title = `${p.nombre} — Piezauto`;
-  if (window.trackViewItem) trackViewItem(p);
-
-  const _precio = p.precio_oferta || p.precio;
-  const _desc = `${p.nombre} — $${Number(_precio).toLocaleString('es-AR')}. ${p.descripcion ? p.descripcion.slice(0, 120) : 'Autoparte disponible en Piezauto.'}`;
-  document.getElementById('page-title').textContent = `${p.nombre} — Piezauto`;
-  document.getElementById('meta-desc').content = _desc;
-  document.getElementById('og-title').content = `${p.nombre} — Piezauto`;
-  document.getElementById('og-desc').content = _desc;
-  if (p.imagenes && p.imagenes[0]) document.getElementById('og-image').content = p.imagenes[0];
-  const _url = `https://piezauto.com.ar/producto.html?id=${p.id}`;
-  document.getElementById('og-url').content = _url;
-  document.getElementById('canonical').href = _url;
-
-  // JSON-LD Product para Google Shopping
-  const ldScript = document.getElementById('json-ld-producto') || document.createElement('script');
-  ldScript.id = 'json-ld-producto';
-  ldScript.type = 'application/ld+json';
-  ldScript.textContent = JSON.stringify({
-    "@context": "https://schema.org/",
-    "@type": "Product",
-    "name": p.nombre,
-    "description": p.descripcion || p.nombre,
-    "sku": p.codigo_pieza || p.id,
-    "brand": { "@type": "Brand", "name": p.marca_producto || "Piezauto" },
-    "image": p.imagenes?.[0] || '',
-    "offers": {
-      "@type": "Offer",
-      "priceCurrency": "ARS",
-      "price": String(p.precio_oferta || p.precio),
-      "availability": p.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
-      "url": _url,
-      "seller": { "@type": "Organization", "name": "Piezauto" }
-    }
-  });
-  if (!document.getElementById('json-ld-producto')) document.head.appendChild(ldScript);
-
-  const imagenes = p.imagenes && p.imagenes.length ? p.imagenes : [];
-
-  const { data: compats } = await db
-    .from('compatibilidades')
-    .select('anio_desde, anio_hasta, modelos_auto!modelo_id(nombre, marcas_auto(nombre))')
-    .eq('producto_id', id);
-
-  const { data: itemsProv } = await db
-    .from('items_proveedor')
-    .select('codigos_cruzados, fabricante, marca_vehiculo, vehiculo, version_formato, anio_desde, anio_hasta, lado, origen')
-    .eq('producto_id', id)
-    .limit(1);
-  const ip = itemsProv?.[0] || null;
-
-  const compatsHTML = p.universal
-    ? `<div style="display:inline-flex;align-items:center;gap:6px;background:#e8f5e9;color:#2e7d32;padding:7px 16px;border-radius:20px;font-size:13px;font-weight:700">✅ Producto universal — compatible con todos los vehículos</div>`
-    : generarCompatAcordeon(compats);
-
-  const autoGuardado = JSON.parse(sessionStorage.getItem('pz_auto_seleccionado') || 'null');
-
-  let compatBadge = '';
-  if (p.universal) {
-    compatBadge = `<div style="display:inline-flex;align-items:center;gap:6px;background:#e8f5e9;color:#2e7d32;padding:7px 16px;border-radius:20px;font-size:13px;font-weight:700">✅ Producto universal — compatible con todos los vehículos</div>`;
-  } else if (autoGuardado) {
-    const anioGuardado = parseInt(autoGuardado.anio) || null;
-    const esCompat = compats && compats.some(c => {
-      if (!c.modelos_auto) return false;
-      const marcaOk = (c.modelos_auto.marcas_auto?.nombre || '').toLowerCase().includes(autoGuardado.marca.toLowerCase());
-      const modeloOk = (c.modelos_auto.nombre || '').toLowerCase().includes(autoGuardado.modelo.toLowerCase());
-      const anioOk = !anioGuardado ||
-        ((!c.anio_desde || c.anio_desde <= anioGuardado) &&
-         (!c.anio_hasta || c.anio_hasta >= anioGuardado));
-      return marcaOk && modeloOk && anioOk;
-    });
-    compatBadge = esCompat
-      ? `<div style="display:inline-flex;align-items:center;gap:6px;background:#e8f5e9;color:#2e7d32;padding:7px 16px;border-radius:20px;font-size:13px;font-weight:700">✅ Compatible con tu ${autoGuardado.marca} ${autoGuardado.modelo}${autoGuardado.anio ? ' ' + autoGuardado.anio : ''}</div>`
-      : `<div style="display:inline-flex;align-items:center;gap:6px;background:#fff3cd;color:#856404;padding:7px 16px;border-radius:20px;font-size:13px;font-weight:700">⚠️ No verificamos compatibilidad con tu ${autoGuardado.marca} ${autoGuardado.modelo} — consultanos</div>`;
-  } else {
-    compatBadge = `<div style="display:inline-flex;align-items:center;gap:6px;background:#f5f5f5;color:#777;padding:7px 16px;border-radius:20px;font-size:13px;font-weight:700">🔍 Verificá compatibilidad — <a href="index.html" style="color:var(--rojo)">seleccioná tu auto</a></div>`;
-  }
-
-  const autoInfo = autoGuardado
-    ? ` para mi ${autoGuardado.marca} ${autoGuardado.modelo}${autoGuardado.anio ? ' ' + autoGuardado.anio : ''}`
-    : '';
-  const msgWsp = encodeURIComponent(
-    `Hola Piezauto! Consulto por ${p.nombre} (Cód: ${p.codigo_pieza || 'S/N'})${autoInfo}. Precio: $${Number(p.precio).toLocaleString('es-AR')}`
-  );
-
-  document.getElementById('contenido-producto').innerHTML = `
-    <div class="ficha-breadcrumb" style="padding-top:24px">
-      <a href="index.html">Inicio</a> /
-      ${p.categorias?.slug
-        ? `<a href="categoria.html?slug=${p.categorias.slug}">${p.categorias.nombre}</a>`
-        : (p.categorias?.nombre || 'Productos')} /
-      ${p.nombre}
-    </div>
-
-    <div class="ficha-wrap">
-
-      <!-- GALERÍA -->
-      <div class="ficha-galeria">
-        ${imagenes.length
-          ? `<div class="galeria-principal">
-               <img id="img-principal" src="${imagenes[0]}" alt="${p.nombre}" fetchpriority="high">
-             </div>
-             <div class="galeria-thumbs" id="galeria-thumbs"></div>`
-          : `<div class="img-placeholder">
-               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                 <rect x="3" y="3" width="18" height="18" rx="2"/>
-                 <circle cx="8.5" cy="8.5" r="1.5"/>
-                 <path d="m21 15-5-5L5 21"/>
-               </svg>
-               <span>Sin imagen disponible</span>
-             </div>`
-        }
-      </div>
-
-      <!-- INFO -->
-      <div class="ficha-info">
-        <h1 class="ficha-nombre">${p.nombre}</h1>
-
-        ${compatBadge}
-
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0">
-          ${p.codigo_pieza ? `<span class="ficha-codigo">OEM: ${p.codigo_pieza}</span>` : ''}
-          ${p.codigo_propio ? `<span class="ficha-codigo" style="background:#e8f0fe;color:#1a56db;border-color:#c7d9fb">Interno: ${p.codigo_propio}</span>` : ''}
-        </div>
-
-        ${p.marca_producto
-          ? `<div style="font-size:13px;color:#777">Marca: <strong>${p.marca_producto}</strong></div>`
-          : ''}
-
-        <div class="ficha-precio">$${Number(p.precio).toLocaleString('es-AR')}</div>
-
-        <div class="${p.stock > 0 ? 'ficha-stock-ok' : 'ficha-stock-no'}">
-          ${p.stock > 0 ? `✅ En stock (${p.stock} disponibles)` : '❌ Sin stock'}
-        </div>
-
-        <div class="ficha-qty-wrap">
-          <span style="font-size:14px;color:#666">Cantidad:</span>
-          <button class="qty-btn" onclick="cambiarQty(-1)">−</button>
-          <input class="qty-input" type="number" id="qty-input" value="1" min="1" max="${p.stock}">
-          <button class="qty-btn" onclick="cambiarQty(1)">+</button>
-        </div>
-
-        <div class="ficha-acciones">
-          <button
-            class="btn btn-rojo btn-full"
-            onclick="agregarAlCarrito()"
-            ${p.stock === 0 ? 'disabled style="opacity:0.5;cursor:not-allowed"' : ''}
-          >
-            🛒 Agregar al carrito
-          </button>
-          ${p.stock === 0
-            ? `<button class="btn btn-full" onclick="abrirModalConsulta()" style="background:#1a1a1a;color:#fff;padding:12px;border-radius:8px;font-weight:700;font-size:15px;border:none;cursor:pointer">📩 Consultar disponibilidad</button>`
-            : ''}
-          <button
-            class="ficha-whatsapp"
-            onclick="window.open('https://wa.me/5491100000000?text=${msgWsp}','_blank')"
-          >
-            Consultar por WhatsApp
-          </button>
-        </div>
-
-        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-          <span style="font-size:12px;color:#aaa;flex:1">Retiro en local (Zona Oeste) o envío al AMBA</span>
-          <div style="display:flex;gap:8px">
-            <a href="https://wa.me/?text=${encodeURIComponent(p.nombre + ' — ' + window.location.href)}" target="_blank" title="Compartir por WhatsApp"
-              style="width:32px;height:32px;border-radius:50%;background:#25d366;display:flex;align-items:center;justify-content:center;font-size:16px;text-decoration:none">💬</a>
-            <a href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}" target="_blank" title="Compartir en Facebook"
-              style="width:32px;height:32px;border-radius:50%;background:#1877f2;display:flex;align-items:center;justify-content:center;font-size:16px;text-decoration:none">📘</a>
-            <button onclick="copiarLink()" title="Copiar enlace"
-              style="width:32px;height:32px;border-radius:50%;background:#f0f0f0;border:none;cursor:pointer;font-size:16px" id="btn-copiar-link">🔗</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- TABS -->
-    <div class="tab-btns">
-      <button id="tab-btn-desc" class="tab-btn activo" onclick="abrirTab('desc')">Descripción</button>
-      <button id="tab-btn-compat" class="tab-btn" onclick="abrirTab('compat')">Compatibilidades</button>
-      ${ip ? `<button id="tab-btn-specs" class="tab-btn" onclick="abrirTab('specs')">Especificaciones</button>` : ''}
-      ${ip?.codigos_cruzados?.length ? `<button id="tab-btn-codigos" class="tab-btn" onclick="abrirTab('codigos')">Códigos equivalentes</button>` : ''}
-    </div>
-
-    <div id="tab-desc" class="tab-panel activo">
-      <p class="ficha-descripcion">${p.descripcion || 'Sin descripción disponible.'}</p>
-    </div>
-
-    <div id="tab-compat" class="tab-panel" style="padding-bottom:40px">
-      ${compatsHTML}
-    </div>
-
-    ${ip ? `
-    <div id="tab-specs" class="tab-panel" style="padding-bottom:40px">
-      <table style="width:100%;border-collapse:collapse;font-size:14px">
-        ${ip.fabricante    ? `<tr><td style="padding:10px 12px;color:#666;width:180px;border-bottom:1px solid #f0f0f0">Fabricante</td><td style="padding:10px 12px;border-bottom:1px solid #f0f0f0;font-weight:600">${ip.fabricante}</td></tr>` : ''}
-        ${ip.marca_vehiculo? `<tr><td style="padding:10px 12px;color:#666;border-bottom:1px solid #f0f0f0">Marca del vehículo</td><td style="padding:10px 12px;border-bottom:1px solid #f0f0f0;font-weight:600">${ip.marca_vehiculo}</td></tr>` : ''}
-        ${ip.vehiculo      ? `<tr><td style="padding:10px 12px;color:#666;border-bottom:1px solid #f0f0f0">Vehículo</td><td style="padding:10px 12px;border-bottom:1px solid #f0f0f0;font-weight:600">${ip.vehiculo}</td></tr>` : ''}
-        ${ip.version_formato?`<tr><td style="padding:10px 12px;color:#666;border-bottom:1px solid #f0f0f0">Versión</td><td style="padding:10px 12px;border-bottom:1px solid #f0f0f0;font-weight:600">${ip.version_formato}</td></tr>` : ''}
-        ${(ip.anio_desde || ip.anio_hasta) ? `<tr><td style="padding:10px 12px;color:#666;border-bottom:1px solid #f0f0f0">Años</td><td style="padding:10px 12px;border-bottom:1px solid #f0f0f0;font-weight:600">${ip.anio_desde || ''}${ip.anio_desde && ip.anio_hasta ? ' – ' : ''}${ip.anio_hasta || ''}</td></tr>` : ''}
-        ${ip.lado          ? `<tr><td style="padding:10px 12px;color:#666;border-bottom:1px solid #f0f0f0">Lado</td><td style="padding:10px 12px;border-bottom:1px solid #f0f0f0;font-weight:600">${ip.lado}</td></tr>` : ''}
-        ${ip.origen        ? `<tr><td style="padding:10px 12px;color:#666">Origen</td><td style="padding:10px 12px;font-weight:600">${ip.origen}</td></tr>` : ''}
-      </table>
-    </div>
-    ` : ''}
-
-    ${ip?.codigos_cruzados?.length ? `
-    <div id="tab-codigos" class="tab-panel" style="padding-bottom:40px">
-      <p style="font-size:13px;color:#666;margin-bottom:12px">Códigos equivalentes u OEM de otros fabricantes para este producto:</p>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        ${ip.codigos_cruzados.map(c => `<span style="background:#f5f5f5;border:1px solid #e0e0e0;border-radius:6px;padding:6px 12px;font-family:monospace;font-size:13px">${c}</span>`).join('')}
-      </div>
-    </div>
-    ` : ''}
-
-    <div id="también-compraron-wrap"></div>
-    <div id="relacionados-wrap"></div>
-
-    <div class="resenas-section" id="resenas-section">
-      <div class="loader" style="padding:20px">Cargando reseñas...</div>
-    </div>
-
-    <section class="faq-seccion" id="faq-seccion">
-      <h2 class="seccion-titulo">Preguntas frecuentes</h2>
-      <div id="faq-lista" class="faq-lista"></div>
-      <div class="faq-hacer-pregunta" id="faq-form-wrap">
-        <h3 class="faq-form-titulo">¿Tenés una pregunta sobre este producto?</h3>
-        <div id="faq-login-aviso" style="display:none">
-          <p>Iniciá sesión para hacer una pregunta. <a href="usuario.html">Ingresar</a></p>
-        </div>
-        <div id="faq-form" style="display:none">
-          <textarea id="faq-texto" class="faq-textarea" placeholder="Escribí tu pregunta sobre el producto..." rows="3"></textarea>
-          <button onclick="enviarPregunta()" class="faq-btn-enviar">Enviar pregunta</button>
-          <div id="faq-msg" style="margin-top:8px;font-size:13px;font-weight:600;min-height:18px"></div>
-        </div>
-      </div>
-    </section>
-  `;
-}
-
-async function cargarRelacionados(categoriaId, excluirId) {
-  if (!categoriaId) return;
-  const { data } = await db.from('productos')
-    .select('*')
-    .eq('activo', true)
-    .eq('categoria_id', categoriaId)
-    .neq('id', excluirId)
-    .limit(4)
-    .order('creado_en', { ascending: false });
-
-  const wrap = document.getElementById('relacionados-wrap');
-  if (!wrap || !data || !data.length) return;
-
-  wrap.innerHTML = `
-    <div style="margin-top:48px;margin-bottom:8px">
-      <div class="seccion-titulo" style="margin-bottom:16px">Productos relacionados</div>
-      <div class="grilla-productos">
-        ${data.map(r => `
-          <div class="prod-card" onclick="window.location='producto.html?id=${r.id}'">
-            <img class="prod-card-img" loading="lazy"
-              src="${r.imagenes && r.imagenes[0] ? r.imagenes[0] : 'https://placehold.co/300x200?text=Sin+imagen'}"
-              alt="${r.nombre}">
-            <div class="prod-card-body">
-              <div class="prod-card-nombre">${r.nombre}</div>
-              <div class="prod-card-codigo">${r.codigo_pieza ? 'Cód: ' + r.codigo_pieza : ''}</div>
-              <div class="prod-card-precio">$${Number(r.precio).toLocaleString('es-AR')}</div>
-              <button class="prod-card-btn" onclick="event.stopPropagation(); agregarAlCarrito({id:'${r.id}',nombre:'${r.nombre.replace(/'/g,"\\'")}',precio:${r.precio}})">
-                Agregar al carrito
-              </button>
-            </div>
-          </div>
-        `).join('')}
-      </div>
-    </div>
-  `;
-}
-
-let resenasPuntuacion = 0;
-
-async function cargarResenas(productoId) {
-  const sect = document.getElementById('resenas-section');
-  if (!sect) return;
-
-  const { data: resenas, count } = await db.from('resenas_productos')
-    .select('*', { count: 'exact' })
-    .eq('producto_id', productoId)
-    .eq('aprobada', true)
-    .order('creado_en', { ascending: false });
-
-  const prom = resenas && resenas.length
-    ? (resenas.reduce((a, r) => a + r.puntuacion, 0) / resenas.length).toFixed(1)
-    : null;
-
-  const usuario = JSON.parse(localStorage.getItem('pz_usuario') || 'null');
-
-  let promedioHTML = '';
-  if (prom) {
-    const estrellas = '★'.repeat(Math.round(prom)) + '☆'.repeat(5 - Math.round(prom));
-    promedioHTML = `
-      <div class="promedio-stars">
-        <div class="promedio-num">${prom}</div>
-        <div>
-          <div class="stars-grande">${estrellas}</div>
-          <div class="promedio-sub">${count} reseña${count !== 1 ? 's' : ''}</div>
-        </div>
-      </div>`;
-  }
-
-  const listadoHTML = resenas && resenas.length
-    ? resenas.map(r => `
-        <div class="resena-card">
-          <div class="resena-header">
-            <div class="resena-autor">${r.nombre}</div>
-            <div class="resena-fecha">${new Date(r.creado_en).toLocaleDateString('es-AR')}</div>
-          </div>
-          <div class="resena-stars">${'★'.repeat(r.puntuacion)}${'☆'.repeat(5 - r.puntuacion)}</div>
-          ${r.comentario ? `<div class="resena-texto">${r.comentario}</div>` : ''}
-        </div>`).join('')
-    : '<p style="color:#aaa;font-size:14px">Todavía no hay reseñas para este producto.</p>';
-
-  const yaReseno = usuario && resenas
-    ? resenas.some(r => r.usuario_id === usuario.id)
-    : false;
-
-  let formHTML = '';
-  if (usuario && !yaReseno) {
-    formHTML = `
-      <div class="form-resena">
-        <h3>Dejá tu reseña</h3>
-        <div class="stars-selector" id="stars-selector">
-          ${[1,2,3,4,5].map(n => `<button class="star-btn" data-val="${n}" onclick="seleccionarEstrella(${n})">★</button>`).join('')}
-        </div>
-        <textarea id="resena-comentario" rows="3" placeholder="Contá tu experiencia con este producto (opcional)..."
-          style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;outline:none;resize:vertical;font-family:inherit;margin-bottom:12px"></textarea>
-        <button class="btn btn-rojo" onclick="enviarResena('${productoId}')">Publicar reseña</button>
-        <div id="resena-msg" style="margin-top:10px;font-size:13px;font-weight:600;min-height:18px"></div>
-      </div>`;
-  } else if (!usuario) {
-    formHTML = `<p style="font-size:14px;color:#888;margin-top:16px">
-      <a href="usuario.html" style="color:var(--rojo);font-weight:700">Iniciá sesión</a> para dejar una reseña.</p>`;
-  }
-
-  sect.innerHTML = `
-    <h2>Reseñas de clientes</h2>
-    ${promedioHTML}
-    ${listadoHTML}
-    ${formHTML}`;
-}
-
-function seleccionarEstrella(n) {
-  resenasPuntuacion = n;
-  document.querySelectorAll('.star-btn').forEach(btn => {
-    btn.classList.toggle('activa', parseInt(btn.dataset.val) <= n);
-  });
-}
-
-async function enviarResena(productoId) {
-  const msg = document.getElementById('resena-msg');
-  if (!resenasPuntuacion) {
-    msg.style.color = 'var(--rojo)';
-    msg.textContent = 'Seleccioná al menos 1 estrella.';
-    return;
-  }
-  const comentario = document.getElementById('resena-comentario').value.trim();
-  const usuario = JSON.parse(localStorage.getItem('pz_usuario') || 'null');
-  if (!usuario) { msg.textContent = 'Tenés que iniciar sesión.'; return; }
-
-  msg.style.color = '#888'; msg.textContent = 'Enviando...';
-
-  const { error } = await db.from('resenas_productos').insert({
-    producto_id: productoId,
-    usuario_id:  usuario.id,
-    nombre:      usuario.nombre || usuario.email,
-    puntuacion:  resenasPuntuacion,
-    comentario:  comentario || null,
-  });
-
-  if (error) {
-    msg.style.color = 'var(--rojo)';
-    msg.textContent = error.code === '23505'
-      ? 'Ya enviaste una reseña para este producto.'
-      : 'Hubo un error. Intentá de nuevo.';
-    return;
-  }
-  msg.style.color = '#22c55e';
-  msg.textContent = '✓ Reseña enviada. ¡Gracias!';
-  setTimeout(() => cargarResenas(productoId), 1500);
-}
-
-function guardarEnVistos(producto) {
-  const MAX = 6;
-  let vistos = JSON.parse(localStorage.getItem('pz_vistos') || '[]');
-  vistos = vistos.filter(p => p.id !== producto.id);
-  vistos.unshift({
-    id: producto.id,
-    nombre: producto.nombre,
-    precio: producto.precio_oferta || producto.precio,
-    imagen: producto.imagenes?.[0] || ''
-  });
-  vistos = vistos.slice(0, MAX);
-  localStorage.setItem('pz_vistos', JSON.stringify(vistos));
-}
-
-function generarCompatAcordeon(compats) {
-  if (!compats || !compats.length) {
-    return '<p style="color:#888;font-size:14px">No hay datos de compatibilidad cargados para este producto.</p>';
-  }
-
-  const porMarca = {};
-  compats.forEach(c => {
-    const marca  = c.modelos_auto?.marcas_auto?.nombre || 'Sin marca';
-    const modelo = c.modelos_auto?.nombre || '—';
-    const anios  = c.anio_desde && c.anio_hasta
-      ? `${c.anio_desde}–${c.anio_hasta}`
-      : c.anio_desde ? `desde ${c.anio_desde}` : '';
-    if (!porMarca[marca]) porMarca[marca] = [];
-    porMarca[marca].push({ modelo, anios });
-  });
-
-  const total = compats.length;
-  const marcas = Object.entries(porMarca).sort((a, b) => a[0].localeCompare(b[0], 'es'));
-
-  const acordeonHTML = marcas.map(([marca, modelos], idx) => `
-    <div class="compat-marca-wrap" data-marca="${marca.toLowerCase()}">
-      <div class="compat-marca-row ${idx === 0 ? 'abierto' : ''}" onclick="toggleCompatMarca(this)">
-        <span class="compat-marca-nombre">${marca}</span>
-        <span style="display:flex;align-items:center;gap:10px">
-          <span class="compat-marca-count">${modelos.length} modelo${modelos.length !== 1 ? 's' : ''}</span>
-          <span class="compat-marca-flecha">▼</span>
-        </span>
-      </div>
-      <div class="compat-modelos-list ${idx === 0 ? 'abierto' : ''}">
-        ${modelos.map(m => `
-          <div class="compat-modelo-item" data-modelo="${m.modelo.toLowerCase()}">
-            <span>${m.modelo}</span>
-            ${m.anios ? `<span class="compat-modelo-anios">${m.anios}</span>` : ''}
-          </div>
-        `).join('')}
-      </div>
-    </div>
-  `).join('');
-
-  return `
-    <div class="compat-buscador">
-      <input type="text" id="compat-buscar" placeholder="Buscá marca o modelo..." oninput="filtrarCompats(this.value)">
-      <span class="compat-total" id="compat-total">${total} modelos compatibles</span>
-    </div>
-    <div class="compat-acordeon" id="compat-acordeon">
-      ${acordeonHTML}
-    </div>
-    <button class="compat-btn-auto" onclick="document.getElementById('buscador-input') ? document.getElementById('buscador-input').scrollIntoView({behavior:'smooth'}) : window.location.href='index.html'">
-      🔍 ¿Tu auto está en la lista?
-    </button>
-  `;
-}
-
-function toggleCompatMarca(row) {
-  const lista = row.nextElementSibling;
-  row.classList.toggle('abierto');
-  lista.classList.toggle('abierto');
-}
-
-function filtrarCompats(texto) {
-  const q = texto.toLowerCase().trim();
-  const acordeon = document.getElementById('compat-acordeon');
-  if (!acordeon) return;
-
-  let totalVisibles = 0;
-  acordeon.querySelectorAll('.compat-marca-wrap').forEach(wrap => {
-    const marcaMatch = wrap.dataset.marca.includes(q);
-    let modelosVisibles = 0;
-    wrap.querySelectorAll('.compat-modelo-item').forEach(item => {
-      const modeloMatch = item.dataset.modelo.includes(q) || marcaMatch;
-      item.style.display = modeloMatch ? '' : 'none';
-      if (modeloMatch) modelosVisibles++;
-    });
-    const visible = modelosVisibles > 0 || marcaMatch;
-    wrap.style.display = visible ? '' : 'none';
-    if (visible) {
-      totalVisibles += modelosVisibles;
-      if (q) {
-        wrap.querySelector('.compat-marca-row').classList.add('abierto');
-        wrap.querySelector('.compat-modelos-list').classList.add('abierto');
-      }
-    }
-  });
-
-  const totalEl = document.getElementById('compat-total');
-  if (totalEl) totalEl.textContent = q ? `${totalVisibles} resultado${totalVisibles !== 1 ? 's' : ''}` : `${totalVisibles} modelos compatibles`;
-}
-
-let _productoIdFaq = null;
-
-async function cargarFaq(productoId) {
-  _productoIdFaq = productoId;
-
-  const { data } = await db
-    .from('preguntas_producto')
-    .select('id, pregunta, respuesta, publico, creado_en')
-    .eq('producto_id', productoId)
-    .eq('publico', true)
-    .order('creado_en', { ascending: true });
-
-  renderFaq(data || []);
-
-  const usuario = JSON.parse(localStorage.getItem('pz_usuario') || 'null');
-  if (usuario) {
-    document.getElementById('faq-form').style.display = 'block';
-    document.getElementById('faq-login-aviso').style.display = 'none';
-  } else {
-    document.getElementById('faq-form').style.display = 'none';
-    document.getElementById('faq-login-aviso').style.display = 'block';
-  }
-}
-
-function renderFaq(items) {
-  const lista = document.getElementById('faq-lista');
-  if (!items.length) {
-    lista.innerHTML = '<p class="faq-sin-resultados">Aún no hay preguntas frecuentes para este producto. ¡Sé el primero en preguntar!</p>';
-    return;
-  }
-  lista.innerHTML = items.map((item, i) => `
-    <div class="faq-item" id="faq-item-${i}">
-      <div class="faq-pregunta-wrap" onclick="toggleFaq(${i})">
-        <span class="faq-q-icon">P</span>
-        <span class="faq-pregunta-texto">${item.pregunta}</span>
-        <span class="faq-toggle">▾</span>
-      </div>
-      ${item.respuesta ? `<div class="faq-respuesta"><strong>R:</strong> ${item.respuesta}</div>` : ''}
-    </div>
-  `).join('');
-}
-
-function toggleFaq(i) {
-  const item = document.getElementById('faq-item-' + i);
-  if (item) item.classList.toggle('abierto');
-}
-
-async function enviarPregunta() {
-  const usuario = JSON.parse(localStorage.getItem('pz_usuario') || 'null');
-  const texto = document.getElementById('faq-texto').value.trim();
-  const msg = document.getElementById('faq-msg');
-
-  if (!texto) {
-    msg.style.color = '#E63946';
-    msg.textContent = '⚠️ Escribí tu pregunta antes de enviar.';
-    return;
-  }
-
-  const { error } = await db.from('preguntas_producto').insert({
-    producto_id: _productoIdFaq,
-    pregunta: texto,
-    respuesta: null,
-    publico: false,
-    usuario_id: usuario?.id || null,
-  });
-
-  if (error) {
-    msg.style.color = '#E63946';
-    msg.textContent = '❌ Error al enviar. Intentá de nuevo.';
-  } else {
-    msg.style.color = '#22c55e';
-    msg.textContent = '✅ Pregunta enviada. Te responderemos a la brevedad.';
-    document.getElementById('faq-texto').value = '';
-    setTimeout(() => { msg.textContent = ''; }, 4000);
-  }
-}
-
-function mostrarVistosEnProducto() {
-  const vistos = JSON.parse(localStorage.getItem('pz_vistos') || '[]');
-  const productoIdActual = new URLSearchParams(window.location.search).get('id');
-  const filtrados = vistos.filter(p => p.id !== productoIdActual);
-  if (!filtrados.length) return;
-
-  const relacionadosWrap = document.getElementById('relacionados-wrap') || document.querySelector('.seccion-relacionados');
-  if (!relacionadosWrap) return;
-
-  const section = document.createElement('section');
-  section.className = 'seccion container';
-  section.style.paddingTop = '0';
-  section.innerHTML = `
-    <div class="seccion-titulo">Vistos recientemente</div>
-    <div class="grilla-productos">
-      ${filtrados.map(p => `
-        <div class="prod-card" onclick="window.location='producto.html?id=${p.id}'">
-          ${p.imagen
-            ? `<img class="prod-card-img" src="${p.imagen}" alt="${p.nombre}" loading="lazy" onerror="this.outerHTML='<div class=\\'prod-card-placeholder\\'>🔩</div>'">`
-            : `<div class="prod-card-placeholder">🔩</div>`}
-          <div class="prod-card-body">
-            <div class="prod-card-nombre">${p.nombre}</div>
-            <div class="prod-card-precio">$${Number(p.precio).toLocaleString('es-AR')}</div>
-          </div>
-        </div>
-      `).join('')}
-    </div>
-  `;
-  relacionadosWrap.parentNode.insertBefore(section, relacionadosWrap.nextSibling);
-}
-
-function copiarLink() {
-  navigator.clipboard.writeText(window.location.href).then(() => {
-    const btn = document.getElementById('btn-copiar-link');
-    if (btn) { btn.textContent = '✅'; setTimeout(() => { btn.textContent = '🔗'; }, 2000); }
-  });
-}
-
-function abrirModalConsulta() {
-  document.getElementById('modal-consulta').style.display = 'flex';
-}
-function cerrarModalConsulta() {
-  document.getElementById('modal-consulta').style.display = 'none';
-}
-
-async function enviarConsultaDisponibilidad() {
-  const nombre = document.getElementById('consulta-nombre').value.trim();
-  const telefono = document.getElementById('consulta-telefono').value.trim();
-  const email = document.getElementById('consulta-email').value.trim();
-  const msg = document.getElementById('consulta-msg');
-  if (!nombre || !email) {
-    msg.style.color = '#c00'; msg.textContent = 'Nombre y email son obligatorios.'; return;
-  }
-  msg.style.color = '#888'; msg.textContent = 'Enviando...';
-  const { error } = await db.from('consultas').insert({
-    producto_id: productoActual?.id || null,
-    nombre, telefono, email,
-    mensaje: `Consulta de disponibilidad: ${productoActual?.nombre || ''}`,
-  });
-  if (error) {
-    msg.style.color = '#c00'; msg.textContent = 'Error al enviar. Intentá de nuevo.';
-  } else {
-    msg.style.color = '#22c55e'; msg.textContent = '✅ Consulta enviada. Te avisamos cuando esté disponible.';
-    setTimeout(cerrarModalConsulta, 2000);
-  }
-}
-
-async function cargarTambienCompraron(productoId) {
-  const wrap = document.getElementById('también-compraron-wrap');
-  if (!wrap) return;
-  const { data: items } = await db.from('items_pedido')
-    .select('pedido_id')
-    .eq('producto_id', productoId)
-    .limit(100);
-  if (!items?.length) return;
-
-  const pedidoIds = [...new Set(items.map(i => i.pedido_id))];
-  const { data: coItems } = await db.from('items_pedido')
-    .select('producto_id, cantidad')
-    .in('pedido_id', pedidoIds)
-    .neq('producto_id', productoId)
-    .limit(200);
-  if (!coItems?.length) return;
-
-  const conteo = {};
-  coItems.forEach(i => { conteo[i.producto_id] = (conteo[i.producto_id] || 0) + i.cantidad; });
-  const topIds = Object.entries(conteo).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([id]) => id);
-  if (!topIds.length) return;
-
-  const { data } = await db.from('productos').select('*').eq('activo', true).in('id', topIds);
-  if (!data?.length) return;
-
-  wrap.innerHTML = `
-    <div style="margin-top:48px;margin-bottom:8px">
-      <div class="seccion-titulo" style="margin-bottom:16px">Clientes que compraron también</div>
-      <div class="grilla-productos">
-        ${data.map(r => `
-          <div class="prod-card" onclick="window.location='producto.html?id=${r.id}'">
-            <img class="prod-card-img" loading="lazy"
-              src="${r.imagenes?.[0] || 'https://placehold.co/300x200?text=Sin+imagen'}"
-              alt="${r.nombre}">
-            <div class="prod-card-body">
-              <div class="prod-card-nombre">${r.nombre}</div>
-              <div class="prod-card-precio">$${Number(r.precio_oferta || r.precio).toLocaleString('es-AR')}</div>
-              <button class="prod-card-btn" onclick="event.stopPropagation(); agregarDesdeCard('${r.id}','${r.nombre.replace(/'/g,"\\'")}',${r.precio_oferta || r.precio})">Agregar al carrito</button>
-            </div>
-          </div>`).join('')}
-      </div>
-    </div>`;
-}
-
-function agregarDesdeCard(id, nombre, precio) {
-  const existe = carrito.find(i => i.id === id);
-  if (existe) { existe.cantidad++; } else { carrito.push({ id, nombre, precio, cantidad: 1 }); }
-  localStorage.setItem('pz_carrito', JSON.stringify(carrito));
-  actualizarContadorCarrito();
-}
-
-async function init() {
-  await cargarProducto();
-  if (productoActual) {
-    const imgs = productoActual.imagenes && productoActual.imagenes.length ? productoActual.imagenes : [];
-    renderGaleria(imgs);
-    initZoom();
-    guardarEnVistos(productoActual);
-    cargarTambienCompraron(productoActual.id);
-    cargarRelacionados(productoActual.categoria_id, productoActual.id);
-    cargarResenas(productoActual.id);
-    cargarFaq(productoActual.id);
-    mostrarVistosEnProducto();
-  }
-}
-
-init();
+  initHeaderB2C();
+  initProducto();
 </script>
-
-<!-- BOTÓN FLOTANTE WHATSAPP -->
-<script src="js/whatsapp-widget.js"></script>
-
-<script src="js/mini-carrito.js"></script>
-<script src="js/config-topbar.js"></script>
 </body>
 </html>

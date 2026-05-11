@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mi carrito — Piezauto</title>
+  <meta name="robots" content="noindex">
+  <link rel="stylesheet" href="css/estilos.css">
+  <style>
+    body { background: var(--gris-claro); }
+
+    /* ── Header B2C ── */
+    #header-b2c { background:var(--negro); position:sticky; top:0; z-index:100; box-shadow:0 2px 8px rgba(0,0,0,0.3); }
+    .hb2c-inner { max-width:1100px; margin:0 auto; padding:12px 16px; display:flex; align-items:center; gap:12px; }
+    .hb2c-logo { text-decoration:none; font-size:20px; font-weight:900; flex-shrink:0; }
+    .hb2c-logo-pz { color:var(--blanco); }
+    .hb2c-logo-auto { color:var(--rojo); }
+    .hb2c-search { flex:1; display:flex; background:rgba(255,255,255,0.1); border-radius:8px; overflow:hidden; max-width:600px; }
+    .hb2c-search input { flex:1; background:transparent; border:none; outline:none; padding:10px 14px; color:var(--blanco); font-size:14px; }
+    .hb2c-search input::placeholder { color:#888; }
+    .hb2c-search button { background:var(--rojo); border:none; padding:0 16px; cursor:pointer; color:var(--blanco); display:flex; align-items:center; }
+    .hb2c-actions { display:flex; align-items:center; gap:12px; flex-shrink:0; }
+    .hb2c-carrito { position:relative; color:var(--blanco); text-decoration:none; display:flex; }
+    .hb2c-badge { position:absolute; top:-7px; right:-7px; background:var(--rojo); color:var(--blanco); border-radius:50%; min-width:18px; height:18px; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; padding:0 2px; }
+    .hb2c-user { display:flex; align-items:center; gap:8px; text-decoration:none; color:var(--blanco); }
+    .hb2c-avatar { width:32px; height:32px; background:var(--rojo); border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; }
+    .hb2c-nombre { font-size:13px; font-weight:600; }
+    .hb2c-btn-login { background:var(--rojo); color:var(--blanco); text-decoration:none; padding:8px 16px; border-radius:var(--radio); font-size:13px; font-weight:600; }
+    @media (max-width:480px) { .hb2c-nombre { display:none; } }
+
+    /* ── Layout ── */
+    .carrito-layout {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 24px 16px 60px;
+    }
+    .carrito-titulo {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--negro);
+      margin-bottom: 20px;
+    }
+    .carrito-grid {
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      gap: 20px;
+      align-items: start;
+    }
+    @media (max-width: 680px) {
+      .carrito-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ── Estado vacío ── */
+    #carrito-vacio {
+      display: none;
+      text-align: center;
+      padding: 60px 20px;
+      background: var(--blanco);
+      border-radius: 12px;
+      box-shadow: var(--sombra);
+    }
+    .vacio-icono { font-size: 52px; margin-bottom: 12px; }
+    .vacio-titulo { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+    .vacio-sub { font-size: 14px; color: var(--gris-text); margin-bottom: 20px; }
+    .btn-buscar-vacio {
+      display: inline-block;
+      background: var(--rojo);
+      color: var(--blanco);
+      padding: 12px 28px;
+      border-radius: var(--radio);
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    /* ── Lista items ── */
+    #carrito-items-container { display: none; }
+    #lista-items { display: flex; flex-direction: column; gap: 10px; }
+
+    .carrito-item {
+      background: var(--blanco);
+      border-radius: 10px;
+      box-shadow: var(--sombra);
+      padding: 16px 18px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .item-info { flex: 1; min-width: 0; }
+    .item-desc {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--negro);
+      margin-bottom: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .item-desc a { color: inherit; text-decoration: none; }
+    .item-desc a:hover { color: var(--rojo); }
+    .item-codigo {
+      font-size: 12px;
+      color: var(--gris-text);
+      font-family: monospace;
+    }
+    .item-precio-unit {
+      font-size: 13px;
+      color: var(--gris-text);
+      margin-top: 2px;
+    }
+
+    .item-cantidad {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      border: 1px solid var(--gris);
+      border-radius: var(--radio);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .item-cantidad button {
+      background: var(--gris-claro);
+      border: none;
+      width: 32px;
+      height: 32px;
+      font-size: 16px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .item-cantidad button:hover { background: var(--gris); }
+    .item-cant-input {
+      width: 40px;
+      text-align: center;
+      border: none;
+      outline: none;
+      font-size: 14px;
+      font-weight: 700;
+      height: 32px;
+      padding: 0;
+    }
+
+    .item-subtotal {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--rojo);
+      min-width: 90px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+    .item-subtotal.sin-precio { color: var(--gris-text); font-size: 13px; font-weight: 600; }
+
+    .item-eliminar {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #ccc;
+      padding: 4px;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    .item-eliminar:hover { color: var(--rojo); }
+
+    @media (max-width: 480px) {
+      .carrito-item { flex-wrap: wrap; gap: 10px; }
+      .item-subtotal { text-align: left; }
+    }
+
+    /* ── Acción limpiar ── */
+    .carrito-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 10px;
+    }
+    .btn-vaciar {
+      background: none;
+      border: none;
+      color: var(--gris-text);
+      font-size: 13px;
+      cursor: pointer;
+      padding: 6px 0;
+    }
+    .btn-vaciar:hover { color: var(--rojo); }
+
+    /* ── Resumen ── */
+    .resumen-card {
+      background: var(--blanco);
+      border-radius: 12px;
+      box-shadow: var(--sombra);
+      padding: 20px;
+      position: sticky;
+      top: 74px;
+    }
+    .resumen-titulo { font-size: 15px; font-weight: 700; margin-bottom: 16px; }
+    .resumen-fila {
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+      padding: 7px 0;
+      border-bottom: 1px solid var(--gris);
+    }
+    .resumen-fila:last-of-type { border-bottom: none; }
+    .resumen-total {
+      display: flex;
+      justify-content: space-between;
+      font-size: 18px;
+      font-weight: 800;
+      padding: 14px 0 16px;
+      border-top: 2px solid var(--negro);
+      margin-top: 4px;
+    }
+    .resumen-total-val { color: var(--rojo); }
+
+    .nota-precios {
+      font-size: 12px;
+      color: var(--gris-text);
+      margin-bottom: 14px;
+      line-height: 1.5;
+    }
+    .nota-precios span { color: var(--rojo); }
+
+    #btn-checkout {
+      width: 100%;
+      padding: 14px;
+      background: var(--rojo);
+      color: var(--blanco);
+      border: none;
+      border-radius: var(--radio);
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-bottom: 10px;
+    }
+    #btn-checkout:hover { background: var(--rojo-dark); }
+    #btn-checkout:disabled { opacity: 0.5; cursor: default; }
+
+    .btn-seguir-comprando {
+      display: block;
+      text-align: center;
+      color: var(--gris-text);
+      font-size: 13px;
+      text-decoration: none;
+      padding: 8px;
+    }
+    .btn-seguir-comprando:hover { color: var(--negro); }
+
+    /* ── Login CTA ── */
+    #login-cta {
+      background: #e8f4fd;
+      border: 1px solid #bce0f8;
+      border-radius: var(--radio);
+      padding: 12px 16px;
+      font-size: 13px;
+      color: #1a5276;
+      margin-bottom: 14px;
+      display: none;
+    }
+    #login-cta a { color: var(--rojo); font-weight: 600; }
+
+    .sync-badge {
+      font-size: 11px;
+      color: var(--gris-text);
+      text-align: center;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+
+<header id="header-b2c"></header>
+
+<main class="carrito-layout">
+  <h1 class="carrito-titulo">Mi carrito</h1>
+
+  <!-- Vacío -->
+  <div id="carrito-vacio">
+    <div class="vacio-icono">🛒</div>
+    <div class="vacio-titulo">Tu carrito está vacío</div>
+    <div class="vacio-sub">Buscá la pieza que necesitás y agregala acá.</div>
+    <a href="/buscar.html" class="btn-buscar-vacio">Ir a buscar piezas</a>
+  </div>
+
+  <!-- Con items -->
+  <div id="carrito-items-container">
+    <div class="carrito-grid">
+
+      <!-- Lista -->
+      <div>
+        <div id="lista-items"></div>
+        <div class="carrito-actions">
+          <button class="btn-vaciar" onclick="confirmarVaciar()">Vaciar carrito</button>
+        </div>
+      </div>
+
+      <!-- Resumen -->
+      <div>
+        <div class="resumen-card">
+          <div class="resumen-titulo">Resumen del pedido</div>
+
+          <div id="login-cta">
+            <a href="/login.html">Ingresá</a> para guardar tu carrito y finalizar la compra.
+          </div>
+
+          <div id="resumen-filas"></div>
+          <div class="resumen-total">
+            <span>Total</span>
+            <span class="resumen-total-val" id="resumen-total-val">$0</span>
+          </div>
+
+          <p class="nota-precios">
+            Precios en pesos argentinos · <span>IVA incluido</span> · Sujeto a disponibilidad
+          </p>
+
+          <button id="btn-checkout" onclick="irACheckout()">Continuar compra</button>
+          <a href="/buscar.html" class="btn-seguir-comprando">← Seguir comprando</a>
+
+          <div class="sync-badge" id="sync-badge"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script src="js/auth-b2c.js"></script>
+<script src="js/header-b2c.js"></script>
+<script src="js/carrito.js"></script>
+<script>
+async function initPaginaCarrito() {
+  initHeaderB2C();
+
+  const cliente = await getClienteActual();
+  if (!cliente) {
+    document.getElementById('login-cta').style.display = 'block';
+  } else {
+    // Merge carrito local con el de BD
+    await cargarCarritoDesdeDB();
+    document.getElementById('sync-badge').textContent = '✓ Carrito guardado en tu cuenta';
+  }
+
+  renderCarrito();
+}
+
+function renderCarrito() {
+  const items = cargarCarritoLocal();
+  const vacio = document.getElementById('carrito-vacio');
+  const conItems = document.getElementById('carrito-items-container');
+  const lista = document.getElementById('lista-items');
+
+  if (items.length === 0) {
+    vacio.style.display = 'block';
+    conItems.style.display = 'none';
+    return;
+  }
+
+  vacio.style.display = 'none';
+  conItems.style.display = 'block';
+  lista.innerHTML = '';
+
+  items.forEach(item => {
+    const subtotal = item.precio ? item.precio * item.cantidad : null;
+    const subtotalStr = subtotal
+      ? `$${subtotal.toLocaleString('es-AR', { minimumFractionDigits: 2 })}`
+      : 'Consultar';
+    const precioUnit = item.precio
+      ? `$${Number(item.precio).toLocaleString('es-AR', { minimumFractionDigits: 2 })} c/u`
+      : '';
+
+    lista.insertAdjacentHTML('beforeend', `
+      <div class="carrito-item" data-id="${item.id}">
+        <div class="item-info">
+          <div class="item-desc">
+            <a href="/producto.html?id=${item.id}">${item.descripcion}</a>
+          </div>
+          ${item.codigo_piezauto ? `<div class="item-codigo">${item.codigo_piezauto}</div>` : ''}
+          ${precioUnit ? `<div class="item-precio-unit">${precioUnit}</div>` : ''}
+        </div>
+
+        <div class="item-cantidad">
+          <button onclick="cambiarCantItem('${item.id}', -1)">−</button>
+          <input type="number" class="item-cant-input" value="${item.cantidad}" min="1" max="99"
+            onchange="setCantItem('${item.id}', this.value)"
+            onblur="setCantItem('${item.id}', this.value)">
+          <button onclick="cambiarCantItem('${item.id}', 1)">+</button>
+        </div>
+
+        <div class="item-subtotal ${subtotal ? '' : 'sin-precio'}">${subtotalStr}</div>
+
+        <button class="item-eliminar" onclick="quitarItem('${item.id}')" title="Eliminar">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+    `);
+  });
+
+  renderResumen(items);
+}
+
+function renderResumen(items) {
+  const filas = document.getElementById('resumen-filas');
+  const totalVal = document.getElementById('resumen-total-val');
+
+  const cantTotal = items.reduce((s, i) => s + i.cantidad, 0);
+  const subtotalItems = items.filter(i => i.precio);
+  const subtotal = subtotalItems.reduce((s, i) => s + i.precio * i.cantidad, 0);
+  const sinPrecio = items.length - subtotalItems.length;
+
+  filas.innerHTML = `
+    <div class="resumen-fila">
+      <span>Productos (${cantTotal})</span>
+      <span>${subtotal > 0 ? '$' + subtotal.toLocaleString('es-AR', { minimumFractionDigits: 2 }) : '—'}</span>
+    </div>
+    ${sinPrecio > 0 ? `<div class="resumen-fila"><span style="color:var(--gris-text); font-size:12px">${sinPrecio} ítem(s) sin precio → consultar</span><span></span></div>` : ''}
+    <div class="resumen-fila">
+      <span>Envío</span>
+      <span style="color:var(--gris-text)">A calcular</span>
+    </div>
+  `;
+
+  totalVal.textContent = subtotal > 0
+    ? `$${subtotal.toLocaleString('es-AR', { minimumFractionDigits: 2 })}`
+    : 'Consultar';
+}
+
+function cambiarCantItem(skuId, delta) {
+  const items = cargarCarritoLocal();
+  const item = items.find(i => i.id === skuId);
+  if (!item) return;
+  const nueva = Math.max(1, Math.min(99, item.cantidad + delta));
+  actualizarCantidad(skuId, nueva);
+  renderCarrito();
+  actualizarBadgeCarrito();
+}
+
+function setCantItem(skuId, val) {
+  const n = parseInt(val);
+  if (!n || n < 1) { eliminarDelCarrito(skuId); renderCarrito(); actualizarBadgeCarrito(); return; }
+  actualizarCantidad(skuId, n);
+  renderCarrito();
+  actualizarBadgeCarrito();
+}
+
+function quitarItem(skuId) {
+  eliminarDelCarrito(skuId);
+  renderCarrito();
+  actualizarBadgeCarrito();
+}
+
+function confirmarVaciar() {
+  if (confirm('¿Vaciar el carrito?')) {
+    vaciarCarrito();
+    renderCarrito();
+    actualizarBadgeCarrito();
+  }
+}
+
+function irACheckout() {
+  const items = cargarCarritoLocal();
+  if (items.length === 0) return;
+  // Por ahora redirige al checkout legacy con los items en localStorage
+  // En Fase 3 se implementa el checkout B2C completo
+  alert('El checkout completo se habilita en Fase 3. Por ahora podés consultar por WhatsApp o continuar con la versión clásica.');
+}
+
+initPaginaCarrito();
+</script>
+</body>
+</html>

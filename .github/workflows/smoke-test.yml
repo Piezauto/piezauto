@@ -1,4 +1,4 @@
-name: Smoke Test — Hito 4 B2C
+name: Smoke Tests — Piezauto B2C
 
 on:
   push:
@@ -7,8 +7,8 @@ on:
     branches: [main]
 
 jobs:
-  smoke-test:
-    name: Smoke Test Backend B2C
+  smoke-hito4:
+    name: Smoke Test Hito 4 — Auth B2C
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -21,9 +21,31 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Run smoke test
+      - name: Run smoke test Hito 4
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: node smoke_test_hito4.js
+
+  smoke-fase2:
+    name: Smoke Test Fase 2 — Búsqueda + Carrito
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: smoke-hito4
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run smoke test Fase 2
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node smoke_test_fase2.js
