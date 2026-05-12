@@ -13,14 +13,14 @@ async function requireTallerAuth() {
   } catch {}
 
   if (!session) {
-    window.location.href = '/taller/login.html';
+    window.location.href = '/taller/login';
     return null;
   }
 
   const meta = session.user?.user_metadata || {};
   if (meta.role !== 'taller' || !meta.taller_id) {
     await dbB2C.auth.signOut();
-    window.location.href = '/taller/login.html?error=no_autorizado';
+    window.location.href = '/taller/login?error=no_autorizado';
     return null;
   }
 
@@ -33,7 +33,7 @@ function getTallerMeta() { return _tallerMeta; }
 
 async function tallerLogout() {
   await dbB2C.auth.signOut();
-  window.location.href = '/taller/login.html';
+  window.location.href = '/taller/login';
 }
 
 // Inyecta el header del taller (nombre + badge notificaciones + logout)

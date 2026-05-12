@@ -131,7 +131,7 @@ async function getClienteActual() {
 async function resetPasswordCliente(email) {
   const { error } = await dbB2C.auth.resetPasswordForEmail(
     email.trim().toLowerCase(),
-    { redirectTo: window.location.origin + '/login.html' }
+    { redirectTo: window.location.origin + '/login' }
   );
   if (error) return { ok: false, error: error.message };
   return { ok: true };

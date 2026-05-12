@@ -3,7 +3,7 @@
 async function iniciarPerfil() {
   const cliente = await getClienteActual();
   if (!cliente) {
-    window.location.href = 'login.html?redirect=perfil.html';
+    window.location.href = '/login?redirect=/perfil';
     return;
   }
   renderPerfil(cliente);
@@ -113,7 +113,7 @@ async function guardarPerfil(e) {
   btnGuardar.textContent = 'Guardando...';
 
   const cliente = await getClienteActual();
-  if (!cliente) { window.location.href = 'login.html'; return; }
+  if (!cliente) { window.location.href = '/login'; return; }
 
   const { error } = await dbB2C
     .from('cat_clientes_finales')
@@ -136,7 +136,7 @@ async function guardarPerfil(e) {
 
 async function cerrarSesion() {
   await logoutCliente();
-  window.location.href = 'index.html';
+  window.location.href = '/';
 }
 
 document.addEventListener('DOMContentLoaded', () => {

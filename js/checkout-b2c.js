@@ -24,14 +24,14 @@ async function initCheckout() {
     session = data?.session;
   } catch {}
   if (!session) {
-    window.location.href = 'login.html?redirect=/checkout-b2c.html';
+    window.location.href = '/login?redirect=/checkout-b2c';
     return;
   }
 
   // Guard: carrito no vacío
   const items = cargarCarritoLocal();
   if (!items.length) {
-    window.location.href = 'buscar.html';
+    window.location.href = '/buscar';
     return;
   }
 
@@ -263,7 +263,7 @@ async function confirmarPedido() {
   if (typeof actualizarBadgeCarrito === 'function') actualizarBadgeCarrito();
 
   // Redirect a página de gracias
-  window.location.href = `gracias.html?op=${operacionId}`;
+  window.location.href = `/gracias?op=${operacionId}`;
 }
 
 // ── Utils ─────────────────────────────────────────────────────────────

@@ -151,7 +151,7 @@ function actualizarURL() {
   if (_queryActual) params.set('q', _queryActual);
   if (_filtros.familia) params.set('familia', _filtros.familia);
   if (_filtros.marca) params.set('marca', _filtros.marca);
-  window.history.replaceState({}, '', `/buscar.html${params.toString() ? '?' + params : ''}`);
+  window.history.replaceState({}, '', `/buscar${params.toString() ? '?' + params : ''}`);
 }
 
 async function ejecutarBusqueda() {

@@ -24,7 +24,7 @@ async function initConfirmacion() {
     session = data?.session;
   } catch {}
   if (!session) {
-    window.location.href = `login.html?redirect=/gracias.html?op=${opId}`;
+    window.location.href = `/login?redirect=/gracias?op=${opId}`;
     return;
   }
 

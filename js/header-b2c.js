@@ -68,7 +68,7 @@ async function initHeaderB2C() {
 function hb2cBuscar() {
   const q = (document.getElementById('hb2c-q')?.value || '').trim();
   if (!q) return;
-  window.location.href = `/buscar.html?q=${encodeURIComponent(q)}`;
+  window.location.href = `/buscar?q=${encodeURIComponent(q)}`;
 }
 
 function cargarCarritoLocal() {

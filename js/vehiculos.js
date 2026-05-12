@@ -6,7 +6,7 @@ let editandoId = null;
 async function iniciarVehiculos() {
   clienteActual = await getClienteActual();
   if (!clienteActual) {
-    window.location.href = 'login.html?redirect=vehiculos.html';
+    window.location.href = '/login?redirect=/vehiculos';
     return;
   }
 
