@@ -1,3 +1,4 @@
+// v2 — columnas corregidas: expira_at, sin activo
 // Auth B2C — Supabase Auth real para clientes finales (Hito 4)
 // Convive con js/usuario.js (auth legacy) sin tocarlo.
 
