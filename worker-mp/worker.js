@@ -77,6 +77,10 @@ export default {
       return new Response('OK');
     }
 
+    // Delegar en assets estáticos (sirve .html, CSS, JS, etc.)
+    if (env.ASSETS) {
+      return env.ASSETS.fetch(request);
+    }
     return new Response('Not found', { status: 404 });
   },
 };
