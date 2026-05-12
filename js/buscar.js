@@ -196,11 +196,15 @@ async function ejecutarBusqueda() {
     query = query.order('precio_lista', { ascending: true, nullsFirst: false });
   }
 
-  const { data, error, count } = await query;
+  let { data, error, count } = await query;
+  if (error && (error.message.includes('timeout') || error.message.includes('canceling'))) {
+    ({ data, error, count } = await query);
+  }
   loader.style.display = 'none';
 
   if (error) {
-    contenedor.innerHTML = `<p class="error-msg">Error al buscar: ${error.message}</p>`;
+    const esTimeout = error.message.includes('timeout') || error.message.includes('canceling');
+    contenedor.innerHTML = `<p class="error-msg">${esTimeout ? 'La búsqueda tardó demasiado. Intentá de nuevo.' : 'Error al buscar: ' + error.message}</p>`;
     return;
   }
 
