@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Finanzas — Piezauto Point</title>
+<style>
+  :root {
+    --brand:#1A1A2E;--brand-mid:#16213E;--accent:#E94560;
+    --ink-1:#111827;--ink-2:#374151;--ink-3:#6B7280;--ink-4:#9CA3AF;
+    --surface:#FFFFFF;--surface-2:#F9FAFB;--surface-3:#F3F4F6;
+    --line:#E5E7EB;--line-strong:#D1D5DB;
+    --green:#059669;--green-soft:#ECFDF5;
+    --red:#DC2626;--red-soft:#FEF2F2;
+    --amber:#D97706;--amber-soft:#FFFBEB;
+    --blue:#2563EB;--blue-soft:#EFF6FF;
+    --radius:8px;--radius-lg:12px;
+    --shadow-sm:0 1px 3px rgba(0,0,0,.07);
+    --shadow:0 4px 16px rgba(0,0,0,.10);
+    --shadow-lg:0 8px 32px rgba(0,0,0,.18);
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--surface-2);color:var(--ink-1);min-height:100vh;font-size:14px;line-height:1.5}
+  .app-shell{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
+
+  /* TOPBAR */
+  .topbar{background:var(--brand);color:#fff;padding:0 14px;height:56px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.25);flex-shrink:0}
+  .topbar-back{width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:50%;cursor:pointer;transition:background .15s}
+  .topbar-back:hover{background:rgba(255,255,255,.12)}
+  .topbar-back svg{width:20px;height:20px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round}
+  .topbar-title{font-size:15px;font-weight:700;flex:1}
+
+  /* TABS */
+  .tabs{display:flex;background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:56px;z-index:90;flex-shrink:0}
+  .tab-btn{flex:1;padding:12px 4px;font-size:12px;font-weight:600;color:var(--ink-3);background:none;border:none;border-bottom:2.5px solid transparent;cursor:pointer;font-family:inherit;transition:color .15s,border-color .15s}
+  .tab-btn.active{color:var(--brand);border-bottom-color:var(--accent)}
+
+  /* PANELES */
+  .panel{display:none;flex:1;flex-direction:column;overflow-y:auto}
+  .panel.active{display:flex}
+  .panel-body{padding:12px 12px 32px;display:flex;flex-direction:column;gap:12px}
+
+  /* KPI CARDS */
+  .kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .kpi-card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--line);padding:14px 16px;box-shadow:var(--shadow-sm)}
+  .kpi-label{font-size:11px;color:var(--ink-3);font-weight:500;margin-bottom:6px}
+  .kpi-val{font-size:22px;font-weight:800;color:var(--ink-1)}
+  .kpi-val.positivo{color:var(--green)}
+  .kpi-val.negativo{color:var(--red)}
+  .kpi-val.neutro{color:var(--blue)}
+  .kpi-sub{font-size:11px;color:var(--ink-4);margin-top:3px}
+
+  /* SECCIÓN */
+  .section-label{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+
+  /* TARJETA MOVIMIENTO */
+  .mov-card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--line);box-shadow:var(--shadow-sm);overflow:hidden}
+  .mov-row{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--line)}
+  .mov-row:last-child{border-bottom:none}
+  .mov-icono{width:32px;height:32px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+  .mov-icono.credito{background:var(--green-soft)}
+  .mov-icono.debito{background:var(--red-soft)}
+  .mov-body{flex:1;min-width:0}
+  .mov-concepto{font-size:13px;font-weight:600;color:var(--ink-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mov-fecha{font-size:11px;color:var(--ink-3)}
+  .mov-monto{font-size:14px;font-weight:700;flex-shrink:0}
+  .mov-monto.credito{color:var(--green)}
+  .mov-monto.debito{color:var(--red)}
+
+  /* ESTADO VACÍO */
+  .estado-mini{padding:24px 16px;text-align:center;color:var(--ink-3);font-size:13px}
+
+  /* GASTO CARD */
+  .gasto-card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--line);box-shadow:var(--shadow-sm);display:flex;align-items:center;gap:12px;padding:12px 14px}
+  .gasto-cat-badge{padding:3px 8px;border-radius:10px;font-size:10px;font-weight:700;flex-shrink:0}
+  .cat-repuestos{background:#fef3c7;color:#92400e}
+  .cat-insumos{background:#dbeafe;color:#1e40af}
+  .cat-mano_obra{background:#f3e8ff;color:#6b21a8}
+  .cat-servicios{background:#ecfdf5;color:#065f46}
+  .cat-impuestos{background:#fef2f2;color:#991b1b}
+  .cat-otros{background:var(--surface-3);color:var(--ink-2)}
+  .gasto-body{flex:1;min-width:0}
+  .gasto-concepto{font-size:13px;font-weight:600;color:var(--ink-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .gasto-meta{font-size:11px;color:var(--ink-3)}
+  .gasto-monto{font-size:15px;font-weight:700;color:var(--red);flex-shrink:0}
+
+  /* PROVEEDOR ROW */
+  .prov-row{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--line);box-shadow:var(--shadow-sm);padding:12px 14px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:box-shadow .15s}
+  .prov-avatar{width:40px;height:40px;border-radius:50%;background:var(--brand);color:#fff;font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .prov-body{flex:1;min-width:0}
+  .prov-nombre{font-size:14px;font-weight:700;color:var(--ink-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .prov-meta{font-size:12px;color:var(--ink-3)}
+  .prov-accion{color:var(--ink-4);font-size:18px;flex-shrink:0}
+
+  /* BOTÓN AGREGAR */
+  .btn-agregar-gasto{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:13px;border-radius:var(--radius-lg);border:2px dashed var(--line-strong);background:var(--surface);font-size:14px;font-weight:600;color:var(--ink-2);cursor:pointer;font-family:inherit;transition:border-color .15s,color .15s}
+  .btn-agregar-gasto:hover{border-color:var(--brand);color:var(--brand)}
+
+  /* DRAWER */
+  .drawer-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:flex-end;justify-content:center}
+  .drawer-overlay.open{display:flex;animation:fadeIn .2s}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .drawer{background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-width:480px;max-height:90vh;display:flex;flex-direction:column;animation:slideUp .25s cubic-bezier(.34,1.56,.64,1)}
+  @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+  .drawer-handle{width:36px;height:4px;background:var(--line-strong);border-radius:2px;margin:12px auto 0;flex-shrink:0}
+  .drawer-header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px 10px;border-bottom:1px solid var(--line);flex-shrink:0}
+  .drawer-titulo{font-size:16px;font-weight:700}
+  .drawer-close{width:30px;height:30px;border-radius:50%;background:var(--surface-3);border:none;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink-2)}
+  .drawer-body{overflow-y:auto;flex:1;padding:16px 20px}
+  .drawer-footer{padding:12px 20px 20px;border-top:1px solid var(--line);display:flex;gap:10px;flex-shrink:0}
+
+  .form-group{margin-bottom:12px}
+  .form-label{font-size:12px;font-weight:600;color:var(--ink-2);margin-bottom:5px;display:block}
+  .form-label .req{color:var(--accent);margin-left:2px}
+  .form-input{width:100%;border:1.5px solid var(--line-strong);border-radius:var(--radius);padding:10px 12px;font-size:14px;font-family:inherit;color:var(--ink-1);background:var(--surface);outline:none;transition:border-color .15s}
+  .form-input:focus{border-color:var(--brand)}
+  .form-input::placeholder{color:var(--ink-4)}
+  .form-input.error{border-color:var(--red)}
+  .form-select{width:100%;border:1.5px solid var(--line-strong);border-radius:var(--radius);padding:10px 12px;font-size:14px;font-family:inherit;color:var(--ink-1);background:var(--surface);outline:none;appearance:none}
+  .form-select:focus{border-color:var(--brand)}
+
+  .btn-cancelar{flex:1;padding:12px;border-radius:var(--radius-lg);border:1.5px solid var(--line-strong);background:var(--surface);font-size:14px;font-weight:600;color:var(--ink-2);cursor:pointer;font-family:inherit}
+  .btn-guardar{flex:2;padding:12px;border-radius:var(--radius-lg);border:none;background:var(--brand);font-size:14px;font-weight:700;color:#fff;cursor:pointer;font-family:inherit;transition:opacity .15s}
+  .btn-guardar:hover{opacity:.88}
+  .btn-guardar:disabled{opacity:.45;cursor:default}
+
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--ink-1);color:#fff;padding:11px 20px;border-radius:20px;font-size:13px;font-weight:600;box-shadow:var(--shadow-lg);opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:300;white-space:nowrap}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .toast.error{background:var(--accent)}
+</style>
+</head>
+<body>
+<div class="app-shell">
+
+  <header class="topbar">
+    <div class="topbar-back" onclick="history.back()">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    </div>
+    <span class="topbar-title">Finanzas</span>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="tab-resumen"  onclick="switchTab(this)">Resumen</button>
+    <button class="tab-btn"        data-tab="tab-cc"       onclick="switchTab(this)">CC Piezauto</button>
+    <button class="tab-btn"        data-tab="tab-gastos"   onclick="switchTab(this)">Gastos</button>
+    <button class="tab-btn"        data-tab="tab-provs"    onclick="switchTab(this)">Proveedores</button>
+  </nav>
+
+  <!-- ══ RESUMEN ══ -->
+  <div class="panel active" id="tab-resumen">
+    <div class="panel-body">
+
+      <div class="section-label">Este mes</div>
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-label">Gastos registrados</div>
+          <div class="kpi-val negativo" id="kpiGastos">—</div>
+          <div class="kpi-sub" id="kpiGastosSub">cargando…</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Saldo CC Piezauto</div>
+          <div class="kpi-val" id="kpiSaldo">—</div>
+          <div class="kpi-sub">cuenta corriente</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Pedidos este mes</div>
+          <div class="kpi-val neutro" id="kpiPedidos">—</div>
+          <div class="kpi-sub" id="kpiPedidosSub">cargando…</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Proveedores activos</div>
+          <div class="kpi-val" id="kpiProveedores">—</div>
+          <div class="kpi-sub">registrados</div>
+        </div>
+      </div>
+
+      <div class="section-label">Últimos gastos</div>
+      <div class="mov-card" id="resumenGastos">
+        <div class="estado-mini">Cargando…</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══ CC PIEZAUTO ══ -->
+  <div class="panel" id="tab-cc">
+    <div class="panel-body">
+
+      <div class="kpi-card" style="grid-column:span 2">
+        <div class="kpi-label">Saldo actual</div>
+        <div class="kpi-val" id="ccSaldo">—</div>
+        <div class="kpi-sub">Solo lectura — los movimientos los carga Piezauto</div>
+      </div>
+
+      <div class="section-label">Movimientos</div>
+      <div class="mov-card" id="ccMovimientos">
+        <div class="estado-mini">Cargando…</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══ GASTOS ══ -->
+  <div class="panel" id="tab-gastos">
+    <div class="panel-body">
+
+      <button class="btn-agregar-gasto" onclick="abrirNuevoGasto()">+ Registrar gasto</button>
+
+      <div class="section-label">Gastos registrados</div>
+      <div id="listaGastos"><div class="estado-mini">Cargando…</div></div>
+
+    </div>
+  </div>
+
+  <!-- ══ PROVEEDORES ══ -->
+  <div class="panel" id="tab-provs">
+    <div class="panel-body">
+
+      <button class="btn-agregar-gasto" onclick="abrirNuevoProv()">+ Agregar proveedor</button>
+
+      <div class="section-label">Mis proveedores</div>
+      <div id="listaProvs"><div class="estado-mini">Cargando…</div></div>
+
+    </div>
+  </div>
+
+</div><!-- /app-shell -->
+
+<!-- DRAWER GASTO -->
+<div class="drawer-overlay" id="drawerGasto" onclick="cerrarSiClick(event,'drawerGasto')">
+  <div class="drawer">
+    <div class="drawer-handle"></div>
+    <div class="drawer-header">
+      <span class="drawer-titulo">Registrar gasto</span>
+      <button class="drawer-close" onclick="cerrarDrawer('drawerGasto')">✕</button>
+    </div>
+    <div class="drawer-body">
+      <div class="form-group">
+        <label class="form-label">Concepto <span class="req">*</span></label>
+        <input class="form-input" id="g-concepto" type="text" placeholder="Ej: Compra insumos lunes">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Categoría</label>
+        <select class="form-select" id="g-categoria">
+          <option value="">— Sin categoría —</option>
+          <option value="repuestos">Repuestos</option>
+          <option value="insumos">Insumos</option>
+          <option value="mano_obra">Mano de obra</option>
+          <option value="servicios">Servicios</option>
+          <option value="impuestos">Impuestos</option>
+          <option value="otros">Otros</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Monto ($) <span class="req">*</span></label>
+        <input class="form-input" id="g-monto" type="number" min="0" step="100" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Proveedor</label>
+        <select class="form-select" id="g-proveedor">
+          <option value="">— Sin proveedor —</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fecha</label>
+        <input class="form-input" id="g-fecha" type="date">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Comprobante</label>
+        <input class="form-input" id="g-comprobante" type="text" placeholder="Nro factura, ticket, etc.">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notas</label>
+        <input class="form-input" id="g-notas" type="text" placeholder="">
+      </div>
+    </div>
+    <div class="drawer-footer">
+      <button class="btn-cancelar" onclick="cerrarDrawer('drawerGasto')">Cancelar</button>
+      <button class="btn-guardar" id="btnGuardarGasto" onclick="guardarGasto()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- DRAWER PROVEEDOR -->
+<div class="drawer-overlay" id="drawerProv" onclick="cerrarSiClick(event,'drawerProv')">
+  <div class="drawer">
+    <div class="drawer-handle"></div>
+    <div class="drawer-header">
+      <span class="drawer-titulo" id="drawerProvTitulo">Nuevo proveedor</span>
+      <button class="drawer-close" onclick="cerrarDrawer('drawerProv')">✕</button>
+    </div>
+    <div class="drawer-body">
+      <div class="form-group">
+        <label class="form-label">Nombre <span class="req">*</span></label>
+        <input class="form-input" id="p-nombre" type="text" placeholder="Ej: Distribuidora XYZ">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Contacto</label>
+        <input class="form-input" id="p-contacto" type="text" placeholder="Nombre del contacto">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Teléfono</label>
+        <input class="form-input" id="p-telefono" type="tel" placeholder="11 5555-1234">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-input" id="p-email" type="email" placeholder="">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notas</label>
+        <input class="form-input" id="p-notas" type="text" placeholder="">
+      </div>
+    </div>
+    <div class="drawer-footer">
+      <button class="btn-cancelar" onclick="cerrarDrawer('drawerProv')">Cancelar</button>
+      <button class="btn-guardar" id="btnGuardarProv" onclick="guardarProv()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SB_URL  = 'https://mqxowotdeibllkitkije.supabase.co';
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xeG93b3RkZWlibGxraXRraWplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxMzgxNDYsImV4cCI6MjA5MTcxNDE0Nn0.V_Pr0elBurAK7OPKFL3OoZwBmb-bI-Mcz8N1U8yblG8';
+
+let tallerId   = null;
+let proveedores = [];   // cat_taller_proveedores — cache para selects
+let guardandoG = false;
+let guardandoP = false;
+let provActivo = null;
+
+function tok(){ try{const k=Object.keys(localStorage).find(k=>k.includes('auth-token'));if(k)return JSON.parse(localStorage.getItem(k))?.access_token||SB_ANON;}catch(_){}return SB_ANON; }
+function hdrs(extra={}){return{'apikey':SB_ANON,'Authorization':`Bearer ${tok()}`,'Content-Type':'application/json',...extra};}
+
+async function get(tabla,qs){
+  const r=await fetch(`${SB_URL}/rest/v1/${tabla}?${qs}`,{headers:{...hdrs(),'Prefer':'count=exact'}});
+  if(!r.ok){const b=await r.json().catch(()=>({}));throw new Error(b.message||r.status);}
+  const count=parseInt(r.headers.get('Content-Range')?.split('/')[1]||'0',10);
+  return{data:await r.json(),count};
+}
+async function post(tabla,body){
+  const r=await fetch(`${SB_URL}/rest/v1/${tabla}`,{method:'POST',headers:{...hdrs(),'Prefer':'return=representation'},body:JSON.stringify(body)});
+  if(!r.ok){const b=await r.json().catch(()=>({}));throw new Error(b.message||r.status);}
+  return(await r.json())[0];
+}
+async function patch(tabla,id,body){
+  const r=await fetch(`${SB_URL}/rest/v1/${tabla}?id=eq.${id}`,{method:'PATCH',headers:{...hdrs(),'Prefer':'return=representation'},body:JSON.stringify(body)});
+  if(!r.ok){const b=await r.json().catch(()=>({}));throw new Error(b.message||r.status);}
+  return(await r.json())[0];
+}
+async function del(tabla,id){
+  const r=await fetch(`${SB_URL}/rest/v1/${tabla}?id=eq.${id}`,{method:'DELETE',headers:hdrs()});
+  if(!r.ok){const b=await r.json().catch(()=>({}));throw new Error(b.message||r.status);}
+}
+
+// ─── INIT ───
+async function init(){
+  await cargarTallerId();
+  await Promise.all([cargarCC(), cargarGastos(), cargarProveedores()]);
+  await cargarKPIs();
+}
+
+async function cargarTallerId(){
+  try{const r=await fetch(`${SB_URL}/rest/v1/cat_recomendaciones_talleres?select=id&limit=1`,{headers:hdrs()});if(r.ok){const d=await r.json();if(d?.length)tallerId=d[0].id;}}catch(e){console.warn(e);}
+}
+
+// ─── KPIs ───
+async function cargarKPIs(){
+  // Saldo CC (último movimiento)
+  try{
+    const{data:cc}=await get('cat_taller_cuenta_corriente','select=saldo_resultante&order=created_at.desc&limit=1');
+    const saldo=cc?.[0]?.saldo_resultante;
+    const kpiEl=document.getElementById('kpiSaldo');
+    kpiEl.textContent=saldo!=null?fmt(saldo):'$\u202F0';
+    kpiEl.className='kpi-val '+(saldo>=0?'positivo':'negativo');
+    document.getElementById('ccSaldo').textContent=saldo!=null?fmt(saldo):'$\u202F0';
+    document.getElementById('ccSaldo').className='kpi-val '+(saldo>=0?'positivo':'negativo');
+  }catch(e){console.warn('KPI saldo:',e.message);}
+
+  // Gastos del mes
+  const hoy=new Date(); const primeroDeMes=new Date(hoy.getFullYear(),hoy.getMonth(),1).toISOString().split('T')[0];
+  try{
+    const{data:gastos}=await get('cat_taller_gastos',`select=monto&created_at=gte.${primeroDeMes}`);
+    const total=(gastos||[]).reduce((s,g)=>s+(parseFloat(g.monto)||0),0);
+    document.getElementById('kpiGastos').textContent=fmt(total);
+    document.getElementById('kpiGastosSub').textContent=`${gastos?.length||0} movimiento${gastos?.length!==1?'s':''}`;
+  }catch(e){document.getElementById('kpiGastos').textContent='—';}
+
+  // Pedidos del mes
+  try{
+    const{data:pedidos,count}=await get('cat_operaciones_b2c',`select=total&created_at=gte.${primeroDeMes}T00:00:00&taller_id=eq.${tallerId}`);
+    const totalP=(pedidos||[]).reduce((s,p)=>s+(parseFloat(p.total)||0),0);
+    document.getElementById('kpiPedidos').textContent=fmt(totalP);
+    document.getElementById('kpiPedidosSub').textContent=`${count} pedido${count!==1?'s':''}`;
+  }catch(e){document.getElementById('kpiPedidos').textContent='—';}
+
+  // Cantidad proveedores
+  document.getElementById('kpiProveedores').textContent=proveedores.length;
+}
+
+// ─── CC PIEZAUTO ───
+async function cargarCC(){
+  try{
+    const{data}=await get('cat_taller_cuenta_corriente','select=tipo,concepto,monto,saldo_resultante,fecha&order=fecha.desc&limit=30');
+    renderCC(data||[]);
+  }catch(e){
+    document.getElementById('ccMovimientos').innerHTML=`<div class="estado-mini">Error: ${e.message}</div>`;
+  }
+}
+
+function renderCC(movs){
+  const cont=document.getElementById('ccMovimientos');
+  const resumen=document.getElementById('resumenGastos');
+  if(!movs.length){
+    cont.innerHTML='<div class="estado-mini">Sin movimientos registrados.<br>Los carga Piezauto desde el panel admin.</div>';
+    return;
+  }
+  const html=movs.slice(0,5).map(m=>{
+    const cls=m.tipo==='credito'?'credito':'debito';
+    const icon=m.tipo==='credito'?'📥':'📤';
+    return `
+    <div class="mov-row">
+      <div class="mov-icono ${cls}">${icon}</div>
+      <div class="mov-body">
+        <div class="mov-concepto">${m.concepto}</div>
+        <div class="mov-fecha">${fmtFecha(m.fecha)}${m.saldo_resultante!=null?' · Saldo: '+fmt(m.saldo_resultante):''}</div>
+      </div>
+      <div class="mov-monto ${cls}">${m.tipo==='credito'?'+':'−'}${fmt(Math.abs(m.monto))}</div>
+    </div>`;
+  }).join('');
+  cont.innerHTML=html;
+
+  // últimos 3 en resumen
+  if(resumen) resumen.innerHTML=movs.slice(0,3).map(m=>{
+    const cls=m.tipo==='credito'?'credito':'debito';
+    const icon=m.tipo==='credito'?'📥':'📤';
+    return `
+    <div class="mov-row">
+      <div class="mov-icono ${cls}">${icon}</div>
+      <div class="mov-body">
+        <div class="mov-concepto">${m.concepto}</div>
+        <div class="mov-fecha">${fmtFecha(m.fecha)}</div>
+      </div>
+      <div class="mov-monto ${cls}">${m.tipo==='credito'?'+':'−'}${fmt(Math.abs(m.monto))}</div>
+    </div>`;
+  }).join('');
+}
+
+// ─── GASTOS ───
+async function cargarGastos(){
+  try{
+    const{data}=await get('cat_taller_gastos','select=*,cat_taller_proveedores(nombre)&order=fecha.desc&limit=50');
+    renderGastos(data||[]);
+  }catch(e){
+    document.getElementById('listaGastos').innerHTML=`<div class="estado-mini">Error: ${e.message}</div>`;
+  }
+}
+
+function renderGastos(gastos){
+  const cont=document.getElementById('listaGastos');
+  if(!gastos.length){cont.innerHTML='<div class="estado-mini">Ningún gasto registrado todavía.</div>';return;}
+  cont.innerHTML=gastos.map(g=>{
+    const catCls='cat-'+(g.categoria||'otros');
+    const catLabel={repuestos:'Repuestos',insumos:'Insumos',mano_obra:'Mano de obra',servicios:'Servicios',impuestos:'Impuestos',otros:'Otros'}[g.categoria]||'Otros';
+    const prov=g.cat_taller_proveedores?.nombre||'';
+    return `
+    <div class="gasto-card">
+      <span class="gasto-cat-badge ${catCls}">${catLabel}</span>
+      <div class="gasto-body">
+        <div class="gasto-concepto">${g.concepto}</div>
+        <div class="gasto-meta">${fmtFecha(g.fecha)}${prov?' · '+prov:''}</div>
+      </div>
+      <div class="gasto-monto">−${fmt(g.monto)}</div>
+    </div>`;
+  }).join('');
+}
+
+// ─── NUEVO GASTO ───
+function abrirNuevoGasto(){
+  // Fecha por defecto: hoy
+  document.getElementById('g-fecha').value=new Date().toISOString().split('T')[0];
+  ['concepto','monto','comprobante','notas'].forEach(f=>{const el=document.getElementById('g-'+f);if(el)el.value='';});
+  document.getElementById('g-categoria').value='';
+  // Poblar select proveedores
+  const sel=document.getElementById('g-proveedor');
+  sel.innerHTML='<option value="">— Sin proveedor —</option>'+
+    proveedores.map(p=>`<option value="${p.id}">${p.nombre}</option>`).join('');
+  document.getElementById('drawerGasto').classList.add('open');
+}
+
+async function guardarGasto(){
+  if(guardandoG)return;
+  const concepto=(document.getElementById('g-concepto').value||'').trim();
+  const monto=parseFloat(document.getElementById('g-monto').value||'0');
+  if(!concepto){document.getElementById('g-concepto').classList.add('error');return;}
+  if(!monto||monto<=0){showToast('El monto debe ser mayor a 0','error');return;}
+  if(!tallerId){showToast('Error: no se identificó el taller','error');return;}
+  document.getElementById('g-concepto').classList.remove('error');
+  guardandoG=true;
+  const btn=document.getElementById('btnGuardarGasto');
+  btn.disabled=true;btn.textContent='Guardando…';
+  try{
+    await post('cat_taller_gastos',{
+      taller_id:    tallerId,
+      concepto,
+      monto,
+      categoria:    document.getElementById('g-categoria').value||null,
+      proveedor_id: document.getElementById('g-proveedor').value||null,
+      fecha:        document.getElementById('g-fecha').value,
+      comprobante:  document.getElementById('g-comprobante').value.trim()||null,
+      notas:        document.getElementById('g-notas').value.trim()||null,
+    });
+    cerrarDrawer('drawerGasto');
+    showToast('✓ Gasto registrado');
+    await cargarGastos();
+    await cargarKPIs();
+  }catch(err){showToast('Error: '+err.message,'error');}
+  finally{guardandoG=false;btn.disabled=false;btn.textContent='Guardar';}
+}
+
+// ─── PROVEEDORES ───
+async function cargarProveedores(){
+  try{
+    const{data}=await get('cat_taller_proveedores','select=*&order=nombre.asc');
+    proveedores=data||[];
+    renderProveedores();
+  }catch(e){
+    document.getElementById('listaProvs').innerHTML=`<div class="estado-mini">Error: ${e.message}</div>`;
+  }
+}
+
+function renderProveedores(){
+  const cont=document.getElementById('listaProvs');
+  if(!proveedores.length){cont.innerHTML='<div class="estado-mini">Ningún proveedor registrado.</div>';return;}
+  cont.innerHTML=proveedores.map(p=>`
+    <div class="prov-row" onclick="abrirEditarProv('${p.id}')">
+      <div class="prov-avatar">${(p.nombre[0]||'?').toUpperCase()}</div>
+      <div class="prov-body">
+        <div class="prov-nombre">${p.nombre}</div>
+        <div class="prov-meta">${[p.contacto,p.telefono].filter(Boolean).join(' · ')||'Sin datos de contacto'}</div>
+      </div>
+      <div class="prov-accion">›</div>
+    </div>`).join('');
+  document.getElementById('kpiProveedores').textContent=proveedores.length;
+}
+
+function abrirNuevoProv(){
+  provActivo=null;
+  document.getElementById('drawerProvTitulo').textContent='Nuevo proveedor';
+  ['nombre','contacto','telefono','email','notas'].forEach(f=>{const el=document.getElementById('p-'+f);if(el)el.value='';});
+  document.getElementById('drawerProv').classList.add('open');
+}
+function abrirEditarProv(id){
+  provActivo=proveedores.find(p=>p.id===id);
+  if(!provActivo)return;
+  document.getElementById('drawerProvTitulo').textContent='Editar proveedor';
+  const map={nombre:provActivo.nombre,contacto:provActivo.contacto,telefono:provActivo.telefono,email:provActivo.email,notas:provActivo.notas};
+  Object.entries(map).forEach(([k,v])=>{const el=document.getElementById('p-'+k);if(el)el.value=v||'';});
+  document.getElementById('drawerProv').classList.add('open');
+}
+
+async function guardarProv(){
+  if(guardandoP)return;
+  const nombre=(document.getElementById('p-nombre').value||'').trim();
+  if(!nombre){document.getElementById('p-nombre').classList.add('error');return;}
+  if(!tallerId&&!provActivo){showToast('Error: no se identificó el taller','error');return;}
+  document.getElementById('p-nombre').classList.remove('error');
+  guardandoP=true;
+  const btn=document.getElementById('btnGuardarProv');
+  btn.disabled=true;btn.textContent='Guardando…';
+  const payload={
+    nombre,
+    contacto: document.getElementById('p-contacto').value.trim()||null,
+    telefono: document.getElementById('p-telefono').value.trim()||null,
+    email:    document.getElementById('p-email').value.trim()||null,
+    notas:    document.getElementById('p-notas').value.trim()||null,
+  };
+  try{
+    if(provActivo){
+      const upd=await patch('cat_taller_proveedores',provActivo.id,payload);
+      const idx=proveedores.findIndex(p=>p.id===provActivo.id);
+      if(idx>=0)proveedores[idx]={...proveedores[idx],...upd};
+      showToast('✓ Proveedor actualizado');
+    }else{
+      const nuevo=await post('cat_taller_proveedores',{...payload,taller_id:tallerId});
+      proveedores.push(nuevo);
+      proveedores.sort((a,b)=>a.nombre.localeCompare(b.nombre));
+      showToast('✓ Proveedor agregado');
+    }
+    renderProveedores();
+    cerrarDrawer('drawerProv');
+  }catch(err){showToast('Error: '+err.message,'error');}
+  finally{guardandoP=false;btn.disabled=false;btn.textContent='Guardar';}
+}
+
+// ─── TABS ───
+function switchTab(btn){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(btn.dataset.tab).classList.add('active');
+}
+
+// ─── DRAWERS ───
+function cerrarDrawer(id){document.getElementById(id).classList.remove('open');}
+function cerrarSiClick(e,id){if(e.target===document.getElementById(id))cerrarDrawer(id);}
+
+// ─── UTILS ───
+function fmt(n){if(n==null||isNaN(n))return'—';return '$\u202F'+Math.round(n).toLocaleString('es-AR');}
+function fmtFecha(s){if(!s)return'—';const d=new Date(s);return d.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit'});}
+
+let toastTimer;
+function showToast(msg,type='ok'){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show'+(type==='error'?' error':'');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),3000);}
+
+document.addEventListener('DOMContentLoaded',init);
+</script>
+</body>
+</html>

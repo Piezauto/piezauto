@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mi Perfil — Piezauto Point</title>
+<style>
+  /* ── TOKENS ────────────────────────────────────────────────── */
+  :root {
+    --brand:        #1A1A2E;
+    --brand-mid:    #16213E;
+    --accent:       #E94560;
+    --accent-soft:  #fef2f4;
+    --ink-1:        #111827;
+    --ink-2:        #374151;
+    --ink-3:        #6B7280;
+    --ink-4:        #9CA3AF;
+    --surface:      #FFFFFF;
+    --surface-2:    #F9FAFB;
+    --surface-3:    #F3F4F6;
+    --line:         #E5E7EB;
+    --line-strong:  #D1D5DB;
+    --green:        #059669;
+    --green-soft:   #ECFDF5;
+    --amber:        #D97706;
+    --amber-soft:   #FFFBEB;
+    --radius:       8px;
+    --radius-lg:    12px;
+    --radius-xl:    16px;
+    --shadow-sm:    0 1px 3px rgba(0,0,0,.08);
+    --shadow:       0 4px 16px rgba(0,0,0,.10);
+    --shadow-lg:    0 8px 32px rgba(0,0,0,.14);
+  }
+
+  /* ── RESET ──────────────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--surface-2);
+    color: var(--ink-1);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* ── LAYOUT ─────────────────────────────────────────────────── */
+  .app-shell {
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+  }
+
+  /* ── HEADER ─────────────────────────────────────────────────── */
+  .topbar {
+    background: var(--brand);
+    color: #fff;
+    padding: 0 16px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,.25);
+  }
+
+  .topbar-back {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background .15s;
+    flex-shrink: 0;
+  }
+  .topbar-back:hover { background: rgba(255,255,255,.12); }
+  .topbar-back svg { width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; }
+
+  .topbar-title { font-size: 15px; font-weight: 600; flex: 1; }
+
+  .topbar-save {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    padding: 7px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity .15s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .topbar-save:hover { opacity: .88; }
+  .topbar-save:disabled { opacity: .45; cursor: default; }
+
+  /* ── TALLER HERO ────────────────────────────────────────────── */
+  .taller-hero {
+    background: linear-gradient(135deg, var(--brand) 0%, var(--brand-mid) 100%);
+    padding: 24px 20px 20px;
+    color: #fff;
+    position: relative;
+  }
+
+  .hero-inner { display: flex; gap: 16px; align-items: flex-start; }
+
+  .logo-wrapper {
+    flex-shrink: 0;
+    width: 72px;
+    height: 72px;
+    border-radius: var(--radius-lg);
+    background: rgba(255,255,255,.12);
+    border: 2px dashed rgba(255,255,255,.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background .2s;
+    overflow: hidden;
+    position: relative;
+  }
+  .logo-wrapper:hover { background: rgba(255,255,255,.2); }
+  .logo-wrapper img { width: 100%; height: 100%; object-fit: cover; border-radius: calc(var(--radius-lg) - 2px); }
+  .logo-placeholder { font-size: 11px; color: rgba(255,255,255,.6); text-align: center; line-height: 1.3; padding: 4px; }
+  .logo-input { display: none; }
+
+  .hero-info { flex: 1; min-width: 0; }
+  .hero-nombre {
+    font-size: 18px;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .hero-localidad { font-size: 12px; color: rgba(255,255,255,.7); margin-top: 2px; }
+
+  .tier-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(255,255,255,.15);
+    border: 1px solid rgba(255,255,255,.25);
+    border-radius: 20px;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-top: 10px;
+  }
+  .tier-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+
+  .descuento-badge {
+    margin-top: 12px;
+    background: var(--green-soft);
+    color: var(--green);
+    border-radius: var(--radius);
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* ── TABS ───────────────────────────────────────────────────── */
+  .tabs {
+    display: flex;
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+    position: sticky;
+    top: 56px;
+    z-index: 90;
+  }
+
+  .tab-btn {
+    flex: 1;
+    padding: 12px 4px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink-3);
+    background: none;
+    border: none;
+    border-bottom: 2.5px solid transparent;
+    cursor: pointer;
+    transition: color .15s, border-color .15s;
+    text-align: center;
+  }
+  .tab-btn.active {
+    color: var(--brand);
+    border-bottom-color: var(--accent);
+  }
+
+  /* ── PANELES ─────────────────────────────────────────────────── */
+  .panel { display: none; padding: 16px; }
+  .panel.active { display: block; }
+
+  /* ── SECCIONES / CARDS ──────────────────────────────────────── */
+  .section-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 20px 0 10px;
+  }
+  .section-label:first-child { margin-top: 0; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* ── FIELD ROWS ─────────────────────────────────────────────── */
+  .field-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--line);
+  }
+  .field-row:last-child { border-bottom: none; }
+
+  .field-icon {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius);
+    background: var(--surface-3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+  }
+
+  .field-body { flex: 1; min-width: 0; }
+  .field-label { font-size: 11px; color: var(--ink-3); margin-bottom: 2px; font-weight: 500; }
+
+  .field-input {
+    width: 100%;
+    border: none;
+    outline: none;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink-1);
+    background: transparent;
+    padding: 0;
+    font-family: inherit;
+  }
+  .field-input::placeholder { color: var(--ink-4); }
+  .field-input:focus { color: var(--brand); }
+
+  .field-input[readonly] {
+    color: var(--ink-3);
+    cursor: default;
+  }
+
+  .field-readonly-badge {
+    flex-shrink: 0;
+    font-size: 10px;
+    background: var(--surface-3);
+    color: var(--ink-3);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-weight: 600;
+  }
+
+  /* ── TEXTAREA ────────────────────────────────────────────────── */
+  .field-textarea {
+    width: 100%;
+    border: none;
+    outline: none;
+    font-size: 14px;
+    color: var(--ink-1);
+    background: transparent;
+    padding: 0;
+    font-family: inherit;
+    resize: none;
+    line-height: 1.5;
+    min-height: 72px;
+  }
+  .field-textarea::placeholder { color: var(--ink-4); }
+
+  /* ── NUMERIC FIELDS ─────────────────────────────────────────── */
+  .numeric-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .numeric-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    padding: 14px 16px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .numeric-label {
+    font-size: 11px;
+    color: var(--ink-3);
+    font-weight: 500;
+    margin-bottom: 6px;
+  }
+
+  .numeric-input-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .currency-sym {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--ink-3);
+  }
+
+  .numeric-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--ink-1);
+    background: transparent;
+    font-family: inherit;
+    width: 0;
+  }
+  .numeric-input::placeholder { color: var(--ink-4); font-weight: 400; font-size: 16px; }
+  .numeric-input:focus { color: var(--brand); }
+
+  .numeric-hint { font-size: 11px; color: var(--ink-4); margin-top: 4px; }
+
+  /* ── TOGGLE ──────────────────────────────────────────────────── */
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--line);
+  }
+  .toggle-row:last-child { border-bottom: none; }
+  .toggle-label { font-size: 14px; font-weight: 500; }
+  .toggle-sub { font-size: 11px; color: var(--ink-3); margin-top: 1px; }
+
+  .toggle-switch {
+    position: relative;
+    width: 42px;
+    height: 24px;
+    flex-shrink: 0;
+  }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; }
+  .toggle-track {
+    position: absolute;
+    inset: 0;
+    background: var(--line-strong);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background .2s;
+  }
+  .toggle-track::after {
+    content: '';
+    position: absolute;
+    width: 18px; height: 18px;
+    top: 3px; left: 3px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform .2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,.2);
+  }
+  .toggle-switch input:checked + .toggle-track { background: var(--green); }
+  .toggle-switch input:checked + .toggle-track::after { transform: translateX(18px); }
+
+  /* ── HORARIOS ────────────────────────────────────────────────── */
+  .horario-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--line);
+  }
+  .horario-row:last-child { border-bottom: none; }
+  .dia-label { width: 28px; font-size: 12px; font-weight: 600; color: var(--ink-3); flex-shrink: 0; }
+  .horario-inputs { display: flex; align-items: center; gap: 6px; flex: 1; }
+  .horario-input {
+    flex: 1;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 6px 8px;
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+    color: var(--ink-1);
+    background: var(--surface-2);
+    text-align: center;
+  }
+  .horario-input:focus { border-color: var(--brand); background: var(--surface); }
+  .horario-sep { font-size: 12px; color: var(--ink-3); }
+  .horario-cerrado {
+    font-size: 12px;
+    color: var(--ink-4);
+    font-style: italic;
+    flex: 1;
+    text-align: center;
+  }
+  .toggle-dia {
+    width: 32px;
+    height: 20px;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .toggle-dia input { opacity: 0; width: 0; height: 0; position: absolute; }
+  .toggle-dia-track {
+    position: absolute;
+    inset: 0;
+    background: var(--line-strong);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background .2s;
+  }
+  .toggle-dia-track::after {
+    content: '';
+    position: absolute;
+    width: 14px; height: 14px;
+    top: 3px; left: 3px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform .2s;
+    box-shadow: 0 1px 2px rgba(0,0,0,.2);
+  }
+  .toggle-dia input:checked + .toggle-dia-track { background: var(--green); }
+  .toggle-dia input:checked + .toggle-dia-track::after { transform: translateX(12px); }
+
+  /* ── ESPECIALIDADES ──────────────────────────────────────────── */
+  .chip-grid { display: flex; flex-wrap: wrap; gap: 8px; padding: 14px 16px; }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    border: 1.5px solid var(--line-strong);
+    background: var(--surface);
+    color: var(--ink-2);
+    cursor: pointer;
+    transition: all .15s;
+    user-select: none;
+  }
+  .chip:hover { border-color: var(--brand); color: var(--brand); }
+  .chip.selected {
+    background: var(--brand);
+    border-color: var(--brand);
+    color: #fff;
+  }
+
+  /* ── SAVE TOAST ──────────────────────────────────────────────── */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--ink-1);
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 24px;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: var(--shadow-lg);
+    transition: transform .3s cubic-bezier(.34,1.56,.64,1);
+    z-index: 200;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.error { background: var(--accent); }
+
+  /* ── SAVE INDICATOR ──────────────────────────────────────────── */
+  .dirty-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--amber);
+    display: none;
+    flex-shrink: 0;
+  }
+  .dirty-dot.visible { display: block; }
+
+  /* ── PREVIEW CARD (tab Público) ──────────────────────────────── */
+  .preview-card {
+    background: linear-gradient(135deg, var(--brand) 0%, var(--brand-mid) 100%);
+    border-radius: var(--radius-xl);
+    padding: 20px;
+    color: #fff;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+  }
+  .preview-header { display: flex; gap: 14px; align-items: center; margin-bottom: 14px; }
+  .preview-logo {
+    width: 52px; height: 52px;
+    border-radius: var(--radius);
+    background: rgba(255,255,255,.15);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    overflow: hidden;
+  }
+  .preview-logo img { width: 100%; height: 100%; object-fit: cover; }
+  .preview-nombre { font-size: 16px; font-weight: 700; }
+  .preview-localidad { font-size: 12px; opacity: .7; }
+  .preview-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .preview-chip {
+    font-size: 11px;
+    background: rgba(255,255,255,.15);
+    border-radius: 12px;
+    padding: 3px 10px;
+  }
+  .preview-horario { margin-top: 14px; font-size: 12px; opacity: .75; }
+
+  .preview-info { font-size: 12px; color: var(--ink-3); text-align: center; padding: 0 16px 16px; line-height: 1.5; }
+
+  /* ── BOTTOM SPACER ───────────────────────────────────────────── */
+  .bottom-spacer { height: 32px; }
+</style>
+</head>
+
+<body>
+<div class="app-shell">
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="topbar-back" onclick="history.back()">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    </div>
+    <span class="topbar-title">Mi Perfil</span>
+    <div class="dirty-dot" id="dirtyDot"></div>
+    <button class="topbar-save" id="btnSave" onclick="guardarPerfil()" disabled>
+      Guardar
+    </button>
+  </header>
+
+  <!-- HERO -->
+  <div class="taller-hero">
+    <div class="hero-inner">
+      <div class="logo-wrapper" onclick="document.getElementById('logoInput').click()" title="Cambiar logo">
+        <img id="logoPreview" src="" alt="" style="display:none">
+        <div class="logo-placeholder" id="logoPlaceholder">📷<br>Logo</div>
+      </div>
+      <input type="file" id="logoInput" class="logo-input" accept="image/*" onchange="previewLogo(this)">
+      <div class="hero-info">
+        <div class="hero-nombre" id="heroNombre">Cargando…</div>
+        <div class="hero-localidad" id="heroLocalidad">—</div>
+        <div class="tier-pill"><div class="tier-dot"></div> <span id="herTier">Beta Managed</span></div>
+        <div class="descuento-badge">🏷️ Descuento Piezauto: <span id="heroDescuento">—</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="tab-datos" onclick="switchTab(this)">Datos</button>
+    <button class="tab-btn" data-tab="tab-config" onclick="switchTab(this)">Configuración</button>
+    <button class="tab-btn" data-tab="tab-horarios" onclick="switchTab(this)">Horarios</button>
+    <button class="tab-btn" data-tab="tab-publico" onclick="switchTab(this)">Vista pública</button>
+  </nav>
+
+  <!-- ═══════════════════════════════ TAB: DATOS ══════════════════ -->
+  <div class="panel active" id="tab-datos">
+
+    <p class="section-label">Identificación</p>
+    <div class="card">
+      <div class="field-row">
+        <div class="field-icon">🏢</div>
+        <div class="field-body">
+          <div class="field-label">Nombre del taller</div>
+          <input class="field-input" id="f-nombre" type="text" placeholder="Nombre del taller" oninput="markDirty()">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field-icon">🔢</div>
+        <div class="field-body">
+          <div class="field-label">CUIT</div>
+          <input class="field-input" id="f-cuit" type="text" placeholder="30-12345678-9" oninput="markDirty()">
+        </div>
+      </div>
+    </div>
+
+    <p class="section-label">Contacto</p>
+    <div class="card">
+      <div class="field-row">
+        <div class="field-icon">📞</div>
+        <div class="field-body">
+          <div class="field-label">Teléfono</div>
+          <input class="field-input" id="f-telefono" type="tel" placeholder="011 5555-1234" oninput="markDirty()">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field-icon">💬</div>
+        <div class="field-body">
+          <div class="field-label">WhatsApp</div>
+          <input class="field-input" id="f-whatsapp" type="tel" placeholder="11 5555-1234 (sin 0)" oninput="markDirty()">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field-icon">✉️</div>
+        <div class="field-body">
+          <div class="field-label">Email</div>
+          <input class="field-input" id="f-email" type="email" placeholder="taller@email.com" oninput="markDirty()">
+        </div>
+      </div>
+    </div>
+
+    <p class="section-label">Ubicación</p>
+    <div class="card">
+      <div class="field-row">
+        <div class="field-icon">📍</div>
+        <div class="field-body">
+          <div class="field-label">Dirección</div>
+          <input class="field-input" id="f-direccion" type="text" placeholder="Av. Ejemplo 1234" oninput="markDirty()">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field-icon">🏘️</div>
+        <div class="field-body">
+          <div class="field-label">Localidad</div>
+          <input class="field-input" id="f-localidad" type="text" placeholder="Hurlingham, Villa Tesei…" oninput="markDirty()">
+        </div>
+      </div>
+    </div>
+
+    <p class="section-label">Especialidades</p>
+    <div class="card">
+      <div class="chip-grid" id="especialidadesGrid">
+        <!-- generado por JS -->
+      </div>
+    </div>
+
+    <div class="bottom-spacer"></div>
+  </div>
+
+  <!-- ═══════════════════════════════ TAB: CONFIGURACIÓN ══════════ -->
+  <div class="panel" id="tab-config">
+
+    <p class="section-label">Presupuestos — valores por defecto</p>
+    <div class="numeric-grid">
+      <div class="numeric-card">
+        <div class="numeric-label">Valor hora M.O.</div>
+        <div class="numeric-input-row">
+          <span class="currency-sym">$</span>
+          <input class="numeric-input" id="f-valor-hora" type="number" min="0" step="100"
+                 placeholder="0" oninput="markDirty()">
+        </div>
+        <div class="numeric-hint">por hora de mano de obra</div>
+      </div>
+      <div class="numeric-card">
+        <div class="numeric-label">Valor por paño</div>
+        <div class="numeric-input-row">
+          <span class="currency-sym">$</span>
+          <input class="numeric-input" id="f-valor-pano" type="number" min="0" step="100"
+                 placeholder="0" oninput="markDirty()">
+        </div>
+        <div class="numeric-hint">pintura por paño</div>
+      </div>
+    </div>
+
+    <p class="section-label">Descuento Piezauto (solo lectura)</p>
+    <div class="card">
+      <div class="field-row">
+        <div class="field-icon">🏷️</div>
+        <div class="field-body">
+          <div class="field-label">Descuento aplicado al catálogo</div>
+          <input class="field-input" id="f-descuento" type="text" readonly>
+        </div>
+        <span class="field-readonly-badge">Solo Piezauto</span>
+      </div>
+    </div>
+
+    <p class="section-label">Condiciones de presupuesto</p>
+    <div class="card">
+      <div class="field-row" style="align-items:flex-start">
+        <div class="field-icon" style="margin-top:2px">📄</div>
+        <div class="field-body">
+          <div class="field-label">Texto que aparece al pie de cada presupuesto</div>
+          <textarea class="field-textarea" id="f-condiciones"
+            placeholder="Ej: Presupuesto válido por 12 días hábiles. Precios en pesos. IVA incluido..."
+            oninput="markDirty()"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <p class="section-label">Opciones</p>
+    <div class="card">
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">IVA en presupuestos</div>
+          <div class="toggle-sub">Mostrar línea de IVA en el PDF</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="f-iva" onchange="markDirty()">
+          <div class="toggle-track"></div>
+        </label>
+      </div>
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">Presupuesto de seguros</div>
+          <div class="toggle-sub">Habilitar flujo de siniestros</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="f-seguros" checked onchange="markDirty()">
+          <div class="toggle-track"></div>
+        </label>
+      </div>
+    </div>
+
+    <div class="bottom-spacer"></div>
+  </div>
+
+  <!-- ═══════════════════════════════ TAB: HORARIOS ══════════════ -->
+  <div class="panel" id="tab-horarios">
+
+    <p class="section-label">Horario de atención</p>
+    <div class="card" id="horariosCard">
+      <!-- generado por JS -->
+    </div>
+
+    <div class="bottom-spacer"></div>
+  </div>
+
+  <!-- ═══════════════════════════════ TAB: VISTA PÚBLICA ══════════ -->
+  <div class="panel" id="tab-publico">
+
+    <p class="section-label">Así te ven los clientes de Piezauto Tienda</p>
+
+    <div class="preview-card" id="previewCard">
+      <div class="preview-header">
+        <div class="preview-logo" id="prevLogo">🔧</div>
+        <div>
+          <div class="preview-nombre" id="prevNombre">—</div>
+          <div class="preview-localidad" id="prevLocalidad">—</div>
+        </div>
+      </div>
+      <div class="preview-chips" id="prevChips"></div>
+      <div class="preview-horario" id="prevHorario">—</div>
+    </div>
+
+    <p class="preview-info">
+      Esta tarjeta aparece cuando un cliente de Piezauto Tienda quiere que lo atiendan en un taller socio. Solo se muestra si tu perfil está completo.
+    </p>
+
+    <div class="bottom-spacer"></div>
+  </div>
+
+</div><!-- /app-shell -->
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// CONFIG — reemplazar con valores reales del JWT/sesión
+// ═══════════════════════════════════════════════════════════════
+const SUPABASE_URL = 'https://mqxowotdeibllkitkije.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xeG93b3RkZWlibGxraXRraWplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxMzgxNDYsImV4cCI6MjA5MTcxNDE0Nn0.V_Pr0elBurAK7OPKFL3OoZwBmb-bI-Mcz8N1U8yblG8';
+
+// ═══════════════════════════════════════════════════════════════
+// ESTADO
+// ═══════════════════════════════════════════════════════════════
+let tallerData = null;
+let isDirty = false;
+let logoFile = null;
+
+// ═══════════════════════════════════════════════════════════════
+// ESPECIALIDADES DISPONIBLES
+// ═══════════════════════════════════════════════════════════════
+const ESPECIALIDADES = [
+  'Chapa y pintura', 'Mecánica general', 'Electricidad', 'Gomería',
+  'Alineación', 'Aire acondicionado', 'Parabrisas', 'Tapicería',
+  'Turbo y diesel', 'Alta gama', 'Pick-ups y 4x4'
+];
+
+let especialidadesSeleccionadas = new Set();
+
+// ═══════════════════════════════════════════════════════════════
+// DÍAS DE LA SEMANA
+// ═══════════════════════════════════════════════════════════════
+const DIAS = [
+  { key: 'lun', label: 'LUN' },
+  { key: 'mar', label: 'MAR' },
+  { key: 'mie', label: 'MIE' },
+  { key: 'jue', label: 'JUE' },
+  { key: 'vie', label: 'VIE' },
+  { key: 'sab', label: 'SÁB' },
+  { key: 'dom', label: 'DOM' },
+];
+
+let horariosData = {
+  lun: { abierto: true,  desde: '08:00', hasta: '18:00' },
+  mar: { abierto: true,  desde: '08:00', hasta: '18:00' },
+  mie: { abierto: true,  desde: '08:00', hasta: '18:00' },
+  jue: { abierto: true,  desde: '08:00', hasta: '18:00' },
+  vie: { abierto: true,  desde: '08:00', hasta: '18:00' },
+  sab: { abierto: true,  desde: '08:00', hasta: '13:00' },
+  dom: { abierto: false, desde: '',      hasta: ''      },
+};
+
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+async function init() {
+  renderEspecialidades();
+  renderHorarios();
+  await cargarPerfil();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// API
+// ═══════════════════════════════════════════════════════════════
+async function supabaseGet(table, params = '') {
+  const token = getSessionToken();
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${params}`, {
+    headers: {
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': `Bearer ${token}`,
+    }
+  });
+  if (!res.ok) throw new Error(`GET ${table}: ${res.status}`);
+  return res.json();
+}
+
+async function supabasePatch(table, params, body) {
+  const token = getSessionToken();
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${params}`, {
+    method: 'PATCH',
+    headers: {
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation',
+    },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || `PATCH ${table}: ${res.status}`);
+  }
+  return res.json();
+}
+
+function getSessionToken() {
+  // Leer token de localStorage (Supabase JS SDK lo guarda ahí)
+  try {
+    const raw = localStorage.getItem(`sb-${SUPABASE_URL.split('//')[1].split('.')[0]}-auth-token`);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return parsed.access_token || SUPABASE_ANON_KEY;
+    }
+  } catch (_) {}
+  return SUPABASE_ANON_KEY;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CARGAR PERFIL
+// ═══════════════════════════════════════════════════════════════
+async function cargarPerfil() {
+  try {
+    // auth_taller_id() se resuelve en el backend via JWT
+    // La RLS filtra automáticamente: el taller solo ve su propia fila
+    const rows = await supabaseGet(
+      'cat_recomendaciones_talleres',
+      'select=id,nombre,cuit,telefono,email,whatsapp,direccion,localidad,logo_url,' +
+      'descuento_piezauto,valor_hora_mo,valor_pano,condiciones_presupuesto,horarios,especialidades'
+    );
+
+    if (!rows || rows.length === 0) {
+      showToast('No se encontró perfil del taller', 'error');
+      return;
+    }
+
+    tallerData = rows[0];
+    poblarFormulario(tallerData);
+    actualizarHero(tallerData);
+    actualizarPreview();
+
+  } catch (err) {
+    console.error('cargarPerfil:', err);
+    showToast('Error cargando perfil: ' + err.message, 'error');
+    // En dev/demo: cargar datos de ejemplo
+    cargarDemo();
+  }
+}
+
+function cargarDemo() {
+  tallerData = {
+    id: 'demo',
+    nombre: 'Franzoni Hermanos',
+    cuit: '30-71234567-9',
+    telefono: '011 4651-2233',
+    whatsapp: '1145678901',
+    email: 'franzoni@taller.com',
+    direccion: 'Av. Gaona 4521',
+    localidad: 'Villa Tesei',
+    logo_url: null,
+    descuento_piezauto: 0.15,
+    valor_hora_mo: 8500,
+    valor_pano: 22000,
+    condiciones_presupuesto: 'Presupuesto válido por 12 días hábiles. Precios en pesos argentinos. No incluye imprevistos de obra.',
+    horarios: null,
+    especialidades: ['Chapa y pintura', 'Mecánica general'],
+  };
+  poblarFormulario(tallerData);
+  actualizarHero(tallerData);
+  actualizarPreview();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// POBLAR FORMULARIO
+// ═══════════════════════════════════════════════════════════════
+function poblarFormulario(d) {
+  setVal('f-nombre',     d.nombre      || '');
+  setVal('f-cuit',       d.cuit        || '');
+  setVal('f-telefono',   d.telefono    || '');
+  setVal('f-whatsapp',   d.whatsapp    || '');
+  setVal('f-email',      d.email       || '');
+  setVal('f-direccion',  d.direccion   || '');
+  setVal('f-localidad',  d.localidad   || '');
+  setVal('f-valor-hora', d.valor_hora_mo || '');
+  setVal('f-valor-pano', d.valor_pano  || '');
+  setVal('f-descuento',
+    d.descuento_piezauto != null
+      ? (d.descuento_piezauto * 100).toFixed(0) + '%'
+      : '0%'
+  );
+  setVal('f-condiciones', d.condiciones_presupuesto || '');
+
+  // Logo
+  if (d.logo_url) {
+    const img = document.getElementById('logoPreview');
+    img.src = d.logo_url;
+    img.style.display = 'block';
+    document.getElementById('logoPlaceholder').style.display = 'none';
+  }
+
+  // Especialidades — text[] de Postgres llega como array JS nativo via REST
+  if (Array.isArray(d.especialidades) && d.especialidades.length > 0) {
+    especialidadesSeleccionadas = new Set(d.especialidades);
+    renderEspecialidades();
+  }
+
+  // Horarios
+  if (d.horarios) {
+    try {
+      const h = typeof d.horarios === 'string' ? JSON.parse(d.horarios) : d.horarios;
+      Object.assign(horariosData, h);
+    } catch (_) {}
+    renderHorarios();
+  }
+}
+
+function setVal(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.value = val;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HERO
+// ═══════════════════════════════════════════════════════════════
+function actualizarHero(d) {
+  document.getElementById('heroNombre').textContent   = d.nombre || '—';
+  document.getElementById('heroLocalidad').textContent = d.localidad || '—';
+  document.getElementById('heroDescuento').textContent =
+    d.descuento_piezauto != null
+      ? (d.descuento_piezauto * 100).toFixed(0) + '%'
+      : '0%';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// GUARDAR
+// ═══════════════════════════════════════════════════════════════
+async function guardarPerfil() {
+  const btn = document.getElementById('btnSave');
+  btn.disabled = true;
+  btn.textContent = 'Guardando…';
+
+  const payload = {
+    nombre:                  document.getElementById('f-nombre').value.trim(),
+    cuit:                    document.getElementById('f-cuit').value.trim(),
+    telefono:                document.getElementById('f-telefono').value.trim(),
+    whatsapp:                document.getElementById('f-whatsapp').value.trim(),
+    email:                   document.getElementById('f-email').value.trim(),
+    direccion:               document.getElementById('f-direccion').value.trim(),
+    localidad:               document.getElementById('f-localidad').value.trim(),
+    valor_hora_mo:           parseFloat(document.getElementById('f-valor-hora').value) || 0,
+    valor_pano:              parseFloat(document.getElementById('f-valor-pano').value) || 0,
+    condiciones_presupuesto: document.getElementById('f-condiciones').value.trim(),
+    horarios:                JSON.stringify(horariosData),
+    especialidades:          [...especialidadesSeleccionadas],   // text[] nativo, no JSON string
+    updated_at:              new Date().toISOString(),
+  };
+
+  // Logo upload (futuro: Supabase Storage)
+  // if (logoFile) { payload.logo_url = await uploadLogo(logoFile); }
+
+  try {
+    // RLS + auth_taller_id() garantizan que solo actualiza su propia fila
+    await supabasePatch(
+      'cat_recomendaciones_talleres',
+      'id=eq.' + tallerData.id,
+      payload
+    );
+
+    Object.assign(tallerData, payload);
+    actualizarHero(tallerData);
+    actualizarPreview();
+    clearDirty();
+    showToast('✓ Perfil guardado');
+
+  } catch (err) {
+    console.error('guardarPerfil:', err);
+    showToast('Error al guardar: ' + err.message, 'error');
+    btn.disabled = false;
+    btn.textContent = 'Guardar';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TABS
+// ═══════════════════════════════════════════════════════════════
+function switchTab(btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(btn.dataset.tab).classList.add('active');
+  if (btn.dataset.tab === 'tab-publico') actualizarPreview();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ESPECIALIDADES
+// ═══════════════════════════════════════════════════════════════
+function renderEspecialidades() {
+  const grid = document.getElementById('especialidadesGrid');
+  grid.innerHTML = ESPECIALIDADES.map(e => `
+    <div class="chip ${especialidadesSeleccionadas.has(e) ? 'selected' : ''}"
+         onclick="toggleEspecialidad('${e}', this)">
+      ${especialidadesSeleccionadas.has(e) ? '✓ ' : ''}${e}
+    </div>
+  `).join('');
+}
+
+function toggleEspecialidad(nombre, el) {
+  if (especialidadesSeleccionadas.has(nombre)) {
+    especialidadesSeleccionadas.delete(nombre);
+    el.classList.remove('selected');
+    el.textContent = nombre;
+  } else {
+    especialidadesSeleccionadas.add(nombre);
+    el.classList.add('selected');
+    el.textContent = '✓ ' + nombre;
+  }
+  markDirty();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HORARIOS
+// ═══════════════════════════════════════════════════════════════
+function renderHorarios() {
+  const card = document.getElementById('horariosCard');
+  card.innerHTML = DIAS.map(d => {
+    const h = horariosData[d.key];
+    return `
+    <div class="horario-row" id="hrow-${d.key}">
+      <span class="dia-label">${d.label}</span>
+      <label class="toggle-dia">
+        <input type="checkbox" id="htoggle-${d.key}"
+               ${h.abierto ? 'checked' : ''}
+               onchange="toggleDia('${d.key}')">
+        <div class="toggle-dia-track"></div>
+      </label>
+      <div class="horario-inputs" id="hinputs-${d.key}"
+           style="${h.abierto ? '' : 'display:none'}">
+        <input class="horario-input" type="time"
+               id="hdesde-${d.key}" value="${h.desde}"
+               onchange="updateHorario('${d.key}')">
+        <span class="horario-sep">–</span>
+        <input class="horario-input" type="time"
+               id="hhasta-${d.key}" value="${h.hasta}"
+               onchange="updateHorario('${d.key}')">
+      </div>
+      <span class="horario-cerrado" id="hcerrado-${d.key}"
+            style="${h.abierto ? 'display:none' : ''}">Cerrado</span>
+    </div>`;
+  }).join('');
+}
+
+function toggleDia(dia) {
+  const checked = document.getElementById('htoggle-' + dia).checked;
+  horariosData[dia].abierto = checked;
+  document.getElementById('hinputs-'  + dia).style.display = checked ? '' : 'none';
+  document.getElementById('hcerrado-' + dia).style.display = checked ? 'none' : '';
+  markDirty();
+}
+
+function updateHorario(dia) {
+  horariosData[dia].desde = document.getElementById('hdesde-' + dia).value;
+  horariosData[dia].hasta = document.getElementById('hhasta-' + dia).value;
+  markDirty();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// VISTA PÚBLICA
+// ═══════════════════════════════════════════════════════════════
+function actualizarPreview() {
+  document.getElementById('prevNombre').textContent   =
+    document.getElementById('f-nombre').value   || '—';
+  document.getElementById('prevLocalidad').textContent =
+    document.getElementById('f-localidad').value || '—';
+
+  // Logo
+  const logoEl = document.getElementById('prevLogo');
+  const imgSrc = document.getElementById('logoPreview').src;
+  if (imgSrc && document.getElementById('logoPreview').style.display !== 'none') {
+    logoEl.innerHTML = `<img src="${imgSrc}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:6px">`;
+  } else {
+    logoEl.textContent = '🔧';
+  }
+
+  // Especialidades
+  const chips = document.getElementById('prevChips');
+  chips.innerHTML = [...especialidadesSeleccionadas]
+    .map(e => `<span class="preview-chip">${e}</span>`).join('');
+
+  // Horario hoy
+  const dias = ['dom','lun','mar','mie','jue','vie','sab'];
+  const hoy  = dias[new Date().getDay()];
+  const h    = horariosData[hoy];
+  document.getElementById('prevHorario').textContent = h && h.abierto
+    ? `Hoy: ${h.desde} – ${h.hasta}`
+    : 'Cerrado hoy';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// LOGO
+// ═══════════════════════════════════════════════════════════════
+function previewLogo(input) {
+  if (!input.files || !input.files[0]) return;
+  logoFile = input.files[0];
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = document.getElementById('logoPreview');
+    img.src = e.target.result;
+    img.style.display = 'block';
+    document.getElementById('logoPlaceholder').style.display = 'none';
+  };
+  reader.readAsDataURL(logoFile);
+  markDirty();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DIRTY STATE
+// ═══════════════════════════════════════════════════════════════
+function markDirty() {
+  if (isDirty) return;
+  isDirty = true;
+  document.getElementById('dirtyDot').classList.add('visible');
+  document.getElementById('btnSave').disabled = false;
+  document.getElementById('btnSave').textContent = 'Guardar';
+}
+
+function clearDirty() {
+  isDirty = false;
+  document.getElementById('dirtyDot').classList.remove('visible');
+  document.getElementById('btnSave').disabled = true;
+  document.getElementById('btnSave').textContent = 'Guardado';
+  setTimeout(() => {
+    document.getElementById('btnSave').textContent = 'Guardar';
+  }, 2000);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════════════
+let toastTimer;
+function showToast(msg, type = 'ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (type === 'error' ? ' error' : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.classList.remove('show'); }, 3000);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ARRANQUE
+// ═══════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

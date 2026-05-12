@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Catálogo — Piezauto Point</title>
+<style>
+  /* ── TOKENS ────────────────────────────────────────────────── */
+  :root {
+    --brand:       #1A1A2E;
+    --brand-mid:   #16213E;
+    --accent:      #E94560;
+    --accent-soft: #fef2f4;
+    --ink-1:       #111827;
+    --ink-2:       #374151;
+    --ink-3:       #6B7280;
+    --ink-4:       #9CA3AF;
+    --surface:     #FFFFFF;
+    --surface-2:   #F9FAFB;
+    --surface-3:   #F3F4F6;
+    --line:        #E5E7EB;
+    --line-strong: #D1D5DB;
+    --green:       #059669;
+    --green-soft:  #ECFDF5;
+    --amber:       #D97706;
+    --amber-soft:  #FFFBEB;
+    --blue:        #2563EB;
+    --blue-soft:   #EFF6FF;
+    --radius:      8px;
+    --radius-lg:   12px;
+    --shadow-sm:   0 1px 3px rgba(0,0,0,.07);
+    --shadow:      0 4px 16px rgba(0,0,0,.10);
+    --shadow-lg:   0 8px 32px rgba(0,0,0,.14);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--surface-2);
+    color: var(--ink-1);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .app-shell {
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--surface-2);
+  }
+
+  /* ── TOPBAR ─────────────────────────────────────────────────── */
+  .topbar {
+    background: var(--brand);
+    color: #fff;
+    padding: 0 14px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,.25);
+    flex-shrink: 0;
+  }
+
+  .topbar-back {
+    width: 34px; height: 34px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background .15s;
+  }
+  .topbar-back:hover { background: rgba(255,255,255,.12); }
+  .topbar-back svg { width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; }
+
+  .topbar-title { font-size: 15px; font-weight: 700; flex: 1; letter-spacing: -.01em; }
+
+  .cart-btn {
+    position: relative;
+    width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background .15s;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+  .cart-btn:hover { background: rgba(255,255,255,.12); }
+  .cart-count {
+    position: absolute;
+    top: 2px; right: 2px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    display: none;
+  }
+  .cart-count.visible { display: flex; }
+
+  /* ── BARRA DE BÚSQUEDA ──────────────────────────────────────── */
+  .search-bar {
+    background: var(--brand-mid);
+    padding: 10px 14px 12px;
+    position: sticky;
+    top: 56px;
+    z-index: 90;
+    flex-shrink: 0;
+  }
+
+  .search-input-wrap {
+    display: flex;
+    align-items: center;
+    background: rgba(255,255,255,.1);
+    border: 1px solid rgba(255,255,255,.18);
+    border-radius: var(--radius-lg);
+    padding: 0 12px;
+    gap: 8px;
+    transition: background .15s, border-color .15s;
+  }
+  .search-input-wrap:focus-within {
+    background: rgba(255,255,255,.16);
+    border-color: rgba(255,255,255,.4);
+  }
+
+  .search-icon { color: rgba(255,255,255,.55); font-size: 15px; flex-shrink: 0; }
+
+  .search-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 14px;
+    color: #fff;
+    padding: 11px 0;
+    font-family: inherit;
+  }
+  .search-input::placeholder { color: rgba(255,255,255,.45); }
+
+  .search-clear {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.2);
+    border: none;
+    color: #fff;
+    font-size: 12px;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .search-clear.visible { display: flex; }
+
+  .search-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+    font-size: 11px;
+    color: rgba(255,255,255,.5);
+    min-height: 16px;
+  }
+
+  .descuento-chip {
+    background: rgba(5,150,105,.25);
+    color: #6ee7b7;
+    border-radius: 10px;
+    padding: 2px 8px;
+    font-size: 10px;
+    font-weight: 600;
+  }
+
+  /* ── FILTROS FAMILIA ────────────────────────────────────────── */
+  .filtros-scroll {
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+    padding: 10px 0;
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    flex-shrink: 0;
+  }
+  .filtros-scroll::-webkit-scrollbar { display: none; }
+  .filtros-scroll { padding-left: 14px; padding-right: 14px; }
+
+  .filtro-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    border: 1.5px solid var(--line-strong);
+    background: var(--surface);
+    color: var(--ink-2);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all .15s;
+    flex-shrink: 0;
+  }
+  .filtro-chip:hover { border-color: var(--brand); color: var(--brand); }
+  .filtro-chip.active { background: var(--brand); border-color: var(--brand); color: #fff; }
+
+  /* ── LISTA DE RESULTADOS ────────────────────────────────────── */
+  .resultados {
+    flex: 1;
+    padding: 12px 12px 80px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* ── ESTADO VACÍO / CARGA / ERROR ───────────────────────────── */
+  .estado-centro {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 24px;
+    text-align: center;
+    gap: 12px;
+  }
+  .estado-icon { font-size: 48px; }
+  .estado-titulo { font-size: 16px; font-weight: 600; color: var(--ink-2); }
+  .estado-sub { font-size: 13px; color: var(--ink-3); line-height: 1.5; }
+
+  .skeleton-card {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    padding: 14px 16px;
+    border: 1px solid var(--line);
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+  .skel-line {
+    background: var(--surface-3);
+    border-radius: 4px;
+    margin-bottom: 8px;
+  }
+  .skel-line.w-60 { width: 60%; height: 12px; }
+  .skel-line.w-100 { width: 100%; height: 10px; }
+  .skel-line.w-80 { width: 80%; height: 10px; }
+  .skel-line.w-40 { width: 40%; height: 14px; margin-top: 10px; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .55; }
+  }
+
+  /* ── TARJETA DE PRODUCTO ─────────────────────────────────────── */
+  .sku-card {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--line);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow .15s, transform .1s;
+  }
+  .sku-card:active { transform: scale(.99); }
+
+  .sku-body { padding: 14px 16px 10px; }
+
+  .sku-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+
+  .sku-codigo {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--ink-3);
+    letter-spacing: .04em;
+    font-family: 'Courier New', monospace;
+  }
+
+  .sku-badges { display: flex; gap: 5px; flex-shrink: 0; }
+
+  .badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 10px;
+  }
+
+  /* lado */
+  .badge-lado-D  { background: var(--blue-soft);  color: var(--blue); }
+  .badge-lado-I  { background: #faf5ff;            color: #7c3aed; }
+  .badge-lado-ambos { background: var(--surface-3); color: var(--ink-2); }
+
+  /* origen */
+  .badge-original { background: #fefce8; color: #854d0e; }
+  .badge-premium  { background: var(--blue-soft); color: var(--blue); }
+  .badge-after    { background: var(--surface-3); color: var(--ink-2); }
+
+  .sku-descripcion {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink-1);
+    line-height: 1.4;
+    margin-bottom: 5px;
+  }
+
+  .sku-aplicaciones {
+    font-size: 12px;
+    color: var(--ink-3);
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .sku-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px 12px;
+    border-top: 1px solid var(--line);
+    gap: 12px;
+  }
+
+  .precios { display: flex; align-items: baseline; gap: 8px; }
+
+  .precio-bonificado {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--ink-1);
+  }
+
+  .precio-lista-tachado {
+    font-size: 12px;
+    color: var(--ink-4);
+    text-decoration: line-through;
+  }
+
+  .precio-lista-solo {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--ink-1);
+  }
+
+  .btn-agregar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--brand);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    padding: 9px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity .15s, background .15s;
+    white-space: nowrap;
+    font-family: inherit;
+    flex-shrink: 0;
+  }
+  .btn-agregar:hover { opacity: .88; }
+  .btn-agregar.agregado {
+    background: var(--green);
+  }
+  .btn-agregar:active { transform: scale(.97); }
+
+  /* ── PAGINACIÓN ──────────────────────────────────────────────── */
+  .pag-wrap {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding: 16px 0 8px;
+  }
+  .pag-btn {
+    padding: 8px 16px;
+    border-radius: var(--radius);
+    border: 1.5px solid var(--line-strong);
+    background: var(--surface);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink-2);
+    cursor: pointer;
+    transition: all .15s;
+    font-family: inherit;
+  }
+  .pag-btn:hover { border-color: var(--brand); color: var(--brand); }
+  .pag-btn:disabled { opacity: .35; cursor: default; }
+  .pag-info { font-size: 12px; color: var(--ink-3); display: flex; align-items: center; padding: 0 4px; }
+
+  /* ── MINI CARRITO FLOTANTE ───────────────────────────────────── */
+  .cart-fab {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--brand);
+    color: #fff;
+    border-radius: 28px;
+    padding: 14px 24px;
+    font-size: 14px;
+    font-weight: 700;
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: transform .35s cubic-bezier(.34,1.56,.64,1);
+    z-index: 150;
+    max-width: calc(480px - 40px);
+  }
+  .cart-fab.visible { transform: translateX(-50%) translateY(0); }
+  .cart-fab-icon { font-size: 18px; }
+  .cart-fab-text { flex: 1; }
+  .cart-fab-count {
+    background: var(--accent);
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    font-size: 12px;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* ── TOAST ───────────────────────────────────────────────────── */
+  .toast {
+    position: fixed;
+    bottom: 84px;
+    left: 50%;
+    transform: translateX(-50%) translateY(40px);
+    background: var(--ink-1);
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    box-shadow: var(--shadow);
+    opacity: 0;
+    transition: opacity .2s, transform .2s;
+    pointer-events: none;
+    z-index: 160;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="topbar-back" onclick="history.back()">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    </div>
+    <span class="topbar-title">Catálogo Piezauto</span>
+    <div class="cart-btn" onclick="irAPedido()">
+      🛒
+      <div class="cart-count" id="cartCount"></div>
+    </div>
+  </header>
+
+  <!-- BÚSQUEDA -->
+  <div class="search-bar">
+    <div class="search-input-wrap">
+      <span class="search-icon">🔍</span>
+      <input class="search-input" id="searchInput"
+             type="text"
+             placeholder="Buscar por descripción, pieza, modelo…"
+             autocomplete="off"
+             oninput="onSearchInput()">
+      <button class="search-clear" id="searchClear" onclick="clearSearch()">✕</button>
+    </div>
+    <div class="search-meta">
+      <span id="searchMeta">Ingresá 3 o más caracteres para buscar</span>
+      <span class="descuento-chip" id="descuentoChip" style="display:none"></span>
+    </div>
+  </div>
+
+  <!-- FILTROS FAMILIA -->
+  <div class="filtros-scroll" id="filtrosScroll">
+    <div class="filtro-chip active" data-familia="" onclick="setFiltro(this)">Todos</div>
+  </div>
+
+  <!-- RESULTADOS -->
+  <div class="resultados" id="resultados">
+    <div class="estado-centro">
+      <div class="estado-icon">🔎</div>
+      <div class="estado-titulo">Buscá cualquier pieza</div>
+      <div class="estado-sub">Escribí en el campo de arriba.<br>Podés buscar por nombre, modelo de auto o número de pieza.</div>
+    </div>
+  </div>
+
+</div><!-- /app-shell -->
+
+<!-- CARRITO FLOTANTE -->
+<div class="cart-fab" id="cartFab" onclick="irAPedido()">
+  <span class="cart-fab-icon">🛒</span>
+  <span class="cart-fab-text">Ver pedido</span>
+  <span class="cart-fab-count" id="cartFabCount">0</span>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════════════════════
+const SUPABASE_URL     = 'https://mqxowotdeibllkitkije.supabase.co';
+const SUPABASE_ANON    = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xeG93b3RkZWlibGxraXRraWplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxMzgxNDYsImV4cCI6MjA5MTcxNDE0Nn0.V_Pr0elBurAK7OPKFL3OoZwBmb-bI-Mcz8N1U8yblG8';
+
+const PAGE_SIZE        = 20;
+const MIN_QUERY_LEN    = 3;
+const DEBOUNCE_MS      = 380;
+
+// Columnas visibles — NO se solicitan: fabricante_id, codigo_oem,
+// recomendado_*, padre_id, precio_neto, rentabilidad_override, etc.
+// categoria_calidad se intenta; si falla, origen muestra "—".
+const SELECT_COLS = [
+  'id', 'codigo_piezauto', 'descripcion', 'descripcion_corta',
+  'lado', 'aplicaciones', 'precio_lista', 'activo_venta',
+  'familia_id', 'categoria_calidad'
+].join(',');
+
+// ═══════════════════════════════════════════════════════════════
+// ESTADO
+// ═══════════════════════════════════════════════════════════════
+let descuentoPiezauto  = null;   // 0–1, null = no configurado
+let familiaFiltro      = '';     // UUID o '' (todos)
+let familias           = {};     // {uuid: nombre}
+let currentQuery       = '';
+let currentPage        = 0;
+let totalCount         = 0;
+let debounceTimer      = null;
+let loading            = false;
+let categoriaCalidadOk = true;  // false si la columna no existe
+
+// Carrito: [{id, codigo_piezauto, descripcion, precio_lista, precio_bonificado, cantidad}]
+let carrito = JSON.parse(localStorage.getItem('point_carrito') || '[]');
+
+// ═══════════════════════════════════════════════════════════════
+// HELPERS API
+// ═══════════════════════════════════════════════════════════════
+function getToken() {
+  try {
+    const key = Object.keys(localStorage).find(k => k.includes('auth-token'));
+    if (key) {
+      const d = JSON.parse(localStorage.getItem(key));
+      return d?.access_token || SUPABASE_ANON;
+    }
+  } catch (_) {}
+  return SUPABASE_ANON;
+}
+
+async function sbGet(table, qs) {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${qs}`, {
+    headers: {
+      'apikey': SUPABASE_ANON,
+      'Authorization': `Bearer ${getToken()}`,
+      'Prefer': 'count=exact',
+    }
+  });
+  const count = parseInt(r.headers.get('Content-Range')?.split('/')[1] || '0', 10);
+  if (!r.ok) {
+    const body = await r.json().catch(() => ({}));
+    throw Object.assign(new Error(body.message || r.statusText), { status: r.status, body });
+  }
+  const data = await r.json();
+  return { data, count };
+}
+
+async function sbGetSingle(table, qs) {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${qs}`, {
+    headers: {
+      'apikey': SUPABASE_ANON,
+      'Authorization': `Bearer ${getToken()}`,
+    }
+  });
+  if (!r.ok) throw new Error(r.status);
+  return r.json();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+async function init() {
+  await Promise.all([
+    cargarDescuento(),
+    cargarFamilias(),
+  ]);
+  actualizarCarritoUI();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DESCUENTO DEL TALLER
+// ═══════════════════════════════════════════════════════════════
+async function cargarDescuento() {
+  try {
+    const rows = await sbGetSingle(
+      'cat_recomendaciones_talleres',
+      'select=descuento_piezauto&limit=1'
+      // RLS + auth_taller_id() filtra automáticamente al taller del JWT
+    );
+    if (rows && rows.length > 0 && rows[0].descuento_piezauto != null) {
+      descuentoPiezauto = parseFloat(rows[0].descuento_piezauto);
+    }
+  } catch (e) {
+    console.warn('No se pudo cargar descuento:', e.message);
+    descuentoPiezauto = null;
+  }
+
+  // Mostrar chip de descuento en barra de búsqueda
+  const chip = document.getElementById('descuentoChip');
+  if (descuentoPiezauto && descuentoPiezauto > 0) {
+    chip.textContent = `${(descuentoPiezauto * 100).toFixed(0)}% dto.`;
+    chip.style.display = '';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FAMILIAS
+// ═══════════════════════════════════════════════════════════════
+async function cargarFamilias() {
+  try {
+    const rows = await sbGetSingle(
+      'cat_familias',
+      'select=id,nombre&activo=eq.true&order=nombre.asc'
+    );
+    familias = {};
+    rows.forEach(f => { familias[f.id] = f.nombre; });
+
+    const scroll = document.getElementById('filtrosScroll');
+    // Familias más relevantes para chapa/pintura primero
+    const prioritarias = [
+      'Paragolpes','Ópticas','Guardabarros','Capots','Espejos',
+      'Faros','Lámparas','Parabrisas'
+    ];
+    const sorted = rows.sort((a, b) => {
+      const ai = prioritarias.findIndex(p => a.nombre.toLowerCase().includes(p.toLowerCase()));
+      const bi = prioritarias.findIndex(p => b.nombre.toLowerCase().includes(p.toLowerCase()));
+      if (ai >= 0 && bi < 0) return -1;
+      if (bi >= 0 && ai < 0) return 1;
+      if (ai >= 0 && bi >= 0) return ai - bi;
+      return a.nombre.localeCompare(b.nombre);
+    });
+
+    sorted.forEach(f => {
+      const chip = document.createElement('div');
+      chip.className = 'filtro-chip';
+      chip.dataset.familia = f.id;
+      chip.textContent = f.nombre;
+      chip.onclick = function() { setFiltro(this); };
+      scroll.appendChild(chip);
+    });
+  } catch (e) {
+    console.warn('cargarFamilias:', e.message);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// BÚSQUEDA
+// ═══════════════════════════════════════════════════════════════
+function onSearchInput() {
+  const q = document.getElementById('searchInput').value.trim();
+  document.getElementById('searchClear').classList.toggle('visible', q.length > 0);
+  clearTimeout(debounceTimer);
+
+  if (q.length < MIN_QUERY_LEN) {
+    currentQuery = '';
+    currentPage  = 0;
+    mostrarEstadoInicial();
+    return;
+  }
+
+  debounceTimer = setTimeout(() => {
+    currentQuery = q;
+    currentPage  = 0;
+    buscar();
+  }, DEBOUNCE_MS);
+}
+
+function clearSearch() {
+  document.getElementById('searchInput').value = '';
+  document.getElementById('searchClear').classList.remove('visible');
+  currentQuery = '';
+  currentPage  = 0;
+  mostrarEstadoInicial();
+}
+
+function setFiltro(el) {
+  document.querySelectorAll('.filtro-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  familiaFiltro = el.dataset.familia || '';
+  currentPage   = 0;
+  if (currentQuery.length >= MIN_QUERY_LEN) buscar();
+}
+
+async function buscar() {
+  if (loading) return;
+  loading = true;
+  mostrarSkeletons();
+
+  // Construir query string
+  const params = new URLSearchParams();
+
+  // Seleccionar solo columnas visibles (+ categoria_calidad si disponible)
+  const cols = categoriaCalidadOk ? SELECT_COLS : SELECT_COLS.replace(',categoria_calidad', '');
+  params.set('select', cols);
+  params.set('activo_venta', 'eq.true');
+  params.set('order', 'descripcion.asc');
+  params.set('limit', PAGE_SIZE);
+  params.set('offset', currentPage * PAGE_SIZE);
+
+  if (familiaFiltro) params.set('familia_id', `eq.${familiaFiltro}`);
+
+  // Full-text search sobre descripcion. PostgREST: ?descripcion=fts.{query}
+  // Usamos phfts (phrase) para múltiples palabras, fts para una sola.
+  const words = currentQuery.trim().replace(/\s+/g, ' & ');
+  params.set('descripcion', `fts(spanish).${encodeURIComponent(words)}`);
+
+  try {
+    const { data, count } = await sbGet('cat_skus', params.toString());
+    totalCount = count;
+    loading    = false;
+    renderResultados(data, count);
+  } catch (err) {
+    loading = false;
+
+    // Si falla por categoria_calidad (columna inexistente → 400)
+    if (err.status === 400 && categoriaCalidadOk &&
+        (err.body?.message || '').includes('categoria_calidad')) {
+      categoriaCalidadOk = false;
+      buscar();   // reintentar sin esa columna
+      return;
+    }
+
+    // Si FTS falla (config de idioma), fallback a ilike
+    if (err.status === 400) {
+      buscarIlike();
+      return;
+    }
+
+    renderError(err.message);
+  }
+}
+
+async function buscarIlike() {
+  // Fallback: ilike simple. Más lento pero sin dependencia de config FTS.
+  const params = new URLSearchParams();
+  const cols = categoriaCalidadOk ? SELECT_COLS : SELECT_COLS.replace(',categoria_calidad', '');
+  params.set('select', cols);
+  params.set('activo_venta', 'eq.true');
+  params.set('order', 'descripcion.asc');
+  params.set('limit', PAGE_SIZE);
+  params.set('offset', currentPage * PAGE_SIZE);
+  if (familiaFiltro) params.set('familia_id', `eq.${familiaFiltro}`);
+  params.set('descripcion', `ilike.*${currentQuery}*`);
+
+  try {
+    const { data, count } = await sbGet('cat_skus', params.toString());
+    totalCount = count;
+    renderResultados(data, count);
+  } catch (err) {
+    renderError(err.message);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PRECIO HELPERS
+// ═══════════════════════════════════════════════════════════════
+function calcBonificado(precioLista) {
+  if (!precioLista) return null;
+  if (!descuentoPiezauto || descuentoPiezauto <= 0) return null;
+  return precioLista * (1 - descuentoPiezauto);
+}
+
+function fmt(n) {
+  if (n == null) return '—';
+  return '$\u202F' + Math.round(n).toLocaleString('es-AR');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ORIGEN (solo si categoria_calidad está disponible)
+// ═══════════════════════════════════════════════════════════════
+function origenBadge(cat) {
+  if (!cat) return '';
+  const map = {
+    original:    { label: 'Original',  cls: 'badge-original' },
+    premium:     { label: 'Premium',   cls: 'badge-premium'  },
+    aftermarket: { label: 'Aftermarket', cls: 'badge-after'  },
+    generico:    { label: 'Genérico',  cls: 'badge-after'    },
+  };
+  const o = map[cat];
+  if (!o) return '';
+  return `<span class="badge ${o.cls}">${o.label}</span>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// LADO BADGE
+// ═══════════════════════════════════════════════════════════════
+function ladoBadge(lado) {
+  if (!lado || lado === 'N/A' || lado === 'SIN_LADO') return '';
+  const map = {
+    'D':    { label: 'Der.', cls: 'badge-lado-D' },
+    'I':    { label: 'Izq.', cls: 'badge-lado-I' },
+    'DER':  { label: 'Der.', cls: 'badge-lado-D' },
+    'IZQ':  { label: 'Izq.', cls: 'badge-lado-I' },
+    'AMBOS':{ label: 'D+I',  cls: 'badge-lado-ambos' },
+  };
+  const key = String(lado).toUpperCase();
+  const o = map[key];
+  if (!o) return `<span class="badge badge-lado-ambos">${lado}</span>`;
+  return `<span class="badge ${o.cls}">${o.label}</span>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════════════════════
+function renderResultados(skus, count) {
+  const cont = document.getElementById('resultados');
+  setMeta(`${count.toLocaleString('es-AR')} resultados`);
+
+  if (!skus || skus.length === 0) {
+    cont.innerHTML = `
+      <div class="estado-centro">
+        <div class="estado-icon">😶</div>
+        <div class="estado-titulo">Sin resultados</div>
+        <div class="estado-sub">Probá con otras palabras o cambiá el filtro de familia.</div>
+      </div>`;
+    return;
+  }
+
+  const cards = skus.map(sku => {
+    const bonif   = calcBonificado(sku.precio_lista);
+    const inCart  = carrito.some(c => c.id === sku.id);
+    const familia = familias[sku.familia_id] || '';
+
+    const preciosHtml = bonif
+      ? `<span class="precio-bonificado">${fmt(bonif)}</span>
+         <span class="precio-lista-tachado">${fmt(sku.precio_lista)}</span>`
+      : sku.precio_lista
+        ? `<span class="precio-lista-solo">${fmt(sku.precio_lista)}</span>`
+        : `<span class="precio-lista-solo" style="color:var(--ink-4)">Sin precio</span>`;
+
+    return `
+      <div class="sku-card" id="card-${sku.id}">
+        <div class="sku-body">
+          <div class="sku-header">
+            <span class="sku-codigo">${sku.codigo_piezauto}</span>
+            <div class="sku-badges">
+              ${ladoBadge(sku.lado)}
+              ${categoriaCalidadOk ? origenBadge(sku.categoria_calidad) : ''}
+            </div>
+          </div>
+          <div class="sku-descripcion">${sku.descripcion}</div>
+          ${sku.aplicaciones
+            ? `<div class="sku-aplicaciones">${sku.aplicaciones}</div>`
+            : familia
+              ? `<div class="sku-aplicaciones" style="color:var(--ink-4)">${familia}</div>`
+              : ''}
+        </div>
+        <div class="sku-footer">
+          <div class="precios">${preciosHtml}</div>
+          <button class="btn-agregar ${inCart ? 'agregado' : ''}"
+                  id="btn-${sku.id}"
+                  onclick="agregarAlCarrito(${JSON.stringify({
+                    id: sku.id,
+                    codigo_piezauto: sku.codigo_piezauto,
+                    descripcion: sku.descripcion,
+                    precio_lista: sku.precio_lista,
+                    precio_bonificado: bonif,
+                  }).replace(/"/g, '&quot;')})">
+            ${inCart ? '✓ Agregado' : '+ Agregar'}
+          </button>
+        </div>
+      </div>`;
+  }).join('');
+
+  // Paginación
+  const totalPags  = Math.ceil(count / PAGE_SIZE);
+  const hayAntes   = currentPage > 0;
+  const hayDespues = currentPage < totalPags - 1;
+
+  const paginacion = (totalPags > 1) ? `
+    <div class="pag-wrap">
+      <button class="pag-btn" onclick="cambiarPag(-1)" ${!hayAntes ? 'disabled' : ''}>← Anterior</button>
+      <span class="pag-info">Pág. ${currentPage + 1} / ${totalPags}</span>
+      <button class="pag-btn" onclick="cambiarPag(1)"  ${!hayDespues ? 'disabled' : ''}>Siguiente →</button>
+    </div>` : '';
+
+  cont.innerHTML = cards + paginacion;
+}
+
+function cambiarPag(dir) {
+  currentPage += dir;
+  buscar();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function mostrarSkeletons() {
+  const cont = document.getElementById('resultados');
+  cont.innerHTML = Array(5).fill(`
+    <div class="skeleton-card">
+      <div class="skel-line w-60"></div>
+      <div class="skel-line w-100"></div>
+      <div class="skel-line w-80"></div>
+      <div class="skel-line w-40"></div>
+    </div>`).join('');
+  setMeta('Buscando…');
+}
+
+function mostrarEstadoInicial() {
+  document.getElementById('resultados').innerHTML = `
+    <div class="estado-centro">
+      <div class="estado-icon">🔎</div>
+      <div class="estado-titulo">Buscá cualquier pieza</div>
+      <div class="estado-sub">Escribí en el campo de arriba.<br>Podés buscar por nombre, modelo de auto o número de pieza.</div>
+    </div>`;
+  setMeta('Ingresá 3 o más caracteres para buscar');
+}
+
+function renderError(msg) {
+  document.getElementById('resultados').innerHTML = `
+    <div class="estado-centro">
+      <div class="estado-icon">⚠️</div>
+      <div class="estado-titulo">Error de conexión</div>
+      <div class="estado-sub">${msg}</div>
+    </div>`;
+  setMeta('');
+}
+
+function setMeta(txt) {
+  document.getElementById('searchMeta').textContent = txt;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CARRITO
+// ═══════════════════════════════════════════════════════════════
+function agregarAlCarrito(sku) {
+  const idx = carrito.findIndex(c => c.id === sku.id);
+  const btn = document.getElementById('btn-' + sku.id);
+
+  if (idx >= 0) {
+    // Ya está — quitar
+    carrito.splice(idx, 1);
+    if (btn) { btn.textContent = '+ Agregar'; btn.classList.remove('agregado'); }
+  } else {
+    // Agregar con cantidad 1
+    carrito.push({ ...sku, cantidad: 1 });
+    if (btn) { btn.textContent = '✓ Agregado'; btn.classList.add('agregado'); }
+    showToast('Pieza agregada al pedido');
+  }
+
+  localStorage.setItem('point_carrito', JSON.stringify(carrito));
+  actualizarCarritoUI();
+}
+
+function actualizarCarritoUI() {
+  const n = carrito.length;
+
+  const countEl    = document.getElementById('cartCount');
+  const countFabEl = document.getElementById('cartFabCount');
+  const fab        = document.getElementById('cartFab');
+
+  countEl.textContent    = n;
+  countFabEl.textContent = n;
+  countEl.classList.toggle('visible', n > 0);
+  fab.classList.toggle('visible', n > 0);
+}
+
+function irAPedido() {
+  window.location.href = '/taller/pedidos.html';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════════════
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ARRANQUE
+// ═══════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

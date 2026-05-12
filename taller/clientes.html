@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clientes — Piezauto Point</title>
+<style>
+  :root {
+    --brand:      #1A1A2E;
+    --brand-mid:  #16213E;
+    --accent:     #E94560;
+    --ink-1:      #111827;
+    --ink-2:      #374151;
+    --ink-3:      #6B7280;
+    --ink-4:      #9CA3AF;
+    --surface:    #FFFFFF;
+    --surface-2:  #F9FAFB;
+    --surface-3:  #F3F4F6;
+    --line:       #E5E7EB;
+    --line-strong:#D1D5DB;
+    --green:      #059669;
+    --green-soft: #ECFDF5;
+    --red:        #DC2626;
+    --red-soft:   #FEF2F2;
+    --blue:       #2563EB;
+    --blue-soft:  #EFF6FF;
+    --radius:     8px;
+    --radius-lg:  12px;
+    --shadow-sm:  0 1px 3px rgba(0,0,0,.07);
+    --shadow:     0 4px 16px rgba(0,0,0,.10);
+    --shadow-lg:  0 8px 32px rgba(0,0,0,.18);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--surface-2);
+    color: var(--ink-1);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.5;
+    overflow-x: hidden;
+  }
+  .app-shell {
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    background: var(--brand);
+    color: #fff;
+    padding: 0 14px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,.25);
+    flex-shrink: 0;
+  }
+  .topbar-back {
+    width: 34px; height: 34px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%; cursor: pointer; transition: background .15s;
+  }
+  .topbar-back:hover { background: rgba(255,255,255,.12); }
+  .topbar-back svg { width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; }
+  .topbar-title { font-size: 15px; font-weight: 700; flex: 1; }
+  .topbar-count { font-size: 12px; color: rgba(255,255,255,.6); }
+
+  /* ── BÚSQUEDA ── */
+  .search-bar {
+    background: var(--brand-mid);
+    padding: 10px 14px 12px;
+    position: sticky;
+    top: 56px;
+    z-index: 90;
+    flex-shrink: 0;
+  }
+  .search-wrap {
+    display: flex;
+    align-items: center;
+    background: rgba(255,255,255,.1);
+    border: 1px solid rgba(255,255,255,.18);
+    border-radius: var(--radius-lg);
+    padding: 0 12px;
+    gap: 8px;
+    transition: background .15s;
+  }
+  .search-wrap:focus-within { background: rgba(255,255,255,.16); border-color: rgba(255,255,255,.4); }
+  .search-icon { color: rgba(255,255,255,.55); font-size: 15px; flex-shrink: 0; }
+  .search-input {
+    flex: 1; border: none; outline: none; background: transparent;
+    font-size: 14px; color: #fff; padding: 11px 0; font-family: inherit;
+  }
+  .search-input::placeholder { color: rgba(255,255,255,.45); }
+  .search-clear {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: rgba(255,255,255,.2); border: none; color: #fff;
+    font-size: 12px; cursor: pointer; display: none;
+    align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .search-clear.visible { display: flex; }
+
+  /* ── LISTA ── */
+  .lista { flex: 1; padding: 12px 12px 100px; display: flex; flex-direction: column; gap: 8px; }
+
+  /* Estado vacío */
+  .estado-centro {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; padding: 60px 24px; text-align: center; gap: 12px;
+  }
+  .estado-icon { font-size: 52px; }
+  .estado-titulo { font-size: 16px; font-weight: 600; color: var(--ink-2); }
+  .estado-sub { font-size: 13px; color: var(--ink-3); line-height: 1.5; }
+
+  /* Skeleton */
+  .skeleton { background: var(--surface); border-radius: var(--radius-lg); padding: 14px 16px; border: 1px solid var(--line); animation: pulse 1.4s ease-in-out infinite; }
+  .skel-line { background: var(--surface-3); border-radius: 4px; margin-bottom: 8px; }
+  .skel-line.w70 { width: 70%; height: 13px; }
+  .skel-line.w45 { width: 45%; height: 11px; }
+  .skel-line.w55 { width: 55%; height: 11px; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.55} }
+
+  /* Tarjeta cliente */
+  .cliente-card {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    align-items: stretch;
+    overflow: hidden;
+    cursor: pointer;
+    transition: box-shadow .15s, transform .1s;
+  }
+  .cliente-card:active { transform: scale(.99); }
+
+  .cliente-avatar {
+    width: 52px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--brand);
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -.02em;
+  }
+
+  .cliente-body { flex: 1; padding: 12px 14px; min-width: 0; }
+  .cliente-nombre { font-size: 14px; font-weight: 700; color: var(--ink-1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cliente-meta { font-size: 12px; color: var(--ink-3); margin-top: 2px; display: flex; gap: 10px; flex-wrap: wrap; }
+  .cliente-meta span { display: flex; align-items: center; gap: 3px; }
+
+  .cliente-accion {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 14px;
+    color: var(--ink-4);
+    font-size: 18px;
+  }
+
+  /* ── FAB ── */
+  .fab {
+    position: fixed;
+    bottom: 24px;
+    right: calc(50% - 240px + 16px);
+    width: 56px; height: 56px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    font-size: 26px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: var(--shadow-lg);
+    cursor: pointer;
+    transition: transform .15s, opacity .15s;
+    z-index: 80;
+  }
+  .fab:hover { transform: scale(1.08); }
+  .fab:active { transform: scale(.96); }
+
+  /* ── DRAWER (create / edit) ── */
+  .drawer-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.45);
+    z-index: 200;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .drawer-overlay.open { display: flex; animation: fadeIn .2s; }
+  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+
+  .drawer {
+    background: var(--surface);
+    border-radius: 20px 20px 0 0;
+    width: 100%;
+    max-width: 480px;
+    max-height: 92vh;
+    display: flex;
+    flex-direction: column;
+    animation: slideUp .25s cubic-bezier(.34,1.56,.64,1);
+  }
+  @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+
+  .drawer-handle {
+    width: 36px; height: 4px;
+    background: var(--line-strong);
+    border-radius: 2px;
+    margin: 12px auto 0;
+    flex-shrink: 0;
+  }
+
+  .drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px 10px;
+    border-bottom: 1px solid var(--line);
+    flex-shrink: 0;
+  }
+  .drawer-titulo { font-size: 16px; font-weight: 700; }
+  .drawer-close {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: var(--surface-3);
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--ink-2);
+    transition: background .15s;
+  }
+  .drawer-close:hover { background: var(--line-strong); }
+
+  .drawer-body { overflow-y: auto; flex: 1; padding: 16px 20px; }
+
+  /* Grupos del form */
+  .form-section {
+    margin-bottom: 20px;
+  }
+  .form-section-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin-bottom: 10px;
+  }
+  .form-group { margin-bottom: 12px; }
+  .form-label { font-size: 12px; font-weight: 600; color: var(--ink-2); margin-bottom: 5px; display: block; }
+  .form-label .req { color: var(--accent); margin-left: 2px; }
+  .form-input {
+    width: 100%;
+    border: 1.5px solid var(--line-strong);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--ink-1);
+    background: var(--surface);
+    outline: none;
+    transition: border-color .15s;
+  }
+  .form-input:focus { border-color: var(--brand); }
+  .form-input::placeholder { color: var(--ink-4); }
+  .form-input.error { border-color: var(--red); }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .form-textarea {
+    width: 100%;
+    border: 1.5px solid var(--line-strong);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--ink-1);
+    background: var(--surface);
+    outline: none;
+    resize: none;
+    min-height: 72px;
+    transition: border-color .15s;
+  }
+  .form-textarea:focus { border-color: var(--brand); }
+  .form-textarea::placeholder { color: var(--ink-4); }
+
+  .drawer-footer {
+    padding: 12px 20px 20px;
+    border-top: 1px solid var(--line);
+    display: flex;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .btn-cancelar {
+    flex: 1;
+    padding: 12px;
+    border-radius: var(--radius-lg);
+    border: 1.5px solid var(--line-strong);
+    background: var(--surface);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink-2);
+    cursor: pointer;
+    font-family: inherit;
+    transition: background .15s;
+  }
+  .btn-cancelar:hover { background: var(--surface-3); }
+  .btn-guardar {
+    flex: 2;
+    padding: 12px;
+    border-radius: var(--radius-lg);
+    border: none;
+    background: var(--brand);
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    cursor: pointer;
+    font-family: inherit;
+    transition: opacity .15s;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .btn-guardar:hover { opacity: .88; }
+  .btn-guardar:disabled { opacity: .45; cursor: default; }
+
+  /* ── DETALLE (modal de solo lectura + acciones) ── */
+  .detalle-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.45);
+    z-index: 200;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .detalle-overlay.open { display: flex; animation: fadeIn .2s; }
+
+  .detalle-sheet {
+    background: var(--surface);
+    border-radius: 20px 20px 0 0;
+    width: 100%;
+    max-width: 480px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    animation: slideUp .25s cubic-bezier(.34,1.56,.64,1);
+  }
+
+  .detalle-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 20px 20px 14px;
+    border-bottom: 1px solid var(--line);
+    flex-shrink: 0;
+  }
+  .detalle-avatar {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    background: var(--brand);
+    color: #fff;
+    font-size: 20px;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .detalle-nombre { font-size: 17px; font-weight: 700; }
+  .detalle-dominio { font-size: 12px; color: var(--ink-3); margin-top: 2px; }
+  .detalle-close {
+    margin-left: auto;
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: var(--surface-3);
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--ink-2);
+    flex-shrink: 0;
+  }
+
+  .detalle-body { overflow-y: auto; flex: 1; padding: 16px 20px; }
+
+  .detalle-row {
+    display: flex;
+    gap: 8px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--line);
+    align-items: flex-start;
+  }
+  .detalle-row:last-child { border-bottom: none; }
+  .detalle-row-icon { font-size: 16px; flex-shrink: 0; width: 22px; text-align: center; margin-top: 1px; }
+  .detalle-row-label { font-size: 11px; color: var(--ink-3); font-weight: 500; }
+  .detalle-row-val { font-size: 14px; font-weight: 500; color: var(--ink-1); }
+
+  .detalle-footer {
+    padding: 12px 20px 20px;
+    border-top: 1px solid var(--line);
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .btn-editar {
+    flex: 1;
+    padding: 12px;
+    border-radius: var(--radius-lg);
+    border: 1.5px solid var(--brand);
+    background: var(--surface);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--brand);
+    cursor: pointer;
+    font-family: inherit;
+    transition: background .15s;
+  }
+  .btn-editar:hover { background: var(--surface-2); }
+  .btn-eliminar {
+    padding: 12px 16px;
+    border-radius: var(--radius-lg);
+    border: 1.5px solid var(--red);
+    background: var(--surface);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--red);
+    cursor: pointer;
+    font-family: inherit;
+    transition: background .15s;
+  }
+  .btn-eliminar:hover { background: var(--red-soft); }
+
+  /* ── CONFIRM DELETE ── */
+  .confirm-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.55);
+    z-index: 300;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .confirm-overlay.open { display: flex; }
+  .confirm-box {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    width: 100%;
+    max-width: 340px;
+    text-align: center;
+  }
+  .confirm-icon { font-size: 40px; margin-bottom: 12px; }
+  .confirm-titulo { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+  .confirm-sub { font-size: 13px; color: var(--ink-3); margin-bottom: 20px; line-height: 1.5; }
+  .confirm-btns { display: flex; gap: 10px; }
+  .confirm-no {
+    flex: 1; padding: 11px; border-radius: var(--radius);
+    border: 1.5px solid var(--line-strong); background: var(--surface);
+    font-size: 14px; font-weight: 600; color: var(--ink-2);
+    cursor: pointer; font-family: inherit;
+  }
+  .confirm-si {
+    flex: 1; padding: 11px; border-radius: var(--radius);
+    border: none; background: var(--red); color: #fff;
+    font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit;
+    transition: opacity .15s;
+  }
+  .confirm-si:hover { opacity: .88; }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed; bottom: 20px; left: 50%;
+    transform: translateX(-50%) translateY(60px);
+    background: var(--ink-1); color: #fff;
+    padding: 11px 20px; border-radius: 20px;
+    font-size: 13px; font-weight: 600; box-shadow: var(--shadow-lg);
+    opacity: 0; transition: opacity .2s, transform .2s;
+    pointer-events: none; z-index: 400; white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.error { background: var(--accent); }
+</style>
+</head>
+<body>
+<div class="app-shell">
+
+  <header class="topbar">
+    <div class="topbar-back" onclick="history.back()">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    </div>
+    <span class="topbar-title">Mis Clientes</span>
+    <span class="topbar-count" id="topbarCount"></span>
+  </header>
+
+  <div class="search-bar">
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input class="search-input" id="searchInput" type="text"
+             placeholder="Buscar por nombre, dominio, teléfono…"
+             autocomplete="off" oninput="onSearch()">
+      <button class="search-clear" id="searchClear" onclick="clearSearch()">✕</button>
+    </div>
+  </div>
+
+  <div class="lista" id="lista"></div>
+
+  <button class="fab" onclick="abrirNuevo()" title="Nuevo cliente">+</button>
+
+</div><!-- /app-shell -->
+
+<!-- ══ DRAWER CREAR / EDITAR ══ -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="cerrarDrawerSiClick(event)">
+  <div class="drawer">
+    <div class="drawer-handle"></div>
+    <div class="drawer-header">
+      <span class="drawer-titulo" id="drawerTitulo">Nuevo cliente</span>
+      <button class="drawer-close" onclick="cerrarDrawer()">✕</button>
+    </div>
+    <div class="drawer-body">
+
+      <div class="form-section">
+        <div class="form-section-label">Datos personales</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Nombre <span class="req">*</span></label>
+            <input class="form-input" id="f-nombre" type="text" placeholder="Juan">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Apellido</label>
+            <input class="form-input" id="f-apellido" type="text" placeholder="García">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Teléfono</label>
+            <input class="form-input" id="f-telefono" type="tel" placeholder="11 5555-1234">
+          </div>
+          <div class="form-group">
+            <label class="form-label">DNI</label>
+            <input class="form-input" id="f-dni" type="text" placeholder="32.456.789">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input class="form-input" id="f-email" type="email" placeholder="juan@email.com">
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-label">Vehículo</div>
+        <div class="form-group">
+          <label class="form-label">Dominio / Patente</label>
+          <input class="form-input" id="f-dominio" type="text"
+                 placeholder="ABC 123" style="text-transform:uppercase"
+                 oninput="this.value=this.value.toUpperCase()">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Marca</label>
+            <input class="form-input" id="f-marca" type="text" placeholder="Peugeot">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Modelo</label>
+            <input class="form-input" id="f-modelo" type="text" placeholder="208">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Año</label>
+          <input class="form-input" id="f-anio" type="number"
+                 min="1960" max="2030" placeholder="2019">
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-label">Seguro (opcional)</div>
+        <div class="form-group">
+          <label class="form-label">Compañía de seguro</label>
+          <input class="form-input" id="f-seguro" type="text" placeholder="Federación Patronal">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nro. de póliza</label>
+          <input class="form-input" id="f-poliza" type="text" placeholder="12345678">
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-label">Notas</div>
+        <div class="form-group">
+          <textarea class="form-textarea" id="f-notas"
+            placeholder="Observaciones, historial, preferencias del cliente…"></textarea>
+        </div>
+      </div>
+
+    </div>
+    <div class="drawer-footer">
+      <button class="btn-cancelar" onclick="cerrarDrawer()">Cancelar</button>
+      <button class="btn-guardar" id="btnGuardar" onclick="guardar()">
+        Guardar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DETALLE CLIENTE ══ -->
+<div class="detalle-overlay" id="detalleOverlay" onclick="cerrarDetalleSiClick(event)">
+  <div class="detalle-sheet">
+    <div class="drawer-handle"></div>
+    <div class="detalle-header">
+      <div class="detalle-avatar" id="detAvatar">—</div>
+      <div>
+        <div class="detalle-nombre" id="detNombre">—</div>
+        <div class="detalle-dominio" id="detDominio">—</div>
+      </div>
+      <button class="detalle-close" onclick="cerrarDetalle()">✕</button>
+    </div>
+    <div class="detalle-body" id="detBody"></div>
+    <div class="detalle-footer">
+      <button class="btn-editar" onclick="editarDesdeDetalle()">✏️ Editar</button>
+      <button class="btn-eliminar" onclick="confirmarEliminar()">🗑️ Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CONFIRM ELIMINAR ══ -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <div class="confirm-icon">⚠️</div>
+    <div class="confirm-titulo">¿Eliminar cliente?</div>
+    <div class="confirm-sub" id="confirmSub">Esta acción no se puede deshacer.</div>
+    <div class="confirm-btns">
+      <button class="confirm-no" onclick="cerrarConfirm()">Cancelar</button>
+      <button class="confirm-si" onclick="eliminar()">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════════════════════
+const SUPABASE_URL  = 'https://mqxowotdeibllkitkije.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xeG93b3RkZWlibGxraXRraWplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxMzgxNDYsImV4cCI6MjA5MTcxNDE0Nn0.V_Pr0elBurAK7OPKFL3OoZwBmb-bI-Mcz8N1U8yblG8';
+const TABLA         = 'cat_taller_clientes';
+
+// ═══════════════════════════════════════════════════════════════
+// ESTADO
+// ═══════════════════════════════════════════════════════════════
+let clientes       = [];   // lista completa en memoria
+let clienteFiltrado = [];  // tras búsqueda
+let clienteActivo  = null; // el que está en detalle / edición
+let modoEdicion    = false;
+let guardando      = false;
+let tallerId       = null;    // id en cat_recomendaciones_talleres — requerido en INSERT
+
+// ═══════════════════════════════════════════════════════════════
+// API
+// ═══════════════════════════════════════════════════════════════
+function getToken() {
+  try {
+    const k = Object.keys(localStorage).find(k => k.includes('auth-token'));
+    if (k) return JSON.parse(localStorage.getItem(k))?.access_token || SUPABASE_ANON;
+  } catch (_) {}
+  return SUPABASE_ANON;
+}
+
+function headers(extra = {}) {
+  return {
+    'apikey': SUPABASE_ANON,
+    'Authorization': `Bearer ${getToken()}`,
+    'Content-Type': 'application/json',
+    ...extra,
+  };
+}
+
+async function sbGet(qs) {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${TABLA}?${qs}`, {
+    headers: { ...headers(), 'Prefer': 'count=exact' }
+  });
+  if (!r.ok) { const b = await r.json().catch(()=>({})); throw new Error(b.message||r.status); }
+  const count = parseInt(r.headers.get('Content-Range')?.split('/')[1]||'0', 10);
+  return { data: await r.json(), count };
+}
+
+async function sbInsert(body) {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${TABLA}`, {
+    method: 'POST',
+    headers: { ...headers(), 'Prefer': 'return=representation' },
+    body: JSON.stringify(body),
+  });
+  if (!r.ok) { const b = await r.json().catch(()=>({})); throw new Error(b.message||r.status); }
+  return (await r.json())[0];
+}
+
+async function sbUpdate(id, body) {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${TABLA}?id=eq.${id}`, {
+    method: 'PATCH',
+    headers: { ...headers(), 'Prefer': 'return=representation' },
+    body: JSON.stringify(body),
+  });
+  if (!r.ok) { const b = await r.json().catch(()=>({})); throw new Error(b.message||r.status); }
+  return (await r.json())[0];
+}
+
+async function sbDelete(id) {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${TABLA}?id=eq.${id}`, {
+    method: 'DELETE',
+    headers: headers(),
+  });
+  if (!r.ok) { const b = await r.json().catch(()=>({})); throw new Error(b.message||r.status); }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CARGA INICIAL
+// ═══════════════════════════════════════════════════════════════
+async function init() {
+  renderSkeletons();
+  await cargarTallerId();
+  await cargar();
+}
+
+async function cargarTallerId() {
+  try {
+    const r = await fetch(
+      `${SUPABASE_URL}/rest/v1/cat_recomendaciones_talleres?select=id&limit=1`,
+      { headers: headers() }
+    );
+    if (r.ok) {
+      const rows = await r.json();
+      if (rows?.length) tallerId = rows[0].id;
+    }
+  } catch (e) { console.warn('cargarTallerId:', e.message); }
+}
+
+async function cargar() {
+  try {
+    const { data, count } = await sbGet(
+      'select=id,nombre,apellido,telefono,email,dni,' +
+      'dominio_vehiculo,marca_vehiculo,modelo_vehiculo,anio_vehiculo,' +
+      'compania_seguro,nro_poliza,notas,created_at' +
+      '&order=nombre.asc'
+    );
+    clientes = data || [];
+    document.getElementById('topbarCount').textContent =
+      clientes.length ? `${clientes.length} cliente${clientes.length !== 1 ? 's' : ''}` : '';
+    aplicarFiltro();
+  } catch (err) {
+    document.getElementById('lista').innerHTML = `
+      <div class="estado-centro">
+        <div class="estado-icon">⚠️</div>
+        <div class="estado-titulo">Error de conexión</div>
+        <div class="estado-sub">${err.message}</div>
+      </div>`;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// BÚSQUEDA LOCAL (en memoria — evita round-trip por cada tecla)
+// ═══════════════════════════════════════════════════════════════
+let debounceTimer;
+function onSearch() {
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  document.getElementById('searchClear').classList.toggle('visible', q.length > 0);
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    clienteFiltrado = q
+      ? clientes.filter(c =>
+          (c.nombre     + ' ' + (c.apellido||'')).toLowerCase().includes(q) ||
+          (c.dominio_vehiculo||'').toLowerCase().includes(q) ||
+          (c.telefono   ||'').includes(q) ||
+          (c.email      ||'').toLowerCase().includes(q) ||
+          (c.dni        ||'').includes(q)
+        )
+      : clientes;
+    renderLista(clienteFiltrado);
+  }, 120);
+}
+
+function clearSearch() {
+  document.getElementById('searchInput').value = '';
+  document.getElementById('searchClear').classList.remove('visible');
+  clienteFiltrado = clientes;
+  renderLista(clienteFiltrado);
+}
+
+function aplicarFiltro() {
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  clienteFiltrado = q
+    ? clientes.filter(c =>
+        (c.nombre + ' ' + (c.apellido||'')).toLowerCase().includes(q) ||
+        (c.dominio_vehiculo||'').toLowerCase().includes(q) ||
+        (c.telefono||'').includes(q)
+      )
+    : [...clientes];
+  renderLista(clienteFiltrado);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER LISTA
+// ═══════════════════════════════════════════════════════════════
+function renderSkeletons() {
+  document.getElementById('lista').innerHTML = Array(5).fill(`
+    <div class="skeleton">
+      <div class="skel-line w70"></div>
+      <div class="skel-line w45"></div>
+      <div class="skel-line w55"></div>
+    </div>`).join('');
+}
+
+function renderLista(lista) {
+  const cont = document.getElementById('lista');
+
+  if (!lista.length) {
+    const sinBusqueda = !document.getElementById('searchInput').value.trim();
+    cont.innerHTML = `
+      <div class="estado-centro">
+        <div class="estado-icon">${sinBusqueda ? '👥' : '🔍'}</div>
+        <div class="estado-titulo">${sinBusqueda ? 'Sin clientes todavía' : 'Sin resultados'}</div>
+        <div class="estado-sub">${sinBusqueda
+          ? 'Tocá + para agregar tu primer cliente.'
+          : 'Probá con otro nombre, dominio o teléfono.'}</div>
+      </div>`;
+    return;
+  }
+
+  cont.innerHTML = lista.map(c => {
+    const iniciales = initiales(c.nombre, c.apellido);
+    const nombreCompleto = [c.nombre, c.apellido].filter(Boolean).join(' ');
+    const meta = [];
+    if (c.dominio_vehiculo) meta.push(`🚗 ${c.dominio_vehiculo}`);
+    if (c.marca_vehiculo)   meta.push(`${c.marca_vehiculo}${c.modelo_vehiculo ? ' ' + c.modelo_vehiculo : ''}`);
+    if (c.telefono)         meta.push(`📞 ${c.telefono}`);
+
+    return `
+    <div class="cliente-card" onclick="abrirDetalle('${c.id}')">
+      <div class="cliente-avatar">${iniciales}</div>
+      <div class="cliente-body">
+        <div class="cliente-nombre">${nombreCompleto}</div>
+        <div class="cliente-meta">
+          ${meta.map(m => `<span>${m}</span>`).join('')}
+        </div>
+      </div>
+      <div class="cliente-accion">›</div>
+    </div>`;
+  }).join('');
+}
+
+function initiales(nombre, apellido) {
+  const n = (nombre||'').trim()[0] || '';
+  const a = (apellido||'').trim()[0] || '';
+  return (n + a).toUpperCase() || '?';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DETALLE
+// ═══════════════════════════════════════════════════════════════
+function abrirDetalle(id) {
+  const c = clientes.find(x => x.id === id);
+  if (!c) return;
+  clienteActivo = c;
+
+  const nombreCompleto = [c.nombre, c.apellido].filter(Boolean).join(' ');
+  document.getElementById('detAvatar').textContent  = initiales(c.nombre, c.apellido);
+  document.getElementById('detNombre').textContent  = nombreCompleto;
+  document.getElementById('detDominio').textContent =
+    c.dominio_vehiculo
+      ? `${c.dominio_vehiculo}${c.marca_vehiculo ? ' · ' + c.marca_vehiculo : ''}${c.modelo_vehiculo ? ' ' + c.modelo_vehiculo : ''}${c.anio_vehiculo ? ' (' + c.anio_vehiculo + ')' : ''}`
+      : 'Sin vehículo registrado';
+
+  const rows = [
+    c.telefono      && { icon:'📞', label:'Teléfono',  val: c.telefono },
+    c.email         && { icon:'✉️', label:'Email',     val: c.email },
+    c.dni           && { icon:'🪪', label:'DNI',       val: c.dni },
+    c.dominio_vehiculo && { icon:'🚗', label:'Dominio',   val: c.dominio_vehiculo },
+    (c.marca_vehiculo||c.modelo_vehiculo||c.anio_vehiculo) && {
+      icon:'🔧', label:'Vehículo',
+      val: [c.marca_vehiculo, c.modelo_vehiculo, c.anio_vehiculo].filter(Boolean).join(' ')
+    },
+    c.compania_seguro && { icon:'🛡️', label:'Seguro',    val: c.compania_seguro },
+    c.nro_poliza    && { icon:'📄', label:'Póliza',    val: c.nro_poliza },
+    c.notas         && { icon:'📝', label:'Notas',     val: c.notas },
+  ].filter(Boolean);
+
+  document.getElementById('detBody').innerHTML = rows.length
+    ? rows.map(r => `
+      <div class="detalle-row">
+        <div class="detalle-row-icon">${r.icon}</div>
+        <div>
+          <div class="detalle-row-label">${r.label}</div>
+          <div class="detalle-row-val">${r.val}</div>
+        </div>
+      </div>`).join('')
+    : '<p style="color:var(--ink-4);font-size:13px;padding:8px 0">Sin datos adicionales.</p>';
+
+  document.getElementById('detalleOverlay').classList.add('open');
+}
+
+function cerrarDetalle() {
+  document.getElementById('detalleOverlay').classList.remove('open');
+}
+function cerrarDetalleSiClick(e) {
+  if (e.target === document.getElementById('detalleOverlay')) cerrarDetalle();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DRAWER CREAR / EDITAR
+// ═══════════════════════════════════════════════════════════════
+function abrirNuevo() {
+  modoEdicion = false;
+  clienteActivo = null;
+  document.getElementById('drawerTitulo').textContent = 'Nuevo cliente';
+  limpiarForm();
+  document.getElementById('drawerOverlay').classList.add('open');
+}
+
+function editarDesdeDetalle() {
+  cerrarDetalle();
+  if (!clienteActivo) return;
+  modoEdicion = true;
+  document.getElementById('drawerTitulo').textContent = 'Editar cliente';
+  poblarForm(clienteActivo);
+  document.getElementById('drawerOverlay').classList.add('open');
+}
+
+function cerrarDrawer() {
+  document.getElementById('drawerOverlay').classList.remove('open');
+}
+function cerrarDrawerSiClick(e) {
+  if (e.target === document.getElementById('drawerOverlay')) cerrarDrawer();
+}
+
+function limpiarForm() {
+  ['nombre','apellido','telefono','dni','email',
+   'dominio','marca','modelo','anio','seguro','poliza','notas']
+    .forEach(f => {
+      const el = document.getElementById('f-' + f);
+      if (el) el.value = '';
+    });
+  document.getElementById('f-nombre').classList.remove('error');
+}
+
+function poblarForm(c) {
+  const map = {
+    nombre: c.nombre, apellido: c.apellido, telefono: c.telefono,
+    dni: c.dni, email: c.email, dominio: c.dominio_vehiculo,
+    marca: c.marca_vehiculo, modelo: c.modelo_vehiculo, anio: c.anio_vehiculo,
+    seguro: c.compania_seguro, poliza: c.nro_poliza, notas: c.notas,
+  };
+  Object.entries(map).forEach(([k, v]) => {
+    const el = document.getElementById('f-' + k);
+    if (el) el.value = v || '';
+  });
+}
+
+function leerForm() {
+  const g = id => (document.getElementById('f-' + id)?.value || '').trim();
+  return {
+    nombre:           g('nombre'),
+    apellido:         g('apellido') || null,
+    telefono:         g('telefono') || null,
+    dni:              g('dni')      || null,
+    email:            g('email')    || null,
+    dominio_vehiculo: g('dominio')  || null,
+    marca_vehiculo:   g('marca')    || null,
+    modelo_vehiculo:  g('modelo')   || null,
+    anio_vehiculo:    g('anio') ? parseInt(g('anio')) : null,
+    compania_seguro:  g('seguro')   || null,
+    nro_poliza:       g('poliza')   || null,
+    notas:            g('notas')    || null,
+    updated_at:       new Date().toISOString(),
+  };
+}
+
+async function guardar() {
+  if (guardando) return;
+
+  const payload = leerForm();
+
+  // Validar contexto
+  if (!modoEdicion && !tallerId) {
+    showToast('Error: no se pudo identificar el taller. Recargá la página.', 'error');
+    return;
+  }
+
+  // Validar nombre obligatorio
+  if (!payload.nombre) {
+    document.getElementById('f-nombre').classList.add('error');
+    document.getElementById('f-nombre').focus();
+    return;
+  }
+  document.getElementById('f-nombre').classList.remove('error');
+
+  guardando = true;
+  const btn = document.getElementById('btnGuardar');
+  btn.disabled = true;
+  btn.textContent = 'Guardando…';
+
+  try {
+    if (modoEdicion && clienteActivo) {
+      const actualizado = await sbUpdate(clienteActivo.id, payload);
+      const idx = clientes.findIndex(c => c.id === clienteActivo.id);
+      if (idx >= 0) clientes[idx] = { ...clientes[idx], ...actualizado };
+      showToast('✓ Cliente actualizado');
+    } else {
+      const nuevo = await sbInsert({ ...payload, taller_id: tallerId });
+      clientes.unshift(nuevo);
+      clientes.sort((a, b) => (a.nombre||'').localeCompare(b.nombre||''));
+      showToast('✓ Cliente agregado');
+    }
+
+    document.getElementById('topbarCount').textContent =
+      `${clientes.length} cliente${clientes.length !== 1 ? 's' : ''}`;
+
+    aplicarFiltro();
+    cerrarDrawer();
+
+  } catch (err) {
+    showToast('Error: ' + err.message, 'error');
+  } finally {
+    guardando = false;
+    btn.disabled = false;
+    btn.textContent = 'Guardar';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ELIMINAR
+// ═══════════════════════════════════════════════════════════════
+function confirmarEliminar() {
+  if (!clienteActivo) return;
+  const nombre = [clienteActivo.nombre, clienteActivo.apellido].filter(Boolean).join(' ');
+  document.getElementById('confirmSub').textContent =
+    `Se eliminará a "${nombre}" y todos sus datos. Esta acción no se puede deshacer.`;
+  document.getElementById('confirmOverlay').classList.add('open');
+}
+
+function cerrarConfirm() {
+  document.getElementById('confirmOverlay').classList.remove('open');
+}
+
+async function eliminar() {
+  if (!clienteActivo) return;
+  cerrarConfirm();
+  cerrarDetalle();
+
+  try {
+    await sbDelete(clienteActivo.id);
+    clientes = clientes.filter(c => c.id !== clienteActivo.id);
+    clienteActivo = null;
+    document.getElementById('topbarCount').textContent =
+      clientes.length ? `${clientes.length} cliente${clientes.length !== 1 ? 's' : ''}` : '';
+    aplicarFiltro();
+    showToast('Cliente eliminado');
+  } catch (err) {
+    showToast('Error al eliminar: ' + err.message, 'error');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════════════
+let toastTimer;
+function showToast(msg, type = 'ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (type === 'error' ? ' error' : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ARRANQUE
+// ═══════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pedidos — Piezauto Point</title>
+<style>
+  :root {
+    --brand:      #1A1A2E;
+    --brand-mid:  #16213E;
+    --accent:     #E94560;
+    --ink-1:      #111827;
+    --ink-2:      #374151;
+    --ink-3:      #6B7280;
+    --ink-4:      #9CA3AF;
+    --surface:    #FFFFFF;
+    --surface-2:  #F9FAFB;
+    --surface-3:  #F3F4F6;
+    --line:       #E5E7EB;
+    --line-strong:#D1D5DB;
+    --green:      #059669;
+    --green-soft: #ECFDF5;
+    --amber:      #D97706;
+    --amber-soft: #FFFBEB;
+    --blue:       #2563EB;
+    --blue-soft:  #EFF6FF;
+    --red:        #DC2626;
+    --red-soft:   #FEF2F2;
+    --radius:     8px;
+    --radius-lg:  12px;
+    --shadow-sm:  0 1px 3px rgba(0,0,0,.07);
+    --shadow:     0 4px 16px rgba(0,0,0,.10);
+    --shadow-lg:  0 8px 32px rgba(0,0,0,.14);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--surface-2);
+    color: var(--ink-1);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .app-shell {
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--surface-2);
+  }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    background: var(--brand);
+    color: #fff;
+    padding: 0 14px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,.25);
+    flex-shrink: 0;
+  }
+  .topbar-back {
+    width: 34px; height: 34px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .topbar-back:hover { background: rgba(255,255,255,.12); }
+  .topbar-back svg { width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; }
+  .topbar-title { font-size: 15px; font-weight: 700; flex: 1; }
+
+  /* ── TABS ── */
+  .tabs {
+    display: flex;
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+    position: sticky;
+    top: 56px;
+    z-index: 90;
+    flex-shrink: 0;
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 13px 4px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink-3);
+    background: none;
+    border: none;
+    border-bottom: 2.5px solid transparent;
+    cursor: pointer;
+    transition: color .15s, border-color .15s;
+    font-family: inherit;
+    position: relative;
+  }
+  .tab-btn.active { color: var(--brand); border-bottom-color: var(--accent); }
+  .tab-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    margin-left: 5px;
+    vertical-align: middle;
+  }
+
+  /* ── PANELES ── */
+  .panel { display: none; flex: 1; flex-direction: column; }
+  .panel.active { display: flex; }
+
+  /* ══════════════════════════════════════════════
+     TAB CARRITO
+  ══════════════════════════════════════════════ */
+  .carrito-body { flex: 1; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+
+  /* Vacío */
+  .carrito-vacio {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 24px;
+    text-align: center;
+    gap: 12px;
+  }
+  .carrito-vacio-icon { font-size: 56px; }
+  .carrito-vacio h2 { font-size: 17px; font-weight: 600; color: var(--ink-2); }
+  .carrito-vacio p { font-size: 13px; color: var(--ink-3); line-height: 1.5; }
+  .btn-ir-catalogo {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--brand);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-lg);
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 8px;
+    font-family: inherit;
+    transition: opacity .15s;
+  }
+  .btn-ir-catalogo:hover { opacity: .88; }
+
+  /* Item del carrito */
+  .item-card {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--line);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+  }
+  .item-body { padding: 12px 14px 10px; display: flex; gap: 10px; }
+  .item-info { flex: 1; min-width: 0; }
+  .item-codigo {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--ink-3);
+    letter-spacing: .04em;
+    font-family: 'Courier New', monospace;
+    margin-bottom: 2px;
+  }
+  .item-desc {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink-1);
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .item-precio-unit {
+    font-size: 11px;
+    color: var(--ink-3);
+    margin-top: 2px;
+  }
+  .item-remove {
+    flex-shrink: 0;
+    width: 28px; height: 28px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+    border: none;
+    background: var(--red-soft);
+    color: var(--red);
+    font-size: 14px;
+    cursor: pointer;
+    transition: background .15s;
+    margin-top: 2px;
+  }
+  .item-remove:hover { background: #fecaca; }
+
+  .item-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 14px 10px;
+    border-top: 1px solid var(--line);
+  }
+
+  /* Stepper cantidad */
+  .stepper {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .stepper-btn {
+    width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    border: none;
+    background: var(--surface-2);
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--ink-2);
+    cursor: pointer;
+    transition: background .12s;
+    font-family: inherit;
+  }
+  .stepper-btn:hover { background: var(--surface-3); }
+  .stepper-btn:disabled { color: var(--ink-4); cursor: default; }
+  .stepper-val {
+    min-width: 36px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--ink-1);
+    border-left: 1px solid var(--line);
+    border-right: 1px solid var(--line);
+    padding: 0 4px;
+    height: 32px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .item-subtotal {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--ink-1);
+  }
+
+  /* Sección notas */
+  .notas-section {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--line);
+    padding: 14px;
+    box-shadow: var(--shadow-sm);
+  }
+  .notas-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin-bottom: 8px;
+  }
+  .notas-input {
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--ink-1);
+    background: var(--surface-2);
+    outline: none;
+    resize: none;
+    min-height: 72px;
+    transition: border-color .15s;
+  }
+  .notas-input:focus { border-color: var(--brand); background: var(--surface); }
+  .notas-input::placeholder { color: var(--ink-4); }
+
+  /* Resumen de totales */
+  .resumen-card {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--line);
+    padding: 14px;
+    box-shadow: var(--shadow-sm);
+  }
+  .resumen-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+    font-size: 13px;
+    color: var(--ink-2);
+  }
+  .resumen-row.total {
+    border-top: 1px solid var(--line);
+    margin-top: 6px;
+    padding-top: 10px;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--ink-1);
+  }
+  .resumen-row .muted { color: var(--ink-3); font-size: 12px; }
+
+  /* Botón confirmar */
+  .confirm-wrap {
+    padding: 12px;
+    background: var(--surface);
+    border-top: 1px solid var(--line);
+    flex-shrink: 0;
+  }
+  .btn-confirmar {
+    width: 100%;
+    background: var(--green);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-lg);
+    padding: 15px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: opacity .15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .btn-confirmar:hover { opacity: .9; }
+  .btn-confirmar:disabled { opacity: .45; cursor: default; }
+
+  /* Estado de envío */
+  .enviando-overlay {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 24px;
+    gap: 16px;
+    text-align: center;
+  }
+  .enviando-overlay.visible { display: flex; }
+  .spinner {
+    width: 48px; height: 48px;
+    border: 4px solid var(--line);
+    border-top-color: var(--brand);
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Confirmación exitosa */
+  .exito-overlay {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 24px;
+    gap: 14px;
+    text-align: center;
+    flex: 1;
+  }
+  .exito-overlay.visible { display: flex; }
+  .exito-icon { font-size: 64px; }
+  .exito-titulo { font-size: 20px; font-weight: 700; color: var(--ink-1); }
+  .exito-sub { font-size: 14px; color: var(--ink-3); line-height: 1.5; max-width: 280px; }
+  .exito-numero {
+    background: var(--brand);
+    color: #fff;
+    border-radius: var(--radius-lg);
+    padding: 14px 24px;
+    font-size: 13px;
+    font-family: 'Courier New', monospace;
+    font-weight: 700;
+    letter-spacing: .06em;
+    word-break: break-all;
+    text-align: center;
+    max-width: 320px;
+    width: 100%;
+  }
+  .btn-nuevo-pedido {
+    background: var(--surface);
+    color: var(--brand);
+    border: 2px solid var(--brand);
+    border-radius: var(--radius-lg);
+    padding: 12px 28px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    margin-top: 8px;
+    transition: background .15s;
+  }
+  .btn-nuevo-pedido:hover { background: var(--surface-3); }
+
+  /* ══════════════════════════════════════════════
+     TAB HISTORIAL
+  ══════════════════════════════════════════════ */
+  .historial-body {
+    flex: 1;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow-y: auto;
+  }
+
+  .pedido-card {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+  }
+  .pedido-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 12px 14px 10px;
+    gap: 8px;
+  }
+  .pedido-id {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--ink-3);
+    font-family: 'Courier New', monospace;
+    letter-spacing: .04em;
+    margin-bottom: 2px;
+  }
+  .pedido-fecha { font-size: 12px; color: var(--ink-3); }
+  .pedido-total { font-size: 17px; font-weight: 700; color: var(--ink-1); text-align: right; }
+  .pedido-items-count { font-size: 11px; color: var(--ink-3); text-align: right; }
+
+  .pedido-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 14px 10px;
+    border-top: 1px solid var(--line);
+  }
+  .pedido-notas {
+    font-size: 12px;
+    color: var(--ink-3);
+    font-style: italic;
+    flex: 1;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    padding-right: 8px;
+  }
+
+  /* Badges de estado */
+  .estado-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .estado-pendiente   { background: var(--amber-soft); color: var(--amber); }
+  .estado-preparando  { background: var(--blue-soft);  color: var(--blue); }
+  .estado-enviado     { background: #f0fdf4; color: #15803d; }
+  .estado-entregado   { background: var(--green-soft); color: var(--green); }
+  .estado-pagado      { background: var(--green-soft); color: var(--green); }
+  .estado-cancelado   { background: var(--red-soft);   color: var(--red); }
+  .estado-devolucion  { background: var(--surface-3);  color: var(--ink-2); }
+
+  .estado-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+  /* Expandible items */
+  .pedido-items {
+    display: none;
+    background: var(--surface-2);
+    border-top: 1px solid var(--line);
+    padding: 10px 14px;
+  }
+  .pedido-items.open { display: block; }
+  .pedido-item-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+    font-size: 12px;
+    border-bottom: 1px solid var(--line);
+    gap: 8px;
+  }
+  .pedido-item-row:last-child { border-bottom: none; }
+  .pedido-item-desc { flex: 1; color: var(--ink-2); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .pedido-item-qty { color: var(--ink-3); flex-shrink: 0; }
+  .pedido-item-sub { font-weight: 600; color: var(--ink-1); flex-shrink: 0; }
+
+  .btn-expandir {
+    background: none;
+    border: none;
+    font-size: 11px;
+    color: var(--blue);
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+    font-family: inherit;
+  }
+
+  /* Estado vacío / loading historial */
+  .hist-estado {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 24px;
+    text-align: center;
+    gap: 10px;
+    color: var(--ink-3);
+    font-size: 13px;
+  }
+  .hist-estado-icon { font-size: 40px; }
+
+  /* Paginación historial */
+  .hist-pag {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 0 16px;
+  }
+  .pag-btn {
+    padding: 8px 16px;
+    border-radius: var(--radius);
+    border: 1.5px solid var(--line-strong);
+    background: var(--surface);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink-2);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all .15s;
+  }
+  .pag-btn:hover { border-color: var(--brand); color: var(--brand); }
+  .pag-btn:disabled { opacity: .35; cursor: default; }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(60px);
+    background: var(--ink-1);
+    color: #fff;
+    padding: 11px 20px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: var(--shadow-lg);
+    opacity: 0;
+    transition: opacity .2s, transform .2s;
+    pointer-events: none;
+    z-index: 200;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.error { background: var(--accent); }
+
+  .bottom-spacer { height: 16px; flex-shrink: 0; }
+</style>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="topbar-back" onclick="history.back()">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    </div>
+    <span class="topbar-title">Pedidos</span>
+  </header>
+
+  <!-- TABS -->
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="tab-carrito" onclick="switchTab(this)">
+      Carrito <span class="tab-badge" id="cartBadge" style="display:none"></span>
+    </button>
+    <button class="tab-btn" data-tab="tab-historial" onclick="switchTab(this)">
+      Historial
+    </button>
+  </nav>
+
+  <!-- ══ TAB CARRITO ══ -->
+  <div class="panel active" id="tab-carrito">
+
+    <!-- Carrito vacío -->
+    <div class="carrito-vacio" id="carritoVacio" style="display:none">
+      <div class="carrito-vacio-icon">🛒</div>
+      <h2>El carrito está vacío</h2>
+      <p>Buscá piezas en el catálogo y agregálas para armar un pedido.</p>
+      <button class="btn-ir-catalogo" onclick="window.location.href='/taller/catalogo.html'">
+        🔍 Ir al catálogo
+      </button>
+    </div>
+
+    <!-- Enviando -->
+    <div class="enviando-overlay" id="enviandoOverlay">
+      <div class="spinner"></div>
+      <p style="color:var(--ink-3);font-size:14px">Confirmando pedido…</p>
+    </div>
+
+    <!-- Éxito -->
+    <div class="exito-overlay" id="exitoOverlay">
+      <div class="exito-icon">✅</div>
+      <div class="exito-titulo">¡Pedido confirmado!</div>
+      <div class="exito-sub">El pedido quedó registrado. Piezauto lo ve en el panel admin para preparar el despacho.</div>
+      <div class="exito-numero" id="exitoNumero"></div>
+      <button class="btn-nuevo-pedido" onclick="nuevoCarrito()">+ Nuevo pedido</button>
+    </div>
+
+    <!-- Contenido carrito -->
+    <div class="carrito-body" id="carritoContenido">
+      <div id="listaItems"></div>
+
+      <div class="notas-section" id="notasSection" style="display:none">
+        <div class="notas-label">Notas para Piezauto</div>
+        <textarea class="notas-input" id="notasInput"
+          placeholder="Ej: Urgente. Llevar a taller. Confirmar disponibilidad antes de preparar."
+          rows="3"></textarea>
+      </div>
+
+      <div class="resumen-card" id="resumenCard" style="display:none">
+        <div class="resumen-row">
+          <span>Subtotal</span>
+          <span id="resumenSubtotal">—</span>
+        </div>
+        <div class="resumen-row">
+          <span class="muted">Descuento taller</span>
+          <span id="resumenDescuento" class="muted">—</span>
+        </div>
+        <div class="resumen-row total">
+          <span>Total</span>
+          <span id="resumenTotal">—</span>
+        </div>
+        <div class="resumen-row" style="margin-top:8px">
+          <span class="muted">Forma de pago</span>
+          <span style="font-size:12px;font-weight:600">Cuenta corriente</span>
+        </div>
+      </div>
+
+      <div class="bottom-spacer"></div>
+    </div>
+
+    <!-- Botón confirmar -->
+    <div class="confirm-wrap" id="confirmWrap" style="display:none">
+      <button class="btn-confirmar" id="btnConfirmar" onclick="confirmarPedido()">
+        ✅ Confirmar pedido
+      </button>
+    </div>
+
+  </div><!-- /tab-carrito -->
+
+  <!-- ══ TAB HISTORIAL ══ -->
+  <div class="panel" id="tab-historial">
+    <div class="historial-body" id="historialBody">
+      <div class="hist-estado" id="histEstado">
+        <div class="hist-estado-icon">⏳</div>
+        Cargando historial…
+      </div>
+    </div>
+  </div>
+
+</div><!-- /app-shell -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════════════════════
+const SUPABASE_URL  = 'https://mqxowotdeibllkitkije.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xeG93b3RkZWlibGxraXRraWplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxMzgxNDYsImV4cCI6MjA5MTcxNDE0Nn0.V_Pr0elBurAK7OPKFL3OoZwBmb-bI-Mcz8N1U8yblG8';
+
+const HIST_PAGE_SIZE = 15;
+
+// ═══════════════════════════════════════════════════════════════
+// ESTADO
+// ═══════════════════════════════════════════════════════════════
+let carrito       = JSON.parse(localStorage.getItem('point_carrito') || '[]');
+let descuento     = 0;       // descuento_piezauto del taller (0–1)
+let clienteId     = null;    // id en cat_clientes_finales
+let tallerId      = null;    // id en cat_recomendaciones_talleres
+let histPage      = 0;
+let histTotal     = 0;
+let histLoaded    = false;
+let expandedCards = new Set();
+
+// ═══════════════════════════════════════════════════════════════
+// API HELPERS
+// ═══════════════════════════════════════════════════════════════
+function getToken() {
+  try {
+    const k = Object.keys(localStorage).find(k => k.includes('auth-token'));
+    if (k) return JSON.parse(localStorage.getItem(k))?.access_token || SUPABASE_ANON;
+  } catch (_) {}
+  return SUPABASE_ANON;
+}
+
+async function sbGet(table, qs) {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${qs}`, {
+    headers: {
+      'apikey': SUPABASE_ANON,
+      'Authorization': `Bearer ${getToken()}`,
+      'Prefer': 'count=exact',
+    }
+  });
+  const count = parseInt(r.headers.get('Content-Range')?.split('/')[1] || '0', 10);
+  if (!r.ok) { const b = await r.json().catch(() => ({})); throw new Error(b.message || r.status); }
+  return { data: await r.json(), count };
+}
+
+async function sbPost(table, body) {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+    method: 'POST',
+    headers: {
+      'apikey': SUPABASE_ANON,
+      'Authorization': `Bearer ${getToken()}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation',
+    },
+    body: JSON.stringify(body),
+  });
+  if (!r.ok) { const b = await r.json().catch(() => ({})); throw new Error(b.message || r.status); }
+  return r.json();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+async function init() {
+  await cargarContextoTaller();
+  renderCarrito();
+  actualizarBadge();
+}
+
+async function cargarContextoTaller() {
+  try {
+    // Descuento y taller_id desde cat_recomendaciones_talleres (RLS filtra por JWT)
+    const { data: talleres } = await sbGet(
+      'cat_recomendaciones_talleres',
+      'select=id,descuento_piezauto&limit=1'
+    );
+    if (talleres?.length) {
+      tallerId = talleres[0].id;
+      descuento = parseFloat(talleres[0].descuento_piezauto) || 0;
+    }
+
+    // cliente_id: buscar en cat_clientes_finales por auth_user_id = auth.uid()
+    // El taller debe tener una fila en cat_clientes_finales para poder insertar en cat_operaciones_b2c
+    // (cliente_id ahora nullable para pedidos de taller — ALTER ejecutado)
+    const { data: clientes } = await sbGet(
+      'cat_clientes_finales',
+      'select=id&limit=1'
+      // RLS de cat_clientes_finales filtra por auth.uid() — retorna solo la fila del usuario autenticado
+    );
+    if (clientes?.length) {
+      clienteId = clientes[0].id;
+    }
+  } catch (e) {
+    console.warn('cargarContextoTaller:', e.message);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER CARRITO
+// ═══════════════════════════════════════════════════════════════
+function renderCarrito() {
+  const vacio      = document.getElementById('carritoVacio');
+  const contenido  = document.getElementById('carritoContenido');
+  const confirmW   = document.getElementById('confirmWrap');
+  const notas      = document.getElementById('notasSection');
+  const resumen    = document.getElementById('resumenCard');
+  const lista      = document.getElementById('listaItems');
+
+  if (!carrito.length) {
+    vacio.style.display     = '';
+    contenido.style.display = 'none';
+    confirmW.style.display  = 'none';
+    return;
+  }
+
+  vacio.style.display     = 'none';
+  contenido.style.display = '';
+  confirmW.style.display  = '';
+  notas.style.display     = '';
+  resumen.style.display   = '';
+
+  lista.innerHTML = carrito.map((item, i) => {
+    const precioUnitario = descuento > 0
+      ? item.precio_lista * (1 - descuento)
+      : item.precio_lista;
+    const sub = precioUnitario * item.cantidad;
+    return `
+    <div class="item-card" id="item-${i}">
+      <div class="item-body">
+        <div class="item-info">
+          <div class="item-codigo">${item.codigo_piezauto}</div>
+          <div class="item-desc">${item.descripcion}</div>
+          <div class="item-precio-unit">${fmt(precioUnitario)} c/u</div>
+        </div>
+        <button class="item-remove" onclick="quitarItem(${i})" title="Quitar">✕</button>
+      </div>
+      <div class="item-footer">
+        <div class="stepper">
+          <button class="stepper-btn" onclick="cambiarCantidad(${i}, -1)"
+                  ${item.cantidad <= 1 ? 'disabled' : ''}>−</button>
+          <div class="stepper-val">${item.cantidad}</div>
+          <button class="stepper-btn" onclick="cambiarCantidad(${i}, +1)">+</button>
+        </div>
+        <div class="item-subtotal">${fmt(sub)}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  actualizarResumen();
+}
+
+function actualizarResumen() {
+  let subtotal = 0;
+  let totalConDto = 0;
+
+  carrito.forEach(item => {
+    const base = item.precio_lista || 0;
+    subtotal    += base * item.cantidad;
+    const bonif = descuento > 0 ? base * (1 - descuento) : base;
+    totalConDto += bonif * item.cantidad;
+  });
+
+  const dtoMonto = subtotal - totalConDto;
+
+  document.getElementById('resumenSubtotal').textContent  = fmt(subtotal);
+  document.getElementById('resumenDescuento').textContent =
+    descuento > 0 ? `− ${fmt(dtoMonto)} (${(descuento * 100).toFixed(0)}%)` : '—';
+  document.getElementById('resumenTotal').textContent     = fmt(totalConDto);
+}
+
+function actualizarBadge() {
+  const n = carrito.length;
+  const badge = document.getElementById('cartBadge');
+  badge.textContent = n;
+  badge.style.display = n > 0 ? '' : 'none';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ACCIONES CARRITO
+// ═══════════════════════════════════════════════════════════════
+function quitarItem(i) {
+  carrito.splice(i, 1);
+  guardarCarrito();
+  renderCarrito();
+  actualizarBadge();
+}
+
+function cambiarCantidad(i, delta) {
+  carrito[i].cantidad = Math.max(1, (carrito[i].cantidad || 1) + delta);
+  guardarCarrito();
+  renderCarrito();
+}
+
+function guardarCarrito() {
+  localStorage.setItem('point_carrito', JSON.stringify(carrito));
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CONFIRMAR PEDIDO
+// ═══════════════════════════════════════════════════════════════
+async function confirmarPedido() {
+  if (!carrito.length) return;
+
+  const btn = document.getElementById('btnConfirmar');
+  btn.disabled = true;
+
+  // Mostrar overlay de envío
+  document.getElementById('carritoContenido').style.display = 'none';
+  document.getElementById('confirmWrap').style.display      = 'none';
+  document.getElementById('enviandoOverlay').classList.add('visible');
+
+  try {
+    // ── Calcular totales ─────────────────────────────────────
+    let subtotalBase = 0;
+    carrito.forEach(it => { subtotalBase += (it.precio_lista || 0) * it.cantidad; });
+
+    const descuentoMonto = descuento > 0 ? subtotalBase * descuento : 0;
+    const total = subtotalBase - descuentoMonto;
+
+    // ── INSERT operacion cabecera ────────────────────────────
+    const notas = document.getElementById('notasInput').value.trim();
+
+    const operacion = {
+      ...(clienteId ? { cliente_id: clienteId } : {}),  // nullable post-ALTER
+      taller_id:                  tallerId,
+      estado:                     'pendiente',
+      metodo_pago:                'manual',
+      canal_pago:                 null,
+      subtotal:                   subtotalBase,
+      descuento:                  descuentoMonto,
+      credito_aplicado:           0,
+      total:                      total,
+      notas:                      notas || null,
+      pendiente_aprobacion_taller: false,
+    };
+
+    const [operacionCreada] = await sbPost('cat_operaciones_b2c', operacion);
+    const operacionId = operacionCreada.id;
+
+    // ── INSERT items ─────────────────────────────────────────
+    const items = carrito.map(item => {
+      const precioUnit = descuento > 0
+        ? item.precio_lista * (1 - descuento)
+        : item.precio_lista;
+      return {
+        operacion_id:    operacionId,
+        sku_id:          item.id,
+        cantidad:        item.cantidad,
+        precio_unitario: precioUnit,
+        subtotal:        precioUnit * item.cantidad,
+      };
+    });
+
+    await sbPost('cat_operaciones_b2c_items', items);
+
+    // ── Éxito ────────────────────────────────────────────────
+    document.getElementById('enviandoOverlay').classList.remove('visible');
+    document.getElementById('exitoNumero').textContent = operacionId;
+    document.getElementById('exitoOverlay').classList.add('visible');
+
+    // Limpiar carrito
+    carrito = [];
+    guardarCarrito();
+    actualizarBadge();
+    histLoaded = false; // forzar reload del historial
+
+  } catch (err) {
+    document.getElementById('enviandoOverlay').classList.remove('visible');
+    document.getElementById('carritoContenido').style.display = '';
+    document.getElementById('confirmWrap').style.display      = '';
+    btn.disabled = false;
+    showToast('Error al confirmar: ' + err.message, 'error');
+    console.error('confirmarPedido:', err);
+  }
+}
+
+function nuevoCarrito() {
+  document.getElementById('exitoOverlay').classList.remove('visible');
+  document.getElementById('carritoContenido').style.display = '';
+  document.getElementById('confirmWrap').style.display      = '';
+  renderCarrito();
+  actualizarBadge();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HISTORIAL
+// ═══════════════════════════════════════════════════════════════
+async function cargarHistorial(page = 0) {
+  const body = document.getElementById('historialBody');
+  body.innerHTML = '<div class="hist-estado"><div class="hist-estado-icon">⏳</div>Cargando…</div>';
+
+  try {
+    const params = new URLSearchParams({
+      select:   'id,estado,subtotal,descuento,total,metodo_pago,notas,created_at',
+      order:    'created_at.desc',
+      limit:    HIST_PAGE_SIZE,
+      offset:   page * HIST_PAGE_SIZE,
+    });
+
+    // Filtrar por taller_id: si RLS no lo hace automáticamente, lo forzamos explícito
+    if (tallerId) params.set('taller_id', `eq.${tallerId}`);
+
+    const { data: pedidos, count } = await sbGet('cat_operaciones_b2c', params.toString());
+    histTotal = count;
+    histPage  = page;
+    histLoaded = true;
+
+    if (!pedidos?.length) {
+      body.innerHTML = `
+        <div class="hist-estado">
+          <div class="hist-estado-icon">📋</div>
+          Todavía no hay pedidos registrados.
+        </div>`;
+      return;
+    }
+
+    const totalPags   = Math.ceil(count / HIST_PAGE_SIZE);
+    const hayAntes    = page > 0;
+    const hayDespues  = page < totalPags - 1;
+
+    const cards = pedidos.map(p => {
+      const estadoCls  = `estado-${p.estado}`;
+      const estadoLabel = {
+        pendiente:  '⏳ Pendiente',
+        pagado:     '💳 Pagado',
+        preparando: '📦 Preparando',
+        enviado:    '🚚 Enviado',
+        entregado:  '✅ Entregado',
+        cancelado:  '❌ Cancelado',
+        devolucion: '↩️ Devolución',
+      }[p.estado] || p.estado;
+
+      const fecha = new Date(p.created_at).toLocaleDateString('es-AR', {
+        day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit'
+      });
+
+      return `
+      <div class="pedido-card">
+        <div class="pedido-header">
+          <div>
+            <div class="pedido-id">${p.id.slice(0, 8).toUpperCase()}…</div>
+            <div class="pedido-fecha">${fecha}</div>
+          </div>
+          <div>
+            <div class="pedido-total">${fmt(p.total)}</div>
+            <div class="pedido-items-count">
+              <button class="btn-expandir" onclick="toggleItems('${p.id}', this)">
+                Ver ítems ▾
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="pedido-footer">
+          <div class="pedido-notas">${p.notas || '—'}</div>
+          <span class="estado-badge ${estadoCls}">
+            <div class="estado-dot"></div>
+            ${estadoLabel}
+          </span>
+        </div>
+        <div class="pedido-items" id="items-${p.id}">
+          <div style="color:var(--ink-4);font-size:12px;text-align:center;padding:8px">
+            ⏳ Cargando ítems…
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+
+    const paginacion = totalPags > 1 ? `
+      <div class="hist-pag">
+        <button class="pag-btn" onclick="cargarHistorial(${page - 1})" ${!hayAntes ? 'disabled' : ''}>← Anterior</button>
+        <button class="pag-btn" onclick="cargarHistorial(${page + 1})" ${!hayDespues ? 'disabled' : ''}>Siguiente →</button>
+      </div>` : '';
+
+    body.innerHTML = cards + paginacion;
+
+  } catch (err) {
+    body.innerHTML = `
+      <div class="hist-estado">
+        <div class="hist-estado-icon">⚠️</div>
+        Error cargando historial: ${err.message}
+      </div>`;
+    console.error('cargarHistorial:', err);
+  }
+}
+
+async function toggleItems(operacionId, btn) {
+  const panel = document.getElementById('items-' + operacionId);
+  const abierto = panel.classList.contains('open');
+
+  if (abierto) {
+    panel.classList.remove('open');
+    btn.textContent = 'Ver ítems ▾';
+    return;
+  }
+
+  panel.classList.add('open');
+  btn.textContent = 'Ocultar ▴';
+
+  if (panel.dataset.loaded) return; // ya cargados
+
+  try {
+    const { data: items } = await sbGet(
+      'cat_operaciones_b2c_items',
+      `select=cantidad,precio_unitario,subtotal,sku_id,cat_skus(codigo_piezauto,descripcion)` +
+      `&operacion_id=eq.${operacionId}`
+    );
+
+    if (!items?.length) {
+      panel.innerHTML = '<div style="color:var(--ink-4);font-size:12px;padding:8px;text-align:center">Sin ítems</div>';
+    } else {
+      panel.innerHTML = items.map(it => {
+        const sku = it.cat_skus || {};
+        return `
+        <div class="pedido-item-row">
+          <div class="pedido-item-desc">${sku.codigo_piezauto || ''} — ${sku.descripcion || it.sku_id}</div>
+          <div class="pedido-item-qty">×${it.cantidad}</div>
+          <div class="pedido-item-sub">${fmt(it.subtotal)}</div>
+        </div>`;
+      }).join('');
+    }
+    panel.dataset.loaded = '1';
+  } catch (err) {
+    panel.innerHTML = `<div style="color:var(--red);font-size:12px;padding:8px">Error: ${err.message}</div>`;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TABS
+// ═══════════════════════════════════════════════════════════════
+function switchTab(btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(btn.dataset.tab).classList.add('active');
+
+  if (btn.dataset.tab === 'tab-historial' && !histLoaded) {
+    cargarHistorial(0);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FORMATO
+// ═══════════════════════════════════════════════════════════════
+function fmt(n) {
+  if (n == null || isNaN(n)) return '—';
+  return '$\u202F' + Math.round(n).toLocaleString('es-AR');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════════════
+let toastTimer;
+function showToast(msg, type = 'ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (type === 'error' ? ' error' : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 4000);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ARRANQUE
+// ═══════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
