@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Turnos — Admin Piezauto</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <style>
+    :root {
+      --rojo:#E94560; --negro:#1A1A2E; --gris:#F3F4F6;
+      --ink-1:#111827; --ink-2:#374151; --ink-3:#6B7280; --ink-4:#9CA3AF;
+      --surface:#fff; --line:#E5E7EB; --line-strong:#D1D5DB;
+      --green:#059669; --green-soft:#ECFDF5;
+      --amber:#D97706; --amber-soft:#FFFBEB;
+      --blue:#2563EB; --blue-soft:#EFF6FF;
+      --red:#DC2626; --red-soft:#FEF2F2;
+      --purple:#7C3AED;
+      --radius:8px; --radius-lg:12px;
+      --sombra:0 2px 8px rgba(0,0,0,.08);
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--gris);color:var(--ink-1);font-size:14px;line-height:1.5}
+    button{font-family:inherit}
+
+    /* Layout admin — asume que admin/index.html ya tiene el sidebar */
+    .page-wrap { max-width: 1100px; margin: 0 auto; padding: 24px 20px 60px; }
+
+    /* Header */
+    .page-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:12px; }
+    .page-title { font-size:20px; font-weight:800; }
+    .page-sub   { font-size:13px; color:var(--ink-3); }
+
+    /* KPIs */
+    .kpi-row { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:20px; }
+    @media(max-width:700px){ .kpi-row { grid-template-columns:1fr 1fr; } }
+    .kpi { background:var(--surface); border-radius:var(--radius-lg); padding:16px; box-shadow:var(--sombra); }
+    .kpi-num   { font-size:28px; font-weight:800; line-height:1; }
+    .kpi-label { font-size:11px; color:var(--ink-3); font-weight:700; text-transform:uppercase; letter-spacing:.04em; margin-top:4px; }
+    .kpi-green .kpi-num  { color:var(--green); }
+    .kpi-amber .kpi-num  { color:var(--amber); }
+    .kpi-blue  .kpi-num  { color:var(--blue); }
+    .kpi-purple.kpi-num  { color:var(--purple); }
+
+    /* Filtros */
+    .filtros { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; align-items:center; }
+    .filtro-select {
+      padding:8px 12px; border:1.5px solid var(--line-strong); border-radius:var(--radius);
+      font-size:13px; font-family:inherit; color:var(--ink-1); background:var(--surface);
+      outline:none; cursor:pointer; min-width:140px;
+    }
+    .filtro-select:focus { border-color:var(--negro); }
+    .filtro-date { padding:7px 10px; border:1.5px solid var(--line-strong); border-radius:var(--radius); font-size:13px; font-family:inherit; outline:none; }
+    .filtro-date:focus { border-color:var(--negro); }
+    .btn-reset { padding:8px 14px; border:1.5px solid var(--line-strong); border-radius:var(--radius); background:var(--surface); font-size:13px; font-weight:600; cursor:pointer; color:var(--ink-2); transition:background .15s; }
+    .btn-reset:hover { background:var(--gris); }
+    .result-count { font-size:12px; color:var(--ink-3); margin-left:auto; }
+
+    /* Tabla */
+    .table-card { background:var(--surface); border-radius:var(--radius-lg); box-shadow:var(--sombra); overflow:hidden; }
+    .table-scroll { overflow-x:auto; }
+    table { width:100%; border-collapse:collapse; min-width:700px; }
+    thead tr { background:var(--negro); }
+    thead th { padding:12px 14px; font-size:11px; font-weight:700; color:#fff; text-align:left; text-transform:uppercase; letter-spacing:.04em; white-space:nowrap; }
+    tbody tr { border-bottom:1px solid var(--line); transition:background .1s; }
+    tbody tr:last-child { border-bottom:none; }
+    tbody tr:hover { background:#fafafa; }
+    td { padding:11px 14px; font-size:13px; color:var(--ink-1); vertical-align:middle; }
+    td.muted { color:var(--ink-3); }
+    .td-nombre { font-weight:700; max-width:160px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+    .td-taller  { font-size:12px; color:var(--ink-3); max-width:120px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+    .td-mono    { font-family:monospace; font-size:11px; color:var(--ink-4); }
+
+    /* Badges estado */
+    .badge { display:inline-flex; align-items:center; gap:4px; padding:3px 9px; border-radius:10px; font-size:10px; font-weight:700; }
+    .b-pendiente  { background:var(--amber-soft); color:var(--amber); }
+    .b-confirmado { background:var(--blue-soft);  color:var(--blue); }
+    .b-en_proceso { background:#F5F3FF; color:var(--purple); }
+    .b-finalizado { background:var(--green-soft); color:var(--green); }
+    .b-cancelado  { background:var(--red-soft);   color:var(--red); }
+
+    /* Badges tipo */
+    .bt-inspeccion { background:#F0F9FF; color:#0369A1; font-size:10px; font-weight:700; padding:2px 7px; border-radius:8px; }
+    .bt-trabajo    { background:#F0FDF4; color:#166534; font-size:10px; font-weight:700; padding:2px 7px; border-radius:8px; }
+    .bt-consulta   { background:var(--amber-soft); color:var(--amber); font-size:10px; font-weight:700; padding:2px 7px; border-radius:8px; }
+    .bt-reclamo    { background:var(--red-soft);   color:var(--red);   font-size:10px; font-weight:700; padding:2px 7px; border-radius:8px; }
+
+    /* Acciones */
+    .btn-accion { padding:5px 10px; border-radius:6px; font-size:11px; font-weight:700; border:none; cursor:pointer; font-family:inherit; transition:opacity .15s; }
+    .btn-ver    { background:var(--negro); color:#fff; text-decoration:none; display:inline-flex; align-items:center; gap:4px; }
+    .btn-ver:hover { opacity:.85; }
+
+    .select-estado { padding:4px 8px; border:1.5px solid var(--line-strong); border-radius:6px; font-size:11px; font-family:inherit; outline:none; cursor:pointer; }
+    .select-estado:focus { border-color:var(--negro); }
+
+    /* Paginación */
+    .pag { display:flex; justify-content:center; gap:8px; padding:16px 0; }
+    .pag-btn { padding:8px 16px; border-radius:var(--radius); border:1.5px solid var(--line-strong); background:var(--surface); font-size:13px; font-weight:600; color:var(--ink-2); cursor:pointer; font-family:inherit; transition:all .15s; }
+    .pag-btn:hover { border-color:var(--negro); color:var(--negro); }
+    .pag-btn:disabled { opacity:.35; cursor:default; }
+    .pag-info { font-size:12px; color:var(--ink-3); display:flex; align-items:center; }
+
+    /* Spinner */
+    .spinner-wrap { display:flex; justify-content:center; padding:40px; }
+    .spinner { width:28px; height:28px; border:3px solid #eee; border-top-color:var(--rojo); border-radius:50%; animation:spin .8s linear infinite; }
+    @keyframes spin { to{transform:rotate(360deg)} }
+
+    /* Toast */
+    .toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(60px); background:var(--ink-1); color:#fff; padding:11px 20px; border-radius:20px; font-size:13px; font-weight:600; box-shadow:0 4px 20px rgba(0,0,0,.2); opacity:0; transition:opacity .2s,transform .2s; pointer-events:none; z-index:500; }
+    .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+    .toast.error { background:var(--rojo); }
+
+    /* Header admin simple */
+    .admin-topbar { background:var(--negro); color:#fff; padding:0 20px; height:52px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 2px 8px rgba(0,0,0,.3); }
+    .admin-topbar-title { font-size:15px; font-weight:800; }
+    .admin-topbar a { color:#aaa; font-size:13px; text-decoration:none; }
+    .admin-topbar a:hover { color:#fff; }
+  </style>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/js/supabase.js"></script>
+<script src="/js/auth-b2c.js"></script>
+
+<div class="admin-topbar">
+  <div class="admin-topbar-title">🔧 Admin Piezauto — Turnos</div>
+  <a href="index.html">← Panel admin</a>
+</div>
+
+<div class="page-wrap">
+
+  <div class="page-header">
+    <div>
+      <div class="page-title">📅 Gestión de turnos</div>
+      <div class="page-sub">Todos los talleres · en tiempo real</div>
+    </div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-row">
+    <div class="kpi kpi-amber">
+      <div class="kpi-num" id="kpiHoy">—</div>
+      <div class="kpi-label">Turnos hoy</div>
+    </div>
+    <div class="kpi kpi-blue">
+      <div class="kpi-num" id="kpiPendientes">—</div>
+      <div class="kpi-label">Pendientes de confirmar</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-num" id="kpiEnProceso">—</div>
+      <div class="kpi-label">En proceso ahora</div>
+    </div>
+    <div class="kpi kpi-green">
+      <div class="kpi-num" id="kpiFinMes">—</div>
+      <div class="kpi-label">Finalizados este mes</div>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="filtros">
+    <select class="filtro-select" id="filtroTaller" onchange="aplicarFiltros()">
+      <option value="">Todos los talleres</option>
+    </select>
+    <select class="filtro-select" id="filtroEstado" onchange="aplicarFiltros()">
+      <option value="">Todos los estados</option>
+      <option value="pendiente">Pendiente</option>
+      <option value="confirmado">Confirmado</option>
+      <option value="en_proceso">En proceso</option>
+      <option value="finalizado">Finalizado</option>
+      <option value="cancelado">Cancelado</option>
+    </select>
+    <select class="filtro-select" id="filtroTipo" onchange="aplicarFiltros()">
+      <option value="">Todos los tipos</option>
+      <option value="inspeccion_presupuesto">Inspección / Presupuesto</option>
+      <option value="inicio_trabajo">Inicio de trabajo</option>
+      <option value="consulta">Consulta</option>
+      <option value="reclamo">Reclamo</option>
+    </select>
+    <input class="filtro-date" type="date" id="filtroFechaDesde" onchange="aplicarFiltros()" title="Desde">
+    <input class="filtro-date" type="date" id="filtroFechaHasta" onchange="aplicarFiltros()" title="Hasta">
+    <button class="btn-reset" onclick="resetFiltros()">Limpiar</button>
+    <span class="result-count" id="resultCount"></span>
+  </div>
+
+  <!-- Tabla -->
+  <div class="table-card">
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Fecha / Hora</th>
+            <th>Taller</th>
+            <th>Cliente</th>
+            <th>Vehículo</th>
+            <th>Tipo</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tablaTurnos">
+          <tr><td colspan="7"><div class="spinner-wrap"><div class="spinner"></div></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="pag" id="paginacion"></div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SB_URL     = 'https://mqxowotdeibllkitkije.supabase.co';
+const SB_ANON    = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xeG93b3RkZWlibGxraXRraWplIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NjEzODE0NiwiZXhwIjoyMDkxNzE0MTQ2fQ._vUFd0bRPiJ59PIqlvUebq0v_X9JM7Twlr1Ri1_TIzI'; // service role — admin page
+
+// Nota: en producción reemplazar SB_ANON por la service_role_key del Worker
+// igual que comprobantes_admin.html. La clave aquí es para acceso sin RLS.
+
+const PAGE_SIZE = 25;
+let page = 0;
+let total = 0;
+let talleres = [];
+
+const ESTADO_LABEL = { pendiente:'Pendiente', confirmado:'Confirmado', en_proceso:'En proceso', finalizado:'Finalizado', cancelado:'Cancelado' };
+const TIPO_BADGE   = {
+  inspeccion_presupuesto: '<span class="bt-inspeccion">Inspección</span>',
+  inicio_trabajo:         '<span class="bt-trabajo">Inicio trab.</span>',
+  consulta:               '<span class="bt-consulta">Consulta</span>',
+  reclamo:                '<span class="bt-reclamo">Reclamo</span>',
+};
+const ESTADO_BADGE = {
+  pendiente:  '<span class="badge b-pendiente">⏳ Pendiente</span>',
+  confirmado: '<span class="badge b-confirmado">✓ Confirmado</span>',
+  en_proceso: '<span class="badge b-en_proceso">▶ En proceso</span>',
+  finalizado: '<span class="badge b-finalizado">✅ Finalizado</span>',
+  cancelado:  '<span class="badge b-cancelado">✕ Cancelado</span>',
+};
+
+function hdrs() {
+  return { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`, 'Content-Type': 'application/json', 'Prefer': 'count=exact' };
+}
+
+async function init() {
+  await Promise.all([cargarTalleresSelect(), cargarKPIs()]);
+  await cargarTurnos();
+}
+
+// ── SELECT de talleres ───────────────────────────────────────────────
+async function cargarTalleresSelect() {
+  try {
+    const r = await fetch(`${SB_URL}/rest/v1/cat_recomendaciones_talleres?select=id,nombre&order=nombre.asc`, { headers: hdrs() });
+    if (!r.ok) return;
+    talleres = await r.json();
+    const sel = document.getElementById('filtroTaller');
+    talleres.forEach(t => sel.innerHTML += `<option value="${t.id}">${esc(t.nombre)}</option>`);
+  } catch {}
+}
+
+// ── KPIs ─────────────────────────────────────────────────────────────
+async function cargarKPIs() {
+  const hoy    = new Date().toISOString().split('T')[0];
+  const priMes = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
+
+  async function count(qs) {
+    const r = await fetch(`${SB_URL}/rest/v1/cat_turnos?${qs}&select=id&limit=1`, { headers: hdrs() });
+    return parseInt(r.headers.get('Content-Range')?.split('/')[1] || '0', 10);
+  }
+
+  try {
+    const [hoyN, pendN, procN, finN] = await Promise.all([
+      count(`fecha=eq.${hoy}`),
+      count(`estado=eq.pendiente`),
+      count(`estado=eq.en_proceso`),
+      count(`estado=eq.finalizado&fecha=gte.${priMes}`),
+    ]);
+    document.getElementById('kpiHoy').textContent        = hoyN;
+    document.getElementById('kpiPendientes').textContent  = pendN;
+    document.getElementById('kpiEnProceso').textContent   = procN;
+    document.getElementById('kpiFinMes').textContent      = finN;
+  } catch {}
+}
+
+// ── TABLA ─────────────────────────────────────────────────────────────
+async function cargarTurnos(pg = 0) {
+  page = pg;
+  document.getElementById('tablaTurnos').innerHTML =
+    '<tr><td colspan="7"><div class="spinner-wrap"><div class="spinner"></div></div></td></tr>';
+
+  const params = new URLSearchParams({
+    select: 'id,taller_id,tipo,estado,fecha,hora_inicio,nombre_cliente,telefono_cliente,vehiculo_marca,vehiculo_modelo,vehiculo_dominio,motivo,created_at,cat_recomendaciones_talleres(nombre)',
+    order:  'fecha.desc,hora_inicio.desc',
+    limit:  PAGE_SIZE,
+    offset: pg * PAGE_SIZE,
+  });
+
+  const tallerId  = document.getElementById('filtroTaller').value;
+  const estado    = document.getElementById('filtroEstado').value;
+  const tipo      = document.getElementById('filtroTipo').value;
+  const fechaDesde= document.getElementById('filtroFechaDesde').value;
+  const fechaHasta= document.getElementById('filtroFechaHasta').value;
+
+  if (tallerId)   params.set('taller_id', `eq.${tallerId}`);
+  if (estado)     params.set('estado',    `eq.${estado}`);
+  if (tipo)       params.set('tipo',      `eq.${tipo}`);
+  if (fechaDesde) params.set('fecha',     `gte.${fechaDesde}`);
+  if (fechaHasta) {
+    // Si hay ambas fechas, usar range — PostgREST no soporta AND en mismo campo via params simples
+    // Workaround: solo usamos hasta si no hay desde, o usamos lte separado
+    params.delete('fecha');
+    if (fechaDesde) params.append('fecha', `gte.${fechaDesde}`);
+    params.append('fecha', `lte.${fechaHasta}`);
+  }
+
+  try {
+    const r = await fetch(`${SB_URL}/rest/v1/cat_turnos?${params.toString()}`, { headers: hdrs() });
+    if (!r.ok) throw new Error(r.status);
+    const turnos = await r.json();
+    total = parseInt(r.headers.get('Content-Range')?.split('/')[1] || '0', 10);
+
+    document.getElementById('resultCount').textContent = `${total.toLocaleString('es-AR')} turno${total !== 1 ? 's' : ''}`;
+    renderTabla(turnos);
+    renderPag();
+  } catch (e) {
+    document.getElementById('tablaTurnos').innerHTML =
+      `<tr><td colspan="7" style="text-align:center;color:var(--red);padding:24px">Error: ${e.message}</td></tr>`;
+  }
+}
+
+function renderTabla(turnos) {
+  if (!turnos.length) {
+    document.getElementById('tablaTurnos').innerHTML =
+      '<tr><td colspan="7" style="text-align:center;color:var(--ink-4);padding:24px">Sin turnos con esos filtros.</td></tr>';
+    return;
+  }
+  document.getElementById('tablaTurnos').innerHTML = turnos.map(t => {
+    const tallerNombre = t.cat_recomendaciones_talleres?.nombre || '—';
+    const veh = [t.vehiculo_marca, t.vehiculo_modelo].filter(Boolean).join(' ');
+    const hora = t.hora_inicio?.slice(0,5) || '';
+    const fecha = t.fecha ? new Date(t.fecha + 'T00:00:00').toLocaleDateString('es-AR', {day:'2-digit',month:'2-digit',year:'2-digit'}) : '—';
+    return `<tr>
+      <td>
+        <div style="font-weight:700">${fecha}</div>
+        <div class="muted" style="font-size:11px">${hora}</div>
+      </td>
+      <td>
+        <div class="td-taller">${esc(tallerNombre)}</div>
+      </td>
+      <td>
+        <div class="td-nombre">${esc(t.nombre_cliente || '—')}</div>
+        ${t.telefono_cliente ? `<div style="font-size:11px;color:var(--ink-3)">${esc(t.telefono_cliente)}</div>` : ''}
+      </td>
+      <td>
+        <div style="font-size:12px">${esc(veh || '—')}</div>
+        ${t.vehiculo_dominio ? `<div class="td-mono">${esc(t.vehiculo_dominio)}</div>` : ''}
+      </td>
+      <td>${TIPO_BADGE[t.tipo] || esc(t.tipo)}</td>
+      <td>
+        <select class="select-estado" onchange="cambiarEstado('${t.id}', this.value, this)">
+          ${['pendiente','confirmado','en_proceso','finalizado','cancelado'].map(e =>
+            `<option value="${e}" ${t.estado === e ? 'selected' : ''}>${ESTADO_LABEL[e]}</option>`
+          ).join('')}
+        </select>
+      </td>
+      <td>
+        <a class="btn-accion btn-ver" href="/taller/turno-detalle.html?id=${t.id}" target="_blank">👁 Ver</a>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function renderPag() {
+  const totalPags = Math.ceil(total / PAGE_SIZE);
+  const pag = document.getElementById('paginacion');
+  if (totalPags <= 1) { pag.innerHTML = ''; return; }
+  pag.innerHTML = `
+    <button class="pag-btn" onclick="cargarTurnos(${page-1})" ${page===0?'disabled':''}>← Anterior</button>
+    <span class="pag-info">Pág. ${page+1} / ${totalPags}</span>
+    <button class="pag-btn" onclick="cargarTurnos(${page+1})" ${page>=totalPags-1?'disabled':''}>Siguiente →</button>`;
+}
+
+// ── CAMBIAR ESTADO ─────────────────────────────────────────────────
+async function cambiarEstado(turnoId, nuevoEstado, selectEl) {
+  try {
+    const r = await fetch(`${SB_URL}/rest/v1/cat_turnos?id=eq.${turnoId}`, {
+      method: 'PATCH',
+      headers: { ...hdrs(), 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ estado: nuevoEstado, updated_at: new Date().toISOString() }),
+    });
+    if (!r.ok) throw new Error(r.status);
+    showToast(`✓ Estado → ${ESTADO_LABEL[nuevoEstado]}`);
+    await cargarKPIs();
+  } catch (e) {
+    showToast('Error: ' + e.message, 'error');
+    // Revertir el select al valor anterior
+    await cargarTurnos(page);
+  }
+}
+
+// ── FILTROS ────────────────────────────────────────────────────────
+function aplicarFiltros() { cargarTurnos(0); }
+function resetFiltros() {
+  ['filtroTaller','filtroEstado','filtroTipo'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('filtroFechaDesde').value = '';
+  document.getElementById('filtroFechaHasta').value = '';
+  cargarTurnos(0);
+}
+
+// ── UTILS ──────────────────────────────────────────────────────────
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+let toastTimer;
+function showToast(msg, type='ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show' + (type==='error'?' error':'');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
