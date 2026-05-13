@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Comprobantes — Admin Piezauto</title>
+<style>
+:root {
+  --brand:#1A1A2E; --brand-mid:#16213E; --accent:#E94560;
+  --ink-1:#111827; --ink-2:#374151; --ink-3:#6B7280; --ink-4:#9CA3AF;
+  --surface:#FFFFFF; --surface-2:#F9FAFB; --surface-3:#F3F4F6;
+  --line:#E5E7EB; --line-strong:#D1D5DB;
+  --green:#059669; --green-soft:#ECFDF5;
+  --amber:#D97706; --amber-soft:#FFFBEB;
+  --red:#DC2626; --red-soft:#FEF2F2;
+  --blue:#2563EB; --blue-soft:#EFF6FF;
+  --purple:#7C3AED; --purple-soft:#F5F3FF;
+  --radius:8px; --radius-lg:12px;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.07);
+  --shadow:0 4px 16px rgba(0,0,0,.10);
+  --shadow-lg:0 8px 32px rgba(0,0,0,.18);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--surface-2);color:var(--ink-1);min-height:100vh;font-size:14px;line-height:1.5;overflow-x:hidden}
+button{font-family:inherit}
+
+.app-shell{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
+
+/* TOPBAR */
+.topbar{background:var(--brand);color:#fff;padding:0 14px;height:56px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.3);flex-shrink:0}
+.topbar-back{width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:50%;cursor:pointer;transition:background .15s}
+.topbar-back:hover{background:rgba(255,255,255,.12)}
+.topbar-back svg{width:20px;height:20px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.topbar-title{font-size:15px;font-weight:700;flex:1}
+.admin-badge{background:var(--accent);font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;letter-spacing:.04em}
+
+/* VISTAS */
+#vistaLista{flex:1;display:flex;flex-direction:column}
+#vistaEditor{flex:1;display:none;flex-direction:column}
+
+/* TOOLBAR */
+.toolbar{padding:10px 14px;display:flex;gap:8px;background:var(--surface);border-bottom:1px solid var(--line);flex-shrink:0}
+.btn-nuevo{flex:1;padding:10px 14px;border-radius:var(--radius-lg);border:none;background:var(--accent);color:#fff;font-size:14px;font-weight:700;cursor:pointer;transition:opacity .15s;display:flex;align-items:center;justify-content:center;gap:6px}
+.btn-nuevo:hover{opacity:.88}
+.filtro-taller{flex:1.2;padding:0 10px;border-radius:var(--radius-lg);border:1.5px solid var(--line-strong);background:var(--surface);font-size:13px;color:var(--ink-2);outline:none;cursor:pointer}
+
+/* LISTA */
+.lista-body{flex:1;padding:12px 12px 80px;display:flex;flex-direction:column;gap:8px;overflow-y:auto}
+
+/* Tarjeta comprobante */
+.comp-card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--line);box-shadow:var(--shadow-sm);overflow:hidden;cursor:pointer;transition:box-shadow .15s}
+.comp-card:active{box-shadow:var(--shadow)}
+.comp-stripe{height:4px}
+.stripe-recibo{background:var(--green)}
+.stripe-nota_debito{background:var(--red)}
+.stripe-nota_credito{background:var(--blue)}
+.stripe-factura{background:var(--purple)}
+.comp-body{padding:12px 14px 10px;display:flex;gap:10px;align-items:flex-start}
+.comp-info{flex:1;min-width:0}
+.comp-numero{font-size:11px;font-weight:700;color:var(--ink-3);font-family:'Courier New',monospace;letter-spacing:.04em;margin-bottom:2px}
+.comp-concepto{font-size:14px;font-weight:700;color:var(--ink-1)}
+.comp-taller{font-size:12px;color:var(--ink-3);margin-top:1px}
+.comp-right{text-align:right;flex-shrink:0}
+.comp-monto{font-size:17px;font-weight:800}
+.comp-monto.positivo{color:var(--green)}
+.comp-monto.negativo{color:var(--red)}
+.comp-monto.neutro{color:var(--ink-1)}
+.comp-fecha{font-size:11px;color:var(--ink-3);margin-top:2px}
+.comp-footer{display:flex;align-items:center;justify-content:space-between;padding:8px 14px 10px;border-top:1px solid var(--line)}
+.tipo-badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:10px}
+.tipo-recibo{background:var(--green-soft);color:var(--green)}
+.tipo-nota_debito{background:var(--red-soft);color:var(--red)}
+.tipo-nota_credito{background:var(--blue-soft);color:var(--blue)}
+.tipo-factura{background:var(--purple-soft);color:var(--purple)}
+.btn-print-mini{padding:5px 10px;border-radius:var(--radius);border:1.5px solid var(--line-strong);background:var(--surface);font-size:11px;font-weight:600;color:var(--ink-2);cursor:pointer;transition:background .12s}
+.btn-print-mini:hover{background:var(--surface-3)}
+
+/* ESTADO VACÍO */
+.estado-centro{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 24px;text-align:center;gap:12px}
+.estado-icon{font-size:52px}
+.estado-titulo{font-size:16px;font-weight:600;color:var(--ink-2)}
+.estado-sub{font-size:13px;color:var(--ink-3);line-height:1.5}
+.skeleton{background:var(--surface);border-radius:var(--radius-lg);padding:16px;border:1px solid var(--line);animation:pulse 1.4s ease-in-out infinite}
+.skel-line{background:var(--surface-3);border-radius:4px;margin-bottom:8px}
+.skel-line.w70{width:70%;height:13px}.skel-line.w45{width:45%;height:11px}.skel-line.w55{width:55%;height:11px}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+
+/* EDITOR */
+.editor-topbar{background:var(--brand-mid);padding:0 14px;height:52px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.editor-topbar-title{font-size:14px;font-weight:700;color:#fff;flex:1}
+.btn-cancelar-ed{padding:7px 14px;border-radius:var(--radius);border:1.5px solid rgba(255,255,255,.3);background:transparent;color:rgba(255,255,255,.8);font-size:13px;font-weight:600;cursor:pointer}
+.btn-emitir-ed{padding:7px 16px;border-radius:var(--radius);border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:700;cursor:pointer;transition:opacity .15s}
+.btn-emitir-ed:hover{opacity:.88}
+.btn-emitir-ed:disabled{opacity:.45;cursor:default}
+
+.editor-body{flex:1;overflow-y:auto;padding:16px}
+
+/* Selector de tipo (4 opciones) */
+.tipo-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.tipo-card{padding:12px;border-radius:var(--radius-lg);border:2px solid var(--line-strong);background:var(--surface);cursor:pointer;transition:all .15s;text-align:center}
+.tipo-card:hover{border-color:var(--brand)}
+.tipo-card.sel.recibo{border-color:var(--green);background:var(--green-soft)}
+.tipo-card.sel.nota_debito{border-color:var(--red);background:var(--red-soft)}
+.tipo-card.sel.nota_credito{border-color:var(--blue);background:var(--blue-soft)}
+.tipo-card.sel.factura{border-color:var(--purple);background:var(--purple-soft)}
+.tipo-card-icon{font-size:22px;margin-bottom:4px}
+.tipo-card-label{font-size:12px;font-weight:700;color:var(--ink-2)}
+.tipo-card.sel .tipo-card-label{color:var(--ink-1)}
+
+/* Formulario */
+.section-label{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin:16px 0 10px;display:block}
+.section-label:first-child{margin-top:0}
+.fg{margin-bottom:12px}
+.fl{font-size:12px;font-weight:600;color:var(--ink-2);margin-bottom:5px;display:block}
+.fl .req{color:var(--accent);margin-left:2px}
+.fi,.fs{width:100%;border:1.5px solid var(--line-strong);border-radius:var(--radius);padding:10px 12px;font-size:14px;font-family:inherit;color:var(--ink-1);background:var(--surface);outline:none;transition:border-color .15s}
+.fi:focus,.fs:focus{border-color:var(--brand)}
+.fi::placeholder{color:var(--ink-4)}
+.fi.error{border-color:var(--red)}
+.fs{appearance:none}
+.fr2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* Resumen */
+.resumen-card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--line);padding:14px;margin-top:4px}
+.res-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:13px;color:var(--ink-2)}
+.res-row.total{font-size:16px;font-weight:700;color:var(--ink-1);border-top:1px solid var(--line);margin-top:6px;padding-top:10px}
+.monto-preview{font-size:24px;font-weight:800;text-align:right;margin-top:10px}
+.monto-preview.recibo{color:var(--green)}
+.monto-preview.nota_debito{color:var(--red)}
+.monto-preview.nota_credito{color:var(--blue)}
+.monto-preview.factura{color:var(--purple)}
+
+/* Footer editor */
+.editor-footer{background:var(--surface);border-top:1px solid var(--line);padding:12px 16px;display:flex;gap:8px;flex-shrink:0}
+.btn-preview-ed{flex:1;padding:12px;border-radius:var(--radius-lg);border:1.5px solid var(--brand);background:var(--surface);font-size:13px;font-weight:700;color:var(--brand);cursor:pointer}
+.btn-emitir-footer{flex:1.5;padding:12px;border-radius:var(--radius-lg);border:none;background:var(--accent);font-size:13px;font-weight:700;color:#fff;cursor:pointer;transition:opacity .15s}
+.btn-emitir-footer:hover{opacity:.88}
+.btn-emitir-footer:disabled{opacity:.45;cursor:default}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--ink-1);color:#fff;padding:11px 20px;border-radius:20px;font-size:13px;font-weight:600;box-shadow:var(--shadow-lg);opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:500;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.error{background:var(--accent)}
+
+/* ══════════════════════════════════════════════════════════════
+   ÁREA DE IMPRESIÓN — @media print
+══════════════════════════════════════════════════════════════ */
+#printArea{display:none}
+@media print {
+  body, .app-shell { display: none !important; }
+  #printArea {
+    display: block !important;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 11pt;
+    color: #000;
+  }
+  .pr-page { padding: 20mm 20mm 15mm; }
+
+  /* Franja superior de color por tipo */
+  .pr-stripe { height: 6pt; width: 100%; margin-bottom: 14pt; }
+  .pr-stripe.recibo      { background: #059669; }
+  .pr-stripe.nota_debito { background: #DC2626; }
+  .pr-stripe.nota_credito{ background: #2563EB; }
+  .pr-stripe.factura     { background: #7C3AED; }
+
+  .pr-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16pt; border-bottom: 1.5pt solid #1A1A2E; padding-bottom: 10pt; }
+  .pr-logo { font-size: 22pt; font-weight: 900; color: #1A1A2E; }
+  .pr-logo-sub { font-size: 9pt; color: #6B7280; }
+  .pr-doc-tipo { font-size: 16pt; font-weight: 700; text-align: right; }
+  .pr-doc-tipo.recibo      { color: #059669; }
+  .pr-doc-tipo.nota_debito { color: #DC2626; }
+  .pr-doc-tipo.nota_credito{ color: #2563EB; }
+  .pr-doc-tipo.factura     { color: #7C3AED; }
+  .pr-doc-numero { font-size: 10pt; color: #6B7280; text-align: right; margin-top: 3pt; font-family: 'Courier New', monospace; }
+
+  .pr-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 10pt; margin-bottom: 16pt; }
+  .pr-meta-box { border: 1pt solid #E5E7EB; border-radius: 6pt; padding: 8pt 10pt; }
+  .pr-meta-titulo { font-size: 8pt; font-weight: 700; color: #6B7280; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 5pt; }
+  .pr-meta-row { font-size: 9.5pt; line-height: 1.5; }
+
+  /* Cuerpo del comprobante */
+  .pr-concepto-box { border: 1pt solid #E5E7EB; border-radius: 6pt; padding: 12pt 14pt; margin-bottom: 16pt; }
+  .pr-concepto-titulo { font-size: 8pt; font-weight: 700; color: #6B7280; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6pt; }
+  .pr-concepto-text { font-size: 11pt; color: #111827; line-height: 1.4; }
+
+  /* Monto destacado */
+  .pr-monto-block { display: flex; justify-content: space-between; align-items: center; border: 1.5pt solid #E5E7EB; border-radius: 6pt; padding: 12pt 14pt; margin-bottom: 16pt; background: #F9FAFB; }
+  .pr-monto-label { font-size: 10pt; color: #374151; font-weight: 700; }
+  .pr-monto-val { font-size: 20pt; font-weight: 900; }
+  .pr-monto-val.recibo      { color: #059669; }
+  .pr-monto-val.nota_debito { color: #DC2626; }
+  .pr-monto-val.nota_credito{ color: #2563EB; }
+  .pr-monto-val.factura     { color: #7C3AED; }
+
+  /* Operación vinculada */
+  .pr-op-box { border: 1pt solid #FEF3C7; background: #FFFBEB; border-radius: 6pt; padding: 8pt 10pt; margin-bottom: 12pt; font-size: 9pt; color: #92400E; }
+
+  /* Leyendas por tipo */
+  .pr-leyenda { font-size: 8.5pt; color: #6B7280; border-top: 1pt solid #E5E7EB; padding-top: 8pt; margin-bottom: 12pt; line-height: 1.5; }
+
+  /* Firma */
+  .pr-firma { display: flex; justify-content: space-between; margin-top: 24pt; }
+  .pr-firma-box { text-align: center; width: 160pt; }
+  .pr-firma-line { border-top: 1pt solid #000; margin-bottom: 4pt; }
+  .pr-firma-label { font-size: 8pt; color: #6B7280; }
+
+  .pr-footer-note { text-align: center; font-size: 8pt; color: #9CA3AF; margin-top: 16pt; border-top: 1pt solid #E5E7EB; padding-top: 8pt; }
+}
+</style>
+</head>
+<body>
+<div class="app-shell">
+
+  <header class="topbar">
+    <div class="topbar-back" id="topbarBack" onclick="onBack()">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    </div>
+    <span class="topbar-title" id="topbarTitle">Comprobantes</span>
+    <span class="admin-badge">ADMIN</span>
+  </header>
+
+  <!-- ══ LISTA ══ -->
+  <div id="vistaLista">
+    <div class="toolbar">
+      <button class="btn-nuevo" onclick="abrirNuevo()">+ Emitir comprobante</button>
+      <select class="filtro-taller" id="filtroTaller" onchange="renderLista()">
+        <option value="">Todos los talleres</option>
+      </select>
+    </div>
+    <div class="lista-body" id="listaBody"></div>
+  </div>
+
+  <!-- ══ EDITOR ══ -->
+  <div id="vistaEditor">
+    <div class="editor-topbar">
+      <span class="editor-topbar-title">Nuevo comprobante</span>
+      <button class="btn-cancelar-ed" onclick="cerrarEditor()">Cancelar</button>
+    </div>
+
+    <div class="editor-body">
+
+      <span class="section-label">Tipo de comprobante</span>
+      <div class="tipo-grid">
+        <div class="tipo-card recibo sel" id="tc-recibo" onclick="setTipo('recibo')">
+          <div class="tipo-card-icon">📥</div>
+          <div class="tipo-card-label">Recibo</div>
+        </div>
+        <div class="tipo-card nota_debito" id="tc-nota_debito" onclick="setTipo('nota_debito')">
+          <div class="tipo-card-icon">📤</div>
+          <div class="tipo-card-label">Nota de débito</div>
+        </div>
+        <div class="tipo-card nota_credito" id="tc-nota_credito" onclick="setTipo('nota_credito')">
+          <div class="tipo-card-icon">💳</div>
+          <div class="tipo-card-label">Nota de crédito</div>
+        </div>
+        <div class="tipo-card factura" id="tc-factura" onclick="setTipo('factura')">
+          <div class="tipo-card-icon">🧾</div>
+          <div class="tipo-card-label">Factura</div>
+        </div>
+      </div>
+
+      <span class="section-label">Taller destinatario</span>
+      <div class="fg">
+        <label class="fl">Taller <span class="req">*</span></label>
+        <select class="fs" id="e-taller">
+          <option value="">— Seleccioná un taller —</option>
+        </select>
+      </div>
+
+      <span class="section-label">Datos del comprobante</span>
+      <div class="fr2">
+        <div class="fg">
+          <label class="fl">Número <span class="req">*</span></label>
+          <input class="fi" id="e-numero" type="text" placeholder="0001">
+        </div>
+        <div class="fg">
+          <label class="fl">Monto ($) <span class="req">*</span></label>
+          <input class="fi" id="e-monto" type="number" min="0" step="100" placeholder="0" oninput="actualizarPreview()">
+        </div>
+      </div>
+      <div class="fg">
+        <label class="fl">Concepto <span class="req">*</span></label>
+        <input class="fi" id="e-concepto" type="text" placeholder="Ej: Pago pedido #00123 · Regularización cuenta corriente">
+      </div>
+      <div class="fg">
+        <label class="fl">Operación vinculada (opcional)</label>
+        <select class="fs" id="e-operacion">
+          <option value="">— Sin vincular —</option>
+        </select>
+      </div>
+
+      <div class="resumen-card">
+        <div class="res-row"><span>Tipo</span><span id="prev-tipo">Recibo</span></div>
+        <div class="res-row"><span>Número</span><span id="prev-numero" style="font-family:monospace">—</span></div>
+        <div class="res-row total">
+          <span>Monto</span>
+          <div class="monto-preview recibo" id="prev-monto">$\u202F0</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="editor-footer">
+      <button class="btn-preview-ed" onclick="verPrevia()">🖨️ Vista previa</button>
+      <button class="btn-emitir-footer" id="btnEmitir" onclick="emitir()">✅ Emitir comprobante</button>
+    </div>
+
+  </div><!-- /vistaEditor -->
+
+</div><!-- /app-shell -->
+
+<!-- ÁREA DE IMPRESIÓN -->
+<div id="printArea"></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// CONFIG
+// NOTA: Admin usa service_role key para bypass de RLS en INSERT.
+// La key de anon solo permite SELECT en cat_comprobantes_taller
+// (política taller_comprobantes_select). Para producción, el admin
+// debe autenticarse con un JWT de rol admin, o el request pasa
+// por el Cloudflare Worker con la service_role key.
+// Por ahora: se usa service_role key en el header de admin.
+// ═══════════════════════════════════════════════════════════════
+const SB_URL    = 'https://mqxowotdeibllkitkije.supabase.co';
+const SB_ANON   = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xeG93b3RkZWlibGxraXRraWplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxMzgxNDYsImV4cCI6MjA5MTcxNDE0Nn0.V_Pr0elBurAK7OPKFL3OoZwBmb-bI-Mcz8N1U8yblG8';
+// service_role: Ernesto la configura como variable en el Worker o en .env
+// NO hardcodear en producción. En desarrollo/demo usar esta:
+const SB_SVC    = window.SUPABASE_SERVICE_KEY || SB_ANON; // reemplazar en deploy
+const TABLA     = 'cat_comprobantes_taller';
+
+// ═══════════════════════════════════════════════════════════════
+// ESTADO
+// ═══════════════════════════════════════════════════════════════
+let talleres       = [];  // [{id, nombre}]
+let comprobantes   = [];  // lista completa
+let tipoActual     = 'recibo';
+let emitiendo      = false;
+
+// ═══════════════════════════════════════════════════════════════
+// API — admin usa service_role para INSERT/SELECT sin restricción RLS
+// ═══════════════════════════════════════════════════════════════
+function hdrsAdmin(extra={}){
+  return{
+    'apikey':      SB_ANON,
+    'Authorization':`Bearer ${SB_SVC}`,
+    'Content-Type':'application/json',
+    ...extra
+  };
+}
+
+async function sbGet(tabla,qs){
+  const r=await fetch(`${SB_URL}/rest/v1/${tabla}?${qs}`,{headers:{...hdrsAdmin(),'Prefer':'count=exact'}});
+  if(!r.ok){const b=await r.json().catch(()=>({}));throw new Error(b.message||r.status);}
+  const count=parseInt(r.headers.get('Content-Range')?.split('/')[1]||'0',10);
+  return{data:await r.json(),count};
+}
+
+async function sbPost(tabla,body){
+  const r=await fetch(`${SB_URL}/rest/v1/${tabla}`,{method:'POST',headers:{...hdrsAdmin(),'Prefer':'return=representation'},body:JSON.stringify(body)});
+  if(!r.ok){const b=await r.json().catch(()=>({}));throw new Error(b.message||r.status);}
+  return(await r.json())[0];
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+async function init(){
+  renderSkeletons();
+  await Promise.all([cargarTalleres(), cargarComprobantes()]);
+}
+
+async function cargarTalleres(){
+  try{
+    const{data}=await sbGet('cat_recomendaciones_talleres','select=id,nombre&order=nombre.asc&activo=eq.true');
+    talleres=data||[];
+    // Poblar selects
+    const opts=talleres.map(t=>`<option value="${t.id}">${t.nombre}</option>`).join('');
+    document.getElementById('filtroTaller').innerHTML='<option value="">Todos los talleres</option>'+opts;
+    document.getElementById('e-taller').innerHTML='<option value="">— Seleccioná un taller —</option>'+opts;
+    // Cuando se selecciona taller en editor, cargar sus operaciones y sugerir número
+    document.getElementById('e-taller').addEventListener('change',()=>{
+      cargarOperacionesTaller();
+      sugerirNumero();
+    });
+  }catch(e){console.warn('cargarTalleres:',e.message);}
+}
+
+async function cargarComprobantes(){
+  try{
+    const{data}=await sbGet(TABLA,
+      'select=id,taller_id,tipo,numero,concepto,monto,operacion_id,emitido_at,cat_recomendaciones_talleres(nombre)'+
+      '&order=emitido_at.desc');
+    comprobantes=data||[];
+    renderLista();
+  }catch(err){
+    document.getElementById('listaBody').innerHTML=
+      `<div class="estado-centro"><div class="estado-icon">⚠️</div><div class="estado-titulo">Error</div><div class="estado-sub">${err.message}</div></div>`;
+  }
+}
+
+async function cargarOperacionesTaller(){
+  const tallerId=document.getElementById('e-taller').value;
+  const sel=document.getElementById('e-operacion');
+  sel.innerHTML='<option value="">— Sin vincular —</option>';
+  if(!tallerId)return;
+  try{
+    const{data}=await sbGet('cat_operaciones_b2c',
+      `select=id,estado,total,created_at&taller_id=eq.${tallerId}&order=created_at.desc&limit=20`);
+    (data||[]).forEach(op=>{
+      const label=`Pedido ${op.id.slice(0,8).toUpperCase()} · ${fmt(op.total)} · ${fmtFecha(op.created_at)} (${op.estado})`;
+      sel.innerHTML+=`<option value="${op.id}">${label}</option>`;
+    });
+  }catch(e){console.warn('cargarOperaciones:',e.message);}
+}
+
+async function sugerirNumero(){
+  const tallerId=document.getElementById('e-taller').value;
+  if(!tallerId){document.getElementById('e-numero').value='';return;}
+  try{
+    const{count}=await sbGet(TABLA,
+      `select=id&taller_id=eq.${tallerId}&tipo=eq.${tipoActual}&limit=1&offset=99999`);
+    document.getElementById('e-numero').value=String(count+1).padStart(4,'0');
+    actualizarPreview();
+  }catch(e){document.getElementById('e-numero').value='0001';}
+}
+
+// ═══════════════════════════════════════════════════════════════
+// LISTA
+// ═══════════════════════════════════════════════════════════════
+function renderLista(){
+  const filtro=document.getElementById('filtroTaller').value;
+  const lista=filtro?comprobantes.filter(c=>c.taller_id===filtro):comprobantes;
+  const cont=document.getElementById('listaBody');
+  if(!lista.length){
+    cont.innerHTML=`<div class="estado-centro"><div class="estado-icon">🧾</div><div class="estado-titulo">${comprobantes.length?'Sin resultados':'Sin comprobantes emitidos'}</div><div class="estado-sub">Tocá "+ Emitir comprobante" para crear el primero.</div></div>`;
+    return;
+  }
+  const tipoLabel={recibo:'Recibo',nota_debito:'Nota de débito',nota_credito:'Nota de crédito',factura:'Factura'};
+  const montoClass={recibo:'positivo',nota_debito:'negativo',nota_credito:'positivo',factura:'neutro'};
+  cont.innerHTML=lista.map(c=>{
+    const tNombre=c.cat_recomendaciones_talleres?.nombre||'—';
+    return`
+    <div class="comp-card" onclick="imprimirExistente('${c.id}')">
+      <div class="comp-stripe stripe-${c.tipo}"></div>
+      <div class="comp-body">
+        <div class="comp-info">
+          <div class="comp-numero">${c.tipo.toUpperCase().replace('_',' ')} Nro. ${c.numero}</div>
+          <div class="comp-concepto">${c.concepto}</div>
+          <div class="comp-taller">🏢 ${tNombre}</div>
+        </div>
+        <div class="comp-right">
+          <div class="comp-monto ${montoClass[c.tipo]}">${fmt(c.monto)}</div>
+          <div class="comp-fecha">${fmtFecha(c.emitido_at)}</div>
+        </div>
+      </div>
+      <div class="comp-footer">
+        <span class="tipo-badge tipo-${c.tipo}">${tipoLabel[c.tipo]}</span>
+        <button class="btn-print-mini" onclick="event.stopPropagation();imprimirExistente('${c.id}')">🖨️ Imprimir</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderSkeletons(){
+  document.getElementById('listaBody').innerHTML=
+    Array(4).fill(`<div class="skeleton"><div class="skel-line w70"></div><div class="skel-line w55"></div><div class="skel-line w45"></div></div>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EDITOR
+// ═══════════════════════════════════════════════════════════════
+function abrirNuevo(){
+  tipoActual='recibo';
+  setTipo('recibo');
+  document.getElementById('e-taller').value='';
+  document.getElementById('e-numero').value='';
+  document.getElementById('e-monto').value='';
+  document.getElementById('e-concepto').value='';
+  document.getElementById('e-operacion').innerHTML='<option value="">— Sin vincular —</option>';
+  actualizarPreview();
+  mostrarVista('editor');
+}
+
+function cerrarEditor(){mostrarVista('lista');}
+
+function setTipo(tipo){
+  tipoActual=tipo;
+  ['recibo','nota_debito','nota_credito','factura'].forEach(t=>{
+    const el=document.getElementById('tc-'+t);
+    el.className=`tipo-card ${t}${t===tipo?' sel':''}`;
+  });
+  actualizarPreview();
+  sugerirNumero();
+}
+
+function actualizarPreview(){
+  const tipoLabel={recibo:'Recibo',nota_debito:'Nota de débito',nota_credito:'Nota de crédito',factura:'Factura'};
+  const n=(document.getElementById('e-numero').value||'').trim()||'—';
+  const m=parseFloat(document.getElementById('e-monto').value)||0;
+  document.getElementById('prev-tipo').textContent=tipoLabel[tipoActual];
+  document.getElementById('prev-numero').textContent=n;
+  const el=document.getElementById('prev-monto');
+  el.textContent=fmt(m);
+  el.className=`monto-preview ${tipoActual}`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EMITIR
+// ═══════════════════════════════════════════════════════════════
+async function emitir(){
+  if(emitiendo)return;
+  const tallerId  =(document.getElementById('e-taller').value||'').trim();
+  const numero    =(document.getElementById('e-numero').value||'').trim();
+  const monto     =parseFloat(document.getElementById('e-monto').value||'0');
+  const concepto  =(document.getElementById('e-concepto').value||'').trim();
+  const opId      =(document.getElementById('e-operacion').value||'')||null;
+
+  // Validaciones
+  if(!tallerId){showToast('Seleccioná un taller','error');return;}
+  if(!numero){document.getElementById('e-numero').classList.add('error');showToast('Completá el número','error');return;}
+  if(!monto||monto<=0){showToast('El monto debe ser mayor a 0','error');return;}
+  if(!concepto){document.getElementById('e-concepto').classList.add('error');showToast('Completá el concepto','error');return;}
+  document.getElementById('e-numero').classList.remove('error');
+  document.getElementById('e-concepto').classList.remove('error');
+
+  emitiendo=true;
+  const btn=document.getElementById('btnEmitir');
+  btn.disabled=true; btn.textContent='Emitiendo…';
+
+  const payload={
+    taller_id:    tallerId,
+    tipo:         tipoActual,
+    numero,
+    concepto,
+    monto,
+    operacion_id: opId,
+    emitido_at:   new Date().toISOString(),
+    created_at:   new Date().toISOString(),
+  };
+
+  try{
+    const nuevo=await sbPost(TABLA,payload);
+    // Enriquecer con nombre del taller para la UI
+    const taller=talleres.find(t=>t.id===tallerId);
+    nuevo.cat_recomendaciones_talleres={nombre:taller?.nombre||'—'};
+    comprobantes.unshift(nuevo);
+    showToast('✅ Comprobante emitido');
+    cerrarEditor();
+    renderLista();
+    // Imprimir automáticamente
+    setTimeout(()=>imprimirExistente(nuevo.id),500);
+  }catch(err){
+    showToast('Error al emitir: '+err.message,'error');
+    console.error(err);
+  }finally{
+    emitiendo=false; btn.disabled=false; btn.textContent='✅ Emitir comprobante';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// IMPRESIÓN
+// ═══════════════════════════════════════════════════════════════
+function verPrevia(){
+  const tallerId=(document.getElementById('e-taller').value||'');
+  const taller=talleres.find(t=>t.id===tallerId);
+  const datos={
+    taller_nombre:  taller?.nombre||'—',
+    tipo:           tipoActual,
+    numero:         (document.getElementById('e-numero').value||'').trim()||'—',
+    concepto:       (document.getElementById('e-concepto').value||'').trim()||'—',
+    monto:          parseFloat(document.getElementById('e-monto').value)||0,
+    emitido_at:     new Date().toISOString(),
+    operacion_id:   document.getElementById('e-operacion').value||null,
+    operacion_label:document.getElementById('e-operacion').selectedOptions[0]?.text||null,
+  };
+  document.getElementById('printArea').innerHTML=buildPrintHTML(datos);
+  window.print();
+}
+
+function imprimirExistente(id){
+  const c=comprobantes.find(x=>x.id===id);
+  if(!c)return;
+  const datos={
+    taller_nombre:  c.cat_recomendaciones_talleres?.nombre||'—',
+    tipo:           c.tipo,
+    numero:         c.numero,
+    concepto:       c.concepto,
+    monto:          c.monto,
+    emitido_at:     c.emitido_at,
+    operacion_id:   c.operacion_id,
+    operacion_label:c.operacion_id?`Operación ${c.operacion_id.slice(0,8).toUpperCase()}…`:null,
+  };
+  document.getElementById('printArea').innerHTML=buildPrintHTML(datos);
+  window.print();
+}
+
+function buildPrintHTML(d){
+  const tipoLabel={recibo:'RECIBO DE PAGO',nota_debito:'NOTA DE DÉBITO',nota_credito:'NOTA DE CRÉDITO',factura:'FACTURA'};
+  const leyenda={
+    recibo:      'Este recibo acredita el pago recibido por el concepto indicado. Conservar como comprobante.',
+    nota_debito: 'La presente nota de débito documenta un cargo adicional a la cuenta corriente del taller. Ante consultas comunicarse con Piezauto.',
+    nota_credito:'La presente nota de crédito acredita un beneficio a favor del taller en su cuenta corriente con Piezauto.',
+    factura:     'Documento fiscal. Este comprobante queda sujeto a las condiciones comerciales vigentes entre las partes.',
+  };
+  const opBlock=d.operacion_label?`
+    <div class="pr-op-box">
+      📋 Operación vinculada: <strong>${d.operacion_label}</strong>
+    </div>`:'';
+
+  return`
+  <div class="pr-page">
+    <div class="pr-stripe ${d.tipo}"></div>
+    <div class="pr-header">
+      <div>
+        <div class="pr-logo">Piezauto<span style="color:#E94560">.</span></div>
+        <div class="pr-logo-sub">Distribuidora de autopartes · Zona Oeste AMBA</div>
+      </div>
+      <div>
+        <div class="pr-doc-tipo ${d.tipo}">${tipoLabel[d.tipo]}</div>
+        <div class="pr-doc-numero">Nro. ${d.numero}</div>
+      </div>
+    </div>
+
+    <div class="pr-meta">
+      <div class="pr-meta-box">
+        <div class="pr-meta-titulo">Emisor</div>
+        <div class="pr-meta-row"><strong>Piezauto</strong></div>
+        <div class="pr-meta-row">Distribuidora de autopartes</div>
+        <div class="pr-meta-row">Zona Oeste AMBA</div>
+      </div>
+      <div class="pr-meta-box">
+        <div class="pr-meta-titulo">Destinatario</div>
+        <div class="pr-meta-row"><strong>${d.taller_nombre}</strong></div>
+        <div class="pr-meta-row">Taller socio Piezauto Point</div>
+        <div class="pr-meta-row">Fecha de emisión: ${fmtFecha(d.emitido_at)}</div>
+      </div>
+    </div>
+
+    <div class="pr-concepto-box">
+      <div class="pr-concepto-titulo">Concepto</div>
+      <div class="pr-concepto-text">${d.concepto}</div>
+    </div>
+
+    ${opBlock}
+
+    <div class="pr-monto-block">
+      <div class="pr-monto-label">${tipoLabel[d.tipo]}</div>
+      <div class="pr-monto-val ${d.tipo}">${fmt(d.monto)}</div>
+    </div>
+
+    <div class="pr-leyenda">${leyenda[d.tipo]}</div>
+
+    <div class="pr-firma">
+      <div class="pr-firma-box">
+        <div class="pr-firma-line"></div>
+        <div class="pr-firma-label">Firma y sello Piezauto</div>
+      </div>
+      <div class="pr-firma-box">
+        <div class="pr-firma-line"></div>
+        <div class="pr-firma-label">Firma y sello del taller</div>
+      </div>
+    </div>
+
+    <div class="pr-footer-note">
+      Piezauto — Distribuidora de autopartes · Zona Oeste AMBA · Piezauto Point
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// NAVEGACIÓN
+// ═══════════════════════════════════════════════════════════════
+function mostrarVista(v){
+  document.getElementById('vistaLista').style.display=v==='lista'?'flex':'none';
+  document.getElementById('vistaEditor').style.display=v==='editor'?'flex':'none';
+  document.getElementById('topbarTitle').textContent=v==='lista'?'Comprobantes':'Nuevo comprobante';
+}
+function onBack(){
+  if(document.getElementById('vistaEditor').style.display!=='none'){cerrarEditor();}
+  else{history.back();}
+}
+
+// ═══════════════════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════════════════
+function fmt(n){if(n==null||isNaN(n))return'—';return'$\u202F'+Math.round(n).toLocaleString('es-AR');}
+function fmtFecha(s){if(!s)return'—';const d=new Date(s.includes('T')?s:s+'T12:00:00');return d.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'});}
+
+let toastTimer;
+function showToast(msg,type='ok'){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show'+(type==='error'?' error':'');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),3500);}
+
+document.addEventListener('DOMContentLoaded',()=>{mostrarVista('lista');init();});
+</script>
+</body>
+</html>

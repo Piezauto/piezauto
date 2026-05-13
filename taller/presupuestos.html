@@ -1,0 +1,1324 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Presupuestos — Piezauto Point</title>
+<style>
+/* ══════════════════════════════════════════════════════════════
+   TOKENS
+══════════════════════════════════════════════════════════════ */
+:root {
+  --brand:#1A1A2E; --brand-mid:#16213E; --accent:#E94560;
+  --ink-1:#111827; --ink-2:#374151; --ink-3:#6B7280; --ink-4:#9CA3AF;
+  --surface:#FFFFFF; --surface-2:#F9FAFB; --surface-3:#F3F4F6;
+  --line:#E5E7EB; --line-strong:#D1D5DB;
+  --green:#059669; --green-soft:#ECFDF5;
+  --amber:#D97706; --amber-soft:#FFFBEB;
+  --red:#DC2626; --red-soft:#FEF2F2;
+  --blue:#2563EB; --blue-soft:#EFF6FF;
+  --radius:8px; --radius-lg:12px;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.07);
+  --shadow:0 4px 16px rgba(0,0,0,.10);
+  --shadow-lg:0 8px 32px rgba(0,0,0,.18);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--surface-2);color:var(--ink-1);min-height:100vh;font-size:14px;line-height:1.5;overflow-x:hidden}
+button{font-family:inherit}
+
+/* ══════════════════════════════════════════════════════════════
+   LAYOUT
+══════════════════════════════════════════════════════════════ */
+.app-shell{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;position:relative}
+
+/* TOPBAR */
+.topbar{background:var(--brand);color:#fff;padding:0 14px;height:56px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.25);flex-shrink:0}
+.topbar-back{width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:50%;cursor:pointer;transition:background .15s}
+.topbar-back:hover{background:rgba(255,255,255,.12)}
+.topbar-back svg{width:20px;height:20px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.topbar-title{font-size:15px;font-weight:700;flex:1}
+
+/* ══════════════════════════════════════════════════════════════
+   VISTA: LISTA
+══════════════════════════════════════════════════════════════ */
+#vistaLista{flex:1;display:flex;flex-direction:column}
+
+.lista-toolbar{padding:12px 14px;display:flex;gap:8px;background:var(--surface);border-bottom:1px solid var(--line);flex-shrink:0}
+.btn-nuevo{flex:1;padding:11px 16px;border-radius:var(--radius-lg);border:none;background:var(--accent);color:#fff;font-size:14px;font-weight:700;cursor:pointer;transition:opacity .15s;display:flex;align-items:center;justify-content:center;gap:6px}
+.btn-nuevo:hover{opacity:.88}
+.filtro-tipo{padding:0 12px;border-radius:var(--radius-lg);border:1.5px solid var(--line-strong);background:var(--surface);font-size:13px;color:var(--ink-2);outline:none;cursor:pointer}
+
+.lista-body{flex:1;padding:12px 12px 100px;display:flex;flex-direction:column;gap:8px;overflow-y:auto}
+
+/* Tarjeta presupuesto */
+.pres-card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--line);box-shadow:var(--shadow-sm);overflow:hidden;cursor:pointer;transition:box-shadow .15s}
+.pres-card:active{box-shadow:var(--shadow)}
+.pres-header{display:flex;align-items:flex-start;gap:10px;padding:12px 14px 10px}
+.pres-numero{font-size:12px;font-weight:700;color:var(--ink-3);font-family:'Courier New',monospace;letter-spacing:.04em}
+.pres-cliente{font-size:14px;font-weight:700;color:var(--ink-1);margin-top:1px}
+.pres-vehiculo{font-size:12px;color:var(--ink-3);margin-top:1px}
+.pres-right{text-align:right;flex-shrink:0}
+.pres-total{font-size:17px;font-weight:800;color:var(--ink-1)}
+.pres-fecha{font-size:11px;color:var(--ink-3);margin-top:2px}
+.pres-footer{display:flex;align-items:center;justify-content:space-between;padding:8px 14px 10px;border-top:1px solid var(--line)}
+.pres-tipo-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px}
+.tipo-cliente{background:var(--blue-soft);color:var(--blue)}
+.tipo-seguro{background:var(--amber-soft);color:var(--amber)}
+
+/* Estado badges */
+.estado-badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:10px}
+.estado-borrador{background:var(--surface-3);color:var(--ink-2)}
+.estado-emitido{background:var(--blue-soft);color:var(--blue)}
+.estado-aprobado{background:var(--green-soft);color:var(--green)}
+.estado-rechazado{background:var(--red-soft);color:var(--red)}
+
+.pres-acciones{display:flex;gap:6px}
+.btn-mini{padding:5px 10px;border-radius:var(--radius);border:1.5px solid var(--line-strong);background:var(--surface);font-size:11px;font-weight:600;color:var(--ink-2);cursor:pointer;transition:background .12s}
+.btn-mini:hover{background:var(--surface-3)}
+.btn-mini.prim{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn-mini.prim:hover{opacity:.88}
+
+.estado-centro{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 24px;text-align:center;gap:12px}
+.estado-icon{font-size:52px}
+.estado-titulo{font-size:16px;font-weight:600;color:var(--ink-2)}
+.estado-sub{font-size:13px;color:var(--ink-3);line-height:1.5}
+.skeleton{background:var(--surface);border-radius:var(--radius-lg);padding:16px;border:1px solid var(--line);animation:pulse 1.4s ease-in-out infinite}
+.skel-line{background:var(--surface-3);border-radius:4px;margin-bottom:8px}
+.skel-line.w70{width:70%;height:13px}.skel-line.w45{width:45%;height:11px}.skel-line.w55{width:55%;height:11px}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+
+/* ══════════════════════════════════════════════════════════════
+   VISTA: EDITOR
+══════════════════════════════════════════════════════════════ */
+#vistaEditor{flex:1;display:none;flex-direction:column}
+
+/* Barra del editor */
+.editor-topbar{background:var(--brand-mid);padding:0 14px;height:52px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.editor-topbar-title{font-size:14px;font-weight:700;color:#fff;flex:1}
+.btn-cancelar-ed{padding:7px 14px;border-radius:var(--radius);border:1.5px solid rgba(255,255,255,.3);background:transparent;color:rgba(255,255,255,.8);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+.btn-guardar-ed{padding:7px 16px;border-radius:var(--radius);border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .15s}
+.btn-guardar-ed:hover{opacity:.88}
+.btn-guardar-ed:disabled{opacity:.45;cursor:default}
+
+/* Progreso tipo */
+.tipo-selector{display:flex;background:var(--surface);border-bottom:1px solid var(--line);padding:10px 14px;gap:8px;flex-shrink:0}
+.tipo-btn{flex:1;padding:10px;border-radius:var(--radius-lg);border:2px solid var(--line-strong);background:var(--surface);font-size:13px;font-weight:600;color:var(--ink-2);cursor:pointer;transition:all .15s;text-align:center}
+.tipo-btn.sel{border-color:var(--brand);background:var(--brand);color:#fff}
+
+/* Secciones del formulario */
+.editor-body{flex:1;overflow-y:auto;padding:0 0 20px}
+.ed-section{margin:0;border-bottom:1px solid var(--line)}
+.ed-section-header{display:flex;align-items:center;gap:10px;padding:14px 16px 12px;cursor:pointer;background:var(--surface)}
+.ed-section-header:hover{background:var(--surface-2)}
+.ed-section-num{width:24px;height:24px;border-radius:50%;background:var(--brand);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ed-section-titulo{font-size:14px;font-weight:700;flex:1}
+.ed-section-caret{color:var(--ink-3);font-size:16px;transition:transform .2s}
+.ed-section-caret.open{transform:rotate(180deg)}
+.ed-section-body{display:none;padding:0 16px 16px;background:var(--surface-2)}
+.ed-section-body.open{display:block}
+
+/* Campos */
+.fg{margin-bottom:12px}
+.fl{font-size:12px;font-weight:600;color:var(--ink-2);margin-bottom:5px;display:block}
+.fl .req{color:var(--accent);margin-left:2px}
+.fi,.fs,.fta{width:100%;border:1.5px solid var(--line-strong);border-radius:var(--radius);padding:10px 12px;font-size:14px;font-family:inherit;color:var(--ink-1);background:var(--surface);outline:none;transition:border-color .15s}
+.fi:focus,.fs:focus,.fta:focus{border-color:var(--brand)}
+.fi::placeholder,.fta::placeholder{color:var(--ink-4)}
+.fi.error{border-color:var(--red)}
+.fta{resize:none;min-height:60px}
+.fs{appearance:none}
+.fr2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fr3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+
+/* ── TABLA DE ÍTEMS ── */
+.items-table{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--line);overflow:hidden;margin:12px 0}
+.items-thead{display:grid;grid-template-columns:1fr 56px 88px 28px;padding:8px 10px;background:var(--brand);gap:6px}
+.items-thead span{font-size:10px;font-weight:700;color:rgba(255,255,255,.8);text-transform:uppercase;letter-spacing:.06em}
+.item-row{display:grid;grid-template-columns:1fr 56px 88px 28px;padding:9px 10px;border-bottom:1px solid var(--line);gap:6px;align-items:center}
+.item-row:last-child{border-bottom:none}
+.item-desc{font-size:12px;font-weight:600;color:var(--ink-1);line-height:1.3}
+.item-tipo-tag{font-size:9px;color:var(--ink-3);margin-top:1px}
+.item-qty{font-size:13px;text-align:center;color:var(--ink-2)}
+.item-sub{font-size:13px;font-weight:700;text-align:right;color:var(--ink-1)}
+.item-del{width:24px;height:24px;border-radius:50%;border:none;background:var(--red-soft);color:var(--red);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+.items-empty{padding:20px;text-align:center;color:var(--ink-4);font-size:13px}
+
+.items-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.btn-add-item{display:flex;align-items:center;gap:5px;padding:8px 12px;border-radius:var(--radius);border:1.5px solid var(--line-strong);background:var(--surface);font-size:12px;font-weight:600;color:var(--ink-2);cursor:pointer;transition:all .15s;font-family:inherit}
+.btn-add-item:hover{border-color:var(--brand);color:var(--brand)}
+
+/* Totales */
+.totales-block{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--line);padding:14px;margin-top:12px}
+.tot-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:13px}
+.tot-row.total{border-top:1px solid var(--line);margin-top:6px;padding-top:10px;font-size:16px;font-weight:700}
+.iva-row{display:flex;align-items:center;gap:10px}
+.iva-toggle-wrap{display:flex;align-items:center;gap:6px}
+.iva-label{font-size:12px;color:var(--ink-2)}
+.iva-input{width:54px;border:1.5px solid var(--line-strong);border-radius:var(--radius);padding:4px 6px;font-size:13px;font-family:inherit;text-align:center;outline:none}
+.iva-input:focus{border-color:var(--brand)}
+.iva-pct{font-size:12px;color:var(--ink-3)}
+.toggle-sw{position:relative;width:38px;height:22px}
+.toggle-sw input{opacity:0;width:0;height:0}
+.toggle-track{position:absolute;inset:0;background:var(--line-strong);border-radius:11px;cursor:pointer;transition:background .2s}
+.toggle-track::after{content:'';position:absolute;width:16px;height:16px;top:3px;left:3px;background:#fff;border-radius:50%;transition:transform .2s;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.toggle-sw input:checked+.toggle-track{background:var(--green)}
+.toggle-sw input:checked+.toggle-track::after{transform:translateX(16px)}
+
+/* Acciones finales del editor */
+.editor-footer{background:var(--surface);border-top:1px solid var(--line);padding:12px 16px;display:flex;gap:8px;flex-shrink:0}
+.btn-preview{flex:1;padding:12px;border-radius:var(--radius-lg);border:1.5px solid var(--brand);background:var(--surface);font-size:13px;font-weight:700;color:var(--brand);cursor:pointer;font-family:inherit}
+.btn-emitir{flex:1;padding:12px;border-radius:var(--radius-lg);border:none;background:var(--green);font-size:13px;font-weight:700;color:#fff;cursor:pointer;font-family:inherit;transition:opacity .15s}
+.btn-emitir:hover{opacity:.88}
+.btn-emitir:disabled{opacity:.45;cursor:default}
+
+/* ══════════════════════════════════════════════════════════════
+   MODAL: ITEM MANUAL
+══════════════════════════════════════════════════════════════ */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:flex-end;justify-content:center}
+.modal-overlay.open{display:flex;animation:fadeIn .2s}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal-sheet{background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-width:480px;max-height:88vh;display:flex;flex-direction:column;animation:slideUp .25s cubic-bezier(.34,1.56,.64,1)}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-handle{width:36px;height:4px;background:var(--line-strong);border-radius:2px;margin:12px auto 0;flex-shrink:0}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px 10px;border-bottom:1px solid var(--line);flex-shrink:0}
+.modal-titulo{font-size:16px;font-weight:700}
+.modal-close{width:30px;height:30px;border-radius:50%;background:var(--surface-3);border:none;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink-2)}
+.modal-body{flex:1;overflow-y:auto;padding:16px 20px}
+.modal-footer{padding:12px 20px 20px;border-top:1px solid var(--line);display:flex;gap:10px;flex-shrink:0}
+.btn-cancel-modal{flex:1;padding:12px;border-radius:var(--radius-lg);border:1.5px solid var(--line-strong);background:var(--surface);font-size:14px;font-weight:600;color:var(--ink-2);cursor:pointer;font-family:inherit}
+.btn-ok-modal{flex:2;padding:12px;border-radius:var(--radius-lg);border:none;background:var(--brand);font-size:14px;font-weight:700;color:#fff;cursor:pointer;font-family:inherit;transition:opacity .15s}
+.btn-ok-modal:hover{opacity:.88}
+
+/* ── Modal búsqueda catálogo ── */
+.cat-search-input{width:100%;border:1.5px solid var(--line-strong);border-radius:var(--radius-lg);padding:11px 14px;font-size:14px;font-family:inherit;outline:none;margin-bottom:12px;transition:border-color .15s}
+.cat-search-input:focus{border-color:var(--brand)}
+.cat-result-list{display:flex;flex-direction:column;gap:6px;min-height:80px}
+.cat-item{padding:10px 12px;border-radius:var(--radius);border:1.5px solid var(--line);background:var(--surface);cursor:pointer;transition:border-color .15s,background .15s}
+.cat-item:hover{border-color:var(--brand);background:var(--surface-2)}
+.cat-item.sel{border-color:var(--brand);background:var(--blue-soft)}
+.cat-item-cod{font-size:10px;color:var(--ink-3);font-family:'Courier New',monospace;font-weight:700}
+.cat-item-desc{font-size:13px;font-weight:600;color:var(--ink-1)}
+.cat-item-precio{font-size:12px;color:var(--ink-3);margin-top:2px}
+.cat-empty{text-align:center;color:var(--ink-4);font-size:13px;padding:24px 0}
+
+/* ══════════════════════════════════════════════════════════════
+   ÁREA DE IMPRESIÓN
+   Solo visible en @media print — oculta en pantalla
+══════════════════════════════════════════════════════════════ */
+#printArea{display:none}
+
+@media print {
+  body, .app-shell { display: none !important; }
+  #printArea {
+    display: block !important;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 11pt;
+    color: #000;
+    margin: 0;
+    padding: 0;
+  }
+  .pr-page { padding: 20mm 20mm 15mm; page-break-after: avoid; }
+  .pr-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14pt; border-bottom: 2pt solid #1A1A2E; padding-bottom: 10pt; }
+  .pr-logo { font-size: 22pt; font-weight: 900; color: #1A1A2E; letter-spacing: -.02em; }
+  .pr-logo-sub { font-size: 9pt; color: #6B7280; margin-top: 2pt; }
+  .pr-tipo-badge { font-size: 8pt; font-weight: 700; padding: 4pt 10pt; border-radius: 20pt; display: inline-block; }
+  .pr-tipo-cliente { background: #EFF6FF; color: #2563EB; }
+  .pr-tipo-seguro  { background: #FFFBEB; color: #D97706; }
+  .pr-taller-info { text-align: right; font-size: 9pt; color: #374151; line-height: 1.5; }
+  .pr-taller-nombre { font-weight: 700; font-size: 11pt; }
+  .pr-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 8pt; margin-bottom: 12pt; }
+  .pr-meta-box { border: 1pt solid #E5E7EB; border-radius: 6pt; padding: 8pt 10pt; }
+  .pr-meta-titulo { font-size: 8pt; font-weight: 700; color: #6B7280; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 5pt; }
+  .pr-meta-row { font-size: 9pt; line-height: 1.5; }
+  .pr-meta-row strong { font-weight: 700; }
+  .pr-danos-box { border: 1pt solid #FEF3C7; background: #FFFBEB; border-radius: 6pt; padding: 8pt 10pt; margin-bottom: 10pt; }
+  .pr-danos-titulo { font-size: 8pt; font-weight: 700; color: #92400E; margin-bottom: 4pt; }
+  .pr-items-table { width: 100%; border-collapse: collapse; margin-bottom: 10pt; font-size: 9pt; }
+  .pr-items-table th { background: #1A1A2E; color: #fff; padding: 6pt 8pt; text-align: left; font-size: 8pt; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+  .pr-items-table th.right, .pr-items-table td.right { text-align: right; }
+  .pr-items-table td { padding: 6pt 8pt; border-bottom: 1pt solid #E5E7EB; vertical-align: top; }
+  .pr-items-table tr:nth-child(even) td { background: #F9FAFB; }
+  .pr-tipo-tag { font-size: 7pt; color: #6B7280; }
+  .pr-totales { display: flex; justify-content: flex-end; margin-bottom: 12pt; }
+  .pr-totales-box { width: 220pt; }
+  .pr-tot-row { display: flex; justify-content: space-between; padding: 3pt 0; font-size: 9pt; }
+  .pr-tot-row.total { border-top: 1.5pt solid #1A1A2E; margin-top: 4pt; padding-top: 5pt; font-weight: 700; font-size: 11pt; }
+  .pr-condiciones { border: 1pt solid #E5E7EB; border-radius: 6pt; padding: 8pt 10pt; margin-bottom: 12pt; font-size: 8.5pt; color: #374151; line-height: 1.5; }
+  .pr-condiciones-titulo { font-size: 8pt; font-weight: 700; color: #6B7280; text-transform: uppercase; margin-bottom: 4pt; }
+  .pr-legal { background: #FFFBEB; border: 1pt solid #FDE68A; border-radius: 6pt; padding: 8pt 10pt; margin-bottom: 12pt; font-size: 8pt; color: #92400E; }
+  .pr-firma { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 24pt; }
+  .pr-firma-box { text-align: center; width: 160pt; }
+  .pr-firma-line { border-top: 1pt solid #000; margin-bottom: 4pt; }
+  .pr-firma-label { font-size: 8pt; color: #6B7280; }
+  .pr-numero { font-size: 9pt; color: #6B7280; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   TOAST
+══════════════════════════════════════════════════════════════ */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--ink-1);color:#fff;padding:11px 20px;border-radius:20px;font-size:13px;font-weight:600;box-shadow:var(--shadow-lg);opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:500;white-space:nowrap;max-width:calc(100vw - 40px);text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.error{background:var(--accent)}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════════
+     TOPBAR COMPARTIDA
+══════════════════════════════════════════════════════════════ -->
+<div class="app-shell">
+  <header class="topbar" id="mainTopbar">
+    <div class="topbar-back" id="topbarBack" onclick="onBack()">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    </div>
+    <span class="topbar-title" id="topbarTitle">Presupuestos</span>
+  </header>
+
+  <!-- ══════════════════════════════════════════════════════════
+       VISTA LISTA
+  ══════════════════════════════════════════════════════════════ -->
+  <div id="vistaLista">
+    <div class="lista-toolbar">
+      <button class="btn-nuevo" onclick="abrirNuevo()">+ Nuevo presupuesto</button>
+      <select class="filtro-tipo" id="filtroTipo" onchange="renderLista()">
+        <option value="">Todos</option>
+        <option value="cliente">Cliente</option>
+        <option value="seguro">Seguro</option>
+      </select>
+    </div>
+    <div class="lista-body" id="listaBody"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       VISTA EDITOR
+  ══════════════════════════════════════════════════════════════ -->
+  <div id="vistaEditor">
+    <div class="editor-topbar">
+      <span class="editor-topbar-title" id="editorTitulo">Nuevo presupuesto</span>
+      <button class="btn-cancelar-ed" onclick="cerrarEditor()">Cancelar</button>
+      <button class="btn-guardar-ed" id="btnGuardarBorrador" onclick="guardar('borrador')">Guardar</button>
+    </div>
+
+    <!-- Selector tipo -->
+    <div class="tipo-selector">
+      <button class="tipo-btn sel" id="tipoBtnCliente" onclick="setTipo('cliente')">👤 Cliente</button>
+      <button class="tipo-btn"     id="tipoBtnSeguro"  onclick="setTipo('seguro')">🛡️ Seguro</button>
+    </div>
+
+    <div class="editor-body" id="editorBody">
+
+      <!-- S1: Cliente y vehículo -->
+      <div class="ed-section">
+        <div class="ed-section-header" onclick="toggleSection('s1')">
+          <div class="ed-section-num">1</div>
+          <div class="ed-section-titulo">Cliente y vehículo</div>
+          <div class="ed-section-caret open" id="caret-s1">▾</div>
+        </div>
+        <div class="ed-section-body open" id="s1">
+          <div style="height:12px"></div>
+          <div class="fg">
+            <label class="fl">Nombre del cliente <span class="req">*</span></label>
+            <input class="fi" id="e-cli-nombre" type="text" placeholder="Juan García">
+          </div>
+          <div class="fr2">
+            <div class="fg">
+              <label class="fl">DNI</label>
+              <input class="fi" id="e-cli-dni" type="text" placeholder="32.456.789">
+            </div>
+            <div class="fg">
+              <label class="fl">Teléfono</label>
+              <input class="fi" id="e-cli-tel" type="tel" placeholder="11 5555-1234">
+            </div>
+          </div>
+          <div class="fr3">
+            <div class="fg">
+              <label class="fl">Marca</label>
+              <input class="fi" id="e-veh-marca" type="text" placeholder="Peugeot">
+            </div>
+            <div class="fg">
+              <label class="fl">Modelo</label>
+              <input class="fi" id="e-veh-modelo" type="text" placeholder="208">
+            </div>
+            <div class="fg">
+              <label class="fl">Año</label>
+              <input class="fi" id="e-veh-anio" type="number" placeholder="2019">
+            </div>
+          </div>
+          <div class="fr2">
+            <div class="fg">
+              <label class="fl">Dominio / Patente</label>
+              <input class="fi" id="e-veh-dominio" type="text" placeholder="ABC 123" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+            </div>
+            <div class="fg">
+              <label class="fl">Color</label>
+              <input class="fi" id="e-veh-color" type="text" placeholder="Blanco">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- S2: Siniestro (solo seguro) -->
+      <div class="ed-section" id="seccionSiniestro" style="display:none">
+        <div class="ed-section-header" onclick="toggleSection('s2')">
+          <div class="ed-section-num">2</div>
+          <div class="ed-section-titulo">Datos del siniestro</div>
+          <div class="ed-section-caret" id="caret-s2">▾</div>
+        </div>
+        <div class="ed-section-body" id="s2">
+          <div style="height:12px"></div>
+          <div class="fr2">
+            <div class="fg">
+              <label class="fl">Nro. de siniestro</label>
+              <input class="fi" id="e-sin-nro" type="text" placeholder="SIN-2026-000123">
+            </div>
+            <div class="fg">
+              <label class="fl">Compañía de seguros</label>
+              <input class="fi" id="e-sin-cia" type="text" placeholder="Federación Patronal">
+            </div>
+          </div>
+          <div class="fg">
+            <label class="fl">Nro. de póliza</label>
+            <input class="fi" id="e-sin-poliza" type="text" placeholder="12345678">
+          </div>
+          <div style="font-size:11px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Datos del tercero (si aplica)</div>
+          <div class="fr3">
+            <div class="fg">
+              <label class="fl">Nombre</label>
+              <input class="fi" id="e-ter-nombre" type="text" placeholder="">
+            </div>
+            <div class="fg">
+              <label class="fl">Dominio</label>
+              <input class="fi" id="e-ter-dominio" type="text" placeholder="">
+            </div>
+            <div class="fg">
+              <label class="fl">Compañía</label>
+              <input class="fi" id="e-ter-cia" type="text" placeholder="">
+            </div>
+          </div>
+          <div class="fg">
+            <label class="fl">Descripción de daños</label>
+            <textarea class="fta" id="e-danos" rows="3" placeholder="Descripción detallada de los daños al vehículo…"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- S3: Ítems del trabajo -->
+      <div class="ed-section">
+        <div class="ed-section-header" onclick="toggleSection('s3')">
+          <div class="ed-section-num" id="secItemsNum">2</div>
+          <div class="ed-section-titulo">Ítems del trabajo</div>
+          <div class="ed-section-caret open" id="caret-s3">▾</div>
+        </div>
+        <div class="ed-section-body open" id="s3">
+          <div style="height:12px"></div>
+          <div class="items-table" id="itemsTable">
+            <div class="items-thead">
+              <span>Descripción</span><span style="text-align:center">Cant.</span><span style="text-align:right">Subtotal</span><span></span>
+            </div>
+            <div id="itemsRows"><div class="items-empty">Sin ítems. Usá los botones de abajo.</div></div>
+          </div>
+          <div class="items-actions">
+            <button class="btn-add-item" onclick="abrirModalManual()">✏️ Manual</button>
+            <button class="btn-add-item" onclick="abrirModalCatalogo()">🔍 Del catálogo</button>
+            <button class="btn-add-item" onclick="abrirModalMO()">🔧 Mano de obra</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- S4: Totales y condiciones -->
+      <div class="ed-section">
+        <div class="ed-section-header" onclick="toggleSection('s4')">
+          <div class="ed-section-num" id="secTotalesNum">3</div>
+          <div class="ed-section-titulo">Totales y condiciones</div>
+          <div class="ed-section-caret" id="caret-s4">▾</div>
+        </div>
+        <div class="ed-section-body" id="s4">
+          <div style="height:12px"></div>
+          <div class="fr2">
+            <div class="fg">
+              <label class="fl">Fecha de emisión</label>
+              <input class="fi" id="e-fecha-emision" type="date">
+            </div>
+            <div class="fg">
+              <label class="fl">Fecha de validez <span style="font-size:10px;color:var(--ink-3)">(mín. 12 hábiles)</span></label>
+              <input class="fi" id="e-fecha-validez" type="date">
+            </div>
+          </div>
+          <div class="totales-block">
+            <div class="tot-row"><span>Subtotal</span><span id="tot-subtotal">$\u202F0</span></div>
+            <div class="tot-row iva-row">
+              <div class="iva-toggle-wrap">
+                <label class="toggle-sw"><input type="checkbox" id="ivaCheck" onchange="recalcular()"><div class="toggle-track"></div></label>
+                <span class="iva-label">IVA</span>
+                <input class="iva-input" id="ivaPct" type="number" value="21" min="0" max="100" onchange="recalcular()">
+                <span class="iva-pct">%</span>
+              </div>
+              <span id="tot-iva" style="color:var(--ink-3)">—</span>
+            </div>
+            <div class="tot-row total"><span>Total</span><span id="tot-total">$\u202F0</span></div>
+          </div>
+          <div class="fg" style="margin-top:12px">
+            <label class="fl">Condiciones del presupuesto</label>
+            <textarea class="fta" id="e-condiciones" rows="3" placeholder="Vigencia, garantías, condiciones de pago…"></textarea>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /editor-body -->
+
+    <div class="editor-footer">
+      <button class="btn-preview" onclick="verPreviaImpresion()">🖨️ Vista previa</button>
+      <button class="btn-emitir" id="btnEmitir" onclick="guardar('emitido')">✅ Emitir</button>
+    </div>
+  </div><!-- /vistaEditor -->
+
+</div><!-- /app-shell -->
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     MODAL: ÍTEM MANUAL
+══════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modalManual" onclick="cerrarModalSiClick(event,'modalManual')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <span class="modal-titulo">Agregar ítem</span>
+      <button class="modal-close" onclick="cerrarModal('modalManual')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="fg">
+        <label class="fl">Tipo</label>
+        <select class="fs" id="m-tipo">
+          <option value="pieza">Pieza</option>
+          <option value="mano_obra">Mano de obra</option>
+          <option value="pintura">Pintura</option>
+          <option value="otro">Otro</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label class="fl">Descripción <span class="req">*</span></label>
+        <input class="fi" id="m-desc" type="text" placeholder="">
+      </div>
+      <div class="fr3">
+        <div class="fg">
+          <label class="fl">Cantidad</label>
+          <input class="fi" id="m-qty" type="number" min="0.1" step="0.1" value="1">
+        </div>
+        <div class="fg" style="grid-column:span 2">
+          <label class="fl">Precio unitario ($)</label>
+          <input class="fi" id="m-precio" type="number" min="0" step="100" placeholder="0">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel-modal" onclick="cerrarModal('modalManual')">Cancelar</button>
+      <button class="btn-ok-modal" onclick="agregarItemManual()">Agregar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     MODAL: BÚSQUEDA CATÁLOGO
+══════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modalCatalogo" onclick="cerrarModalSiClick(event,'modalCatalogo')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <span class="modal-titulo">Buscar en catálogo</span>
+      <button class="modal-close" onclick="cerrarModal('modalCatalogo')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input class="cat-search-input" id="catSearchInput" type="text"
+             placeholder="Descripción, modelo, código…" oninput="onCatSearch()">
+      <div class="cat-result-list" id="catResults">
+        <div class="cat-empty">Ingresá 3 o más caracteres para buscar</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel-modal" onclick="cerrarModal('modalCatalogo')">Cancelar</button>
+      <button class="btn-ok-modal" id="btnAgregarCat" onclick="agregarItemCatalogo()" disabled>Agregar seleccionado</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     MODAL: MANO DE OBRA
+══════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modalMO" onclick="cerrarModalSiClick(event,'modalMO')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <span class="modal-titulo">Mano de obra</span>
+      <button class="modal-close" onclick="cerrarModal('modalMO')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="fg">
+        <label class="fl">Tipo</label>
+        <select class="fs" id="mo-tipo" onchange="onMOTipoChange()">
+          <option value="hora">Por hora</option>
+          <option value="pano">Por paño</option>
+          <option value="libre">Valor libre</option>
+        </select>
+      </div>
+      <div id="mo-hora-group">
+        <div class="fr2">
+          <div class="fg">
+            <label class="fl">Valor hora ($) <span style="font-size:10px;color:var(--ink-4)" id="moHoraHint"></span></label>
+            <input class="fi" id="mo-valor-hora" type="number" min="0" step="100" placeholder="0" oninput="onMOInput()">
+          </div>
+          <div class="fg">
+            <label class="fl">Horas</label>
+            <input class="fi" id="mo-horas" type="number" min="0.5" step="0.5" value="1" oninput="onMOInput()">
+          </div>
+        </div>
+      </div>
+      <div id="mo-pano-group" style="display:none">
+        <div class="fr2">
+          <div class="fg">
+            <label class="fl">Valor por paño ($) <span style="font-size:10px;color:var(--ink-4)" id="moPanoHint"></span></label>
+            <input class="fi" id="mo-valor-pano" type="number" min="0" step="100" placeholder="0" oninput="onMOInput()">
+          </div>
+          <div class="fg">
+            <label class="fl">Cantidad de paños</label>
+            <input class="fi" id="mo-panos" type="number" min="1" step="1" value="1" oninput="onMOInput()">
+          </div>
+        </div>
+      </div>
+      <div id="mo-libre-group" style="display:none">
+        <div class="fg">
+          <label class="fl">Descripción</label>
+          <input class="fi" id="mo-libre-desc" type="text" placeholder="Ej: Desarme y armado paragolpe">
+        </div>
+        <div class="fg">
+          <label class="fl">Subtotal ($)</label>
+          <input class="fi" id="mo-libre-monto" type="number" min="0" step="100" placeholder="0" oninput="onMOInput()">
+        </div>
+      </div>
+      <div style="margin-top:14px;padding:10px 12px;background:var(--surface-2);border-radius:var(--radius);display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:13px;color:var(--ink-3)">Subtotal calculado</span>
+        <span style="font-size:17px;font-weight:800;color:var(--ink-1)" id="moSubtotalCalc">$\u202F0</span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel-modal" onclick="cerrarModal('modalMO')">Cancelar</button>
+      <button class="btn-ok-modal" onclick="agregarItemMO()">Agregar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     ÁREA DE IMPRESIÓN (solo visible en @media print)
+══════════════════════════════════════════════════════════════ -->
+<div id="printArea"></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════════════════════
+const SB_URL  = 'https://mqxowotdeibllkitkije.supabase.co';
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xeG93b3RkZWlibGxraXRraWplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxMzgxNDYsImV4cCI6MjA5MTcxNDE0Nn0.V_Pr0elBurAK7OPKFL3OoZwBmb-bI-Mcz8N1U8yblG8';
+const TABLA   = 'cat_taller_presupuestos';
+
+// ═══════════════════════════════════════════════════════════════
+// ESTADO GLOBAL
+// ═══════════════════════════════════════════════════════════════
+let tallerId        = null;
+let tallerPerfil    = {};  // nombre, cuit, direccion, valor_hora_mo, valor_pano, condiciones_presupuesto
+let descuentoPZ     = 0;
+
+let presupuestos    = [];  // lista cargada de la DB
+let itemsActivos    = [];  // líneas del presupuesto en edición
+let presActivo      = null; // el presupuesto en edición (null = nuevo)
+let tipoActual      = 'cliente';
+let guardando       = false;
+
+let catSeleccionado = null; // item seleccionado en modal catálogo
+let catDebTimer;
+
+// ═══════════════════════════════════════════════════════════════
+// API
+// ═══════════════════════════════════════════════════════════════
+function tok(){try{const k=Object.keys(localStorage).find(k=>k.includes('auth-token'));if(k)return JSON.parse(localStorage.getItem(k))?.access_token||SB_ANON;}catch(_){}return SB_ANON;}
+function hdrs(x={}){return{'apikey':SB_ANON,'Authorization':`Bearer ${tok()}`,'Content-Type':'application/json',...x};}
+
+async function sbGet(tabla,qs){const r=await fetch(`${SB_URL}/rest/v1/${tabla}?${qs}`,{headers:{...hdrs(),'Prefer':'count=exact'}});if(!r.ok){const b=await r.json().catch(()=>({}));throw new Error(b.message||r.status);}const count=parseInt(r.headers.get('Content-Range')?.split('/')[1]||'0',10);return{data:await r.json(),count};}
+async function sbPost(tabla,body){const r=await fetch(`${SB_URL}/rest/v1/${tabla}`,{method:'POST',headers:{...hdrs(),'Prefer':'return=representation'},body:JSON.stringify(body)});if(!r.ok){const b=await r.json().catch(()=>({}));throw new Error(b.message||r.status);}return(await r.json())[0];}
+async function sbPatch(tabla,id,body){const r=await fetch(`${SB_URL}/rest/v1/${tabla}?id=eq.${id}`,{method:'PATCH',headers:{...hdrs(),'Prefer':'return=representation'},body:JSON.stringify(body)});if(!r.ok){const b=await r.json().catch(()=>({}));throw new Error(b.message||r.status);}return(await r.json())[0];}
+
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+async function init(){
+  renderSkeletons();
+  await cargarContexto();
+  await cargarLista();
+}
+
+async function cargarContexto(){
+  try{
+    const{data}=await sbGet('cat_recomendaciones_talleres',
+      'select=id,nombre,cuit,direccion,localidad,telefono,valor_hora_mo,valor_pano,condiciones_presupuesto,descuento_piezauto&limit=1');
+    if(data?.length){
+      tallerId=data[0].id;
+      tallerPerfil=data[0];
+      descuentoPZ=parseFloat(data[0].descuento_piezauto)||0;
+      // Prellenar condiciones default en editor
+      if(data[0].condiciones_presupuesto){
+        document.getElementById('e-condiciones').value=data[0].condiciones_presupuesto;
+      }
+    }
+  }catch(e){console.warn('cargarContexto:',e.message);}
+}
+
+// ═══════════════════════════════════════════════════════════════
+// LISTA
+// ═══════════════════════════════════════════════════════════════
+async function cargarLista(){
+  try{
+    const{data}=await sbGet(TABLA,'select=*&order=created_at.desc');
+    presupuestos=data||[];
+    renderLista();
+  }catch(err){
+    document.getElementById('listaBody').innerHTML=`<div class="estado-centro"><div class="estado-icon">⚠️</div><div class="estado-titulo">Error</div><div class="estado-sub">${err.message}</div></div>`;
+  }
+}
+
+function renderLista(){
+  const filtro=document.getElementById('filtroTipo').value;
+  const lista=filtro?presupuestos.filter(p=>p.tipo===filtro):presupuestos;
+  const cont=document.getElementById('listaBody');
+  if(!lista.length){
+    cont.innerHTML=`<div class="estado-centro"><div class="estado-icon">📋</div><div class="estado-titulo">${presupuestos.length?'Sin resultados':'Sin presupuestos'}</div><div class="estado-sub">Tocá "+ Nuevo presupuesto" para crear uno.</div></div>`;
+    return;
+  }
+  cont.innerHTML=lista.map(p=>{
+    const items=Array.isArray(p.items)?p.items:[];
+    const clienteNombre=p.items?.[0]?.cliente_nombre||'—';
+    // cliente_nombre lo guardamos en el primer ítem? No — lo guardamos en campos separados. Usamos desc del vehículo.
+    const veh=[p.vehiculo_marca,p.vehiculo_modelo,p.vehiculo_anio].filter(Boolean).join(' ')||'Sin vehículo';
+    const estado=p.estado||'borrador';
+    const tipoLbl=p.tipo==='seguro'?'Seguro':'Cliente';
+    const tipoCls=p.tipo==='seguro'?'tipo-seguro':'tipo-cliente';
+    return`
+    <div class="pres-card" onclick="abrirEditar('${p.id}')">
+      <div class="pres-header">
+        <div style="flex:1;min-width:0">
+          <div class="pres-numero">${p.numero_presupuesto}</div>
+          <div class="pres-cliente">${p.nombre_cliente||'Sin nombre'}</div>
+          <div class="pres-vehiculo">${veh}${p.vehiculo_dominio?' · '+p.vehiculo_dominio:''}</div>
+        </div>
+        <div class="pres-right">
+          <div class="pres-total">${fmt(p.total)}</div>
+          <div class="pres-fecha">${fmtFecha(p.created_at)}</div>
+        </div>
+      </div>
+      <div class="pres-footer">
+        <span class="pres-tipo-badge ${tipoCls}">${tipoLbl}</span>
+        <div class="pres-acciones">
+          <span class="estado-badge estado-${estado}">${estadoLabel(estado)}</span>
+          <button class="btn-mini prim" onclick="event.stopPropagation();imprimirExistente('${p.id}')">🖨️</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function estadoLabel(e){return{borrador:'Borrador',emitido:'Emitido',aprobado:'Aprobado',rechazado:'Rechazado'}[e]||e;}
+function renderSkeletons(){document.getElementById('listaBody').innerHTML=Array(4).fill(`<div class="skeleton"><div class="skel-line w70"></div><div class="skel-line w55"></div><div class="skel-line w45"></div></div>`).join('');}
+
+// ═══════════════════════════════════════════════════════════════
+// NAVEGACIÓN VISTAS
+// ═══════════════════════════════════════════════════════════════
+function mostrarVista(v){
+  document.getElementById('vistaLista').style.display=v==='lista'?'flex':'none';
+  document.getElementById('vistaEditor').style.display=v==='editor'?'flex':'none';
+}
+
+function onBack(){
+  if(document.getElementById('vistaEditor').style.display!=='none'){
+    cerrarEditor();
+  }else{
+    history.back();
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EDITOR — ABRIR
+// ═══════════════════════════════════════════════════════════════
+async function abrirNuevo(){
+  presActivo=null;
+  itemsActivos=[];
+  tipoActual='cliente';
+  limpiarEditor();
+  setTipo('cliente');
+  await asignarNumero();
+  // Fecha de emisión = hoy; validez = +12 hábiles
+  const hoy=new Date();
+  document.getElementById('e-fecha-emision').value=toDateInput(hoy);
+  document.getElementById('e-fecha-validez').value=toDateInput(sumarDiasHabiles(hoy,12));
+  document.getElementById('editorTitulo').textContent='Nuevo presupuesto';
+  mostrarVista('editor');
+  recalcular();
+}
+
+async function abrirEditar(id){
+  presActivo=presupuestos.find(p=>p.id===id);
+  if(!presActivo)return;
+  limpiarEditor();
+  poblarEditor(presActivo);
+  mostrarVista('editor');
+  recalcular();
+}
+
+function limpiarEditor(){
+  const ids=['e-cli-nombre','e-cli-dni','e-cli-tel','e-veh-marca','e-veh-modelo','e-veh-anio','e-veh-dominio','e-veh-color','e-sin-nro','e-sin-cia','e-sin-poliza','e-ter-nombre','e-ter-dominio','e-ter-cia','e-danos'];
+  ids.forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('e-condiciones').value=tallerPerfil.condiciones_presupuesto||'';
+  document.getElementById('ivaCheck').checked=false;
+  document.getElementById('ivaPct').value='21';
+  itemsActivos=[];
+  renderItems();
+}
+
+function poblarEditor(p){
+  setTipo(p.tipo||'cliente');
+  document.getElementById('e-cli-nombre').value=p.nombre_cliente||'';
+  document.getElementById('e-cli-dni').value=p.dni_cliente||'';
+  document.getElementById('e-cli-tel').value=p.tel_cliente||'';
+  document.getElementById('e-veh-marca').value=p.vehiculo_marca||'';
+  document.getElementById('e-veh-modelo').value=p.vehiculo_modelo||'';
+  document.getElementById('e-veh-anio').value=p.vehiculo_anio||'';
+  document.getElementById('e-veh-dominio').value=p.vehiculo_dominio||'';
+  document.getElementById('e-veh-color').value=p.vehiculo_color||'';
+  document.getElementById('e-fecha-emision').value=p.fecha_emision||'';
+  document.getElementById('e-fecha-validez').value=p.fecha_validez||'';
+  document.getElementById('e-condiciones').value=p.condiciones||'';
+  document.getElementById('ivaCheck').checked=(p.iva_porcentaje||0)>0;
+  document.getElementById('ivaPct').value=p.iva_porcentaje||21;
+  if(p.tipo==='seguro'){
+    document.getElementById('e-sin-nro').value=p.nro_siniestro||'';
+    document.getElementById('e-sin-cia').value=p.compania_seguro||'';
+    document.getElementById('e-sin-poliza').value=p.nro_poliza||'';
+    const ter=p.datos_tercero||{};
+    document.getElementById('e-ter-nombre').value=ter.nombre||'';
+    document.getElementById('e-ter-dominio').value=ter.dominio||'';
+    document.getElementById('e-ter-cia').value=ter.compania||'';
+    document.getElementById('e-danos').value=p.descripcion_danos||'';
+  }
+  itemsActivos=Array.isArray(p.items)?[...p.items]:[];
+  document.getElementById('editorTitulo').textContent=`Editar ${p.numero_presupuesto}`;
+  renderItems();
+}
+
+function cerrarEditor(){
+  mostrarVista('lista');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TIPO PRESUPUESTO
+// ═══════════════════════════════════════════════════════════════
+function setTipo(tipo){
+  tipoActual=tipo;
+  document.getElementById('tipoBtnCliente').className='tipo-btn'+(tipo==='cliente'?' sel':'');
+  document.getElementById('tipoBtnSeguro').className='tipo-btn'+(tipo==='seguro'?' sel':'');
+  const sinSec=document.getElementById('seccionSiniestro');
+  sinSec.style.display=tipo==='seguro'?'block':'none';
+  // Actualizar números de sección
+  document.getElementById('secItemsNum').textContent=tipo==='seguro'?'3':'2';
+  document.getElementById('secTotalesNum').textContent=tipo==='seguro'?'4':'3';
+}
+
+function toggleSection(id){
+  const body=document.getElementById(id);
+  const caret=document.getElementById('caret-'+id);
+  const open=body.classList.contains('open');
+  body.classList.toggle('open',!open);
+  caret.classList.toggle('open',!open);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// NUMERACIÓN AUTONUMÉRICA
+// ═══════════════════════════════════════════════════════════════
+async function asignarNumero(){
+  try{
+    const{count}=await sbGet(TABLA,'select=id&limit=1&offset=99999');
+    const n=String(count+1).padStart(3,'0');
+    const anio=new Date().getFullYear();
+    // Guardamos en variable, se usa al insertar
+    window._presNumero=`${anio}-${n}`;
+  }catch(e){
+    window._presNumero=`${new Date().getFullYear()}-001`;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ÍTEMS
+// ═══════════════════════════════════════════════════════════════
+function renderItems(){
+  const cont=document.getElementById('itemsRows');
+  if(!itemsActivos.length){
+    cont.innerHTML='<div class="items-empty">Sin ítems. Usá los botones de abajo.</div>';
+    recalcular(); return;
+  }
+  const tipoLabel={pieza:'Pieza',mano_obra:'M.O.',pintura:'Pintura',otro:'Otro'};
+  cont.innerHTML=itemsActivos.map((it,i)=>`
+    <div class="item-row">
+      <div>
+        <div class="item-desc">${it.descripcion}</div>
+        <div class="item-tipo-tag">${tipoLabel[it.tipo]||it.tipo}${it.codigo_piezauto?' · '+it.codigo_piezauto:''}</div>
+      </div>
+      <div class="item-qty">${it.cantidad}</div>
+      <div class="item-sub">${fmt(it.subtotal)}</div>
+      <button class="item-del" onclick="quitarItem(${i})">✕</button>
+    </div>`).join('');
+  recalcular();
+}
+
+function quitarItem(i){itemsActivos.splice(i,1);renderItems();}
+
+// ═══════════════════════════════════════════════════════════════
+// MODAL MANUAL
+// ═══════════════════════════════════════════════════════════════
+function abrirModalManual(){
+  document.getElementById('m-tipo').value='pieza';
+  document.getElementById('m-desc').value='';
+  document.getElementById('m-qty').value='1';
+  document.getElementById('m-precio').value='';
+  abrirModal('modalManual');
+}
+function agregarItemManual(){
+  const desc=(document.getElementById('m-desc').value||'').trim();
+  if(!desc){document.getElementById('m-desc').focus();return;}
+  const qty=parseFloat(document.getElementById('m-qty').value)||1;
+  const precio=parseFloat(document.getElementById('m-precio').value)||0;
+  itemsActivos.push({tipo:document.getElementById('m-tipo').value,descripcion:desc,cantidad:qty,precio_unitario:precio,subtotal:qty*precio});
+  cerrarModal('modalManual');
+  renderItems();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MODAL CATÁLOGO
+// ═══════════════════════════════════════════════════════════════
+function abrirModalCatalogo(){
+  catSeleccionado=null;
+  document.getElementById('catSearchInput').value='';
+  document.getElementById('catResults').innerHTML='<div class="cat-empty">Ingresá 3 o más caracteres para buscar</div>';
+  document.getElementById('btnAgregarCat').disabled=true;
+  abrirModal('modalCatalogo');
+  setTimeout(()=>document.getElementById('catSearchInput').focus(),300);
+}
+
+function onCatSearch(){
+  const q=document.getElementById('catSearchInput').value.trim();
+  clearTimeout(catDebTimer);
+  if(q.length<3){document.getElementById('catResults').innerHTML='<div class="cat-empty">Ingresá 3 o más caracteres</div>';return;}
+  catDebTimer=setTimeout(()=>buscarEnCatalogo(q),400);
+}
+
+async function buscarEnCatalogo(q){
+  document.getElementById('catResults').innerHTML='<div class="cat-empty">Buscando…</div>';
+  try{
+    const params=new URLSearchParams({
+      select:'id,codigo_piezauto,descripcion,precio_lista',
+      activo_venta:'eq.true',
+      limit:'12',
+      order:'descripcion.asc',
+    });
+    const words=q.trim().replace(/\s+/g,' & ');
+    params.set('descripcion',`fts(spanish).${encodeURIComponent(words)}`);
+    const{data}=await sbGet('cat_skus',params.toString());
+    if(!data?.length){document.getElementById('catResults').innerHTML='<div class="cat-empty">Sin resultados</div>';return;}
+    document.getElementById('catResults').innerHTML=data.map(s=>{
+      const precioB=descuentoPZ>0?s.precio_lista*(1-descuentoPZ):s.precio_lista;
+      return`<div class="cat-item" id="ci-${s.id}" onclick="seleccionarCatItem(${JSON.stringify({id:s.id,codigo_piezauto:s.codigo_piezauto,descripcion:s.descripcion,precio_lista:s.precio_lista,precio_bonificado:precioB}).replace(/"/g,'&quot;')})">
+        <div class="cat-item-cod">${s.codigo_piezauto}</div>
+        <div class="cat-item-desc">${s.descripcion}</div>
+        <div class="cat-item-precio">${descuentoPZ>0?fmt(precioB)+' c/descuento ('+fmt(s.precio_lista)+' lista)':fmt(s.precio_lista)}</div>
+      </div>`;
+    }).join('');
+  }catch(err){
+    // fallback ilike
+    try{
+      const p2=new URLSearchParams({select:'id,codigo_piezauto,descripcion,precio_lista',activo_venta:'eq.true',limit:'12',order:'descripcion.asc',descripcion:`ilike.*${q}*`});
+      const{data}=await sbGet('cat_skus',p2.toString());
+      if(!data?.length){document.getElementById('catResults').innerHTML='<div class="cat-empty">Sin resultados</div>';return;}
+      document.getElementById('catResults').innerHTML=data.map(s=>{
+        const precioB=descuentoPZ>0?s.precio_lista*(1-descuentoPZ):s.precio_lista;
+        return`<div class="cat-item" id="ci-${s.id}" onclick="seleccionarCatItem(${JSON.stringify({id:s.id,codigo_piezauto:s.codigo_piezauto,descripcion:s.descripcion,precio_lista:s.precio_lista,precio_bonificado:precioB}).replace(/"/g,'&quot;')})">
+          <div class="cat-item-cod">${s.codigo_piezauto}</div>
+          <div class="cat-item-desc">${s.descripcion}</div>
+          <div class="cat-item-precio">${fmt(precioB)}</div>
+        </div>`;
+      }).join('');
+    }catch(e2){document.getElementById('catResults').innerHTML=`<div class="cat-empty">Error: ${e2.message}</div>`;}
+  }
+}
+
+function seleccionarCatItem(sku){
+  document.querySelectorAll('.cat-item').forEach(el=>el.classList.remove('sel'));
+  const el=document.getElementById('ci-'+sku.id);
+  if(el)el.classList.add('sel');
+  catSeleccionado=sku;
+  document.getElementById('btnAgregarCat').disabled=false;
+}
+
+function agregarItemCatalogo(){
+  if(!catSeleccionado)return;
+  const precio=catSeleccionado.precio_bonificado||catSeleccionado.precio_lista||0;
+  itemsActivos.push({tipo:'pieza',descripcion:catSeleccionado.descripcion,codigo_piezauto:catSeleccionado.codigo_piezauto,cantidad:1,precio_unitario:precio,subtotal:precio});
+  cerrarModal('modalCatalogo');
+  renderItems();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MODAL MANO DE OBRA
+// ═══════════════════════════════════════════════════════════════
+function abrirModalMO(){
+  document.getElementById('mo-tipo').value='hora';
+  document.getElementById('mo-valor-hora').value=tallerPerfil.valor_hora_mo||'';
+  document.getElementById('mo-horas').value='1';
+  document.getElementById('mo-valor-pano').value=tallerPerfil.valor_pano||'';
+  document.getElementById('mo-panos').value='1';
+  document.getElementById('mo-libre-desc').value='';
+  document.getElementById('mo-libre-monto').value='';
+  document.getElementById('moHoraHint').textContent=tallerPerfil.valor_hora_mo?`(perfil: $${Math.round(tallerPerfil.valor_hora_mo).toLocaleString('es-AR')})`:'';
+  document.getElementById('moPanoHint').textContent=tallerPerfil.valor_pano?`(perfil: $${Math.round(tallerPerfil.valor_pano).toLocaleString('es-AR')})`:'';
+  onMOTipoChange();
+  onMOInput();
+  abrirModal('modalMO');
+}
+
+function onMOTipoChange(){
+  const tipo=document.getElementById('mo-tipo').value;
+  document.getElementById('mo-hora-group').style.display=tipo==='hora'?'':'none';
+  document.getElementById('mo-pano-group').style.display=tipo==='pano'?'':'none';
+  document.getElementById('mo-libre-group').style.display=tipo==='libre'?'':'none';
+  onMOInput();
+}
+
+function onMOInput(){
+  const tipo=document.getElementById('mo-tipo').value;
+  let sub=0,desc='',qty=1,pu=0;
+  if(tipo==='hora'){
+    pu=parseFloat(document.getElementById('mo-valor-hora').value)||0;
+    qty=parseFloat(document.getElementById('mo-horas').value)||1;
+    sub=pu*qty; desc=`Mano de obra — ${qty}h`;
+  } else if(tipo==='pano'){
+    pu=parseFloat(document.getElementById('mo-valor-pano').value)||0;
+    qty=parseFloat(document.getElementById('mo-panos').value)||1;
+    sub=pu*qty; desc=`Pintura — ${qty} paño${qty!==1?'s':''}`;
+  } else {
+    sub=parseFloat(document.getElementById('mo-libre-monto').value)||0;
+    desc=document.getElementById('mo-libre-desc').value.trim()||'Mano de obra';
+    qty=1; pu=sub;
+  }
+  document.getElementById('moSubtotalCalc').textContent=fmt(sub);
+  // Guardar para agregar
+  window._moTemp={tipo:tipo==='pano'?'pintura':'mano_obra',descripcion:desc,cantidad:qty,precio_unitario:pu,subtotal:sub};
+}
+
+function agregarItemMO(){
+  const it=window._moTemp;
+  if(!it||!it.subtotal){showToast('Completá los valores de mano de obra','error');return;}
+  itemsActivos.push(it);
+  cerrarModal('modalMO');
+  renderItems();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TOTALES
+// ═══════════════════════════════════════════════════════════════
+function recalcular(){
+  const sub=itemsActivos.reduce((s,it)=>s+(it.subtotal||0),0);
+  const ivaOn=document.getElementById('ivaCheck').checked;
+  const ivaPct=ivaOn?(parseFloat(document.getElementById('ivaPct').value)||0):0;
+  const ivaMontoN=sub*ivaPct/100;
+  const total=sub+ivaMontoN;
+  document.getElementById('tot-subtotal').textContent=fmt(sub);
+  document.getElementById('tot-iva').textContent=ivaOn?fmt(ivaMontoN):'—';
+  document.getElementById('tot-total').textContent=fmt(total);
+  return{sub,ivaPct:ivaOn?ivaPct:0,ivaMontoN:ivaOn?ivaMontoN:0,total};
+}
+
+// ═══════════════════════════════════════════════════════════════
+// GUARDAR
+// ═══════════════════════════════════════════════════════════════
+async function guardar(estado){
+  if(guardando)return;
+  const nombreCli=(document.getElementById('e-cli-nombre').value||'').trim();
+  if(!nombreCli){
+    document.getElementById('e-cli-nombre').classList.add('error');
+    document.getElementById('e-cli-nombre').focus();
+    // Abrir sección 1 si está cerrada
+    const s1=document.getElementById('s1');
+    if(!s1.classList.contains('open')){toggleSection('s1');}
+    showToast('El nombre del cliente es obligatorio','error');
+    return;
+  }
+  document.getElementById('e-cli-nombre').classList.remove('error');
+  if(!tallerId){showToast('Error: no se identificó el taller. Recargá.','error');return;}
+
+  guardando=true;
+  const btn=document.getElementById('btnGuardarBorrador');
+  const btnE=document.getElementById('btnEmitir');
+  btn.disabled=true; btnE.disabled=true;
+
+  const{sub,ivaPct,total}=recalcular();
+  const ter={
+    nombre:(document.getElementById('e-ter-nombre').value||'').trim()||null,
+    dominio:(document.getElementById('e-ter-dominio').value||'').trim()||null,
+    compania:(document.getElementById('e-ter-cia').value||'').trim()||null,
+  };
+  const datosTercero=Object.values(ter).some(v=>v)?ter:null;
+
+  const payload={
+    taller_id:            tallerId,
+    tipo:                 tipoActual,
+    numero_presupuesto:   presActivo?.numero_presupuesto||window._presNumero||'S/N',
+    fecha_emision:        document.getElementById('e-fecha-emision').value||null,
+    fecha_validez:        document.getElementById('e-fecha-validez').value||null,
+    nombre_cliente:       nombreCli,
+    dni_cliente:          (document.getElementById('e-cli-dni').value||'').trim()||null,
+    tel_cliente:          (document.getElementById('e-cli-tel').value||'').trim()||null,
+    vehiculo_marca:       (document.getElementById('e-veh-marca').value||'').trim()||null,
+    vehiculo_modelo:      (document.getElementById('e-veh-modelo').value||'').trim()||null,
+    vehiculo_anio:        parseInt(document.getElementById('e-veh-anio').value)||null,
+    vehiculo_dominio:     (document.getElementById('e-veh-dominio').value||'').trim()||null,
+    vehiculo_color:       (document.getElementById('e-veh-color').value||'').trim()||null,
+    nro_siniestro:        tipoActual==='seguro'?(document.getElementById('e-sin-nro').value||'').trim()||null:null,
+    compania_seguro:      tipoActual==='seguro'?(document.getElementById('e-sin-cia').value||'').trim()||null:null,
+    nro_poliza:           tipoActual==='seguro'?(document.getElementById('e-sin-poliza').value||'').trim()||null:null,
+    datos_tercero:        tipoActual==='seguro'?datosTercero:null,
+    descripcion_danos:    tipoActual==='seguro'?(document.getElementById('e-danos').value||'').trim()||null:null,
+    items:                itemsActivos,
+    subtotal:             sub,
+    iva_porcentaje:       ivaPct,
+    total:                total,
+    condiciones:          (document.getElementById('e-condiciones').value||'').trim()||null,
+    estado:               estado,
+    updated_at:           new Date().toISOString(),
+  };
+
+  try{
+    let saved;
+    if(presActivo){
+      saved=await sbPatch(TABLA,presActivo.id,payload);
+      const idx=presupuestos.findIndex(p=>p.id===presActivo.id);
+      if(idx>=0)presupuestos[idx]={...presupuestos[idx],...saved};
+    }else{
+      saved=await sbPost(TABLA,payload);
+      presupuestos.unshift(saved);
+      presActivo=saved;
+    }
+    showToast(estado==='emitido'?'✅ Presupuesto emitido':'✓ Guardado como borrador');
+    if(estado==='emitido'){
+      setTimeout(()=>verPreviaImpresion(),600);
+    }
+  }catch(err){
+    showToast('Error al guardar: '+err.message,'error');
+    console.error(err);
+  }finally{
+    guardando=false; btn.disabled=false; btnE.disabled=false;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// VISTA PREVIA E IMPRESIÓN
+// ═══════════════════════════════════════════════════════════════
+function verPreviaImpresion(){
+  const pa=buildPrintHTML(leerDatosEditor());
+  document.getElementById('printArea').innerHTML=pa;
+  window.print();
+}
+
+function imprimirExistente(id){
+  const p=presupuestos.find(x=>x.id===id);
+  if(!p)return;
+  const pa=buildPrintHTML(p);
+  document.getElementById('printArea').innerHTML=pa;
+  window.print();
+}
+
+function leerDatosEditor(){
+  // Leer estado actual del form como objeto compatible con el schema
+  const{sub,ivaPct,total}=recalcular();
+  const ter={
+    nombre:(document.getElementById('e-ter-nombre').value||'').trim(),
+    dominio:(document.getElementById('e-ter-dominio').value||'').trim(),
+    compania:(document.getElementById('e-ter-cia').value||'').trim(),
+  };
+  return{
+    numero_presupuesto:presActivo?.numero_presupuesto||window._presNumero||'BORRADOR',
+    tipo:tipoActual,
+    nombre_cliente:(document.getElementById('e-cli-nombre').value||'').trim()||'—',
+    dni_cliente:(document.getElementById('e-cli-dni').value||'').trim(),
+    tel_cliente:(document.getElementById('e-cli-tel').value||'').trim(),
+    vehiculo_marca:(document.getElementById('e-veh-marca').value||'').trim(),
+    vehiculo_modelo:(document.getElementById('e-veh-modelo').value||'').trim(),
+    vehiculo_anio:document.getElementById('e-veh-anio').value,
+    vehiculo_dominio:(document.getElementById('e-veh-dominio').value||'').trim(),
+    vehiculo_color:(document.getElementById('e-veh-color').value||'').trim(),
+    fecha_emision:document.getElementById('e-fecha-emision').value,
+    fecha_validez:document.getElementById('e-fecha-validez').value,
+    nro_siniestro:(document.getElementById('e-sin-nro').value||'').trim(),
+    compania_seguro:(document.getElementById('e-sin-cia').value||'').trim(),
+    nro_poliza:(document.getElementById('e-sin-poliza').value||'').trim(),
+    datos_tercero:Object.values(ter).some(v=>v)?ter:null,
+    descripcion_danos:(document.getElementById('e-danos').value||'').trim(),
+    items:itemsActivos,
+    subtotal:sub,
+    iva_porcentaje:ivaPct,
+    total,
+    condiciones:(document.getElementById('e-condiciones').value||'').trim(),
+  };
+}
+
+function buildPrintHTML(p){
+  const items=Array.isArray(p.items)?p.items:[];
+  const tp=tallerPerfil;
+  const tipoLabel=p.tipo==='seguro'?'Presupuesto de Seguro':'Presupuesto';
+  const tipoCls=p.tipo==='seguro'?'pr-tipo-seguro':'pr-tipo-cliente';
+  const veh=[p.vehiculo_marca,p.vehiculo_modelo,p.vehiculo_anio].filter(Boolean).join(' ');
+  const ivaLine=p.iva_porcentaje>0?`<div class="pr-tot-row"><span>IVA (${p.iva_porcentaje}%)</span><span>${fmt(p.subtotal*p.iva_porcentaje/100)}</span></div>`:'';
+
+  const tipoTagMap={pieza:'Pieza',mano_obra:'M.O.',pintura:'Pintura',otro:'Otro'};
+  const itemsRows=items.map((it,i)=>`
+    <tr>
+      <td>${it.descripcion}<br><span class="pr-tipo-tag">${tipoTagMap[it.tipo]||it.tipo}${it.codigo_piezauto?' · '+it.codigo_piezauto:''}</span></td>
+      <td class="right">${it.cantidad}</td>
+      <td class="right">${fmt(it.precio_unitario)}</td>
+      <td class="right">${fmt(it.subtotal)}</td>
+    </tr>`).join('');
+
+  const siniestroBlock=p.tipo==='seguro'?`
+    <div class="pr-meta-box" style="grid-column:span 2">
+      <div class="pr-meta-titulo">Datos del siniestro</div>
+      ${p.nro_siniestro?`<div class="pr-meta-row"><strong>Siniestro:</strong> ${p.nro_siniestro}</div>`:''}
+      ${p.compania_seguro?`<div class="pr-meta-row"><strong>Compañía:</strong> ${p.compania_seguro}</div>`:''}
+      ${p.nro_poliza?`<div class="pr-meta-row"><strong>Póliza:</strong> ${p.nro_poliza}</div>`:''}
+      ${p.datos_tercero?.nombre?`<div class="pr-meta-row" style="margin-top:6pt"><strong>Tercero:</strong> ${p.datos_tercero.nombre}${p.datos_tercero.dominio?' · Dom: '+p.datos_tercero.dominio:''}${p.datos_tercero.compania?' · '+p.datos_tercero.compania:''}</div>`:''}
+    </div>`:'';
+
+  const danosBlock=p.tipo==='seguro'&&p.descripcion_danos?`
+    <div class="pr-danos-box">
+      <div class="pr-danos-titulo">⚠️ Descripción de daños</div>
+      ${p.descripcion_danos}
+    </div>`:'';
+
+  const legalBlock=p.tipo==='seguro'?`<div class="pr-legal">📋 El taller respalda este presupuesto al momento de inspección de la compañía aseguradora.</div>`:'';
+
+  const condicionesBlock=p.condiciones?`
+    <div class="pr-condiciones">
+      <div class="pr-condiciones-titulo">Condiciones</div>
+      ${p.condiciones}
+    </div>`:'';
+
+  return`
+  <div class="pr-page">
+    <div class="pr-header">
+      <div>
+        <div class="pr-logo">Piezauto<span style="color:#E94560">.</span></div>
+        <div class="pr-logo-sub">Distribuidora de autopartes · Zona Oeste AMBA</div>
+        <div style="margin-top:6pt"><span class="pr-tipo-badge ${tipoCls}">${tipoLabel}</span></div>
+      </div>
+      <div class="pr-taller-info">
+        <div class="pr-taller-nombre">${tp.nombre||'Taller'}</div>
+        ${tp.cuit?`<div>CUIT: ${tp.cuit}</div>`:''}
+        ${tp.direccion?`<div>${tp.direccion}${tp.localidad?', '+tp.localidad:''}</div>`:''}
+        ${tp.telefono?`<div>Tel: ${tp.telefono}</div>`:''}
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;margin-bottom:10pt;font-size:9pt;color:#6B7280">
+      <span class="pr-numero">Presupuesto Nro. <strong style="color:#111">${p.numero_presupuesto}</strong></span>
+      <span>Emisión: ${fmtFecha(p.fecha_emision)}${p.fecha_validez?' · Válido hasta: '+fmtFecha(p.fecha_validez):''}</span>
+    </div>
+
+    <div class="pr-meta">
+      <div class="pr-meta-box">
+        <div class="pr-meta-titulo">Cliente</div>
+        <div class="pr-meta-row"><strong>${p.nombre_cliente||'—'}</strong></div>
+        ${p.dni_cliente?`<div class="pr-meta-row">DNI: ${p.dni_cliente}</div>`:''}
+        ${p.tel_cliente?`<div class="pr-meta-row">Tel: ${p.tel_cliente}</div>`:''}
+      </div>
+      <div class="pr-meta-box">
+        <div class="pr-meta-titulo">Vehículo</div>
+        ${veh?`<div class="pr-meta-row"><strong>${veh}</strong></div>`:''}
+        ${p.vehiculo_dominio?`<div class="pr-meta-row">Dominio: ${p.vehiculo_dominio}</div>`:''}
+        ${p.vehiculo_color?`<div class="pr-meta-row">Color: ${p.vehiculo_color}</div>`:''}
+      </div>
+      ${siniestroBlock}
+    </div>
+
+    ${danosBlock}
+
+    <table class="pr-items-table">
+      <thead><tr>
+        <th>Descripción</th>
+        <th class="right">Cant.</th>
+        <th class="right">Precio unit.</th>
+        <th class="right">Subtotal</th>
+      </tr></thead>
+      <tbody>${itemsRows||'<tr><td colspan="4" style="text-align:center;color:#9CA3AF">Sin ítems</td></tr>'}</tbody>
+    </table>
+
+    <div class="pr-totales">
+      <div class="pr-totales-box">
+        <div class="pr-tot-row"><span>Subtotal</span><span>${fmt(p.subtotal)}</span></div>
+        ${ivaLine}
+        <div class="pr-tot-row total"><span>TOTAL</span><span>${fmt(p.total)}</span></div>
+      </div>
+    </div>
+
+    ${condicionesBlock}
+    ${legalBlock}
+
+    <div class="pr-firma">
+      <div class="pr-firma-box">
+        <div class="pr-firma-line"></div>
+        <div class="pr-firma-label">Firma y sello del taller</div>
+      </div>
+      <div class="pr-firma-box">
+        <div class="pr-firma-line"></div>
+        <div class="pr-firma-label">Firma del cliente</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MODALES — HELPERS
+// ═══════════════════════════════════════════════════════════════
+function abrirModal(id){document.getElementById(id).classList.add('open');}
+function cerrarModal(id){document.getElementById(id).classList.remove('open');}
+function cerrarModalSiClick(e,id){if(e.target===document.getElementById(id))cerrarModal(id);}
+
+// ═══════════════════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════════════════
+function fmt(n){if(n==null||isNaN(n))return'—';return'$\u202F'+Math.round(n).toLocaleString('es-AR');}
+function fmtFecha(s){if(!s)return'—';const d=new Date(s.includes('T')?s:s+'T12:00:00');return d.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'});}
+function toDateInput(d){return d.toISOString().split('T')[0];}
+
+function sumarDiasHabiles(fecha,n){
+  // Suma n días hábiles (lunes a viernes), sin contemplar feriados argentinos
+  let d=new Date(fecha); let contados=0;
+  while(contados<n){d.setDate(d.getDate()+1);if(d.getDay()!==0&&d.getDay()!==6)contados++;}
+  return d;
+}
+
+let toastTimer;
+function showToast(msg,type='ok'){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show'+(type==='error'?' error':'');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),3500);}
+
+// ═══════════════════════════════════════════════════════════════
+// ARRANQUE
+// ═══════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded',()=>{
+  mostrarVista('lista');
+  init();
+});
+</script>
+</body>
+</html>
