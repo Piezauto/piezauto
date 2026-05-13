@@ -101,13 +101,13 @@ async function doLogin() {
     return;
   }
 
-  window.location.href = '/taller/dashboard.html';
+  window.location.href = '/taller/index.html';
 }
 
 // Si ya está logueado como taller, redirigir
 dbB2C.auth.getSession().then(({ data }) => {
   const meta = data?.session?.user?.user_metadata || {};
-  if (meta.role === 'taller') window.location.href = '/taller/dashboard.html';
+  if (meta.role === 'taller') window.location.href = '/taller/index.html';
 });
 </script>
 </body>

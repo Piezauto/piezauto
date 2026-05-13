@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel Taller — Piezauto Point</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="../css/estilos.css">
+  <style>
+    body { background: var(--gris-claro); }
+    .wrap { max-width: 900px; margin: 0 auto; padding: 24px 16px 60px; }
+
+    /* ── Saludo ── */
+    .saludo {
+      margin-bottom: 24px;
+    }
+    .saludo-hora {
+      font-size: 12px; font-weight: 700; color: var(--rojo);
+      text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px;
+    }
+    .saludo-nombre { font-size: 22px; font-weight: 800; color: var(--negro); }
+    .saludo-sub    { font-size: 13px; color: #888; margin-top: 2px; }
+
+    /* ── Grid de módulos ── */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+    }
+    @media (max-width: 800px) { .grid { grid-template-columns: repeat(2, 1fr); gap: 12px; } }
+    @media (max-width: 420px) { .grid { grid-template-columns: 1fr 1fr; gap: 10px; } }
+
+    /* ── Card de módulo ── */
+    .mod-card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 20px 18px 18px;
+      box-shadow: var(--sombra);
+      cursor: pointer;
+      transition: transform .15s, box-shadow .15s;
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      position: relative;
+      overflow: hidden;
+      border: 1.5px solid transparent;
+    }
+    .mod-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 28px rgba(0,0,0,.12);
+      border-color: var(--rojo);
+    }
+    .mod-card:active { transform: scale(.98); }
+
+    /* Franja de color superior */
+    .mod-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--rojo);
+      transform: scaleX(0);
+      transition: transform .15s;
+    }
+    .mod-card:hover::before { transform: scaleX(1); }
+
+    .mod-icon {
+      font-size: 28px;
+      line-height: 1;
+    }
+    .mod-nombre {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--negro);
+      line-height: 1.2;
+    }
+    .mod-desc {
+      font-size: 11px;
+      color: #999;
+      line-height: 1.4;
+      flex: 1;
+    }
+    .mod-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      background: var(--gris-claro);
+      color: #666;
+      align-self: flex-start;
+      transition: background .15s;
+    }
+    .mod-badge.alerta { background: #fff3cd; color: #856404; }
+    .mod-badge.ok     { background: #d1fae5; color: #065f46; }
+    .mod-badge.info   { background: #dbeafe; color: #1d4ed8; }
+
+    /* ── Saldo CC destacado ── */
+    .mod-card.finanzas .mod-badge {
+      font-size: 13px;
+      padding: 5px 12px;
+    }
+
+    /* ── Spinner badge ── */
+    .badge-spin {
+      width: 12px; height: 12px;
+      border: 2px solid #ddd;
+      border-top-color: #999;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Separador sección ── */
+    .section-sep {
+      font-size: 11px; font-weight: 700; color: #bbb;
+      text-transform: uppercase; letter-spacing: .08em;
+      margin: 24px 0 12px;
+    }
+
+    /* ── Últimas operaciones ── */
+    .ultimas-ops {
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: var(--sombra);
+      margin-top: 28px;
+      overflow: hidden;
+    }
+    .ops-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px 14px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .ops-header h3 { font-size: 14px; font-weight: 800; }
+    .ops-header a  { font-size: 12px; color: var(--rojo); font-weight: 600; text-decoration: none; }
+    .ops-header a:hover { text-decoration: underline; }
+
+    .op-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 20px;
+      border-bottom: 1px solid #f8f8f8;
+      gap: 12px;
+    }
+    .op-row:last-child { border-bottom: none; }
+    .op-info { flex: 1; min-width: 0; }
+    .op-num  { font-size: 11px; font-weight: 700; color: #aaa; font-family: monospace; }
+    .op-items { font-size: 13px; color: var(--negro); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .op-fecha { font-size: 11px; color: #bbb; }
+    .op-total { font-size: 14px; font-weight: 800; color: var(--rojo); white-space: nowrap; }
+
+    .badge-estado {
+      display: inline-block; padding: 3px 9px; border-radius: 20px;
+      font-size: 10px; font-weight: 700; flex-shrink: 0;
+    }
+    .est-pendiente  { background: #fff8e1; color: #b45309; }
+    .est-preparando { background: #dbeafe; color: #1d4ed8; }
+    .est-enviado    { background: #ede9fe; color: #7c3aed; }
+    .est-entregado  { background: #dcfce7; color: #15803d; }
+    .est-cancelado  { background: #fee2e2; color: #dc2626; }
+    .est-pagado     { background: #dcfce7; color: #15803d; }
+
+    .ops-empty { padding: 24px; text-align: center; color: #bbb; font-size: 13px; }
+    .ops-loading { padding: 24px; display: flex; justify-content: center; }
+    .spinner { width: 28px; height: 28px; border: 3px solid #eee; border-top-color: var(--rojo); border-radius: 50%; animation: spin .8s linear infinite; }
+  </style>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase.js"></script>
+<script src="../js/auth-b2c.js"></script>
+<script src="auth-taller.js"></script>
+
+<div id="taller-header"></div>
+
+<div class="wrap">
+
+  <div class="saludo">
+    <div class="saludo-hora" id="saludoHora">Buen día</div>
+    <div class="saludo-nombre" id="saludoNombre">Cargando…</div>
+    <div class="saludo-sub" id="saludoFecha"></div>
+  </div>
+
+  <div class="section-sep">Módulos</div>
+
+  <div class="grid" id="modulosGrid">
+
+    <a class="mod-card" href="/taller/operaciones.html">
+      <div class="mod-icon">📋</div>
+      <div class="mod-nombre">Operaciones</div>
+      <div class="mod-desc">Pedidos de clientes y aprobaciones pendientes</div>
+      <div class="mod-badge alerta" id="badge-operaciones"><div class="badge-spin"></div></div>
+    </a>
+
+    <a class="mod-card" href="/taller/catalogo.html">
+      <div class="mod-icon">🔍</div>
+      <div class="mod-nombre">Catálogo Piezauto</div>
+      <div class="mod-desc">Buscá piezas con tu precio bonificado</div>
+      <div class="mod-badge info" id="badge-catalogo">393k+ SKUs</div>
+    </a>
+
+    <a class="mod-card" href="/taller/presupuestos.html">
+      <div class="mod-icon">📄</div>
+      <div class="mod-nombre">Presupuestos</div>
+      <div class="mod-desc">Armá presupuestos cliente y seguro con PDF</div>
+      <div class="mod-badge" id="badge-presupuestos"><div class="badge-spin"></div></div>
+    </a>
+
+    <a class="mod-card" href="/taller/pedidos.html">
+      <div class="mod-icon">📦</div>
+      <div class="mod-nombre">Pedidos</div>
+      <div class="mod-desc">Carrito y seguimiento de pedidos a Piezauto</div>
+      <div class="mod-badge" id="badge-pedidos"><div class="badge-spin"></div></div>
+    </a>
+
+    <a class="mod-card" href="/taller/clientes.html">
+      <div class="mod-icon">👥</div>
+      <div class="mod-nombre">Clientes</div>
+      <div class="mod-desc">Registro de clientes del taller y sus vehículos</div>
+      <div class="mod-badge ok" id="badge-clientes"><div class="badge-spin"></div></div>
+    </a>
+
+    <a class="mod-card" href="/taller/inventario.html">
+      <div class="mod-icon">🏪</div>
+      <div class="mod-nombre">Inventario</div>
+      <div class="mod-desc">Stock propio del taller, precios y ubicación</div>
+      <div class="mod-badge" id="badge-inventario"><div class="badge-spin"></div></div>
+    </a>
+
+    <a class="mod-card finanzas" href="/taller/finanzas.html">
+      <div class="mod-icon">💰</div>
+      <div class="mod-nombre">Finanzas</div>
+      <div class="mod-desc">Cuenta corriente Piezauto, gastos y proveedores</div>
+      <div class="mod-badge" id="badge-finanzas"><div class="badge-spin"></div></div>
+    </a>
+
+    <a class="mod-card" href="/taller/perfil.html">
+      <div class="mod-icon">⚙️</div>
+      <div class="mod-nombre">Perfil</div>
+      <div class="mod-desc">Datos del taller, horarios y configuración</div>
+      <div class="mod-badge info">Configuración</div>
+    </a>
+
+  </div>
+
+  <!-- Últimas operaciones -->
+  <div class="ultimas-ops">
+    <div class="ops-header">
+      <h3>📋 Últimas operaciones</h3>
+      <a href="/taller/operaciones.html">Ver todas →</a>
+    </div>
+    <div id="ultimasOps">
+      <div class="ops-loading"><div class="spinner"></div></div>
+    </div>
+  </div>
+
+</div><!-- /wrap -->
+
+<script>
+// ─────────────────────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────────────────────
+(async () => {
+  const auth = await requireTallerAuth();
+  if (!auth) return;
+  await initTallerHeader();
+
+  const { meta } = auth;
+  const tallerId  = meta.taller_id;
+  const nombre    = meta.taller_nombre || 'Taller';
+
+  // Saludo
+  setSaludo(nombre);
+
+  // Cargar todos los badges en paralelo — si uno falla no rompe los demás
+  await Promise.allSettled([
+    cargarBadgeOperaciones(tallerId),
+    cargarBadgePresupuestos(tallerId),
+    cargarBadgePedidos(tallerId),
+    cargarBadgeClientes(tallerId),
+    cargarBadgeInventario(tallerId),
+    cargarBadgeFinanzas(tallerId),
+    cargarUltimasOps(tallerId),
+  ]);
+})();
+
+// ─────────────────────────────────────────────────────────────
+// SALUDO
+// ─────────────────────────────────────────────────────────────
+function setSaludo(nombre) {
+  const h = new Date().getHours();
+  const saludo = h < 12 ? 'Buen día' : h < 19 ? 'Buenas tardes' : 'Buenas noches';
+  document.getElementById('saludoHora').textContent = saludo;
+  document.getElementById('saludoNombre').textContent = `${nombre} 👋`;
+  document.getElementById('saludoFecha').textContent = new Date().toLocaleDateString('es-AR', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+  });
+}
+
+// ─────────────────────────────────────────────────────────────
+// BADGES — cada uno independiente
+// ─────────────────────────────────────────────────────────────
+async function cargarBadgeOperaciones(tid) {
+  try {
+    const { count } = await dbB2C
+      .from('cat_operaciones_b2c')
+      .select('id', { count: 'exact', head: true })
+      .eq('taller_id', tid)
+      .eq('pendiente_aprobacion_taller', true);
+    const el = document.getElementById('badge-operaciones');
+    if (count > 0) {
+      el.className = 'mod-badge alerta';
+      el.textContent = `${count} pendiente${count !== 1 ? 's' : ''}`;
+    } else {
+      el.className = 'mod-badge ok';
+      el.textContent = 'Al día';
+    }
+  } catch { setBadgeError('badge-operaciones'); }
+}
+
+async function cargarBadgePresupuestos(tid) {
+  try {
+    const { count } = await dbB2C
+      .from('cat_taller_presupuestos')
+      .select('id', { count: 'exact', head: true })
+      .eq('taller_id', tid)
+      .eq('estado', 'borrador');
+    const el = document.getElementById('badge-presupuestos');
+    el.className = count > 0 ? 'mod-badge alerta' : 'mod-badge';
+    el.textContent = count > 0 ? `${count} borrador${count !== 1 ? 'es' : ''}` : 'Sin borradores';
+  } catch { setBadgeError('badge-presupuestos'); }
+}
+
+async function cargarBadgePedidos(tid) {
+  try {
+    const { count } = await dbB2C
+      .from('cat_operaciones_b2c')
+      .select('id', { count: 'exact', head: true })
+      .eq('taller_id', tid)
+      .in('estado', ['pendiente', 'preparando', 'enviado']);
+    const el = document.getElementById('badge-pedidos');
+    el.className = count > 0 ? 'mod-badge info' : 'mod-badge';
+    el.textContent = count > 0 ? `${count} en curso` : 'Sin activos';
+  } catch { setBadgeError('badge-pedidos'); }
+}
+
+async function cargarBadgeClientes(tid) {
+  try {
+    const { count } = await dbB2C
+      .from('cat_taller_clientes')
+      .select('id', { count: 'exact', head: true })
+      .eq('taller_id', tid);
+    const el = document.getElementById('badge-clientes');
+    el.className = 'mod-badge ok';
+    el.textContent = `${count || 0} cliente${count !== 1 ? 's' : ''}`;
+  } catch { setBadgeError('badge-clientes'); }
+}
+
+async function cargarBadgeInventario(tid) {
+  try {
+    const { count } = await dbB2C
+      .from('cat_taller_inventario')
+      .select('id', { count: 'exact', head: true })
+      .eq('taller_id', tid)
+      .lte('cantidad', 3)
+      .gt('cantidad', 0);  // stock bajo (1-3 unidades)
+    const { count: ceroCount } = await dbB2C
+      .from('cat_taller_inventario')
+      .select('id', { count: 'exact', head: true })
+      .eq('taller_id', tid)
+      .eq('cantidad', 0);
+    const el = document.getElementById('badge-inventario');
+    const bajo  = (count || 0);
+    const agotado = (ceroCount || 0);
+    if (agotado > 0) {
+      el.className = 'mod-badge alerta';
+      el.textContent = `${agotado} sin stock`;
+    } else if (bajo > 0) {
+      el.className = 'mod-badge alerta';
+      el.textContent = `${bajo} stock bajo`;
+    } else {
+      el.className = 'mod-badge ok';
+      el.textContent = 'Stock OK';
+    }
+  } catch { setBadgeError('badge-inventario'); }
+}
+
+async function cargarBadgeFinanzas(tid) {
+  try {
+    const { data } = await dbB2C
+      .from('cat_taller_cuenta_corriente')
+      .select('saldo_resultante')
+      .eq('taller_id', tid)
+      .order('created_at', { ascending: false })
+      .limit(1);
+    const saldo = data?.[0]?.saldo_resultante;
+    const el = document.getElementById('badge-finanzas');
+    if (saldo != null) {
+      el.className = saldo >= 0 ? 'mod-badge ok' : 'mod-badge alerta';
+      el.textContent = `CC: ${fmtPeso(saldo)}`;
+    } else {
+      el.className = 'mod-badge';
+      el.textContent = 'Sin movimientos';
+    }
+  } catch { setBadgeError('badge-finanzas'); }
+}
+
+// ─────────────────────────────────────────────────────────────
+// ÚLTIMAS OPERACIONES
+// ─────────────────────────────────────────────────────────────
+async function cargarUltimasOps(tid) {
+  const cont = document.getElementById('ultimasOps');
+  try {
+    const { data } = await dbB2C
+      .from('cat_operaciones_b2c')
+      .select('id, estado, total, created_at')
+      .eq('taller_id', tid)
+      .order('created_at', { ascending: false })
+      .limit(5);
+
+    if (!data?.length) {
+      cont.innerHTML = '<div class="ops-empty">No hay operaciones registradas todavía.</div>';
+      return;
+    }
+
+    const estadoLabel = {
+      pendiente: 'Pendiente', pagado: 'Pagado', preparando: 'Preparando',
+      enviado: 'Enviado', entregado: 'Entregado', cancelado: 'Cancelado', devolucion: 'Devolución'
+    };
+
+    cont.innerHTML = data.map(op => `
+      <div class="op-row" onclick="window.location='/taller/operaciones.html'" style="cursor:pointer">
+        <div class="op-info">
+          <div class="op-num">${op.id.slice(0,8).toUpperCase()}…</div>
+          <div class="op-fecha">${fmtFecha(op.created_at)}</div>
+        </div>
+        <span class="badge-estado est-${op.estado}">${estadoLabel[op.estado] || op.estado}</span>
+        <div class="op-total">${fmtPeso(op.total)}</div>
+      </div>`).join('');
+  } catch {
+    cont.innerHTML = '<div class="ops-empty">Error al cargar operaciones.</div>';
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// UTILS
+// ─────────────────────────────────────────────────────────────
+function setBadgeError(id) {
+  const el = document.getElementById(id);
+  if (el) { el.className = 'mod-badge'; el.textContent = '—'; }
+}
+
+function fmtPeso(n) {
+  if (n == null) return '—';
+  return '$\u202F' + Math.round(n).toLocaleString('es-AR');
+}
+
+function fmtFecha(s) {
+  if (!s) return '—';
+  return new Date(s).toLocaleDateString('es-AR', {
+    day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit'
+  });
+}
+</script>
+</body>
+</html>

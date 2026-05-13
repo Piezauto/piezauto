@@ -36,35 +36,63 @@ async function tallerLogout() {
   window.location.href = '/taller/login';
 }
 
-// Inyecta el header del taller (nombre + badge notificaciones + logout)
+// ─────────────────────────────────────────────────────────────
+// Header completo con los 8 módulos + notificaciones
+// ─────────────────────────────────────────────────────────────
 async function initTallerHeader() {
   const meta = _tallerMeta;
   if (!meta) return;
   const wrap = document.getElementById('taller-header');
   if (!wrap) return;
 
-  // Contar notificaciones no leídas
-  const { data: notifs } = await dbB2C
-    .from('cat_notificaciones_talleres')
-    .select('id', { count: 'exact' })
-    .eq('taller_id', meta.taller_id)
-    .eq('leida', false);
-  const unread = notifs?.length || 0;
+  // Conteo de notificaciones no leídas
+  let unread = 0;
+  try {
+    const { data: notifs } = await dbB2C
+      .from('cat_notificaciones_talleres')
+      .select('id', { count: 'exact' })
+      .eq('taller_id', meta.taller_id)
+      .eq('leida', false);
+    unread = notifs?.length || 0;
+  } catch {}
 
-  wrap.innerHTML = `
-    <div style="background:var(--negro);color:#fff;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px">
-      <div style="display:flex;align-items:center;gap:14px">
-        <span style="font-weight:800;font-size:15px">🔧 ${escTH(meta.taller_nombre || 'Taller')}</span>
-        <nav style="display:flex;gap:4px">
-          <a href="/taller/dashboard.html" style="color:#ddd;text-decoration:none;font-size:13px;padding:6px 12px;border-radius:6px;transition:background .2s" onmouseover="this.style.background='rgba(255,255,255,.1)'" onmouseout="this.style.background='none'">Dashboard</a>
-          <a href="/taller/operaciones.html" style="color:#ddd;text-decoration:none;font-size:13px;padding:6px 12px;border-radius:6px;position:relative;transition:background .2s" onmouseover="this.style.background='rgba(255,255,255,.1)'" onmouseout="this.style.background='none'">
-            Operaciones
-            ${unread > 0 ? `<span style="position:absolute;top:2px;right:2px;background:var(--rojo);color:#fff;font-size:10px;font-weight:700;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center">${unread}</span>` : ''}
-          </a>
-        </nav>
-      </div>
-      <button onclick="tallerLogout()" style="background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:6px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;transition:background .2s" onmouseover="this.style.background='rgba(255,255,255,.25)'" onmouseout="this.style.background='rgba(255,255,255,.15)'">Salir</button>
-    </div>`;
+  // Página activa
+  const path = window.location.pathname;
+
+  const navItems = [
+    { href: '/taller/index.html',        label: 'Inicio',       icon: '🏠' },
+    { href: '/taller/operaciones.html',  label: 'Operaciones',  icon: '📋', badge: unread },
+    { href: '/taller/catalogo.html',     label: 'Catálogo',     icon: '🔍' },
+    { href: '/taller/presupuestos.html', label: 'Presupuestos', icon: '📄' },
+    { href: '/taller/pedidos.html',      label: 'Pedidos',      icon: '📦' },
+    { href: '/taller/clientes.html',     label: 'Clientes',     icon: '👥' },
+    { href: '/taller/inventario.html',   label: 'Inventario',   icon: '🏪' },
+    { href: '/taller/finanzas.html',     label: 'Finanzas',     icon: '💰' },
+    { href: '/taller/perfil.html',       label: 'Perfil',       icon: '⚙️' },
+  ];
+
+  const navHTML = navItems.map(item => {
+    const isActive = path.includes(item.href.replace('.html',''));
+    const badgeHTML = item.badge > 0
+      ? '<span style="position:absolute;top:0;right:0;background:var(--rojo);color:#fff;font-size:9px;font-weight:700;min-width:15px;height:15px;border-radius:50%;display:flex;align-items:center;justify-content:center;padding:0 2px">' + item.badge + '</span>'
+      : '';
+    const activeStyle = isActive ? 'rgba(255,255,255,.18)' : 'none';
+    const activeColor = isActive ? '#fff' : '#bbb';
+    const activeFw    = isActive ? '800' : '600';
+    return '<a href="' + item.href + '" style="color:' + activeColor + ';text-decoration:none;font-size:12px;font-weight:' + activeFw + ';padding:6px 10px;border-radius:6px;background:' + activeStyle + ';transition:background .2s;position:relative;white-space:nowrap" onmouseover="this.style.background=\'rgba(255,255,255,.12)\'" onmouseout="this.style.background=\'' + activeStyle + '\'">' + item.icon + ' ' + item.label + badgeHTML + '</a>';
+  }).join('');
+
+  wrap.innerHTML =
+    '<div style="background:var(--negro);color:#fff;padding:0 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:52px;position:sticky;top:0;z-index:200;box-shadow:0 2px 12px rgba(0,0,0,.3)">' +
+      '<a href="/taller/index.html" style="font-weight:900;font-size:14px;color:#fff;text-decoration:none;white-space:nowrap;flex-shrink:0">🔧 ' + escTH(meta.taller_nombre || 'Taller') + '</a>' +
+      '<nav id="taller-nav" style="display:flex;gap:2px;align-items:center;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding:8px 0;flex:1;justify-content:center">' + navHTML + '</nav>' +
+      '<button onclick="tallerLogout()" style="background:rgba(255,255,255,.12);color:#fff;border:none;border-radius:6px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0" onmouseover="this.style.background=\'rgba(255,255,255,.22)\'" onmouseout="this.style.background=\'rgba(255,255,255,.12)\'">Salir</button>' +
+    '</div>';
+
+  // Ocultar scrollbar webkit del nav
+  const s = document.createElement('style');
+  s.textContent = '#taller-nav::-webkit-scrollbar{display:none}';
+  document.head.appendChild(s);
 }
 
 function escTH(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
