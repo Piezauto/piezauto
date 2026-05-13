@@ -115,8 +115,7 @@
 </div>
 
 <script>
-const SUPABASE_URL  = 'https://mqxowotdeibllkitkije.supabase.co';
-const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xeG93b3RkZWlibGxraXRraWplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxMzgxNDYsImV4cCI6MjA5MTcxNDE0Nn0.V_Pr0elBurAK7OPKFL3OoZwBmb-bI-Mcz8N1U8yblG8';
+
 
 const DIAS_SEMANA = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 const TIPO_INFO = {
@@ -128,8 +127,8 @@ const TIPO_INFO = {
 
 async function sbGetSafe(tabla, qs) {
   try {
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/${tabla}?${qs}`, {
-      headers: { 'apikey': SUPABASE_ANON }
+    const r = await fetch(`${_B2C_URL}/rest/v1/${tabla}?${qs}`, {
+      headers: { 'apikey': _B2C_KEY }
     });
     if (!r.ok) {
       console.error(`sbGetSafe ${tabla} → HTTP ${r.status}`);
