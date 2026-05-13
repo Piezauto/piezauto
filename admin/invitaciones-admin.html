@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Invitaciones BETA — Admin Piezauto</title>
+  <style>
+    :root {
+      --rojo:#E94560; --negro:#1A1A2E;
+      --ink-1:#111827; --ink-2:#374151; --ink-3:#6B7280; --ink-4:#9CA3AF;
+      --surface:#fff; --gris:#F3F4F6; --line:#E5E7EB; --line-strong:#D1D5DB;
+      --green:#059669; --green-soft:#ECFDF5;
+      --amber:#D97706; --amber-soft:#FFFBEB;
+      --red:#DC2626;   --red-soft:#FEF2F2;
+      --blue:#2563EB;  --blue-soft:#EFF6FF;
+      --radius:8px; --radius-lg:12px;
+      --sombra:0 2px 8px rgba(0,0,0,.08);
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--gris);color:var(--ink-1);font-size:14px;line-height:1.5}
+    button{font-family:inherit}
+
+    /* Topbar */
+    .admin-topbar{background:var(--negro);color:#fff;padding:0 20px;height:52px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+    .admin-topbar-title{font-size:15px;font-weight:800}
+    .admin-topbar a{color:#aaa;font-size:13px;text-decoration:none}
+    .admin-topbar a:hover{color:#fff}
+
+    /* Layout */
+    .page-wrap{max-width:1000px;margin:0 auto;padding:24px 20px 60px}
+
+    /* Header */
+    .page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+    .page-title{font-size:20px;font-weight:800}
+    .page-sub{font-size:13px;color:var(--ink-3)}
+    .btn-nuevo{display:inline-flex;align-items:center;gap:6px;padding:10px 18px;background:var(--rojo);color:#fff;border:none;border-radius:var(--radius-lg);font-size:14px;font-weight:700;cursor:pointer;transition:opacity .15s}
+    .btn-nuevo:hover{opacity:.88}
+
+    /* KPIs */
+    .kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+    @media(max-width:600px){.kpi-row{grid-template-columns:1fr}}
+    .kpi{background:var(--surface);border-radius:var(--radius-lg);padding:16px;box-shadow:var(--sombra)}
+    .kpi-num{font-size:28px;font-weight:800;line-height:1}
+    .kpi-label{font-size:11px;color:var(--ink-3);font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-top:4px}
+    .kpi-green .kpi-num{color:var(--green)}
+    .kpi-amber .kpi-num{color:var(--amber)}
+    .kpi-blue  .kpi-num{color:var(--blue)}
+
+    /* Filtros */
+    .filtros{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+    .search-input{flex:1;min-width:200px;padding:9px 12px;border:1.5px solid var(--line-strong);border-radius:var(--radius);font-size:13px;font-family:inherit;outline:none;transition:border-color .15s}
+    .search-input:focus{border-color:var(--negro)}
+    .search-input::placeholder{color:var(--ink-4)}
+    .filtro-select{padding:9px 12px;border:1.5px solid var(--line-strong);border-radius:var(--radius);font-size:13px;font-family:inherit;color:var(--ink-1);background:var(--surface);outline:none;cursor:pointer}
+    .filtro-select:focus{border-color:var(--negro)}
+    .result-count{font-size:12px;color:var(--ink-3);white-space:nowrap}
+
+    /* Tabla */
+    .table-card{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--sombra);overflow:hidden}
+    .table-scroll{overflow-x:auto}
+    table{width:100%;border-collapse:collapse;min-width:750px}
+    thead tr{background:var(--negro)}
+    thead th{padding:11px 14px;font-size:11px;font-weight:700;color:#fff;text-align:left;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+    tbody tr{border-bottom:1px solid var(--line);transition:background .1s}
+    tbody tr:last-child{border-bottom:none}
+    tbody tr:hover{background:#fafafa}
+    td{padding:10px 14px;font-size:13px;color:var(--ink-1);vertical-align:middle}
+    .td-mono{font-family:'Courier New',monospace;font-size:13px;font-weight:700;letter-spacing:.04em}
+    .td-muted{color:var(--ink-3);font-size:12px}
+
+    /* Badges estado */
+    .badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:10px;font-size:10px;font-weight:700;white-space:nowrap}
+    .b-activo   {background:var(--green-soft);color:var(--green)}
+    .b-agotado  {background:var(--amber-soft);color:var(--amber)}
+    .b-expirado {background:var(--red-soft);  color:var(--red)}
+    .b-inactivo {background:var(--gris);      color:var(--ink-3)}
+
+    /* Barra de usos */
+    .uso-bar{display:flex;align-items:center;gap:6px}
+    .uso-track{flex:1;height:6px;background:#f0f0f0;border-radius:3px;overflow:hidden;min-width:50px}
+    .uso-fill{height:100%;border-radius:3px;background:var(--green);transition:width .3s}
+    .uso-fill.agotado{background:var(--amber)}
+    .uso-text{font-size:11px;color:var(--ink-3);white-space:nowrap}
+
+    /* Acciones */
+    .acciones{display:flex;gap:4px;flex-wrap:nowrap}
+    .btn-acc{padding:5px 8px;border-radius:6px;font-size:11px;font-weight:700;border:none;cursor:pointer;font-family:inherit;transition:opacity .15s;white-space:nowrap}
+    .btn-acc:hover{opacity:.8}
+    .btn-copy  {background:#dbeafe;color:var(--blue)}
+    .btn-deact {background:var(--amber-soft);color:var(--amber)}
+    .btn-del   {background:var(--red-soft);  color:var(--red)}
+    .btn-acc:disabled{opacity:.35;cursor:default}
+
+    /* Empty / Loading */
+    .table-empty{text-align:center;padding:40px;color:var(--ink-4);font-size:13px}
+    .spinner-wrap{display:flex;justify-content:center;padding:40px}
+    .spinner{width:26px;height:26px;border:3px solid #eee;border-top-color:var(--rojo);border-radius:50%;animation:spin .8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* Modal */
+    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;align-items:center;justify-content:center;padding:20px}
+    .modal-overlay.open{display:flex;animation:fadeIn .2s}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    .modal-box{background:var(--surface);border-radius:var(--radius-lg);padding:28px;width:100%;max-width:440px;box-shadow:0 8px 40px rgba(0,0,0,.2)}
+    .modal-titulo{font-size:18px;font-weight:800;margin-bottom:4px}
+    .modal-sub{font-size:13px;color:var(--ink-3);margin-bottom:22px}
+
+    .fg{margin-bottom:14px}
+    .fl{font-size:12px;font-weight:600;color:var(--ink-2);margin-bottom:5px;display:flex;align-items:center;justify-content:space-between}
+    .fi,.fs{width:100%;border:1.5px solid var(--line-strong);border-radius:var(--radius);padding:10px 12px;font-size:14px;font-family:inherit;color:var(--ink-1);background:var(--surface);outline:none;transition:border-color .15s}
+    .fi:focus,.fs:focus{border-color:var(--negro)}
+    .fi::placeholder{color:var(--ink-4)}
+    .fi.mono{font-family:'Courier New',monospace;font-size:15px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+    .fi.mono::placeholder{font-family:'Segoe UI',sans-serif;font-size:14px;font-weight:400;text-transform:none;letter-spacing:0}
+    .fs{appearance:none;cursor:pointer}
+    .fr2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+    .btn-generar-codigo{background:none;border:none;color:var(--blue);font-size:11px;font-weight:700;cursor:pointer;padding:0;font-family:inherit}
+    .btn-generar-codigo:hover{text-decoration:underline}
+
+    .modal-btns{display:flex;gap:10px;margin-top:20px}
+    .btn-cancelar{flex:1;padding:12px;border-radius:var(--radius-lg);border:1.5px solid var(--line-strong);background:var(--surface);font-size:14px;font-weight:600;color:var(--ink-2);cursor:pointer;font-family:inherit}
+    .btn-confirmar{flex:2;padding:12px;border-radius:var(--radius-lg);border:none;background:var(--negro);font-size:14px;font-weight:700;color:#fff;cursor:pointer;font-family:inherit;transition:opacity .15s}
+    .btn-confirmar:hover{opacity:.88}
+    .btn-confirmar:disabled{opacity:.45;cursor:default}
+
+    /* Toast */
+    .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--ink-1);color:#fff;padding:11px 20px;border-radius:20px;font-size:13px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,.2);opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:500;white-space:nowrap}
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+    .toast.ok{background:var(--negro)}
+    .toast.error{background:var(--rojo)}
+    .toast.copied{background:var(--blue)}
+  </style>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/js/supabase.js"></script>
+<script src="/js/auth-b2c.js"></script>
+
+<div class="admin-topbar">
+  <div class="admin-topbar-title">🔧 Admin Piezauto — Invitaciones BETA</div>
+  <a href="index.html">← Panel admin</a>
+</div>
+
+<div class="page-wrap">
+
+  <div class="page-header">
+    <div>
+      <div class="page-title">🎟️ Invitaciones BETA</div>
+      <div class="page-sub">Gestión de códigos de acceso a la Tienda B2C</div>
+    </div>
+    <button class="btn-nuevo" onclick="abrirModalNuevo()">+ Nuevo código</button>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-row">
+    <div class="kpi kpi-green">
+      <div class="kpi-num" id="kpiActivos">—</div>
+      <div class="kpi-label">Códigos activos</div>
+    </div>
+    <div class="kpi kpi-blue">
+      <div class="kpi-num" id="kpiUsos">—</div>
+      <div class="kpi-label">Usos totales</div>
+    </div>
+    <div class="kpi kpi-amber">
+      <div class="kpi-num" id="kpiAgotados">—</div>
+      <div class="kpi-label">Agotados / desactivados</div>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="filtros">
+    <input class="search-input" id="searchInput" type="text"
+      placeholder="Buscar por código o email…" oninput="filtrar()">
+    <select class="filtro-select" id="filtroEstado" onchange="filtrar()">
+      <option value="">Todos los estados</option>
+      <option value="activo">Activo</option>
+      <option value="agotado">Agotado</option>
+      <option value="expirado">Expirado</option>
+      <option value="inactivo">Inactivo (desactivado)</option>
+    </select>
+    <span class="result-count" id="resultCount"></span>
+  </div>
+
+  <!-- Tabla -->
+  <div class="table-card">
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Estado</th>
+            <th>Email destino</th>
+            <th>Usos</th>
+            <th>Expira</th>
+            <th>Generado por</th>
+            <th>Creado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tablaBody">
+          <tr><td colspan="8"><div class="spinner-wrap"><div class="spinner"></div></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div><!-- /page-wrap -->
+
+<!-- Modal nuevo código -->
+<div class="modal-overlay" id="modalNuevo" onclick="cerrarModalSiClick(event,'modalNuevo')">
+  <div class="modal-box">
+    <div class="modal-titulo">🎟️ Nuevo código de invitación</div>
+    <div class="modal-sub">El código se puede compartir por email, WhatsApp o impreso.</div>
+
+    <div class="fg">
+      <label class="fl">
+        Código <span style="font-size:11px;color:var(--ink-4)">(mayúsculas y números)</span>
+        <button class="btn-generar-codigo" onclick="generarCodigo()" type="button">↻ Generar</button>
+      </label>
+      <input class="fi mono" id="m-codigo" type="text" placeholder="BETA-XXXXXX"
+        maxlength="20" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9\-]/g,'')">
+    </div>
+
+    <div class="fg">
+      <label class="fl">Email destino <span style="font-size:11px;color:var(--ink-4)">(opcional)</span></label>
+      <input class="fi" id="m-email" type="email" placeholder="cliente@email.com">
+    </div>
+
+    <div class="fr2">
+      <div class="fg">
+        <label class="fl">Máximo de usos</label>
+        <input class="fi" id="m-max-usos" type="number" min="1" max="999" value="1">
+      </div>
+      <div class="fg">
+        <label class="fl">Fecha de expiración <span style="font-size:11px;color:var(--ink-4)">(opcional)</span></label>
+        <input class="fi" id="m-expira" type="date">
+      </div>
+    </div>
+
+    <div class="fg">
+      <label class="fl">Generado por</label>
+      <input class="fi" id="m-generado-por" type="text" placeholder="admin" value="admin">
+    </div>
+
+    <div class="modal-btns">
+      <button class="btn-cancelar" onclick="cerrarModal('modalNuevo')">Cancelar</button>
+      <button class="btn-confirmar" id="btnConfirmar" onclick="crearCodigo()">Crear código</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONFIG ─────────────────────────────────────────────────────────
+// Admin usa la service_role key para bypass de RLS en cat_invitaciones_b2c.
+// Igual que comprobantes_admin y turnos-admin.
+// En producción: inyectar via Cloudflare Worker (window.SUPABASE_SERVICE_KEY).
+const SB_URL = 'https://mqxowotdeibllkitkije.supabase.co';
+const SB_KEY = window.SUPABASE_SERVICE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xeG93b3RkZWlibGxraXRraWplIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NjEzODE0NiwiZXhwIjoyMDkxNzE0MTQ2fQ._vUFd0bRPiJ59PIqlvUebq0v_X9JM7Twlr1Ri1_TIzI';
+const TABLA  = 'cat_invitaciones_b2c';
+
+// ── ESTADO ─────────────────────────────────────────────────────────
+let todos    = [];   // todos los registros cargados
+let filtrado = [];   // tras búsqueda/filtro
+
+// ── API ────────────────────────────────────────────────────────────
+function hdrs(extra = {}) {
+  return {
+    'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`,
+    'Content-Type': 'application/json', 'Prefer': 'return=representation',
+    ...extra,
+  };
+}
+
+async function sbGet(qs) {
+  const r = await fetch(`${SB_URL}/rest/v1/${TABLA}?${qs}`, {
+    headers: { ...hdrs(), 'Prefer': 'count=exact' }
+  });
+  if (!r.ok) { const b = await r.json().catch(() => ({})); throw new Error(b.message || r.status); }
+  return r.json();
+}
+
+async function sbPost(body) {
+  const r = await fetch(`${SB_URL}/rest/v1/${TABLA}`, {
+    method: 'POST', headers: hdrs(), body: JSON.stringify(body),
+  });
+  if (!r.ok) { const b = await r.json().catch(() => ({})); throw new Error(b.message || r.status); }
+  return (await r.json())[0];
+}
+
+async function sbPatch(id, body) {
+  const r = await fetch(`${SB_URL}/rest/v1/${TABLA}?id=eq.${id}`, {
+    method: 'PATCH', headers: hdrs(), body: JSON.stringify(body),
+  });
+  if (!r.ok) { const b = await r.json().catch(() => ({})); throw new Error(b.message || r.status); }
+  return r.json();
+}
+
+async function sbDelete(id) {
+  const r = await fetch(`${SB_URL}/rest/v1/${TABLA}?id=eq.${id}`, {
+    method: 'DELETE', headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}` },
+  });
+  if (!r.ok) { const b = await r.json().catch(() => ({})); throw new Error(b.message || r.status); }
+}
+
+// ── INIT ───────────────────────────────────────────────────────────
+async function init() {
+  await cargar();
+}
+
+async function cargar() {
+  document.getElementById('tablaBody').innerHTML =
+    '<tr><td colspan="8"><div class="spinner-wrap"><div class="spinner"></div></div></td></tr>';
+  try {
+    todos = await sbGet('select=*&order=created_at.desc');
+    calcularKPIs();
+    aplicarFiltro();
+  } catch (e) {
+    document.getElementById('tablaBody').innerHTML =
+      `<tr><td colspan="8" class="table-empty" style="color:var(--red)">Error: ${esc(e.message)}</td></tr>`;
+  }
+}
+
+// ── KPIs ────────────────────────────────────────────────────────────
+function calcularKPIs() {
+  const hoy = new Date().toISOString();
+  const activos  = todos.filter(c => estadoCodigo(c) === 'activo').length;
+  const usos     = todos.reduce((s, c) => s + (c.usos_actuales || 0), 0);
+  const agotados = todos.filter(c => ['agotado','inactivo'].includes(estadoCodigo(c))).length;
+  document.getElementById('kpiActivos').textContent  = activos;
+  document.getElementById('kpiUsos').textContent     = usos;
+  document.getElementById('kpiAgotados').textContent = agotados;
+}
+
+// ── ESTADO del código ───────────────────────────────────────────────
+function estadoCodigo(c) {
+  if (c.usado) return 'inactivo';
+  if (c.expira_at && new Date(c.expira_at) < new Date()) return 'expirado';
+  if ((c.usos_actuales || 0) >= (c.max_usos || 1)) return 'agotado';
+  return 'activo';
+}
+
+const ESTADO_BADGE = {
+  activo:   '<span class="badge b-activo">✓ Activo</span>',
+  agotado:  '<span class="badge b-agotado">⊘ Agotado</span>',
+  expirado: '<span class="badge b-expirado">✕ Expirado</span>',
+  inactivo: '<span class="badge b-inactivo">— Desactivado</span>',
+};
+
+// ── FILTRO ──────────────────────────────────────────────────────────
+let filtrarTimer;
+function filtrar() {
+  clearTimeout(filtrarTimer);
+  filtrarTimer = setTimeout(aplicarFiltro, 120);
+}
+
+function aplicarFiltro() {
+  const q       = document.getElementById('searchInput').value.trim().toLowerCase();
+  const estadoF = document.getElementById('filtroEstado').value;
+
+  filtrado = todos.filter(c => {
+    if (q) {
+      const match = (c.codigo || '').toLowerCase().includes(q) ||
+                    (c.email_destino || '').toLowerCase().includes(q);
+      if (!match) return false;
+    }
+    if (estadoF && estadoCodigo(c) !== estadoF) return false;
+    return true;
+  });
+
+  document.getElementById('resultCount').textContent =
+    `${filtrado.length} de ${todos.length}`;
+  renderTabla();
+}
+
+// ── RENDER ──────────────────────────────────────────────────────────
+function renderTabla() {
+  const tbody = document.getElementById('tablaBody');
+  if (!filtrado.length) {
+    tbody.innerHTML = '<tr><td colspan="8" class="table-empty">Sin resultados.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = filtrado.map(c => {
+    const estado  = estadoCodigo(c);
+    const maxUsos = c.max_usos || 1;
+    const usados  = c.usos_actuales || 0;
+    const pct     = Math.min(100, Math.round((usados / maxUsos) * 100));
+    const barCls  = estado === 'agotado' ? 'agotado' : '';
+    const podElim = usados === 0;
+    const podDeact = estado === 'activo';
+    const expiraStr = c.expira_at
+      ? new Date(c.expira_at).toLocaleDateString('es-AR', {day:'2-digit',month:'2-digit',year:'2-digit'})
+      : '—';
+    const creadoStr = c.created_at
+      ? new Date(c.created_at).toLocaleDateString('es-AR', {day:'2-digit',month:'2-digit',year:'2-digit'})
+      : '—';
+
+    return `<tr>
+      <td><div class="td-mono">${esc(c.codigo)}</div></td>
+      <td>${ESTADO_BADGE[estado] || estado}</td>
+      <td>
+        ${c.email_destino
+          ? `<div style="font-size:12px">${esc(c.email_destino)}</div>`
+          : `<span class="td-muted">General</span>`}
+        ${c.usado_por ? `<div style="font-size:10px;color:var(--ink-4)">Usado por: ${esc(c.usado_por)}</div>` : ''}
+      </td>
+      <td>
+        <div class="uso-bar">
+          <div class="uso-track"><div class="uso-fill ${barCls}" style="width:${pct}%"></div></div>
+          <div class="uso-text">${usados}/${maxUsos}</div>
+        </div>
+      </td>
+      <td class="${!c.expira_at ? 'td-muted' : ''}">${expiraStr}</td>
+      <td class="td-muted">${esc(c.generado_por || '—')}</td>
+      <td class="td-muted">${creadoStr}</td>
+      <td>
+        <div class="acciones">
+          <button class="btn-acc btn-copy" onclick="copiarCodigo('${esc(c.codigo)}')">📋</button>
+          <button class="btn-acc btn-deact" onclick="desactivar('${c.id}')" ${!podDeact?'disabled':''} title="Desactivar">🔒</button>
+          <button class="btn-acc btn-del"   onclick="eliminar('${c.id}','${esc(c.codigo)}')" ${!podElim?'disabled':''} title="Eliminar (solo si sin usos)">🗑️</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ── ACCIONES ────────────────────────────────────────────────────────
+function copiarCodigo(codigo) {
+  navigator.clipboard.writeText(codigo).then(() => showToast(`📋 ${codigo} copiado`, 'copied')).catch(() => {
+    // fallback para entornos sin clipboard API
+    const el = document.createElement('textarea');
+    el.value = codigo; el.style.position = 'fixed'; el.style.opacity = '0';
+    document.body.appendChild(el); el.select(); document.execCommand('copy');
+    document.body.removeChild(el);
+    showToast(`📋 ${codigo} copiado`, 'copied');
+  });
+}
+
+async function desactivar(id) {
+  if (!confirm('¿Desactivar este código? Ya no podrá usarse.')) return;
+  try {
+    await sbPatch(id, { usado: true, updated_at: new Date().toISOString() });
+    showToast('✓ Código desactivado');
+    await cargar();
+  } catch (e) { showToast('Error: ' + e.message, 'error'); }
+}
+
+async function eliminar(id, codigo) {
+  if (!confirm(`¿Eliminar el código ${codigo}? Esta acción no se puede deshacer.`)) return;
+  try {
+    await sbDelete(id);
+    showToast('Código eliminado');
+    await cargar();
+  } catch (e) { showToast('Error: ' + e.message, 'error'); }
+}
+
+// ── MODAL NUEVO ─────────────────────────────────────────────────────
+function abrirModalNuevo() {
+  generarCodigo();
+  document.getElementById('m-email').value        = '';
+  document.getElementById('m-max-usos').value     = '1';
+  document.getElementById('m-expira').value       = '';
+  document.getElementById('m-generado-por').value = 'admin';
+  document.getElementById('btnConfirmar').disabled = false;
+  document.getElementById('btnConfirmar').textContent = 'Crear código';
+  document.getElementById('modalNuevo').classList.add('open');
+  setTimeout(() => document.getElementById('m-codigo').focus(), 200);
+}
+
+function generarCodigo() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // sin I,O,0,1 para evitar confusión
+  let sufijo = '';
+  for (let i = 0; i < 6; i++) sufijo += chars[Math.floor(Math.random() * chars.length)];
+  document.getElementById('m-codigo').value = `BETA-${sufijo}`;
+}
+
+async function crearCodigo() {
+  const codigo     = (document.getElementById('m-codigo').value || '').trim().toUpperCase();
+  const email      = (document.getElementById('m-email').value || '').trim() || null;
+  const maxUsos    = parseInt(document.getElementById('m-max-usos').value) || 1;
+  const expira     = document.getElementById('m-expira').value || null;
+  const generadoPor = (document.getElementById('m-generado-por').value || '').trim() || 'admin';
+
+  if (!codigo) { showToast('El código es obligatorio', 'error'); return; }
+  if (!/^[A-Z0-9\-]{4,20}$/.test(codigo)) { showToast('Código inválido — solo letras, números y guiones', 'error'); return; }
+
+  const btn = document.getElementById('btnConfirmar');
+  btn.disabled = true; btn.textContent = 'Creando…';
+
+  try {
+    await sbPost({
+      codigo,
+      email_destino: email,
+      max_usos:      maxUsos,
+      usos_actuales: 0,
+      usado:         false,
+      generado_por:  generadoPor,
+      expira_at:     expira ? new Date(expira).toISOString() : null,
+    });
+    cerrarModal('modalNuevo');
+    showToast(`✅ Código ${codigo} creado`);
+    await cargar();
+    // Copiar automáticamente al portapapeles
+    setTimeout(() => copiarCodigo(codigo), 500);
+  } catch (e) {
+    const msg = e.message.includes('duplicate') || e.message.includes('unique')
+      ? `El código "${codigo}" ya existe — generá uno nuevo`
+      : 'Error: ' + e.message;
+    showToast(msg, 'error');
+    btn.disabled = false; btn.textContent = 'Crear código';
+  }
+}
+
+// ── UTILS ────────────────────────────────────────────────────────────
+function cerrarModal(id) { document.getElementById(id).classList.remove('open'); }
+function cerrarModalSiClick(e, id) { if (e.target === document.getElementById(id)) cerrarModal(id); }
+function esc(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+let toastTimer;
+function showToast(msg, type = 'ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = `toast show ${type}`;
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
