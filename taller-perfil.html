@@ -126,39 +126,58 @@ const TIPO_INFO = {
   reclamo:                { icon:'📢', label:'Reclamo'                   },
 };
 
-async function sbGet(tabla, qs) {
-  const r = await fetch(`${SUPABASE_URL}/rest/v1/${tabla}?${qs}`, {
-    headers: { 'apikey': SUPABASE_ANON }
-  });
-  if (!r.ok) throw new Error(r.status);
-  return r.json();
+async function sbGetSafe(tabla, qs) {
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${tabla}?${qs}`, {
+      headers: { 'apikey': SUPABASE_ANON }
+    });
+    if (!r.ok) {
+      console.error(`sbGetSafe ${tabla} → HTTP ${r.status}`);
+      return [];
+    }
+    return await r.json();
+  } catch(e) {
+    console.error(`sbGetSafe ${tabla} exception:`, e);
+    return [];
+  }
 }
 
+// Timeout de seguridad: si en 8s no renderizó, mostrar error
+const _timeoutId = setTimeout(() => {
+  if (document.getElementById('contenido')?.innerHTML.includes('spinner')) {
+    renderError('Tiempo de espera agotado. Verificá tu conexión.');
+  }
+}, 8000);
+
 (async () => {
-  try {
   const params   = new URLSearchParams(window.location.search);
   const tallerId = params.get('taller_id') || params.get('id');
 
   if (!tallerId) {
+    clearTimeout(_timeoutId);
     renderError('No se especificó un taller.');
     return;
   }
 
-  // Cargar todo en paralelo
-  const [tallerData, disponibData, resenasData] = await Promise.allSettled([
-    sbGet('cat_recomendaciones_talleres',
+  // Cargar todo en paralelo — sbGetSafe nunca lanza, siempre devuelve array
+  const [tallerArr, disponib, resenas] = await Promise.all([
+    sbGetSafe('cat_recomendaciones_talleres',
       `select=id,nombre,direccion,localidad,telefono,whatsapp,especialidades,horarios,logo_url&id=eq.${tallerId}&limit=1`),
-    sbGet('cat_taller_disponibilidad',
+    sbGetSafe('cat_taller_disponibilidad',
       `select=dia_semana,tipo_turno,hora_inicio,hora_fin,activo&taller_id=eq.${tallerId}&activo=eq.true&order=tipo_turno,dia_semana`),
-    sbGet('cat_turnos',
+    sbGetSafe('cat_turnos',
       `select=calificacion_cliente_al_taller,resena_cliente,vehiculo_marca,vehiculo_modelo,created_at&taller_id=eq.${tallerId}&estado=eq.finalizado&calificacion_cliente_al_taller=not.is.null&order=created_at.desc&limit=5`),
   ]);
 
-  const taller  = tallerData.value?.[0];
-  const disponib = disponibData.value  || [];
-  const resenas  = resenasData.value   || [];
+  clearTimeout(_timeoutId);
 
-  if (!taller) { renderError('Taller no encontrado.'); return; }
+  const taller = tallerArr?.[0];
+  console.log('taller-perfil fetch result:', { taller, disponibCount: disponib.length, resenasCount: resenas.length });
+
+  if (!taller) {
+    renderError('Taller no encontrado. Es posible que la página requiera permisos de acceso — verificar RLS en cat_recomendaciones_talleres para rol anon.');
+    return;
+  }
 
   // Calificación promedio
   const califs    = resenas.map(r => r.calificacion_cliente_al_taller).filter(Boolean);
@@ -297,10 +316,6 @@ async function sbGet(tabla, qs) {
     </div>`;
 
   cont.innerHTML = html;
-  } catch(e) {
-    console.error('taller-perfil error:', e);
-    renderError('Error al cargar el perfil del taller.');
-  }
 })();
 
 function renderError(msg) {
