@@ -135,6 +135,7 @@ async function sbGet(tabla, qs) {
 }
 
 (async () => {
+  try {
   const params   = new URLSearchParams(window.location.search);
   const tallerId = params.get('taller_id') || params.get('id');
 
@@ -165,7 +166,13 @@ async function sbGet(tabla, qs) {
 
   // Horarios (de cat_recomendaciones_talleres.horarios — JSON de horarios de atención)
   let horariosData = {};
-  try { if (taller.horarios) horariosData = JSON.parse(taller.horarios); } catch {}
+  try {
+    if (taller.horarios) {
+      horariosData = typeof taller.horarios === 'string'
+        ? JSON.parse(taller.horarios)
+        : taller.horarios;
+    }
+  } catch { horariosData = {}; }
 
   // ── HERO ────────────────────────────────────────────────────────────
   document.title = `${taller.nombre} — Piezauto`;
@@ -232,9 +239,9 @@ async function sbGet(tabla, qs) {
     </div>`;
   }).filter(Boolean).join('');
 
-  if (horariosRows) {
-    html += `<div class="card"><div class="card-head"><h3>🕐 Horarios de atención</h3></div><div class="card-body">${horariosRows}</div></div>`;
-  }
+  html += `<div class="card"><div class="card-head"><h3>🕐 Horarios de atención</h3></div><div class="card-body">${
+    horariosRows || '<div style="padding:6px 0;font-size:13px;color:#888;font-style:italic">Consultar horarios con el taller.</div>'
+  }</div></div>`;
 
   // Disponibilidad de turnos
   const tiposHabilitados = [...new Set(disponib.map(d => d.tipo_turno))];
@@ -290,6 +297,10 @@ async function sbGet(tabla, qs) {
     </div>`;
 
   cont.innerHTML = html;
+  } catch(e) {
+    console.error('taller-perfil error:', e);
+    renderError('Error al cargar el perfil del taller.');
+  }
 })();
 
 function renderError(msg) {
