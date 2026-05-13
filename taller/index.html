@@ -196,6 +196,13 @@
       <div class="mod-badge alerta" id="badge-operaciones"><div class="badge-spin"></div></div>
     </a>
 
+    <a class="mod-card" href="/taller/agenda.html">
+      <div class="mod-icon">📅</div>
+      <div class="mod-nombre">Agenda</div>
+      <div class="mod-desc">Calendario de turnos, disponibilidad y bloqueos</div>
+      <div class="mod-badge info" id="badge-agenda"><div class="badge-spin"></div></div>
+    </a>
+
     <a class="mod-card" href="/taller/catalogo.html">
       <div class="mod-icon">🔍</div>
       <div class="mod-nombre">Catálogo Piezauto</div>
@@ -279,6 +286,7 @@
   // Cargar todos los badges en paralelo — si uno falla no rompe los demás
   await Promise.allSettled([
     cargarBadgeOperaciones(tallerId),
+    cargarBadgeAgenda(tallerId),
     cargarBadgePresupuestos(tallerId),
     cargarBadgePedidos(tallerId),
     cargarBadgeClientes(tallerId),
@@ -320,6 +328,17 @@ async function cargarBadgeOperaciones(tid) {
       el.textContent = 'Al día';
     }
   } catch { setBadgeError('badge-operaciones'); }
+}
+
+async function cargarBadgeAgenda(tid) {
+  try {
+    const hoy = new Date().toISOString().split('T')[0];
+    const { count } = await dbB2C.from('cat_turnos').select('id', { count: 'exact', head: true })
+      .eq('taller_id', tid).eq('fecha', hoy).in('estado', ['confirmado','en_proceso']);
+    const el = document.getElementById('badge-agenda');
+    if (count > 0) { el.className = 'mod-badge alerta'; el.textContent = `${count} turno${count !== 1 ? 's' : ''} hoy`; }
+    else { el.className = 'mod-badge'; el.textContent = 'Sin turnos hoy'; }
+  } catch { setBadgeError('badge-agenda'); }
 }
 
 async function cargarBadgePresupuestos(tid) {

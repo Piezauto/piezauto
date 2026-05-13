@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Turno — Panel Taller Piezauto</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="../css/estilos.css">
+  <style>
+    body { background: var(--gris-claro); }
+    .wrap { max-width: 700px; margin: 0 auto; padding: 20px 16px 60px; }
+
+    /* Header de página */
+    .page-back { display:flex; align-items:center; gap:8px; margin-bottom:16px; font-size:13px; color:#888; cursor:pointer; }
+    .page-back:hover { color:var(--rojo); }
+
+    /* Card principal */
+    .turno-card { background:#fff; border-radius:14px; box-shadow:var(--sombra); overflow:hidden; margin-bottom:16px; }
+    .turno-card-header { display:flex; justify-content:space-between; align-items:flex-start; padding:18px 20px; border-bottom:1px solid #f0f0f0; }
+    .turno-num  { font-size:11px; font-weight:700; color:#aaa; font-family:monospace; }
+    .turno-tipo { font-size:18px; font-weight:800; color:var(--negro); }
+    .turno-fecha { font-size:13px; color:#666; margin-top:4px; }
+    .estado-select { padding:7px 12px; border-radius:8px; border:2px solid; font-size:13px; font-weight:700; cursor:pointer; outline:none; font-family:inherit; }
+    .estado-pendiente  { border-color:#f59e0b; color:#b45309; background:#fff8e1; }
+    .estado-confirmado { border-color:#3b82f6; color:#1d4ed8; background:#dbeafe; }
+    .estado-en_proceso { border-color:#8b5cf6; color:#7c3aed; background:#ede9fe; }
+    .estado-finalizado { border-color:#22c55e; color:#15803d; background:#dcfce7; }
+    .estado-cancelado  { border-color:#ef4444; color:#dc2626; background:#fee2e2; }
+
+    /* Secciones info */
+    .info-grid { display:grid; grid-template-columns:1fr 1fr; gap:0; }
+    @media(max-width:500px) { .info-grid { grid-template-columns:1fr; } }
+    .info-item { padding:14px 20px; border-bottom:1px solid #f8f8f8; }
+    .info-item:nth-child(odd) { border-right:1px solid #f8f8f8; }
+    .info-label { font-size:10px; font-weight:700; color:#aaa; text-transform:uppercase; letter-spacing:.04em; margin-bottom:4px; }
+    .info-val   { font-size:14px; font-weight:600; color:var(--negro); }
+    .info-val.muted { color:#bbb; font-weight:400; font-style:italic; }
+
+    /* Notas del taller */
+    .notas-section { padding:16px 20px; }
+    .notas-label { font-size:11px; font-weight:700; color:#aaa; text-transform:uppercase; letter-spacing:.04em; margin-bottom:8px; }
+    .notas-input { width:100%; border:1.5px solid #e8e8e8; border-radius:8px; padding:10px 12px; font-size:13px; font-family:inherit; outline:none; resize:none; min-height:80px; transition:border-color .15s; }
+    .notas-input:focus { border-color:var(--rojo); }
+    .notas-btn { margin-top:8px; padding:7px 16px; background:var(--rojo); color:#fff; border:none; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; font-family:inherit; transition:opacity .15s; }
+    .notas-btn:hover { opacity:.88; }
+
+    /* Timeline de progreso */
+    .timeline { padding:16px 20px 20px; }
+    .timeline-title { font-size:14px; font-weight:800; margin-bottom:14px; }
+    .timeline-steps { position:relative; padding-left:20px; }
+    .timeline-steps::before { content:''; position:absolute; left:8px; top:0; bottom:0; width:2px; background:#f0f0f0; }
+    .step-item { position:relative; padding-bottom:16px; }
+    .step-item:last-child { padding-bottom:0; }
+    .step-dot {
+      position:absolute; left:-24px; width:16px; height:16px; border-radius:50%;
+      border:2px solid #e0e0e0; background:#fff; top:2px;
+    }
+    .step-dot.done  { background:#22c55e; border-color:#22c55e; }
+    .step-dot.activo { background:var(--rojo); border-color:var(--rojo); }
+    .step-label { font-size:13px; font-weight:600; color:#999; }
+    .step-label.done  { color:var(--negro); }
+    .step-label.activo { color:var(--rojo); }
+    .step-fecha { font-size:11px; color:#bbb; margin-top:2px; }
+    .step-desc  { font-size:12px; color:#666; margin-top:3px; }
+
+    .btn-avanzar { margin-top:12px; padding:9px 18px; background:var(--rojo); color:#fff; border:none; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; font-family:inherit; transition:opacity .15s; display:flex; align-items:center; gap:6px; }
+    .btn-avanzar:hover { opacity:.88; }
+    .btn-avanzar:disabled { opacity:.45; cursor:default; }
+
+    /* Acciones */
+    .acciones-bar { display:flex; gap:8px; flex-wrap:wrap; padding:16px 20px; border-top:1px solid #f0f0f0; }
+    .btn-acc { padding:9px 14px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; border:none; font-family:inherit; display:flex; align-items:center; gap:5px; transition:opacity .15s; }
+    .btn-acc:hover { opacity:.88; }
+    .btn-pres  { background:#dbeafe; color:#1d4ed8; }
+    .btn-ped   { background:#dcfce7; color:#15803d; }
+    .btn-conf  { background:#22c55e; color:#fff; }
+    .btn-canc  { background:#fee2e2; color:#dc2626; }
+    .btn-fin   { background:var(--rojo); color:#fff; }
+
+    /* Modal calificación */
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:300; align-items:center; justify-content:center; padding:20px; }
+    .modal-overlay.open { display:flex; animation:fadeIn .2s; }
+    @keyframes fadeIn { from{opacity:0}to{opacity:1} }
+    .modal-box { background:#fff; border-radius:14px; padding:24px; width:100%; max-width:400px; }
+    .modal-titulo { font-size:16px; font-weight:800; margin-bottom:4px; }
+    .modal-sub { font-size:13px; color:#888; margin-bottom:20px; }
+    .estrellas { display:flex; gap:8px; margin-bottom:16px; }
+    .estrella { font-size:28px; cursor:pointer; opacity:.3; transition:opacity .15s; }
+    .estrella.on { opacity:1; }
+    .fg { margin-bottom:12px; }
+    .fl { font-size:12px; font-weight:600; color:#555; margin-bottom:5px; display:block; }
+    .fi, .fta { width:100%; border:1.5px solid #e0e0e0; border-radius:8px; padding:9px 12px; font-size:13px; font-family:inherit; outline:none; }
+    .fta { resize:none; min-height:80px; }
+    .modal-btns { display:flex; gap:8px; }
+
+    /* Spinner */
+    .spinner-wrap { display:flex; justify-content:center; padding:40px; }
+    .spinner { width:28px; height:28px; border:3px solid #eee; border-top-color:var(--rojo); border-radius:50%; animation:spin .8s linear infinite; }
+    @keyframes spin { to{transform:rotate(360deg)} }
+
+    /* Toast */
+    .toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(60px); background:var(--negro); color:#fff; padding:11px 20px; border-radius:20px; font-size:13px; font-weight:600; box-shadow:0 4px 20px rgba(0,0,0,.2); opacity:0; transition:opacity .2s,transform .2s; pointer-events:none; z-index:500; }
+    .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+    .toast.error { background:var(--rojo); }
+  </style>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase.js"></script>
+<script src="../js/auth-b2c.js"></script>
+<script src="auth-taller.js"></script>
+
+<div id="taller-header"></div>
+
+<div class="wrap" id="mainWrap">
+  <div class="spinner-wrap"><div class="spinner"></div></div>
+</div>
+
+<!-- Modal calificación -->
+<div class="modal-overlay" id="modalCalif" onclick="cerrarModalSiClick(event,'modalCalif')">
+  <div class="modal-box">
+    <div class="modal-titulo">Calificación del cliente</div>
+    <div class="modal-sub">¿Cómo fue la experiencia con este cliente?</div>
+    <div class="estrellas" id="estrellasCalif">
+      <span class="estrella" data-v="1">★</span>
+      <span class="estrella" data-v="2">★</span>
+      <span class="estrella" data-v="3">★</span>
+      <span class="estrella" data-v="4">★</span>
+      <span class="estrella" data-v="5">★</span>
+    </div>
+    <div class="fg">
+      <label class="fl">Reseña (opcional)</label>
+      <textarea class="fta" id="resenaTaller" rows="3" placeholder="Puntualidad, trato, condiciones del vehículo…"></textarea>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-acc btn-canc" style="flex:1" onclick="cerrarModal('modalCalif')">Cancelar</button>
+      <button class="btn-acc btn-fin" style="flex:1" onclick="guardarCalificacion()">Guardar y finalizar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const TIPO_LABEL = {
+  inspeccion_presupuesto:'Inspección / Presupuesto',
+  inicio_trabajo:'Inicio de trabajo',
+  consulta:'Consulta',
+  reclamo:'Reclamo',
+};
+const PROGRESO_PASOS = [
+  { estado:'recepcionado',    label:'Recepcionado' },
+  { estado:'en_diagnostico',  label:'En diagnóstico' },
+  { estado:'esperando_piezas',label:'Esperando piezas' },
+  { estado:'en_reparacion',   label:'En reparación' },
+  { estado:'control_calidad', label:'Control de calidad' },
+  { estado:'listo_entrega',   label:'Listo para entrega' },
+  { estado:'entregado',       label:'Entregado' },
+];
+
+let turno    = null;
+let progreso = [];
+let califVal = 0;
+
+(async () => {
+  const auth = await requireTallerAuth();
+  if (!auth) return;
+  await initTallerHeader();
+
+  const params  = new URLSearchParams(window.location.search);
+  const turnoId = params.get('id');
+  if (!turnoId) { render404(); return; }
+
+  await cargarTurno(turnoId);
+})();
+
+async function cargarTurno(id) {
+  try {
+    const [{ data: t }, { data: p }] = await Promise.all([
+      dbB2C.from('cat_turnos').select('*').eq('id', id).single(),
+      dbB2C.from('cat_turno_progreso').select('*').eq('turno_id', id).order('created_at', { ascending: true }),
+    ]);
+    if (!t) { render404(); return; }
+    turno    = t;
+    progreso = p || [];
+    renderTurno();
+  } catch (e) { document.getElementById('mainWrap').innerHTML = `<p style="color:var(--rojo);padding:20px">Error: ${e.message}</p>`; }
+}
+
+function renderTurno() {
+  const t   = turno;
+  const fechaStr = new Date(t.fecha + 'T00:00:00').toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  const horaStr  = `${t.hora_inicio?.slice(0,5)} – ${t.hora_fin?.slice(0,5)}`;
+
+  // Determinar último paso del progreso
+  const ultimoPaso   = progreso[progreso.length - 1]?.estado || null;
+  const indicePaso   = ultimoPaso ? PROGRESO_PASOS.findIndex(p => p.estado === ultimoPaso) : -1;
+  const siguientePaso = indicePaso < PROGRESO_PASOS.length - 1 ? PROGRESO_PASOS[indicePaso + 1] : null;
+
+  const timelineHTML = PROGRESO_PASOS.map((paso, i) => {
+    const hecho  = i <= indicePaso;
+    const activo = i === indicePaso;
+    const reg    = progreso.find(p => p.estado === paso.estado);
+    return `
+    <div class="step-item">
+      <div class="step-dot ${hecho ? 'done' : ''} ${activo ? 'activo' : ''}"></div>
+      <div class="step-label ${hecho ? 'done' : ''} ${activo ? 'activo' : ''}">${paso.label}</div>
+      ${reg ? `<div class="step-fecha">${fmtFechaHora(reg.created_at)}</div>` : ''}
+      ${reg?.descripcion ? `<div class="step-desc">${esc(reg.descripcion)}</div>` : ''}
+    </div>`;
+  }).join('');
+
+  const puedeAvanzar = t.estado === 'en_proceso' && siguientePaso;
+
+  document.getElementById('mainWrap').innerHTML = `
+    <div class="page-back" onclick="window.location='/taller/agenda.html'">
+      ← Volver a Agenda
+    </div>
+
+    <!-- Info principal -->
+    <div class="turno-card">
+      <div class="turno-card-header">
+        <div>
+          <div class="turno-num">${t.id.slice(0,8).toUpperCase()}</div>
+          <div class="turno-tipo">${TIPO_LABEL[t.tipo] || t.tipo}</div>
+          <div class="turno-fecha">📅 ${fechaStr} · 🕐 ${horaStr}</div>
+        </div>
+        <select class="estado-select estado-${t.estado}" id="estadoSelect" onchange="cambiarEstado(this.value)">
+          <option value="pendiente"   ${t.estado==='pendiente'  ?'selected':''}>Pendiente</option>
+          <option value="confirmado"  ${t.estado==='confirmado' ?'selected':''}>Confirmado</option>
+          <option value="en_proceso"  ${t.estado==='en_proceso' ?'selected':''}>En proceso</option>
+          <option value="finalizado"  ${t.estado==='finalizado' ?'selected':''}>Finalizado</option>
+          <option value="cancelado"   ${t.estado==='cancelado'  ?'selected':''}>Cancelado</option>
+        </select>
+      </div>
+
+      <!-- Info cliente y vehículo -->
+      <div class="info-grid">
+        <div class="info-item">
+          <div class="info-label">Cliente</div>
+          <div class="info-val">${esc(t.nombre_cliente) || '<span class="muted">Sin nombre</span>'}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Teléfono</div>
+          <div class="info-val">${t.telefono_cliente ? `<a href="tel:${esc(t.telefono_cliente)}" style="color:var(--rojo)">${esc(t.telefono_cliente)}</a>` : '<span class="muted">—</span>'}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Vehículo</div>
+          <div class="info-val">${[t.vehiculo_marca, t.vehiculo_modelo, t.vehiculo_anio].filter(Boolean).join(' ') || '<span class="muted">—</span>'}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Dominio</div>
+          <div class="info-val">${esc(t.vehiculo_dominio) || '<span class="muted">—</span>'}</div>
+        </div>
+        ${t.motivo ? `
+        <div class="info-item" style="grid-column:span 2">
+          <div class="info-label">Motivo del turno</div>
+          <div class="info-val">${esc(t.motivo)}</div>
+        </div>` : ''}
+        ${t.notas_cliente ? `
+        <div class="info-item" style="grid-column:span 2">
+          <div class="info-label">Notas del cliente</div>
+          <div class="info-val">${esc(t.notas_cliente)}</div>
+        </div>` : ''}
+      </div>
+
+      <!-- Notas del taller -->
+      <div class="notas-section">
+        <div class="notas-label">Notas internas del taller</div>
+        <textarea class="notas-input" id="notasTaller" placeholder="Observaciones, diagnóstico, acuerdos…">${esc(t.notas_taller || '')}</textarea>
+        <button class="notas-btn" onclick="guardarNotas()">Guardar notas</button>
+      </div>
+
+      <!-- Acciones -->
+      <div class="acciones-bar">
+        ${t.estado === 'pendiente'  ? `<button class="btn-acc btn-conf" onclick="cambiarEstado('confirmado')">✅ Confirmar</button>` : ''}
+        ${t.estado === 'confirmado' ? `<button class="btn-acc btn-conf" onclick="cambiarEstado('en_proceso')">▶ Iniciar</button>` : ''}
+        ${t.estado !== 'cancelado' && t.estado !== 'finalizado' ? `<button class="btn-acc btn-canc" onclick="cambiarEstado('cancelado')">❌ Cancelar</button>` : ''}
+        ${t.estado === 'en_proceso' ? `<button class="btn-acc btn-fin" onclick="abrirCalificacion()">🏁 Finalizar</button>` : ''}
+        <button class="btn-acc btn-pres" onclick="irAPresupuesto()">📄 Presupuesto</button>
+        <button class="btn-acc btn-ped"  onclick="irAPedido()">📦 Pedido</button>
+      </div>
+    </div>
+
+    <!-- Timeline progreso -->
+    <div class="turno-card">
+      <div class="timeline">
+        <div class="timeline-title">📊 Progreso del vehículo</div>
+        <div class="timeline-steps">${timelineHTML}</div>
+        ${puedeAvanzar ? `
+        <div style="margin-top:16px">
+          <textarea class="notas-input" id="descProgreso" placeholder="Descripción del estado ${siguientePaso.label} (opcional)" style="min-height:60px"></textarea>
+          <button class="btn-avanzar" onclick="avanzarProgreso('${siguientePaso.estado}')">
+            Avanzar → ${siguientePaso.label}
+          </button>
+        </div>` : ''}
+        ${t.estado === 'finalizado' && t.calificacion_taller_al_cliente ? `
+        <div style="margin-top:16px;padding:12px;background:#f8f8f8;border-radius:8px">
+          <div style="font-size:11px;color:#aaa;font-weight:700;text-transform:uppercase;margin-bottom:4px">Tu calificación del cliente</div>
+          <div style="font-size:18px">★★★★★</div>
+        </div>` : ''}
+      </div>
+    </div>`;
+}
+
+// ─── ACCIONES ─────────────────────────────────────────────────────────────────
+async function cambiarEstado(estado) {
+  try {
+    const { data } = await dbB2C.from('cat_turnos').update({ estado, updated_at: new Date().toISOString() }).eq('id', turno.id).select().single();
+    turno = data;
+    if (estado === 'confirmado') await notificarCliente('turno_confirmado', 'Tu turno fue confirmado', `Tu turno del ${turno.fecha} fue confirmado por el taller.`);
+    if (estado === 'cancelado')  await notificarCliente('turno_cancelado', 'Tu turno fue cancelado',  `Tu turno del ${turno.fecha} fue cancelado.`);
+    renderTurno();
+    showToast('Estado actualizado');
+  } catch (e) { showToast('Error: ' + e.message, 'error'); }
+}
+
+async function guardarNotas() {
+  const notas = document.getElementById('notasTaller').value;
+  try {
+    await dbB2C.from('cat_turnos').update({ notas_taller: notas, updated_at: new Date().toISOString() }).eq('id', turno.id);
+    turno.notas_taller = notas;
+    showToast('✓ Notas guardadas');
+  } catch (e) { showToast('Error: ' + e.message, 'error'); }
+}
+
+async function avanzarProgreso(estado) {
+  const desc = document.getElementById('descProgreso')?.value?.trim() || null;
+  try {
+    await dbB2C.from('cat_turno_progreso').insert({ turno_id: turno.id, estado, descripcion: desc });
+    await notificarCliente('progreso_actualizado', 'Progreso actualizado', `Tu vehículo está en estado: ${estado.replace(/_/g,' ')}.`);
+    showToast('✓ Progreso actualizado');
+    await cargarTurno(turno.id);
+  } catch (e) { showToast('Error: ' + e.message, 'error'); }
+}
+
+// Calificación
+function abrirCalificacion() {
+  califVal = 0;
+  renderEstrellas();
+  document.getElementById('resenaTaller').value = '';
+  document.getElementById('modalCalif').classList.add('open');
+}
+
+function renderEstrellas() {
+  document.querySelectorAll('#estrellasCalif .estrella').forEach(el => {
+    el.classList.toggle('on', parseInt(el.dataset.v) <= califVal);
+    el.onclick = () => { califVal = parseInt(el.dataset.v); renderEstrellas(); };
+  });
+}
+
+async function guardarCalificacion() {
+  const resena = document.getElementById('resenaTaller').value.trim() || null;
+  try {
+    const { data } = await dbB2C.from('cat_turnos').update({
+      estado: 'finalizado',
+      calificacion_taller_al_cliente: califVal || null,
+      resena_taller: resena,
+      updated_at: new Date().toISOString(),
+    }).eq('id', turno.id).select().single();
+    turno = data;
+    await notificarCliente('turno_finalizado', 'Tu turno fue finalizado', 'El taller completó el trabajo. Podés dejar tu calificación.');
+    cerrarModal('modalCalif');
+    showToast('✓ Turno finalizado');
+    renderTurno();
+  } catch (e) { showToast('Error: ' + e.message, 'error'); }
+}
+
+// Notificar al cliente
+async function notificarCliente(tipo, titulo, mensaje) {
+  if (!turno.cliente_id) return;
+  try {
+    await dbB2C.from('cat_notificaciones_talleres').insert({
+      taller_id: turno.taller_id,
+      turno_id:  turno.id,
+      tipo, mensaje,
+    });
+  } catch (e) { console.warn('notificar:', e.message); }
+}
+
+// Navegar a presupuesto precargado
+function irAPresupuesto() {
+  const params = new URLSearchParams({
+    turno_id:      turno.id,
+    cliente:       turno.nombre_cliente  || '',
+    telefono:      turno.telefono_cliente || '',
+    veh_marca:     turno.vehiculo_marca  || '',
+    veh_modelo:    turno.vehiculo_modelo || '',
+    veh_anio:      turno.vehiculo_anio   || '',
+    veh_dominio:   turno.vehiculo_dominio || '',
+  });
+  window.location.href = `/taller/presupuestos.html?${params.toString()}`;
+}
+
+function irAPedido() {
+  window.location.href = `/taller/pedidos.html`;
+}
+
+// ─── UTILS ────────────────────────────────────────────────────────────────────
+function render404() {
+  document.getElementById('mainWrap').innerHTML = `
+    <div style="text-align:center;padding:60px 20px;color:#aaa">
+      <div style="font-size:40px;margin-bottom:12px">🔍</div>
+      <div style="font-size:16px;font-weight:700;color:#555">Turno no encontrado</div>
+      <a href="/taller/agenda.html" style="color:var(--rojo);font-size:13px;margin-top:12px;display:block">← Volver a Agenda</a>
+    </div>`;
+}
+
+function cerrarModal(id) { document.getElementById(id).classList.remove('open'); }
+function cerrarModalSiClick(e, id) { if (e.target === document.getElementById(id)) cerrarModal(id); }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmtFechaHora(s) { if (!s) return ''; return new Date(s).toLocaleDateString('es-AR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }); }
+
+let toastTimer;
+function showToast(msg, type='ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show' + (type==='error'?' error':'');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>

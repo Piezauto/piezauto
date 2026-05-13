@@ -100,6 +100,24 @@
   <h1>Mis operaciones</h1>
   <p class="sub">Historial de tus compras y pedidos en Piezauto.</p>
 
+  <!-- TABS OPERACIONES / TURNOS -->
+  <div style="display:flex;gap:0;border-bottom:2px solid #eee;margin-bottom:20px">
+    <button class="ops-tab active" id="tab-ops-btn"    onclick="switchOpsTab('ops')"    style="padding:10px 18px;font-size:13px;font-weight:700;background:none;border:none;border-bottom:2.5px solid var(--rojo);color:var(--rojo);cursor:pointer;font-family:inherit;margin-bottom:-2px">Mis pedidos</button>
+    <button class="ops-tab"        id="tab-turnos-btn" onclick="switchOpsTab('turnos')"  style="padding:10px 18px;font-size:13px;font-weight:700;background:none;border:none;border-bottom:2.5px solid transparent;color:#aaa;cursor:pointer;font-family:inherit;margin-bottom:-2px">
+      📅 Mis turnos <span id="badge-turnos" style="display:none;background:var(--rojo);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px"></span>
+    </button>
+  </div>
+
+  <!-- SECCIÓN TURNOS -->
+  <div id="seccion-turnos" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+      <div style="font-size:13px;color:#888">Tus solicitudes de turno en talleres Piezauto</div>
+      <a href="/solicitar-turno.html" style="display:inline-flex;align-items:center;gap:6px;background:var(--rojo);color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:13px;font-weight:700;text-decoration:none;transition:opacity .15s" onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">+ Solicitar turno</a>
+    </div>
+    <div id="lista-turnos"><div style="text-align:center;padding:30px;color:#bbb">Cargando turnos…</div></div>
+  </div>
+
+  <div id="seccion-ops">
   <div class="filtros">
     <select id="filtro-estado" onchange="cargarOps()">
       <option value="">Todos los estados</option>
@@ -303,6 +321,115 @@ function parseNotas(n) { if (!n) return {}; try { return JSON.parse(n); } catch 
 function escH(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 document.addEventListener('DOMContentLoaded', initPage);
+
+// ─── TURNOS ─────────────────────────────────────────────────────────────────
+let turnosData = [];
+
+function switchOpsTab(tab) {
+  const isOps = tab === 'ops';
+  document.getElementById('seccion-ops').style.display    = isOps ? '' : 'none';
+  document.getElementById('seccion-turnos').style.display = isOps ? 'none' : '';
+  document.getElementById('tab-ops-btn').style.borderBottomColor    = isOps ? 'var(--rojo)' : 'transparent';
+  document.getElementById('tab-ops-btn').style.color                = isOps ? 'var(--rojo)' : '#aaa';
+  document.getElementById('tab-turnos-btn').style.borderBottomColor = isOps ? 'transparent' : 'var(--rojo)';
+  document.getElementById('tab-turnos-btn').style.color             = isOps ? '#aaa' : 'var(--rojo)';
+  if (!isOps && !turnosData.length) cargarTurnos();
+}
+
+async function cargarTurnos() {
+  const cont = document.getElementById('lista-turnos');
+  cont.innerHTML = '<div style="text-align:center;padding:30px;color:#bbb"><div style="width:24px;height:24px;border:3px solid #eee;border-top-color:var(--rojo);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px"></div>Cargando…</div>';
+  try {
+    const { data: s } = await dbB2C.auth.getSession();
+    if (!s?.session) { cont.innerHTML = '<div style="text-align:center;padding:20px;color:#aaa;font-size:13px">Iniciá sesión para ver tus turnos.</div>'; return; }
+    const uid = s.session.user.id;
+    // Obtener cliente_id
+    const { data: cli } = await dbB2C.from('cat_clientes_finales').select('id').eq('auth_user_id', uid).single();
+    if (!cli) { cont.innerHTML = '<div style="text-align:center;padding:20px;color:#aaa;font-size:13px">No se encontró tu perfil de cliente.</div>'; return; }
+
+    const { data: turnos } = await dbB2C.from('cat_turnos')
+      .select('id,taller_id,tipo,estado,fecha,hora_inicio,motivo,calificacion_cliente_al_taller,cat_recomendaciones_talleres(nombre)')
+      .eq('cliente_id', cli.id)
+      .order('fecha', { ascending: false })
+      .limit(20);
+
+    turnosData = turnos || [];
+    if (!turnosData.length) {
+      cont.innerHTML = '<div style="text-align:center;padding:30px;color:#bbb;font-size:13px">No tenés turnos registrados. <a href="/solicitar-turno.html" style="color:var(--rojo)">Pedí uno →</a></div>';
+      return;
+    }
+
+    // Badge en tab
+    const activos = turnosData.filter(t => ['pendiente','confirmado','en_proceso'].includes(t.estado)).length;
+    if (activos > 0) {
+      const badge = document.getElementById('badge-turnos');
+      badge.textContent = activos;
+      badge.style.display = '';
+    }
+
+    const TIPO_L = { inspeccion_presupuesto:'Inspección/Pres.', inicio_trabajo:'Inicio trabajo', consulta:'Consulta', reclamo:'Reclamo' };
+    const EST_L  = { pendiente:'Pendiente', confirmado:'Confirmado', en_proceso:'En proceso', finalizado:'Finalizado', cancelado:'Cancelado' };
+    const EST_CLS= { pendiente:'#fff8e1;#b45309', confirmado:'#dbeafe;#1d4ed8', en_proceso:'#ede9fe;#7c3aed', finalizado:'#dcfce7;#15803d', cancelado:'#fee2e2;#dc2626' };
+
+    cont.innerHTML = turnosData.map(t => {
+      const [bg, cl] = (EST_CLS[t.estado] || '#f0f0f0;#666').split(';');
+      const tallerNombre = t.cat_recomendaciones_talleres?.nombre || '—';
+      const fechaStr = new Date(t.fecha + 'T00:00:00').toLocaleDateString('es-AR', { weekday:'short', day:'numeric', month:'short' });
+      const puedeCalif = t.estado === 'finalizado' && !t.calificacion_cliente_al_taller;
+
+      return \`<div style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.06);padding:16px;margin-bottom:10px;cursor:pointer" onclick="window.location='/solicitar-turno.html?ver=\${t.id}'">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+          <div style="flex:1">
+            <div style="font-size:11px;color:#aaa;font-weight:700;margin-bottom:2px">\${tallerNombre}</div>
+            <div style="font-size:14px;font-weight:700">\${TIPO_L[t.tipo] || t.tipo}</div>
+            <div style="font-size:12px;color:#888;margin-top:3px">📅 \${fechaStr} · \${t.hora_inicio?.slice(0,5) || ''}</div>
+            \${t.motivo ? '<div style="font-size:12px;color:#666;margin-top:4px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">' + escH(t.motivo) + '</div>' : ''}
+          </div>
+          <span style="background:\${bg};color:\${cl};font-size:10px;font-weight:700;padding:3px 9px;border-radius:10px;flex-shrink:0">\${EST_L[t.estado] || t.estado}</span>
+        </div>
+        \${puedeCalif ? '<button onclick="event.stopPropagation();abrirCalifTurno(\'' + t.id + '\')" style="margin-top:10px;padding:6px 14px;background:var(--rojo);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">★ Calificar taller</button>' : ''}
+        \${t.calificacion_cliente_al_taller ? '<div style="margin-top:8px;font-size:12px;color:#888">Tu calificación: ' + '★'.repeat(t.calificacion_cliente_al_taller) + '</div>' : ''}
+      </div>\`;
+    }).join('');
+  } catch (e) {
+    cont.innerHTML = '<div style="text-align:center;padding:20px;color:#c00;font-size:13px">Error: ' + e.message + '</div>';
+  }
+}
+
+// Modal calificación simple
+let califTurnoId = null, califTurnoVal = 0;
+function abrirCalifTurno(turnoId) {
+  califTurnoId = turnoId; califTurnoVal = 0;
+  const modal = document.createElement('div');
+  modal.id = 'modal-calif-turno';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;display:flex;align-items:center;justify-content:center;padding:20px';
+  modal.innerHTML = \`
+    <div style="background:#fff;border-radius:14px;padding:24px;width:100%;max-width:380px">
+      <div style="font-size:16px;font-weight:800;margin-bottom:4px">¿Cómo fue el taller?</div>
+      <div style="font-size:13px;color:#888;margin-bottom:16px">Tu opinión ayuda a otros clientes.</div>
+      <div id="estrellas-cli" style="display:flex;gap:8px;font-size:32px;margin-bottom:16px;cursor:pointer">
+        \${[1,2,3,4,5].map(v => '<span data-v="' + v + '" onclick="setCalifTurno(' + v + ')" style="opacity:.3">★</span>').join('')}
+      </div>
+      <textarea id="resena-cli" rows="3" placeholder="Contá tu experiencia…" style="width:100%;border:1.5px solid #e0e0e0;border-radius:8px;padding:10px;font-size:13px;font-family:inherit;outline:none;resize:none"></textarea>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button onclick="document.getElementById('modal-calif-turno').remove()" style="flex:1;padding:11px;border:1.5px solid #e0e0e0;border-radius:8px;background:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">Cancelar</button>
+        <button onclick="enviarCalifTurno()" style="flex:1;padding:11px;border:none;border-radius:8px;background:var(--rojo);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">Enviar</button>
+      </div>
+    </div>\`;
+  document.body.appendChild(modal);
+}
+function setCalifTurno(v) {
+  califTurnoVal = v;
+  document.querySelectorAll('#estrellas-cli span').forEach(el => { el.style.opacity = parseInt(el.dataset.v) <= v ? '1' : '.3'; });
+}
+async function enviarCalifTurno() {
+  const resena = document.getElementById('resena-cli')?.value?.trim() || null;
+  try {
+    await dbB2C.from('cat_turnos').update({ calificacion_cliente_al_taller: califTurnoVal || null, resena_cliente: resena, updated_at: new Date().toISOString() }).eq('id', califTurnoId);
+    document.getElementById('modal-calif-turno').remove();
+    turnosData = []; cargarTurnos();
+  } catch (e) { alert('Error: ' + e.message); }
+}
 </script>
 </body>
 </html>

@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agenda — Panel Taller Piezauto</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="../css/estilos.css">
+  <style>
+    body { background: var(--gris-claro); }
+    .wrap { max-width: 1000px; margin: 0 auto; padding: 20px 16px 60px; }
+
+    /* ── Header de la página ── */
+    .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+    .page-title  { font-size: 20px; font-weight: 800; }
+    .page-sub    { font-size: 13px; color: #888; }
+
+    /* ── Stats del mes ── */
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+    @media(max-width:600px) { .stats-row { grid-template-columns: 1fr 1fr; } }
+    .stat-card { background:#fff; border-radius:12px; padding:16px; box-shadow:var(--sombra); }
+    .stat-num   { font-size:28px; font-weight:800; color:var(--negro); line-height:1; }
+    .stat-label { font-size:11px; color:#888; font-weight:700; text-transform:uppercase; letter-spacing:.04em; margin-top:4px; }
+    .stat-card.ok   .stat-num { color:#22c55e; }
+    .stat-card.warn .stat-num { color:var(--rojo); }
+    .stat-card.info .stat-num { color:#3b82f6; }
+
+    /* ── Layout principal ── */
+    .main-grid { display: grid; grid-template-columns: 1fr 320px; gap: 16px; }
+    @media(max-width:700px) { .main-grid { grid-template-columns: 1fr; } }
+
+    /* ── Calendario ── */
+    .cal-card { background:#fff; border-radius:14px; box-shadow:var(--sombra); overflow:hidden; }
+    .cal-header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid #f0f0f0; }
+    .cal-titulo  { font-size:16px; font-weight:800; text-transform:capitalize; }
+    .cal-nav { display:flex; gap:6px; }
+    .cal-nav button { width:32px; height:32px; border:1.5px solid #e0e0e0; background:#fff; border-radius:8px; cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center; transition:background .15s; }
+    .cal-nav button:hover { background:var(--gris-claro); }
+
+    .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); }
+    .cal-dow { text-align:center; padding:10px 4px; font-size:11px; font-weight:700; color:#aaa; text-transform:uppercase; }
+    .cal-day {
+      min-height:70px; padding:6px 4px; border-top:1px solid #f8f8f8; border-right:1px solid #f8f8f8;
+      cursor:pointer; transition:background .15s; position:relative;
+    }
+    .cal-day:hover { background:#fff9f9; }
+    .cal-day.otro-mes { opacity:.35; cursor:default; }
+    .cal-day.otro-mes:hover { background:transparent; }
+    .cal-day.hoy { background:#fff5f5; }
+    .cal-day.hoy .cal-day-num { background:var(--rojo); color:#fff; border-radius:50%; width:22px; height:22px; display:flex; align-items:center; justify-content:center; }
+    .cal-day.seleccionado { background:#fef2f2; outline:2px solid var(--rojo); }
+    .cal-day.bloqueado { background:#f8f8f8; }
+    .cal-day-num { font-size:12px; font-weight:700; color:var(--negro); margin-bottom:4px; width:22px; height:22px; display:flex; align-items:center; justify-content:center; }
+    .cal-day.bloqueado .cal-day-num { color:#ccc; }
+
+    /* Puntos de turnos */
+    .turnos-dots { display:flex; flex-wrap:wrap; gap:3px; }
+    .turno-dot { width:7px; height:7px; border-radius:50%; }
+    .dot-inspeccion_presupuesto { background:#3b82f6; }
+    .dot-inicio_trabajo         { background:#22c55e; }
+    .dot-consulta               { background:#f59e0b; }
+    .dot-reclamo                { background:var(--rojo); }
+
+    /* ── Panel lateral ── */
+    .panel-lateral { display:flex; flex-direction:column; gap:12px; }
+
+    /* Panel acciones rápidas */
+    .panel-card { background:#fff; border-radius:14px; box-shadow:var(--sombra); overflow:hidden; }
+    .panel-head { padding:14px 16px; border-bottom:1px solid #f0f0f0; }
+    .panel-head h3 { font-size:14px; font-weight:800; }
+    .panel-body { padding:14px 16px; }
+
+    /* Lista de turnos del día */
+    .turno-item {
+      display:flex; align-items:flex-start; gap:10px; padding:10px 0;
+      border-bottom:1px solid #f8f8f8; cursor:pointer;
+    }
+    .turno-item:last-child { border-bottom:none; }
+    .turno-hora { font-size:12px; font-weight:700; color:#666; min-width:44px; }
+    .turno-info { flex:1; min-width:0; }
+    .turno-cliente { font-size:13px; font-weight:700; color:var(--negro); }
+    .turno-tipo-txt { font-size:11px; color:#888; }
+    .turno-estado-badge {
+      font-size:10px; font-weight:700; padding:2px 8px; border-radius:10px; flex-shrink:0;
+    }
+    .est-pendiente  { background:#fff8e1; color:#b45309; }
+    .est-confirmado { background:#dbeafe; color:#1d4ed8; }
+    .est-en_proceso { background:#ede9fe; color:#7c3aed; }
+    .est-finalizado { background:#dcfce7; color:#15803d; }
+    .est-cancelado  { background:#fee2e2; color:#dc2626; }
+
+    .turno-empty { text-align:center; color:#bbb; padding:20px 0; font-size:13px; }
+
+    /* ── Tabs config ── */
+    .tab-row { display:flex; gap:0; border-bottom:1px solid #f0f0f0; }
+    .tab-btn {
+      flex:1; padding:10px 8px; font-size:12px; font-weight:700; text-align:center;
+      background:none; border:none; border-bottom:2.5px solid transparent;
+      cursor:pointer; color:#999; transition:color .15s; font-family:inherit;
+    }
+    .tab-btn.active { color:var(--rojo); border-bottom-color:var(--rojo); }
+
+    /* ── Disponibilidad config ── */
+    .disp-row {
+      display:grid; grid-template-columns:80px 1fr auto; gap:8px; align-items:center;
+      padding:8px 0; border-bottom:1px solid #f8f8f8; font-size:13px;
+    }
+    .disp-row:last-child { border-bottom:none; }
+    .dia-label { font-size:12px; font-weight:700; color:#555; }
+    .disp-time-row { display:flex; align-items:center; gap:6px; }
+    .time-input { border:1.5px solid #e0e0e0; border-radius:6px; padding:5px 8px; font-size:12px; font-family:inherit; outline:none; width:70px; }
+    .time-input:focus { border-color:var(--rojo); }
+    .toggle-mini { position:relative; width:34px; height:18px; flex-shrink:0; }
+    .toggle-mini input { opacity:0; width:0; height:0; }
+    .toggle-mini-track { position:absolute; inset:0; background:#ddd; border-radius:9px; cursor:pointer; transition:background .2s; }
+    .toggle-mini-track::after { content:''; position:absolute; width:14px; height:14px; top:2px; left:2px; background:#fff; border-radius:50%; transition:transform .2s; box-shadow:0 1px 2px rgba(0,0,0,.2); }
+    .toggle-mini input:checked + .toggle-mini-track { background:#22c55e; }
+    .toggle-mini input:checked + .toggle-mini-track::after { transform:translateX(16px); }
+
+    /* ── Botones ── */
+    .btn { padding:9px 16px; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; border:none; transition:opacity .15s; font-family:inherit; }
+    .btn-rojo  { background:var(--rojo); color:#fff; }
+    .btn-rojo:hover { opacity:.88; }
+    .btn-ghost { background:var(--gris-claro); color:var(--negro); }
+    .btn-ghost:hover { background:#e8e8e8; }
+    .btn-sm { padding:6px 12px; font-size:12px; }
+
+    /* ── Modal bloqueo ── */
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:300; align-items:center; justify-content:center; padding:20px; }
+    .modal-overlay.open { display:flex; animation:fadeIn .2s; }
+    @keyframes fadeIn { from{opacity:0}to{opacity:1} }
+    .modal-box { background:#fff; border-radius:14px; padding:24px; width:100%; max-width:380px; }
+    .modal-titulo { font-size:16px; font-weight:800; margin-bottom:16px; }
+    .fg { margin-bottom:12px; }
+    .fl { font-size:12px; font-weight:600; color:#555; margin-bottom:5px; display:block; }
+    .fi, .fs { width:100%; border:1.5px solid #e0e0e0; border-radius:8px; padding:9px 12px; font-size:14px; font-family:inherit; outline:none; transition:border-color .15s; }
+    .fi:focus, .fs:focus { border-color:var(--rojo); }
+    .modal-btns { display:flex; gap:8px; margin-top:16px; }
+
+    /* Spinner */
+    .spinner { width:24px; height:24px; border:3px solid #eee; border-top-color:var(--rojo); border-radius:50%; animation:spin .8s linear infinite; margin:20px auto; }
+    @keyframes spin { to{transform:rotate(360deg)} }
+
+    /* Toast */
+    .toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(60px); background:var(--negro); color:#fff; padding:11px 20px; border-radius:20px; font-size:13px; font-weight:600; box-shadow:0 4px 20px rgba(0,0,0,.2); opacity:0; transition:opacity .2s,transform .2s; pointer-events:none; z-index:500; }
+    .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+    .toast.error { background:var(--rojo); }
+
+    /* Leyenda de colores */
+    .leyenda { display:flex; flex-wrap:wrap; gap:10px; margin-top:12px; }
+    .leyenda-item { display:flex; align-items:center; gap:5px; font-size:11px; color:#666; }
+    .leyenda-dot { width:8px; height:8px; border-radius:50%; }
+  </style>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase.js"></script>
+<script src="../js/auth-b2c.js"></script>
+<script src="auth-taller.js"></script>
+
+<div id="taller-header"></div>
+
+<div class="wrap">
+
+  <div class="page-header">
+    <div>
+      <div class="page-title">📅 Agenda</div>
+      <div class="page-sub" id="mesLabel">Cargando…</div>
+    </div>
+    <button class="btn btn-rojo" onclick="abrirModalBloqueo()">🚫 Bloquear día</button>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card ok">
+      <div class="stat-num" id="statFinalizados">—</div>
+      <div class="stat-label">Finalizados</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="statConfirmados">—</div>
+      <div class="stat-label">Confirmados</div>
+    </div>
+    <div class="stat-card warn">
+      <div class="stat-num" id="statCancelados">—</div>
+      <div class="stat-label">Cancelados</div>
+    </div>
+    <div class="stat-card info">
+      <div class="stat-num" id="statCalif">—</div>
+      <div class="stat-label">Calif. prom.</div>
+    </div>
+  </div>
+
+  <div class="main-grid">
+
+    <!-- Calendario -->
+    <div class="cal-card">
+      <div class="cal-header">
+        <div class="cal-titulo" id="calTitulo">—</div>
+        <div class="cal-nav">
+          <button onclick="navMes(-1)">‹</button>
+          <button onclick="navMes(0)">Hoy</button>
+          <button onclick="navMes(1)">›</button>
+        </div>
+      </div>
+      <div class="cal-grid" id="calDow">
+        <div class="cal-dow">Dom</div><div class="cal-dow">Lun</div>
+        <div class="cal-dow">Mar</div><div class="cal-dow">Mié</div>
+        <div class="cal-dow">Jue</div><div class="cal-dow">Vie</div>
+        <div class="cal-dow">Sáb</div>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+      <div class="leyenda" style="padding:12px 16px">
+        <div class="leyenda-item"><div class="leyenda-dot dot-inspeccion_presupuesto"></div> Inspección/Presup.</div>
+        <div class="leyenda-item"><div class="leyenda-dot dot-inicio_trabajo"></div> Inicio trabajo</div>
+        <div class="leyenda-item"><div class="leyenda-dot dot-consulta"></div> Consulta</div>
+        <div class="leyenda-item"><div class="leyenda-dot dot-reclamo"></div> Reclamo</div>
+      </div>
+    </div>
+
+    <!-- Panel lateral -->
+    <div class="panel-lateral">
+
+      <!-- Turnos del día -->
+      <div class="panel-card">
+        <div class="panel-head">
+          <h3 id="panelDiaLabel">Seleccioná un día</h3>
+        </div>
+        <div class="panel-body" id="panelTurnos">
+          <div class="turno-empty">Tocá un día del calendario para ver los turnos.</div>
+        </div>
+      </div>
+
+      <!-- Configuración de disponibilidad -->
+      <div class="panel-card">
+        <div class="tab-row">
+          <button class="tab-btn active" data-tab="tab-disp" onclick="switchTab(this)">Disponibilidad</button>
+          <button class="tab-btn"        data-tab="tab-config" onclick="switchTab(this)">Parámetros</button>
+        </div>
+
+        <!-- Tab disponibilidad -->
+        <div id="tab-disp" class="panel-body">
+          <div style="font-size:11px;color:#888;margin-bottom:10px">
+            Configurá los días y horarios disponibles para cada tipo de turno.
+          </div>
+          <div style="margin-bottom:10px">
+            <select id="filtroTipoDisp" class="fs" style="font-size:12px;padding:6px 10px" onchange="cargarDisponibilidad()">
+              <option value="inspeccion_presupuesto">Inspección / Presupuesto</option>
+              <option value="inicio_trabajo">Inicio de trabajo</option>
+              <option value="consulta">Consulta</option>
+              <option value="reclamo">Reclamo</option>
+            </select>
+          </div>
+          <div id="dispGrid"></div>
+          <button class="btn btn-rojo btn-sm" style="margin-top:10px;width:100%" onclick="guardarDisponibilidad()">Guardar disponibilidad</button>
+        </div>
+
+        <!-- Tab parámetros -->
+        <div id="tab-config" class="panel-body" style="display:none">
+          <div class="fg">
+            <label class="fl">Duración por defecto (minutos)</label>
+            <input class="fi" type="number" id="cfg-duracion" value="60" min="15" step="15">
+          </div>
+          <div class="fg">
+            <label class="fl">Capacidad máxima por franja</label>
+            <input class="fi" type="number" id="cfg-capacidad" value="1" min="1" max="10">
+          </div>
+          <button class="btn btn-rojo btn-sm" style="width:100%" onclick="guardarParametros()">Guardar parámetros</button>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal bloquear día -->
+<div class="modal-overlay" id="modalBloqueo" onclick="cerrarModalSiClick(event,'modalBloqueo')">
+  <div class="modal-box">
+    <div class="modal-titulo">🚫 Bloquear día</div>
+    <div class="fg">
+      <label class="fl">Fecha</label>
+      <input class="fi" type="date" id="blq-fecha">
+    </div>
+    <div class="fg">
+      <label class="fl">Tipo de turno (vacío = bloquear todos)</label>
+      <select class="fs" id="blq-tipo">
+        <option value="">Todos los tipos</option>
+        <option value="inspeccion_presupuesto">Inspección / Presupuesto</option>
+        <option value="inicio_trabajo">Inicio de trabajo</option>
+        <option value="consulta">Consulta</option>
+        <option value="reclamo">Reclamo</option>
+      </select>
+    </div>
+    <div class="fg">
+      <label class="fl">Motivo (opcional)</label>
+      <input class="fi" type="text" id="blq-motivo" placeholder="Ej: Feriado, vacaciones…">
+    </div>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" style="flex:1" onclick="cerrarModal('modalBloqueo')">Cancelar</button>
+      <button class="btn btn-rojo" style="flex:1" onclick="guardarBloqueo()">Bloquear</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const DIAS = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const TIPO_LABEL = {
+  inspeccion_presupuesto: 'Inspección/Presup.',
+  inicio_trabajo: 'Inicio trabajo',
+  consulta: 'Consulta',
+  reclamo: 'Reclamo',
+};
+const ESTADO_LABEL = { pendiente:'Pendiente', confirmado:'Confirmado', en_proceso:'En proceso', finalizado:'Finalizado', cancelado:'Cancelado' };
+
+let tallerId  = null;
+let mesActual = new Date();
+let diaSelec  = null;
+let turnos    = []; // turnos del mes cargados
+let bloqueos  = []; // bloqueos del mes
+
+(async () => {
+  const auth = await requireTallerAuth();
+  if (!auth) return;
+  await initTallerHeader();
+  tallerId = auth.meta.taller_id;
+
+  // Fecha inicial seleccionada = hoy
+  diaSelec = new Date().toISOString().split('T')[0];
+  document.getElementById('blq-fecha').value = diaSelec;
+
+  await Promise.all([cargarMes(), cargarStats()]);
+  cargarDisponibilidad();
+})();
+
+// ─── CALENDARIO ───────────────────────────────────────────────────────────────
+async function navMes(dir) {
+  if (dir === 0) { mesActual = new Date(); }
+  else { mesActual.setMonth(mesActual.getMonth() + dir); }
+  await Promise.all([cargarMes(), cargarStats()]);
+}
+
+async function cargarMes() {
+  const y = mesActual.getFullYear();
+  const m = mesActual.getMonth();
+  const primerDia = new Date(y, m, 1).toISOString().split('T')[0];
+  const ultimoDia = new Date(y, m + 1, 0).toISOString().split('T')[0];
+
+  document.getElementById('calTitulo').textContent =
+    mesActual.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
+  document.getElementById('mesLabel').textContent =
+    `${mesActual.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' })}`;
+
+  try {
+    const [{ data: turnosData }, { data: bloqueosData }] = await Promise.all([
+      dbB2C.from('cat_turnos').select('id,fecha,hora_inicio,tipo,estado,nombre_cliente').eq('taller_id', tallerId).gte('fecha', primerDia).lte('fecha', ultimoDia),
+      dbB2C.from('cat_taller_bloqueos').select('fecha,tipo_turno').eq('taller_id', tallerId).gte('fecha', primerDia).lte('fecha', ultimoDia),
+    ]);
+    turnos  = turnosData  || [];
+    bloqueos = bloqueosData || [];
+  } catch (e) { console.warn('cargarMes:', e); turnos = []; bloqueos = []; }
+
+  renderCalendario();
+  if (diaSelec) mostrarTurnosDia(diaSelec);
+}
+
+function renderCalendario() {
+  const y = mesActual.getFullYear();
+  const m = mesActual.getMonth();
+  const hoy = new Date().toISOString().split('T')[0];
+
+  const primerDow = new Date(y, m, 1).getDay(); // 0=dom
+  const diasMes   = new Date(y, m + 1, 0).getDate();
+
+  // Agrupar turnos por fecha
+  const turnosPorFecha = {};
+  turnos.forEach(t => {
+    if (!turnosPorFecha[t.fecha]) turnosPorFecha[t.fecha] = [];
+    turnosPorFecha[t.fecha].push(t);
+  });
+  const bloqFechas = new Set(bloqueos.map(b => b.fecha));
+
+  let html = '';
+  // Celdas vacías antes del primer día
+  for (let i = 0; i < primerDow; i++) html += '<div class="cal-day otro-mes"></div>';
+
+  for (let d = 1; d <= diasMes; d++) {
+    const fecha = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const esBloqueado = bloqFechas.has(fecha);
+    const esHoy = fecha === hoy;
+    const esSel = fecha === diaSelec;
+    const turnosDia = turnosPorFecha[fecha] || [];
+
+    const dots = [...new Set(turnosDia.filter(t => t.estado !== 'cancelado').map(t => t.tipo))]
+      .map(tipo => `<div class="turno-dot dot-${tipo}"></div>`).join('');
+
+    const cls = ['cal-day', esBloqueado ? 'bloqueado' : '', esHoy ? 'hoy' : '', esSel ? 'seleccionado' : ''].filter(Boolean).join(' ');
+
+    html += `<div class="${cls}" onclick="seleccionarDia('${fecha}')">
+      <div class="cal-day-num">${d}</div>
+      <div class="turnos-dots">${dots}</div>
+    </div>`;
+  }
+
+  // Rellenar celdas finales
+  const totalCeldas = primerDow + diasMes;
+  const resto = totalCeldas % 7 === 0 ? 0 : 7 - (totalCeldas % 7);
+  for (let i = 0; i < resto; i++) html += '<div class="cal-day otro-mes"></div>';
+
+  document.getElementById('calGrid').innerHTML = html;
+}
+
+function seleccionarDia(fecha) {
+  diaSelec = fecha;
+  document.getElementById('blq-fecha').value = fecha;
+  renderCalendario();
+  mostrarTurnosDia(fecha);
+}
+
+function mostrarTurnosDia(fecha) {
+  const d = new Date(fecha + 'T00:00:00');
+  document.getElementById('panelDiaLabel').textContent =
+    d.toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' });
+
+  const turnosDia = turnos.filter(t => t.fecha === fecha).sort((a, b) => a.hora_inicio.localeCompare(b.hora_inicio));
+  const cont = document.getElementById('panelTurnos');
+
+  if (!turnosDia.length) {
+    cont.innerHTML = '<div class="turno-empty">Sin turnos este día.</div>';
+    return;
+  }
+
+  cont.innerHTML = turnosDia.map(t => `
+    <div class="turno-item" onclick="window.location='/taller/turno-detalle.html?id=${t.id}'">
+      <div class="turno-hora">${t.hora_inicio?.slice(0,5)}</div>
+      <div class="turno-info">
+        <div class="turno-cliente">${esc(t.nombre_cliente || 'Cliente')}</div>
+        <div class="turno-tipo-txt">${TIPO_LABEL[t.tipo] || t.tipo}</div>
+      </div>
+      <span class="turno-estado-badge est-${t.estado}">${ESTADO_LABEL[t.estado] || t.estado}</span>
+    </div>`).join('');
+}
+
+// ─── STATS ────────────────────────────────────────────────────────────────────
+async function cargarStats() {
+  const y = mesActual.getFullYear();
+  const m = mesActual.getMonth();
+  const primerDia = new Date(y, m, 1).toISOString().split('T')[0];
+  const ultimoDia = new Date(y, m + 1, 0).toISOString().split('T')[0];
+  try {
+    const { data } = await dbB2C.from('cat_turnos').select('estado,calificacion_cliente_al_taller')
+      .eq('taller_id', tallerId).gte('fecha', primerDia).lte('fecha', ultimoDia);
+    if (!data) return;
+    const fin = data.filter(t => t.estado === 'finalizado').length;
+    const conf = data.filter(t => t.estado === 'confirmado').length;
+    const canc = data.filter(t => t.estado === 'cancelado').length;
+    const califs = data.map(t => t.calificacion_cliente_al_taller).filter(Boolean);
+    const promCalif = califs.length ? (califs.reduce((a,b)=>a+b,0)/califs.length).toFixed(1) : '—';
+    document.getElementById('statFinalizados').textContent = fin;
+    document.getElementById('statConfirmados').textContent = conf;
+    document.getElementById('statCancelados').textContent  = canc;
+    document.getElementById('statCalif').textContent       = califs.length ? `★ ${promCalif}` : '—';
+  } catch (e) { console.warn('stats:', e); }
+}
+
+// ─── DISPONIBILIDAD ───────────────────────────────────────────────────────────
+let dispConfig = []; // filas de cat_taller_disponibilidad
+
+async function cargarDisponibilidad() {
+  const tipo = document.getElementById('filtroTipoDisp').value;
+  try {
+    const { data } = await dbB2C.from('cat_taller_disponibilidad').select('*').eq('taller_id', tallerId).eq('tipo_turno', tipo);
+    dispConfig = data || [];
+  } catch { dispConfig = []; }
+  renderDisponibilidad();
+}
+
+function renderDisponibilidad() {
+  const tipo = document.getElementById('filtroTipoDisp').value;
+  const html = DIAS.map((label, dow) => {
+    const cfg = dispConfig.find(c => c.dia_semana === dow) || { activo: false, hora_inicio: '08:00', hora_fin: '18:00', duracion_minutos: 60, capacidad_max: 1 };
+    return `
+    <div class="disp-row">
+      <div class="dia-label">${label}</div>
+      <div class="disp-time-row">
+        <input class="time-input" type="time" id="disp-${dow}-desde" value="${cfg.hora_inicio||'08:00'}" ${!cfg.activo?'disabled':''}>
+        <span style="font-size:11px;color:#bbb">–</span>
+        <input class="time-input" type="time" id="disp-${dow}-hasta" value="${cfg.hora_fin||'18:00'}" ${!cfg.activo?'disabled':''}>
+      </div>
+      <label class="toggle-mini">
+        <input type="checkbox" id="disp-${dow}-activo" ${cfg.activo?'checked':''} onchange="toggleDisp(${dow})">
+        <div class="toggle-mini-track"></div>
+      </label>
+    </div>`;
+  }).join('');
+  document.getElementById('dispGrid').innerHTML = html;
+}
+
+function toggleDisp(dow) {
+  const activo = document.getElementById(`disp-${dow}-activo`).checked;
+  document.getElementById(`disp-${dow}-desde`).disabled = !activo;
+  document.getElementById(`disp-${dow}-hasta`).disabled = !activo;
+}
+
+async function guardarDisponibilidad() {
+  const tipo = document.getElementById('filtroTipoDisp').value;
+  const duracion  = parseInt(document.getElementById('cfg-duracion').value) || 60;
+  const capacidad = parseInt(document.getElementById('cfg-capacidad').value) || 1;
+  const rows = [];
+  for (let dow = 0; dow < 7; dow++) {
+    const activo   = document.getElementById(`disp-${dow}-activo`).checked;
+    const desde    = document.getElementById(`disp-${dow}-desde`).value || '08:00';
+    const hasta    = document.getElementById(`disp-${dow}-hasta`).value || '18:00';
+    rows.push({ taller_id: tallerId, dia_semana: dow, tipo_turno: tipo, hora_inicio: desde, hora_fin: hasta, duracion_minutos: duracion, capacidad_max: capacidad, activo });
+  }
+  try {
+    await dbB2C.from('cat_taller_disponibilidad').upsert(rows, { onConflict: 'taller_id,dia_semana,tipo_turno' });
+    showToast('✓ Disponibilidad guardada');
+    await cargarDisponibilidad();
+  } catch (e) { showToast('Error: ' + e.message, 'error'); }
+}
+
+async function guardarParametros() {
+  showToast('Parámetros guardados (aplicarán en próxima disponibilidad)');
+}
+
+// ─── BLOQUEO ─────────────────────────────────────────────────────────────────
+function abrirModalBloqueo() { document.getElementById('modalBloqueo').classList.add('open'); }
+
+async function guardarBloqueo() {
+  const fecha  = document.getElementById('blq-fecha').value;
+  const tipo   = document.getElementById('blq-tipo').value || null;
+  const motivo = document.getElementById('blq-motivo').value.trim() || null;
+  if (!fecha) { showToast('Seleccioná una fecha', 'error'); return; }
+  try {
+    await dbB2C.from('cat_taller_bloqueos').upsert({ taller_id: tallerId, fecha, tipo_turno: tipo, motivo }, { onConflict: 'taller_id,fecha,tipo_turno' });
+    cerrarModal('modalBloqueo');
+    showToast('✓ Día bloqueado');
+    await cargarMes();
+  } catch (e) { showToast('Error: ' + e.message, 'error'); }
+}
+
+// ─── UTILS ────────────────────────────────────────────────────────────────────
+function switchTab(btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  ['tab-disp','tab-config'].forEach(id => document.getElementById(id).style.display = 'none');
+  btn.classList.add('active');
+  document.getElementById(btn.dataset.tab).style.display = 'block';
+}
+function cerrarModal(id) { document.getElementById(id).classList.remove('open'); }
+function cerrarModalSiClick(e, id) { if (e.target === document.getElementById(id)) cerrarModal(id); }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+let toastTimer;
+function showToast(msg, type='ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show' + (type==='error'?' error':'');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>

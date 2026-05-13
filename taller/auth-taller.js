@@ -62,6 +62,7 @@ async function initTallerHeader() {
   const navItems = [
     { href: '/taller/index.html',        label: 'Inicio',       icon: '🏠' },
     { href: '/taller/operaciones.html',  label: 'Operaciones',  icon: '📋', badge: unread },
+    { href: '/taller/agenda.html',       label: 'Agenda',       icon: '📅' },
     { href: '/taller/catalogo.html',     label: 'Catálogo',     icon: '🔍' },
     { href: '/taller/presupuestos.html', label: 'Presupuestos', icon: '📄' },
     { href: '/taller/pedidos.html',      label: 'Pedidos',      icon: '📦' },

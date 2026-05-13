@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Solicitar turno — Piezauto</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/css/estilos.css">
+  <style>
+    body { background: var(--gris-claro); }
+    .wrap { max-width: 560px; margin: 0 auto; padding: 24px 16px 60px; }
+
+    /* Stepper */
+    .stepper { display:flex; align-items:center; justify-content:center; gap:0; margin-bottom:28px; }
+    .step { display:flex; align-items:center; gap:6px; }
+    .step-num { width:28px; height:28px; border-radius:50%; border:2px solid #ddd; background:#fff; font-size:12px; font-weight:700; color:#bbb; display:flex; align-items:center; justify-content:center; transition:all .2s; }
+    .step-num.activo { background:var(--rojo); border-color:var(--rojo); color:#fff; }
+    .step-num.hecho  { background:#22c55e; border-color:#22c55e; color:#fff; }
+    .step-label { font-size:11px; color:#bbb; font-weight:600; }
+    .step-label.activo { color:var(--rojo); }
+    .step-label.hecho  { color:#22c55e; }
+    .step-line { width:32px; height:2px; background:#e0e0e0; margin:0 4px; }
+    @media(max-width:400px) { .step-label { display:none; } }
+
+    /* Cards */
+    .card { background:#fff; border-radius:14px; box-shadow:var(--sombra); padding:24px; margin-bottom:16px; }
+    .card-titulo { font-size:16px; font-weight:800; margin-bottom:4px; }
+    .card-sub    { font-size:13px; color:#888; margin-bottom:20px; }
+
+    /* Tipo de turno */
+    .tipo-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .tipo-card { border:2px solid #e8e8e8; border-radius:12px; padding:16px 14px; cursor:pointer; transition:all .15s; }
+    .tipo-card:hover { border-color:var(--rojo); }
+    .tipo-card.sel  { border-color:var(--rojo); background:#fff5f5; }
+    .tipo-icon  { font-size:24px; margin-bottom:8px; }
+    .tipo-label { font-size:13px; font-weight:700; color:var(--negro); }
+    .tipo-desc  { font-size:11px; color:#888; margin-top:3px; line-height:1.4; }
+
+    /* Talleres */
+    .taller-item { border:2px solid #e8e8e8; border-radius:10px; padding:14px; cursor:pointer; transition:all .15s; margin-bottom:8px; display:flex; align-items:center; gap:12px; }
+    .taller-item:hover { border-color:var(--rojo); }
+    .taller-item.sel  { border-color:var(--rojo); background:#fff5f5; }
+    .taller-icon { font-size:24px; flex-shrink:0; }
+    .taller-nombre { font-size:14px; font-weight:700; }
+    .taller-dir    { font-size:12px; color:#888; }
+    .taller-radio  { width:18px; height:18px; accent-color:var(--rojo); margin-left:auto; flex-shrink:0; }
+
+    /* Calendario simple */
+    .cal-wrap { overflow-x:auto; }
+    .cal-mini { width:100%; border-collapse:collapse; }
+    .cal-mini th { font-size:11px; font-weight:700; color:#aaa; text-transform:uppercase; padding:6px 4px; text-align:center; }
+    .cal-mini td { padding:4px; text-align:center; }
+    .cal-mini-day {
+      width:36px; height:36px; border-radius:8px; font-size:13px; font-weight:600;
+      cursor:pointer; display:inline-flex; align-items:center; justify-content:center;
+      transition:background .12s; color:var(--negro);
+    }
+    .cal-mini-day:hover { background:#fff5f5; }
+    .cal-mini-day.disabled { color:#ddd; cursor:default; pointer-events:none; }
+    .cal-mini-day.bloqueado { background:#f8f8f8; color:#ccc; cursor:not-allowed; pointer-events:none; }
+    .cal-mini-day.sel { background:var(--rojo); color:#fff; }
+    .cal-mini-day.hoy { outline:2px solid var(--rojo); }
+    .cal-mini-nav { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+    .cal-mini-titulo { font-size:14px; font-weight:700; text-transform:capitalize; }
+    .cal-mini-btn { width:30px; height:30px; border:1.5px solid #e0e0e0; border-radius:6px; background:#fff; cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center; }
+    .cal-mini-btn:hover { background:#f0f0f0; }
+
+    /* Horarios */
+    .horarios-grid { display:flex; flex-wrap:wrap; gap:8px; }
+    .horario-btn {
+      padding:8px 14px; border:2px solid #e8e8e8; border-radius:8px;
+      font-size:13px; font-weight:600; cursor:pointer; background:#fff; transition:all .15s;
+    }
+    .horario-btn:hover { border-color:var(--rojo); color:var(--rojo); }
+    .horario-btn.sel   { border-color:var(--rojo); background:var(--rojo); color:#fff; }
+    .horario-btn.ocupado { border-color:#f0f0f0; color:#ccc; cursor:not-allowed; background:#f8f8f8; }
+
+    /* Formulario */
+    .fg { margin-bottom:14px; }
+    .fl { font-size:12px; font-weight:600; color:#555; margin-bottom:5px; display:block; }
+    .fl .req { color:var(--rojo); margin-left:2px; }
+    .fi { width:100%; border:1.5px solid #e0e0e0; border-radius:8px; padding:10px 12px; font-size:14px; font-family:inherit; outline:none; transition:border-color .15s; }
+    .fi:focus { border-color:var(--rojo); }
+    .fi::placeholder { color:#bbb; }
+    .fi.error { border-color:var(--rojo); }
+    .fr2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .fta { width:100%; border:1.5px solid #e0e0e0; border-radius:8px; padding:10px 12px; font-size:13px; font-family:inherit; outline:none; resize:none; min-height:80px; }
+    .fta:focus { border-color:var(--rojo); }
+
+    /* Botones nav */
+    .nav-btns { display:flex; gap:10px; margin-top:20px; }
+    .btn { padding:12px 20px; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; border:none; font-family:inherit; transition:opacity .15s; }
+    .btn-primary { background:var(--rojo); color:#fff; flex:1; }
+    .btn-primary:hover { opacity:.88; }
+    .btn-primary:disabled { opacity:.45; cursor:default; }
+    .btn-back { background:var(--gris-claro); color:var(--negro); padding:12px 16px; }
+    .btn-back:hover { background:#e8e8e8; }
+
+    /* Confirmación */
+    .confirmacion { text-align:center; padding:20px 0; }
+    .conf-icon  { font-size:56px; margin-bottom:16px; }
+    .conf-titulo { font-size:20px; font-weight:800; margin-bottom:8px; }
+    .conf-sub   { font-size:14px; color:#666; line-height:1.5; margin-bottom:20px; }
+    .conf-num   { background:#f8f8f8; border-radius:10px; padding:14px 20px; font-family:monospace; font-size:16px; font-weight:700; color:var(--rojo); display:inline-block; margin-bottom:20px; }
+
+    /* Misc */
+    .spinner-wrap { display:flex; justify-content:center; padding:24px; }
+    .spinner { width:24px; height:24px; border:3px solid #eee; border-top-color:var(--rojo); border-radius:50%; animation:spin .8s linear infinite; }
+    @keyframes spin { to{transform:rotate(360deg)} }
+    .empty { text-align:center; color:#bbb; padding:20px 0; font-size:13px; }
+    .toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(60px); background:var(--negro); color:#fff; padding:11px 20px; border-radius:20px; font-size:13px; font-weight:600; box-shadow:0 4px 20px rgba(0,0,0,.2); opacity:0; transition:opacity .2s,transform .2s; pointer-events:none; z-index:500; }
+    .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+    .toast.error { background:var(--rojo); }
+  </style>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/js/supabase.js"></script>
+<script src="/js/auth-b2c.js"></script>
+
+<div style="background:var(--negro);padding:0 16px;height:52px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(0,0,0,.25)">
+  <a href="/" style="font-weight:900;font-size:16px;color:var(--rojo);text-decoration:none">Piezauto</a>
+  <a href="/operaciones.html" style="font-size:12px;color:#aaa;text-decoration:none">Mis turnos →</a>
+</div>
+
+<div class="wrap">
+
+  <!-- Stepper -->
+  <div class="stepper" id="stepper">
+    <div class="step"><div class="step-num activo" id="sn1">1</div><div class="step-label activo">Tipo</div></div>
+    <div class="step-line"></div>
+    <div class="step"><div class="step-num" id="sn2">2</div><div class="step-label" id="sl2">Taller</div></div>
+    <div class="step-line"></div>
+    <div class="step"><div class="step-num" id="sn3">3</div><div class="step-label" id="sl3">Fecha</div></div>
+    <div class="step-line"></div>
+    <div class="step"><div class="step-num" id="sn4">4</div><div class="step-label" id="sl4">Datos</div></div>
+  </div>
+
+  <div id="contenido"></div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── ESTADO ────────────────────────────────────────────────────────────────
+let paso = 1;
+let sel = {
+  tipo: null,
+  taller_id: null, taller_nombre: null,
+  fecha: null, hora_inicio: null, hora_fin: null,
+  cliente_id: null,
+  // Datos del cliente
+  nombre: '', telefono: '',
+  veh_marca: '', veh_modelo: '', veh_anio: '', veh_dominio: '',
+  motivo: '', notas: '',
+};
+
+let talleres   = [];
+let bloqueos   = [];
+let disponib   = [];
+let turnosOcup = [];
+let mesSelec   = new Date();
+
+const TIPOS = [
+  { val:'inspeccion_presupuesto', icon:'🔍', label:'Inspección / Presupuesto', desc:'Evaluamos el vehículo y te damos un presupuesto detallado.' },
+  { val:'inicio_trabajo',         icon:'🔧', label:'Inicio de trabajo',         desc:'Ya tenés el presupuesto aprobado y querés iniciar la reparación.' },
+  { val:'consulta',               icon:'💬', label:'Consulta',                  desc:'Tenés dudas o querés hablar con el taller antes de decidir.' },
+  { val:'reclamo',                icon:'📢', label:'Reclamo',                   desc:'Seguimiento de un trabajo realizado o inconveniente.' },
+];
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+(async () => {
+  // Pre-cargar sesión del cliente si está logueado
+  try {
+    const { data } = await dbB2C.auth.getSession();
+    if (data?.session) {
+      const uid = data.session.user.id;
+      const { data: cli } = await dbB2C.from('cat_clientes_finales').select('id,nombre,apellido,telefono').eq('auth_user_id', uid).single();
+      if (cli) {
+        sel.cliente_id = cli.id;
+        sel.nombre     = [cli.nombre, cli.apellido].filter(Boolean).join(' ');
+        sel.telefono   = cli.telefono || '';
+      }
+      // Intentar precargar vehículo principal
+      const { data: veh } = await dbB2C.from('cat_vehiculos_clientes').select('*').eq('cliente_id', sel.cliente_id).eq('es_principal', true).single().catch(() => ({ data: null }));
+      if (veh) {
+        sel.veh_marca   = veh.marca  || '';
+        sel.veh_modelo  = veh.modelo || '';
+        sel.veh_anio    = veh.anio   || '';
+        sel.veh_dominio = veh.dominio || '';
+      }
+    }
+  } catch {}
+  renderPaso();
+})();
+
+// ─── RENDER PASOS ─────────────────────────────────────────────────────────────
+function renderPaso() {
+  actualizarStepper();
+  const cont = document.getElementById('contenido');
+  if (paso === 1) renderPaso1(cont);
+  else if (paso === 2) renderPaso2(cont);
+  else if (paso === 3) renderPaso3(cont);
+  else if (paso === 4) renderPaso4(cont);
+  else if (paso === 5) renderConfirmacion(cont);
+}
+
+// PASO 1 — Tipo de turno
+function renderPaso1(cont) {
+  cont.innerHTML = `
+    <div class="card">
+      <div class="card-titulo">¿Qué tipo de turno necesitás?</div>
+      <div class="card-sub">Seleccioná el tipo de atención que buscás</div>
+      <div class="tipo-grid">
+        ${TIPOS.map(t => `
+        <div class="tipo-card ${sel.tipo === t.val ? 'sel' : ''}" onclick="selTipo('${t.val}')">
+          <div class="tipo-icon">${t.icon}</div>
+          <div class="tipo-label">${t.label}</div>
+          <div class="tipo-desc">${t.desc}</div>
+        </div>`).join('')}
+      </div>
+      <div class="nav-btns">
+        <button class="btn btn-primary" onclick="irPaso(2)" ${!sel.tipo ? 'disabled' : ''}>Siguiente →</button>
+      </div>
+    </div>`;
+}
+
+function selTipo(tipo) { sel.tipo = tipo; renderPaso(); }
+
+// PASO 2 — Selección de taller
+async function renderPaso2(cont) {
+  cont.innerHTML = `<div class="card"><div class="card-titulo">Elegí un taller</div><div class="spinner-wrap"><div class="spinner"></div></div></div>`;
+  if (!talleres.length) {
+    try {
+      const { data } = await dbB2C.from('cat_recomendaciones_talleres')
+        .select('id,nombre,direccion,localidad,whatsapp')
+        .eq('activo', true)
+        .order('nombre');
+      talleres = data || [];
+    } catch { talleres = []; }
+  }
+  cont.innerHTML = `
+    <div class="card">
+      <div class="card-titulo">Elegí un taller</div>
+      <div class="card-sub">Talleres socios de Piezauto en tu zona</div>
+      ${talleres.length ? talleres.map(t => `
+      <div class="taller-item ${sel.taller_id === t.id ? 'sel' : ''}" onclick="selTaller('${t.id}','${esc(t.nombre)}')">
+        <div class="taller-icon">🔧</div>
+        <div>
+          <div class="taller-nombre">${esc(t.nombre)}</div>
+          <div class="taller-dir">${esc(t.direccion || '')}${t.localidad ? ', ' + esc(t.localidad) : ''}</div>
+        </div>
+        <input type="radio" class="taller-radio" name="taller" ${sel.taller_id === t.id ? 'checked' : ''}>
+      </div>`).join('') : '<div class="empty">No hay talleres disponibles.</div>'}
+      <div class="nav-btns">
+        <button class="btn btn-back" onclick="irPaso(1)">← Atrás</button>
+        <button class="btn btn-primary" onclick="irPaso(3)" ${!sel.taller_id ? 'disabled' : ''}>Siguiente →</button>
+      </div>
+    </div>`;
+}
+
+function selTaller(id, nombre) { sel.taller_id = id; sel.taller_nombre = nombre; renderPaso(); }
+
+// PASO 3 — Fecha y horario
+async function renderPaso3(cont) {
+  cont.innerHTML = `<div class="card"><div class="card-titulo">Elegí fecha y horario</div><div class="spinner-wrap"><div class="spinner"></div></div></div>`;
+
+  // Cargar disponibilidad, bloqueos y turnos ya ocupados del mes
+  await cargarDisponibMes();
+  renderPaso3UI(cont);
+}
+
+async function cargarDisponibMes() {
+  const y = mesSelec.getFullYear();
+  const m = mesSelec.getMonth();
+  const primer = new Date(y, m, 1).toISOString().split('T')[0];
+  const ultimo = new Date(y, m + 1, 0).toISOString().split('T')[0];
+  try {
+    const [{ data: disp }, { data: bloq }, { data: occ }] = await Promise.all([
+      dbB2C.from('cat_taller_disponibilidad').select('*').eq('taller_id', sel.taller_id).eq('tipo_turno', sel.tipo).eq('activo', true),
+      dbB2C.from('cat_taller_bloqueos').select('fecha,tipo_turno').eq('taller_id', sel.taller_id).gte('fecha', primer).lte('fecha', ultimo),
+      dbB2C.from('cat_turnos').select('fecha,hora_inicio').eq('taller_id', sel.taller_id).eq('tipo', sel.tipo).gte('fecha', primer).lte('fecha', ultimo).neq('estado', 'cancelado'),
+    ]);
+    disponib   = disp   || [];
+    bloqueos   = bloq   || [];
+    turnosOcup = occ    || [];
+  } catch { disponib = []; bloqueos = []; turnosOcup = []; }
+}
+
+function renderPaso3UI(cont) {
+  const y  = mesSelec.getFullYear();
+  const m  = mesSelec.getMonth();
+  const hoy = new Date().toISOString().split('T')[0];
+  const diasMes = new Date(y, m + 1, 0).getDate();
+  const primerDow = new Date(y, m, 1).getDay();
+
+  const bloqFechas = new Set(bloqueos.filter(b => !b.tipo_turno || b.tipo_turno === sel.tipo).map(b => b.fecha));
+  const dispDias   = new Set(disponib.map(d => d.dia_semana));
+
+  let calHTML = `<table class="cal-mini"><thead><tr>`;
+  ['Do','Lu','Ma','Mi','Ju','Vi','Sa'].forEach(d => calHTML += `<th>${d}</th>`);
+  calHTML += '</tr></thead><tbody><tr>';
+
+  for (let i = 0; i < primerDow; i++) calHTML += '<td></td>';
+  let col = primerDow;
+  for (let d = 1; d <= diasMes; d++) {
+    const fecha  = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dow    = new Date(fecha + 'T00:00:00').getDay();
+    const pasado = fecha < hoy;
+    const bloq   = bloqFechas.has(fecha);
+    const sinDisp = !dispDias.has(dow);
+    const esHoy  = fecha === hoy;
+    const esSel  = fecha === sel.fecha;
+
+    let cls = 'cal-mini-day';
+    if (pasado || sinDisp) cls += ' disabled';
+    else if (bloq) cls += ' bloqueado';
+    else if (esSel) cls += ' sel';
+    else if (esHoy) cls += ' hoy';
+
+    const onclick = (pasado || sinDisp || bloq) ? '' : `onclick="selFecha('${fecha}')"`;
+    calHTML += `<td><div class="${cls}" ${onclick}>${d}</div></td>`;
+    col++;
+    if (col % 7 === 0 && d < diasMes) calHTML += '</tr><tr>';
+  }
+  while (col % 7 !== 0) { calHTML += '<td></td>'; col++; }
+  calHTML += '</tr></tbody></table>';
+
+  const mesStr = mesSelec.toLocaleDateString('es-AR', { month:'long', year:'numeric' });
+
+  // Horarios del día seleccionado
+  let horariosHTML = '';
+  if (sel.fecha) {
+    const dowSel = new Date(sel.fecha + 'T00:00:00').getDay();
+    const cfg    = disponib.find(d => d.dia_semana === dowSel);
+    if (cfg) {
+      const slots   = generarSlots(cfg.hora_inicio, cfg.hora_fin, cfg.duracion_minutos || 60);
+      const ocupados = new Set(turnosOcup.filter(t => t.fecha === sel.fecha).map(t => t.hora_inicio?.slice(0,5)));
+      horariosHTML = `
+        <div style="margin-top:16px">
+          <div class="fl">Horarios disponibles para ${new Date(sel.fecha + 'T00:00:00').toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' })}</div>
+          <div class="horarios-grid">
+            ${slots.map(s => {
+              const occ = ocupados.has(s.inicio);
+              return `<div class="horario-btn ${occ ? 'ocupado' : sel.hora_inicio === s.inicio ? 'sel' : ''}" ${occ ? '' : `onclick="selHorario('${s.inicio}','${s.fin}')"`}>${s.inicio}</div>`;
+            }).join('')}
+          </div>
+        </div>`;
+    }
+  }
+
+  cont.innerHTML = `
+    <div class="card">
+      <div class="card-titulo">Elegí fecha y horario</div>
+      <div class="card-sub">${esc(sel.taller_nombre)}</div>
+      <div class="cal-mini-nav">
+        <button class="cal-mini-btn" onclick="navMesSol(-1)">‹</button>
+        <div class="cal-mini-titulo">${mesStr}</div>
+        <button class="cal-mini-btn" onclick="navMesSol(1)">›</button>
+      </div>
+      <div class="cal-wrap">${calHTML}</div>
+      ${horariosHTML}
+      <div class="nav-btns">
+        <button class="btn btn-back" onclick="irPaso(2)">← Atrás</button>
+        <button class="btn btn-primary" onclick="irPaso(4)" ${!sel.fecha || !sel.hora_inicio ? 'disabled' : ''}>Siguiente →</button>
+      </div>
+    </div>`;
+}
+
+function selFecha(fecha) { sel.fecha = fecha; sel.hora_inicio = null; sel.hora_fin = null; renderPaso3UI(document.getElementById('contenido')); }
+function selHorario(ini, fin) { sel.hora_inicio = ini; sel.hora_fin = fin; renderPaso3UI(document.getElementById('contenido')); }
+
+async function navMesSol(dir) {
+  mesSelec.setMonth(mesSelec.getMonth() + dir);
+  sel.fecha = null; sel.hora_inicio = null; sel.hora_fin = null;
+  await cargarDisponibMes();
+  renderPaso3UI(document.getElementById('contenido'));
+}
+
+function generarSlots(desde, hasta, durMin) {
+  const slots = [];
+  let [h, min] = desde.split(':').map(Number);
+  const [hf, mf] = hasta.split(':').map(Number);
+  while (h * 60 + min + durMin <= hf * 60 + mf) {
+    const ini = `${String(h).padStart(2,'0')}:${String(min).padStart(2,'0')}`;
+    min += durMin; if (min >= 60) { h += Math.floor(min/60); min = min%60; }
+    const fin = `${String(h).padStart(2,'0')}:${String(min).padStart(2,'0')}`;
+    slots.push({ inicio: ini, fin });
+  }
+  return slots;
+}
+
+// PASO 4 — Datos del cliente y vehículo
+function renderPaso4(cont) {
+  cont.innerHTML = `
+    <div class="card">
+      <div class="card-titulo">Tus datos</div>
+      <div class="card-sub">Completá la información para confirmar el turno</div>
+
+      <div class="fr2">
+        <div class="fg">
+          <label class="fl">Nombre <span class="req">*</span></label>
+          <input class="fi" id="f-nombre" type="text" placeholder="Juan García" value="${esc(sel.nombre)}">
+        </div>
+        <div class="fg">
+          <label class="fl">Teléfono <span class="req">*</span></label>
+          <input class="fi" id="f-telefono" type="tel" placeholder="11 5555-1234" value="${esc(sel.telefono)}">
+        </div>
+      </div>
+
+      <div style="font-size:11px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.04em;margin:16px 0 10px">Vehículo</div>
+      <div class="fr2">
+        <div class="fg">
+          <label class="fl">Marca</label>
+          <input class="fi" id="f-marca" type="text" placeholder="Peugeot" value="${esc(sel.veh_marca)}">
+        </div>
+        <div class="fg">
+          <label class="fl">Modelo</label>
+          <input class="fi" id="f-modelo" type="text" placeholder="208" value="${esc(sel.veh_modelo)}">
+        </div>
+      </div>
+      <div class="fr2">
+        <div class="fg">
+          <label class="fl">Año</label>
+          <input class="fi" id="f-anio" type="number" placeholder="2019" value="${esc(sel.veh_anio)}">
+        </div>
+        <div class="fg">
+          <label class="fl">Dominio</label>
+          <input class="fi" id="f-dominio" type="text" placeholder="ABC 123" value="${esc(sel.veh_dominio)}" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+        </div>
+      </div>
+
+      <div class="fg">
+        <label class="fl">Descripción / Motivo <span class="req">*</span></label>
+        <textarea class="fta" id="f-motivo" placeholder="Describí brevemente qué necesitás o qué le pasa al vehículo…">${esc(sel.motivo)}</textarea>
+      </div>
+      <div class="fg">
+        <label class="fl">Notas adicionales</label>
+        <input class="fi" id="f-notas" type="text" placeholder="Horarios preferidos, acceso especial, etc." value="${esc(sel.notas)}">
+      </div>
+
+      <div class="nav-btns">
+        <button class="btn btn-back" onclick="irPaso(3)">← Atrás</button>
+        <button class="btn btn-primary" onclick="confirmarTurno()">Confirmar turno</button>
+      </div>
+    </div>`;
+}
+
+// PASO 5 — Confirmación
+function renderConfirmacion(cont) {
+  cont.innerHTML = `
+    <div class="card">
+      <div class="confirmacion">
+        <div class="conf-icon">✅</div>
+        <div class="conf-titulo">¡Turno solicitado!</div>
+        <div class="conf-sub">Tu solicitud fue enviada al taller. Te van a confirmar por WhatsApp o email en las próximas horas.</div>
+        <div class="conf-num" id="confNum">—</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <a href="/operaciones.html" class="btn btn-primary" style="text-decoration:none;text-align:center;display:block">Ver mis turnos</a>
+          <a href="/" class="btn btn-back" style="text-decoration:none;text-align:center;display:block">Volver al inicio</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ─── SUBMIT ───────────────────────────────────────────────────────────────────
+async function confirmarTurno() {
+  sel.nombre     = document.getElementById('f-nombre').value.trim();
+  sel.telefono   = document.getElementById('f-telefono').value.trim();
+  sel.veh_marca  = document.getElementById('f-marca').value.trim();
+  sel.veh_modelo = document.getElementById('f-modelo').value.trim();
+  sel.veh_anio   = document.getElementById('f-anio').value;
+  sel.veh_dominio= document.getElementById('f-dominio').value.trim();
+  sel.motivo     = document.getElementById('f-motivo').value.trim();
+  sel.notas      = document.getElementById('f-notas').value.trim();
+
+  if (!sel.nombre)   { document.getElementById('f-nombre').classList.add('error'); showToast('El nombre es obligatorio','error'); return; }
+  if (!sel.telefono) { document.getElementById('f-telefono').classList.add('error'); showToast('El teléfono es obligatorio','error'); return; }
+  if (!sel.motivo)   { document.getElementById('f-motivo').classList.add('error'); showToast('Describí el motivo del turno','error'); return; }
+
+  const payload = {
+    taller_id:       sel.taller_id,
+    cliente_id:      sel.cliente_id || null,
+    tipo:            sel.tipo,
+    estado:          'pendiente',
+    fecha:           sel.fecha,
+    hora_inicio:     sel.hora_inicio + ':00',
+    hora_fin:        sel.hora_fin   + ':00',
+    nombre_cliente:  sel.nombre,
+    telefono_cliente:sel.telefono,
+    vehiculo_marca:  sel.veh_marca  || null,
+    vehiculo_modelo: sel.veh_modelo || null,
+    vehiculo_anio:   sel.veh_anio   ? parseInt(sel.veh_anio) : null,
+    vehiculo_dominio:sel.veh_dominio|| null,
+    motivo:          sel.motivo,
+    notas_cliente:   sel.notas      || null,
+  };
+
+  try {
+    const { data, error } = await dbB2C.from('cat_turnos').insert(payload).select().single();
+    if (error) throw error;
+    // Notificar al taller
+    await dbB2C.from('cat_notificaciones_talleres').insert({
+      taller_id: sel.taller_id,
+      turno_id:  data.id,
+      tipo: 'nueva_operacion',
+      mensaje: `Nuevo turno solicitado: ${sel.nombre} — ${sel.tipo.replace(/_/g,' ')} — ${sel.fecha} ${sel.hora_inicio}`,
+    }).catch(() => {});
+    paso = 5;
+    renderPaso();
+    document.getElementById('confNum').textContent = data.id.slice(0,8).toUpperCase();
+  } catch (e) { showToast('Error: ' + e.message, 'error'); }
+}
+
+// ─── NAV ─────────────────────────────────────────────────────────────────────
+async function irPaso(n) {
+  paso = n;
+  const cont = document.getElementById('contenido');
+  actualizarStepper();
+  if (n === 1) renderPaso1(cont);
+  else if (n === 2) await renderPaso2(cont);
+  else if (n === 3) await renderPaso3(cont);
+  else if (n === 4) renderPaso4(cont);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function actualizarStepper() {
+  [1,2,3,4].forEach(i => {
+    const numEl = document.getElementById(`sn${i}`);
+    const lblEl = document.getElementById(`sl${i}`);
+    if (!numEl) return;
+    if (i < paso) { numEl.className = 'step-num hecho'; if (lblEl) lblEl.className = 'step-label hecho'; }
+    else if (i === paso) { numEl.className = 'step-num activo'; if (lblEl) lblEl.className = 'step-label activo'; }
+    else { numEl.className = 'step-num'; if (lblEl) lblEl.className = 'step-label'; }
+  });
+}
+
+// ─── UTILS ────────────────────────────────────────────────────────────────────
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+let toastTimer;
+function showToast(msg, type='ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show' + (type==='error'?' error':'');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
+}
+</script>
+</body>
+</html>
