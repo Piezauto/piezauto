@@ -170,8 +170,14 @@ let califVal = 0;
 
   const params  = new URLSearchParams(window.location.search);
   const turnoId = params.get('id');
-  if (!turnoId) { render404(); return; }
+  const tipoParam = params.get('tipo');
 
+  if (tipoParam === 'ingreso_directo') {
+    renderIngresoDirecto(auth.meta.taller_id);
+    return;
+  }
+
+  if (!turnoId) { render404(); return; }
   await cargarTurno(turnoId);
 })();
 
@@ -417,6 +423,173 @@ function showToast(msg, type='ok') {
   const t = document.getElementById('toast');
   t.textContent = msg; t.className = 'toast show' + (type==='error'?' error':'');
   clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INGRESO DIRECTO — sin turno previo
+// ═══════════════════════════════════════════════════════════════
+const SB_ANON_TD = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xeG93b3RkZWlibGxraXRraWplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxMzgxNDYsImV4cCI6MjA5MTcxNDE0Nn0.V_Pr0elBurAK7OPKFL3OoZwBmb-bI-Mcz8N1U8yblG8';
+
+function renderIngresoDirecto(tid) {
+  document.getElementById('mainWrap').innerHTML = `
+    <div class="page-back" onclick="history.back()">← Volver</div>
+    <div class="turno-card">
+      <div class="turno-card-header">
+        <div>
+          <div class="turno-tipo">🚗 Ingreso directo de auto</div>
+          <div class="turno-fecha">Sin turno previo · ${new Date().toLocaleDateString('es-AR', {weekday:'long',day:'numeric',month:'long'})}</div>
+        </div>
+      </div>
+      <div style="padding:16px 20px">
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+          <div>
+            <label style="font-size:11px;font-weight:700;color:#aaa;display:block;margin-bottom:4px">Nombre del cliente</label>
+            <input class="notas-input" type="text" id="id-nombre" placeholder="Juan García" style="min-height:unset;padding:9px 12px">
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:#aaa;display:block;margin-bottom:4px">Teléfono</label>
+            <input class="notas-input" type="tel" id="id-tel" placeholder="11 5555-1234" style="min-height:unset;padding:9px 12px">
+          </div>
+        </div>
+
+        <div style="margin-bottom:12px">
+          <label style="font-size:11px;font-weight:700;color:#aaa;display:block;margin-bottom:4px">Buscar cliente registrado</label>
+          <input class="notas-input" type="text" id="id-buscar" placeholder="Buscá por nombre o teléfono…" style="min-height:unset;padding:9px 12px" oninput="buscarClienteIngreso()">
+          <div id="id-resultados" style="background:#fff;border:1px solid #e0e0e0;border-top:none;border-radius:0 0 8px 8px;max-height:140px;overflow-y:auto;display:none"></div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px">
+          <div>
+            <label style="font-size:11px;font-weight:700;color:#aaa;display:block;margin-bottom:4px">Marca</label>
+            <input class="notas-input" type="text" id="id-marca" placeholder="Peugeot" style="min-height:unset;padding:9px 12px">
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:#aaa;display:block;margin-bottom:4px">Modelo</label>
+            <input class="notas-input" type="text" id="id-modelo" placeholder="208" style="min-height:unset;padding:9px 12px">
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:#aaa;display:block;margin-bottom:4px">Dominio</label>
+            <input class="notas-input" type="text" id="id-dominio" placeholder="ABC123" style="min-height:unset;padding:9px 12px;text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+          </div>
+        </div>
+
+        <div style="margin-bottom:16px">
+          <label style="font-size:11px;font-weight:700;color:#aaa;display:block;margin-bottom:4px">Tipo de trabajo</label>
+          <select id="id-tipo" style="width:100%;border:1.5px solid #e8e8e8;border-radius:8px;padding:9px 12px;font-size:14px;font-family:inherit;outline:none">
+            <option value="inspeccion_presupuesto">Inspección / Presupuesto</option>
+            <option value="inicio_trabajo">Inicio de trabajo</option>
+            <option value="consulta">Consulta</option>
+            <option value="reclamo">Reclamo</option>
+          </select>
+        </div>
+
+        <div style="margin-bottom:16px">
+          <label style="font-size:11px;font-weight:700;color:#aaa;display:block;margin-bottom:4px">Motivo / Descripción</label>
+          <textarea class="notas-input" id="id-motivo" rows="2" placeholder="Descripción del trabajo o consulta…" style="padding:9px 12px"></textarea>
+        </div>
+
+        <button onclick="confirmarIngresoDirecto('${tid}')"
+          style="width:100%;padding:13px;background:#1A1A2E;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .15s"
+          onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">
+          🚗 Registrar ingreso y abrir turno
+        </button>
+      </div>
+    </div>`;
+}
+
+let idClienteId = null;
+let idBuscarTimer;
+function buscarClienteIngreso() {
+  const q = document.getElementById('id-buscar').value.trim();
+  const res = document.getElementById('id-resultados');
+  clearTimeout(idBuscarTimer);
+  if (q.length < 2) { res.style.display = 'none'; return; }
+  idBuscarTimer = setTimeout(async () => {
+    const meta = getTallerMeta();
+    if (!meta?.taller_id) return;
+    try {
+      const r = await fetch(
+        `${SUPABASE_URL}/rest/v1/cat_taller_clientes?taller_id=eq.${meta.taller_id}&or=(nombre.ilike.*${encodeURIComponent(q)}*,telefono.ilike.*${encodeURIComponent(q)}*)&select=id,nombre,apellido,telefono,marca_vehiculo,modelo_vehiculo,dominio_vehiculo&limit=6`,
+        { headers: { 'apikey': SB_ANON_TD, 'Authorization': `Bearer ${_tallerSession?.access_token || ''}` } }
+      );
+      const clientes = r.ok ? await r.json() : [];
+      if (!clientes.length) { res.style.display = 'none'; return; }
+      res.innerHTML = clientes.map(c => `
+        <div onclick="selClienteIngreso(${JSON.stringify(c).replace(/"/g,'&quot;')})"
+          style="padding:9px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid #f0f0f0;transition:background .12s"
+          onmouseover="this.style.background='#fff9f9'" onmouseout="this.style.background='#fff'">
+          <strong>${c.nombre||''} ${c.apellido||''}</strong> ${c.telefono ? '· ' + c.telefono : ''}
+          ${c.marca_vehiculo ? '<br><span style="font-size:11px;color:#888">' + c.marca_vehiculo + ' ' + (c.modelo_vehiculo||'') + ' · ' + (c.dominio_vehiculo||'') + '</span>' : ''}
+        </div>`).join('');
+      res.style.display = 'block';
+    } catch {}
+  }, 250);
+}
+
+function selClienteIngreso(c) {
+  idClienteId = c.id;
+  document.getElementById('id-buscar').value  = `${c.nombre||''} ${c.apellido||''}`.trim();
+  document.getElementById('id-nombre').value  = `${c.nombre||''} ${c.apellido||''}`.trim();
+  document.getElementById('id-tel').value     = c.telefono || '';
+  document.getElementById('id-marca').value   = c.marca_vehiculo  || '';
+  document.getElementById('id-modelo').value  = c.modelo_vehiculo || '';
+  document.getElementById('id-dominio').value = c.dominio_vehiculo|| '';
+  document.getElementById('id-resultados').style.display = 'none';
+}
+
+async function confirmarIngresoDirecto(tallerId) {
+  const nombre = document.getElementById('id-nombre').value.trim();
+  if (!nombre) { showToast('El nombre del cliente es obligatorio', 'error'); return; }
+
+  const ahora = new Date();
+  const fecha = ahora.toISOString().split('T')[0];
+  const hh    = String(ahora.getHours()).padStart(2,'0');
+  const mm    = String(ahora.getMinutes()).padStart(2,'0');
+  const horaIni = `${hh}:${mm}:00`;
+  const horaFin = `${hh}:${String(ahora.getMinutes()+60).padStart(2,'0') || '00'}:00`;
+
+  const payload = {
+    taller_id:       tallerId,
+    cliente_id:      idClienteId || null,
+    tipo:            document.getElementById('id-tipo').value,
+    estado:          'en_proceso',
+    fecha,
+    hora_inicio:     horaIni,
+    hora_fin:        `${String(ahora.getHours()+1).padStart(2,'0')}:${mm}:00`,
+    nombre_cliente:  nombre,
+    telefono_cliente:document.getElementById('id-tel').value.trim() || null,
+    vehiculo_marca:  document.getElementById('id-marca').value.trim() || null,
+    vehiculo_modelo: document.getElementById('id-modelo').value.trim() || null,
+    vehiculo_dominio:document.getElementById('id-dominio').value.trim() || null,
+    motivo:          document.getElementById('id-motivo').value.trim() || null,
+  };
+
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/cat_turnos`, {
+      method: 'POST',
+      headers: {
+        'apikey': SB_ANON_TD, 'Authorization': `Bearer ${_tallerSession?.access_token || ''}`,
+        'Content-Type': 'application/json', 'Prefer': 'return=representation',
+      },
+      body: JSON.stringify(payload),
+    });
+    if (!r.ok) throw new Error((await r.json()).message || r.status);
+    const [turnoCreado] = await r.json();
+
+    // Registrar primer progreso automático: recepcionado
+    await fetch(`${SUPABASE_URL}/rest/v1/cat_turno_progreso`, {
+      method: 'POST',
+      headers: {
+        'apikey': SB_ANON_TD, 'Authorization': `Bearer ${_tallerSession?.access_token || ''}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ turno_id: turnoCreado.id, estado: 'recepcionado', descripcion: 'Ingreso directo registrado' }),
+    }).catch(() => {});
+
+    showToast('✅ Ingreso registrado');
+    setTimeout(() => window.location.href = `/taller/turno-detalle.html?id=${turnoCreado.id}`, 800);
+  } catch (e) { showToast('Error: ' + e.message, 'error'); }
 }
 </script>
 </body>

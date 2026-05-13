@@ -167,7 +167,26 @@
     .ops-empty { padding: 24px; text-align: center; color: #bbb; font-size: 13px; }
     .ops-loading { padding: 24px; display: flex; justify-content: center; }
     .spinner { width: 28px; height: 28px; border: 3px solid #eee; border-top-color: var(--rojo); border-radius: 50%; animation: spin .8s linear infinite; }
-  </style>
+  
+    /* ── Acciones rápidas ── */
+    .acciones-rapidas { display:flex; gap:10px; margin-bottom:20px; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; padding-bottom:2px; }
+    .acciones-rapidas::-webkit-scrollbar { display:none; }
+    .accion-btn {
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      gap:6px; padding:14px 12px; min-width:90px; border-radius:12px; border:none;
+      cursor:pointer; text-decoration:none; transition:transform .15s, box-shadow .15s;
+      flex-shrink:0; box-shadow:var(--sombra);
+    }
+    .accion-btn:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(0,0,0,.12); }
+    .accion-btn:active { transform:scale(.97); }
+    .accion-icon  { font-size:22px; line-height:1; }
+    .accion-label { font-size:11px; font-weight:700; line-height:1.2; text-align:center; }
+    .accion-turno  { background:#1A1A2E; color:#fff; }
+    .accion-ingreso { background:#7c3aed; color:#fff; }
+    .accion-presup { background:#2563eb; color:#fff; }
+    .accion-pedido { background:#059669; color:#fff; }
+    .accion-cliente{ background:#d97706; color:#fff; }
+</style>
 </head>
 <body>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -183,6 +202,24 @@
     <div class="saludo-hora" id="saludoHora">Buen día</div>
     <div class="saludo-nombre" id="saludoNombre">Cargando…</div>
     <div class="saludo-sub" id="saludoFecha"></div>
+  </div>
+
+  <div class="acciones-rapidas">
+    <a class="accion-btn accion-turno"   href="/taller/agenda.html?nuevo=1">
+      <div class="accion-icon">➕</div><div class="accion-label">Nuevo turno</div>
+    </a>
+    <a class="accion-btn accion-ingreso" href="/taller/turno-detalle.html?tipo=ingreso_directo">
+      <div class="accion-icon">🚗</div><div class="accion-label">Ingreso de auto</div>
+    </a>
+    <a class="accion-btn accion-presup"  href="/taller/presupuestos.html?nuevo=1">
+      <div class="accion-icon">📄</div><div class="accion-label">Nuevo presupuesto</div>
+    </a>
+    <a class="accion-btn accion-pedido"  href="/taller/pedidos.html?nuevo=1">
+      <div class="accion-icon">📦</div><div class="accion-label">Nuevo pedido</div>
+    </a>
+    <a class="accion-btn accion-cliente" href="/taller/clientes.html?nuevo=1">
+      <div class="accion-icon">👤</div><div class="accion-label">Nuevo cliente</div>
+    </a>
   </div>
 
   <div class="section-sep">Módulos</div>

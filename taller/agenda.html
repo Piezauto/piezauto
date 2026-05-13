@@ -303,6 +303,69 @@
   </div>
 </div>
 
+<!-- Modal nuevo turno -->
+<div class="modal-overlay" id="modalNuevoTurno" onclick="cerrarModalSiClick(event,'modalNuevoTurno')">
+  <div class="modal-box" style="max-width:460px">
+    <div class="modal-titulo">➕ Nuevo turno</div>
+    <div class="fg">
+      <label class="fl">Tipo de turno</label>
+      <select class="fs" id="nt-tipo" onchange="actualizarHorariosNT()">
+        <option value="inspeccion_presupuesto">🔍 Inspección / Presupuesto</option>
+        <option value="inicio_trabajo">🔧 Inicio de trabajo</option>
+        <option value="consulta">💬 Consulta</option>
+        <option value="reclamo">📢 Reclamo</option>
+      </select>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="fg">
+        <label class="fl">Fecha</label>
+        <input class="fi" type="date" id="nt-fecha" onchange="actualizarHorariosNT()">
+      </div>
+      <div class="fg">
+        <label class="fl">Hora</label>
+        <select class="fs" id="nt-hora"><option value="">— Elegí fecha —</option></select>
+      </div>
+    </div>
+    <div class="fg">
+      <label class="fl">Cliente</label>
+      <input class="fi" type="text" id="nt-cliente-buscar" placeholder="Buscar por nombre o teléfono…" oninput="buscarClienteNT()">
+      <div id="nt-cliente-resultados" style="background:#fff;border:1px solid #e0e0e0;border-top:none;border-radius:0 0 8px 8px;max-height:140px;overflow-y:auto;display:none"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="fg">
+        <label class="fl">Nombre del cliente</label>
+        <input class="fi" type="text" id="nt-nombre" placeholder="Juan García">
+      </div>
+      <div class="fg">
+        <label class="fl">Teléfono</label>
+        <input class="fi" type="tel" id="nt-tel" placeholder="11 5555-1234">
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+      <div class="fg">
+        <label class="fl">Marca</label>
+        <input class="fi" type="text" id="nt-marca" placeholder="Peugeot">
+      </div>
+      <div class="fg">
+        <label class="fl">Modelo</label>
+        <input class="fi" type="text" id="nt-modelo" placeholder="208">
+      </div>
+      <div class="fg">
+        <label class="fl">Dominio</label>
+        <input class="fi" type="text" id="nt-dominio" placeholder="ABC123" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+      </div>
+    </div>
+    <div class="fg">
+      <label class="fl">Motivo</label>
+      <input class="fi" type="text" id="nt-motivo" placeholder="Descripción breve del trabajo o consulta">
+    </div>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" style="flex:1" onclick="cerrarModal('modalNuevoTurno')">Cancelar</button>
+      <button class="btn btn-rojo" style="flex:1" onclick="confirmarNuevoTurno()">Confirmar turno</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -333,6 +396,11 @@ let bloqueos  = []; // bloqueos del mes
 
   await Promise.all([cargarMes(), cargarStats()]);
   cargarDisponibilidad();
+  // Abrir modal si ?nuevo=1
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('nuevo') === '1') {
+    setTimeout(() => abrirModalNuevoTurno(), 400);
+  }
 })();
 
 // ─── CALENDARIO ───────────────────────────────────────────────────────────────
@@ -559,6 +627,160 @@ function showToast(msg, type='ok') {
   t.textContent = msg; t.className = 'toast show' + (type==='error'?' error':'');
   clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
 }
+
+// ═══════════════════════════════════════════════════════════════
+// NUEVO TURNO — Modal desde ?nuevo=1
+// ═══════════════════════════════════════════════════════════════
+let ntDispConfig = [];  // filas cat_taller_disponibilidad del tipo seleccionado
+let ntClienteId  = null;
+
+async function abrirModalNuevoTurno() {
+  // Fecha por defecto: hoy si tiene disponibilidad, si no primer día disponible
+  const hoy = new Date().toISOString().split('T')[0];
+  document.getElementById('nt-fecha').value = hoy;
+  document.getElementById('nt-cliente-buscar').value = '';
+  document.getElementById('nt-nombre').value = '';
+  document.getElementById('nt-tel').value = '';
+  document.getElementById('nt-marca').value = '';
+  document.getElementById('nt-modelo').value = '';
+  document.getElementById('nt-dominio').value = '';
+  document.getElementById('nt-motivo').value = '';
+  document.getElementById('nt-cliente-resultados').style.display = 'none';
+  ntClienteId = null;
+  await actualizarHorariosNT();
+  document.getElementById('modalNuevoTurno').classList.add('open');
+}
+
+async function actualizarHorariosNT() {
+  const tipo  = document.getElementById('nt-tipo').value;
+  const fecha = document.getElementById('nt-fecha').value;
+  const sel   = document.getElementById('nt-hora');
+  sel.innerHTML = '<option value="">Cargando…</option>';
+  if (!fecha || !tallerId) return;
+
+  try {
+    // Cargar disponibilidad del tipo
+    const dow = new Date(fecha + 'T00:00:00').getDay();
+    const r = await fetch(
+      `${SUPABASE_URL}/rest/v1/cat_taller_disponibilidad?taller_id=eq.${tallerId}&tipo_turno=eq.${tipo}&dia_semana=eq.${dow}&activo=eq.true`,
+      { headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${dbB2C._authSession || ''}` } }
+    );
+    const disp = r.ok ? await r.json() : [];
+    if (!disp.length) { sel.innerHTML = '<option value="">Sin disponibilidad este día</option>'; return; }
+
+    const cfg = disp[0];
+    const slots = generarSlotsAgenda(cfg.hora_inicio, cfg.hora_fin, cfg.duracion_minutos || 60);
+
+    // Turnos ya ocupados ese día
+    const r2 = await fetch(
+      `${SUPABASE_URL}/rest/v1/cat_turnos?taller_id=eq.${tallerId}&tipo=eq.${tipo}&fecha=eq.${fecha}&estado=neq.cancelado&select=hora_inicio`,
+      { headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${dbB2C._authSession || ''}` } }
+    );
+    const ocup = r2.ok ? (await r2.json()).map(t => t.hora_inicio?.slice(0,5)) : [];
+
+    sel.innerHTML = slots
+      .filter(s => !ocup.includes(s.inicio))
+      .map(s => `<option value="${s.inicio}|${s.fin}">${s.inicio}</option>`)
+      .join('') || '<option value="">Sin horarios disponibles</option>';
+  } catch { sel.innerHTML = '<option value="">Error al cargar horarios</option>'; }
+}
+
+function generarSlotsAgenda(desde, hasta, durMin) {
+  const slots = [];
+  let [h2, min] = desde.split(':').map(Number);
+  const [hf, mf] = hasta.split(':').map(Number);
+  while (h2 * 60 + min + durMin <= hf * 60 + mf) {
+    const ini = `${String(h2).padStart(2,'0')}:${String(min).padStart(2,'0')}`;
+    min += durMin; if (min >= 60) { h2 += Math.floor(min/60); min = min%60; }
+    const fin = `${String(h2).padStart(2,'0')}:${String(min).padStart(2,'0')}`;
+    slots.push({ inicio: ini, fin });
+  }
+  return slots;
+}
+
+let ntBuscarTimer;
+async function buscarClienteNT() {
+  const q = document.getElementById('nt-cliente-buscar').value.trim();
+  const res = document.getElementById('nt-cliente-resultados');
+  clearTimeout(ntBuscarTimer);
+  if (q.length < 2) { res.style.display = 'none'; return; }
+  ntBuscarTimer = setTimeout(async () => {
+    try {
+      const r = await fetch(
+        `${SUPABASE_URL}/rest/v1/cat_taller_clientes?taller_id=eq.${tallerId}&or=(nombre.ilike.*${encodeURIComponent(q)}*,telefono.ilike.*${encodeURIComponent(q)}*)&select=id,nombre,apellido,telefono,marca_vehiculo,modelo_vehiculo,dominio_vehiculo&limit=6`,
+        { headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${dbB2C._authSession || ''}` } }
+      );
+      const clientes = r.ok ? await r.json() : [];
+      if (!clientes.length) { res.style.display = 'none'; return; }
+      res.innerHTML = clientes.map(c => `
+        <div onclick="selClienteNT(${JSON.stringify(c).replace(/"/g,'&quot;')})"
+          style="padding:9px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid #f0f0f0;transition:background .12s"
+          onmouseover="this.style.background='#fff9f9'" onmouseout="this.style.background='#fff'">
+          <strong>${c.nombre||''} ${c.apellido||''}</strong> ${c.telefono ? '· ' + c.telefono : ''}
+          ${c.marca_vehiculo ? '<br><span style="font-size:11px;color:#888">' + c.marca_vehiculo + ' ' + (c.modelo_vehiculo||'') + ' · ' + (c.dominio_vehiculo||'') + '</span>' : ''}
+        </div>`).join('');
+      res.style.display = 'block';
+    } catch { res.style.display = 'none'; }
+  }, 250);
+}
+
+function selClienteNT(c) {
+  ntClienteId = c.id;
+  document.getElementById('nt-cliente-buscar').value = `${c.nombre||''} ${c.apellido||''}`.trim();
+  document.getElementById('nt-nombre').value = `${c.nombre||''} ${c.apellido||''}`.trim();
+  document.getElementById('nt-tel').value    = c.telefono || '';
+  document.getElementById('nt-marca').value  = c.marca_vehiculo  || '';
+  document.getElementById('nt-modelo').value = c.modelo_vehiculo || '';
+  document.getElementById('nt-dominio').value= c.dominio_vehiculo|| '';
+  document.getElementById('nt-cliente-resultados').style.display = 'none';
+}
+
+async function confirmarNuevoTurno() {
+  const tipo   = document.getElementById('nt-tipo').value;
+  const fecha  = document.getElementById('nt-fecha').value;
+  const horaVal= document.getElementById('nt-hora').value;
+  const nombre = document.getElementById('nt-nombre').value.trim();
+  const motivo = document.getElementById('nt-motivo').value.trim();
+
+  if (!fecha)   { showToast('Elegí una fecha','error'); return; }
+  if (!horaVal) { showToast('Elegí un horario','error'); return; }
+  if (!nombre)  { showToast('El nombre es obligatorio','error'); return; }
+
+  const [horaIni, horaFin] = horaVal.split('|');
+  const payload = {
+    taller_id:       tallerId,
+    cliente_id:      ntClienteId || null,
+    tipo,
+    estado:          'confirmado',
+    fecha,
+    hora_inicio:     horaIni + ':00',
+    hora_fin:        (horaFin || horaIni) + ':00',
+    nombre_cliente:  nombre,
+    telefono_cliente:document.getElementById('nt-tel').value.trim() || null,
+    vehiculo_marca:  document.getElementById('nt-marca').value.trim() || null,
+    vehiculo_modelo: document.getElementById('nt-modelo').value.trim() || null,
+    vehiculo_dominio:document.getElementById('nt-dominio').value.trim() || null,
+    motivo:          motivo || null,
+  };
+
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/cat_turnos`, {
+      method: 'POST',
+      headers: {
+        'apikey': SB_ANON, 'Authorization': `Bearer ${dbB2C._authSession || ''}`,
+        'Content-Type': 'application/json', 'Prefer': 'return=representation',
+      },
+      body: JSON.stringify(payload),
+    });
+    if (!r.ok) throw new Error((await r.json()).message || r.status);
+    cerrarModal('modalNuevoTurno');
+    showToast('✅ Turno confirmado');
+    await cargarMes();
+  } catch (e) { showToast('Error: ' + e.message, 'error'); }
+}
+
+// Variable para usar en fetch sin el cliente de supabase-js
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xeG93b3RkZWlibGxraXRraWplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxMzgxNDYsImV4cCI6MjA5MTcxNDE0Nn0.V_Pr0elBurAK7OPKFL3OoZwBmb-bI-Mcz8N1U8yblG8';
 </script>
 </body>
 </html>

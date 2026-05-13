@@ -532,6 +532,28 @@
 
   .preview-info { font-size: 12px; color: var(--ink-3); text-align: center; padding: 0 16px 16px; line-height: 1.5; }
 
+  /* ── TIPO TURNO SELECTOR ────────────────────────────────────────── */
+  .tipo-turno-sel-btn {
+    padding: 10px 8px; border-radius: var(--radius-lg); border: 1.5px solid var(--line-strong);
+    background: var(--surface); font-size: 12px; font-weight: 600; color: var(--ink-2);
+    cursor: pointer; font-family: inherit; transition: all .15s; text-align: center;
+  }
+  .tipo-turno-sel-btn:hover { border-color: var(--brand); color: var(--brand); }
+  .tipo-turno-sel-btn.active { background: var(--brand); border-color: var(--brand); color: #fff; }
+  .disp-row-perfil { display:grid; grid-template-columns:36px 1fr 34px; align-items:center; gap:10px; padding:11px 14px; border-bottom:1px solid var(--line); }
+  .disp-row-perfil:last-child { border-bottom:none; }
+  .disp-day-label { font-size:12px; font-weight:700; color:var(--ink-3); }
+  .disp-inputs { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .disp-time-input { border:1.5px solid var(--line-strong); border-radius:6px; padding:5px 8px; font-size:12px; font-family:inherit; outline:none; width:68px; }
+  .disp-time-input:focus { border-color:var(--brand); }
+  .disp-num-input { border:1.5px solid var(--line-strong); border-radius:6px; padding:5px 6px; font-size:12px; font-family:inherit; outline:none; width:52px; text-align:center; }
+  .disp-hint { font-size:10px; color:var(--ink-4); }
+  .bloqueo-item { display:flex; align-items:center; gap:10px; padding:11px 14px; border-bottom:1px solid var(--line); }
+  .bloqueo-item:last-child { border-bottom:none; }
+  .bloqueo-fecha { font-size:13px; font-weight:700; color:var(--ink-1); min-width:80px; }
+  .bloqueo-meta  { flex:1; font-size:12px; color:var(--ink-3); }
+  .bloqueo-del   { width:28px; height:28px; border-radius:50%; border:none; background:#FEF2F2; color:#DC2626; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+
   /* ── BOTTOM SPACER ───────────────────────────────────────────── */
   .bottom-spacer { height: 32px; }
 </style>
@@ -575,6 +597,7 @@
     <button class="tab-btn" data-tab="tab-config" onclick="switchTab(this)">Configuración</button>
     <button class="tab-btn" data-tab="tab-horarios" onclick="switchTab(this)">Horarios</button>
     <button class="tab-btn" data-tab="tab-publico" onclick="switchTab(this)">Vista pública</button>
+    <button class="tab-btn" data-tab="tab-turnos" onclick="switchTab(this)">📅 Turnos</button>
   </nav>
 
   <!-- ═══════════════════════════════ TAB: DATOS ══════════════════ -->
@@ -756,9 +779,53 @@
       <div class="preview-horario" id="prevHorario">—</div>
     </div>
 
-    <p class="preview-info">
-      Esta tarjeta aparece cuando un cliente de Piezauto Tienda quiere que lo atiendan en un taller socio. Solo se muestra si tu perfil está completo.
+    <div id="prevCalif" style="margin-top:10px;font-size:12px;color:rgba(255,255,255,.7)"></div>
+    <div id="prevTiposTurno" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:5px"></div>
+    <a id="prevBtnTurno" href="#" onclick="return false" style="display:inline-flex;align-items:center;gap:6px;margin-top:14px;background:#E94560;color:#fff;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:700;text-decoration:none">📅 Solicitar turno</a>
+
+    <p class="preview-info" style="margin-top:14px">
+      Esta tarjeta aparece cuando un cliente de Piezauto Tienda quiere que lo atiendan en un taller socio. El botón "Solicitar turno" lleva a <strong>/solicitar-turno?taller_id=TU_ID</strong>.
     </p>
+
+    <div class="bottom-spacer"></div>
+  </div>
+
+  <!-- ═══════════════════════════════ TAB: TURNOS ═══════════════════ -->
+  <div class="panel" id="tab-turnos">
+
+    <p class="section-label">Tipo de turno</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 16px 8px">
+      <button class="tipo-turno-sel-btn active" data-tipo="inspeccion_presupuesto" onclick="selTipoTurnoConfig(this)">🔍 Inspección / Presup.</button>
+      <button class="tipo-turno-sel-btn" data-tipo="inicio_trabajo" onclick="selTipoTurnoConfig(this)">🔧 Inicio de trabajo</button>
+      <button class="tipo-turno-sel-btn" data-tipo="consulta" onclick="selTipoTurnoConfig(this)">💬 Consulta</button>
+      <button class="tipo-turno-sel-btn" data-tipo="reclamo" onclick="selTipoTurnoConfig(this)">📢 Reclamo</button>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line)">
+      <span style="font-size:13px;font-weight:600;color:var(--ink-2);flex:1">Habilitar este tipo de turno</span>
+      <label class="toggle-switch" style="flex-shrink:0">
+        <input type="checkbox" id="turno-tipo-activo" checked>
+        <div class="toggle-track"></div>
+      </label>
+    </div>
+
+    <p class="section-label">Disponibilidad semanal</p>
+    <div class="card" id="dispSemanalCard">
+      <div style="padding:14px 16px;color:var(--ink-4);font-size:13px;text-align:center">Cargando…</div>
+    </div>
+
+    <div style="padding:16px">
+      <button onclick="guardarDisponibilidadPerfil()" style="width:100%;padding:13px;background:var(--brand);color:#fff;border:none;border-radius:var(--radius-lg);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">Guardar disponibilidad</button>
+    </div>
+
+    <p class="section-label">Fechas bloqueadas</p>
+    <div class="card" id="bloqueosList">
+      <div style="padding:14px 16px;color:var(--ink-4);font-size:13px;text-align:center">Cargando bloqueos…</div>
+    </div>
+
+    <div style="padding:0 16px 16px">
+      <button onclick="abrirModalBloqueoDesdeTab()" style="width:100%;padding:11px;background:var(--surface);color:var(--ink-2);border:1.5px dashed var(--line-strong);border-radius:var(--radius-lg);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">🚫 Bloquear fecha</button>
+    </div>
 
     <div class="bottom-spacer"></div>
   </div>
@@ -1204,6 +1271,248 @@ function showToast(msg, type = 'ok') {
 // ARRANQUE
 // ═══════════════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', init);
+
+// ═══════════════════════════════════════════════════════════════
+// TAB TURNOS — Disponibilidad y bloqueos
+// ═══════════════════════════════════════════════════════════════
+let tipoTurnoConfig = 'inspeccion_presupuesto';
+let dispData = [];  // filas de cat_taller_disponibilidad para el tipo actual
+let bloqueosData = [];
+
+function selTipoTurnoConfig(btn) {
+  document.querySelectorAll('.tipo-turno-sel-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  tipoTurnoConfig = btn.dataset.tipo;
+  cargarDisponibilidadTab();
+}
+
+async function cargarDisponibilidadTab() {
+  if (!tallerData?.id) return;
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/cat_taller_disponibilidad?taller_id=eq.${tallerData.id}&tipo_turno=eq.${tipoTurnoConfig}`, {
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${getSessionToken()}` }
+    });
+    dispData = r.ok ? await r.json() : [];
+
+    // Chequear toggle activo (si hay al menos un día activo)
+    const hayActivo = dispData.some(d => d.activo);
+    document.getElementById('turno-tipo-activo').checked = dispData.length > 0 ? hayActivo : true;
+  } catch { dispData = []; }
+  renderDispSemanal();
+  await cargarBloqueos();
+}
+
+const DIAS_P = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+
+function renderDispSemanal() {
+  const card = document.getElementById('dispSemanalCard');
+  if (!card) return;
+  card.innerHTML = DIAS_P.map((dia, dow) => {
+    const cfg = dispData.find(d => d.dia_semana === dow) || {
+      activo: false, hora_inicio: '08:00', hora_fin: '18:00',
+      duracion_minutos: 60, capacidad_max: 1
+    };
+    const dis = !cfg.activo ? 'disp-disabled' : '';
+    return `
+    <div class="disp-row-perfil">
+      <div class="disp-day-label">${dia}</div>
+      <div class="disp-inputs ${dis}" id="disp-inputs-${dow}">
+        <input class="disp-time-input" type="time" id="dp-desde-${dow}" value="${(cfg.hora_inicio||'08:00').slice(0,5)}">
+        <span style="font-size:11px;color:var(--ink-4)">–</span>
+        <input class="disp-time-input" type="time" id="dp-hasta-${dow}" value="${(cfg.hora_fin||'18:00').slice(0,5)}">
+        <input class="disp-num-input" type="number" id="dp-dur-${dow}" min="15" step="15" value="${cfg.duracion_minutos||60}" title="Duración (min)">
+        <span class="disp-hint">min</span>
+        <input class="disp-num-input" type="number" id="dp-cap-${dow}" min="1" max="10" value="${cfg.capacidad_max||1}" title="Capacidad">
+        <span class="disp-hint">cap</span>
+      </div>
+      <label class="toggle-switch" style="width:34px;height:20px">
+        <input type="checkbox" id="dp-activo-${dow}" ${cfg.activo?'checked':''} onchange="toggleDispDia(${dow})">
+        <div class="toggle-track"></div>
+      </label>
+    </div>`;
+  }).join('');
+}
+
+function toggleDispDia(dow) {
+  const activo = document.getElementById('dp-activo-' + dow).checked;
+  const el = document.getElementById('disp-inputs-' + dow);
+  if (el) el.className = 'disp-inputs' + (activo ? '' : ' disp-disabled');
+}
+
+async function guardarDisponibilidadPerfil() {
+  if (!tallerData?.id) { showToast('Perfil no cargado', 'error'); return; }
+  const tipoActivo = document.getElementById('turno-tipo-activo').checked;
+  const rows = [];
+  for (let dow = 0; dow < 7; dow++) {
+    const activo = tipoActivo && (document.getElementById('dp-activo-' + dow)?.checked || false);
+    rows.push({
+      taller_id: tallerData.id,
+      dia_semana: dow,
+      tipo_turno: tipoTurnoConfig,
+      hora_inicio: document.getElementById('dp-desde-' + dow)?.value || '08:00',
+      hora_fin:    document.getElementById('dp-hasta-' + dow)?.value || '18:00',
+      duracion_minutos: parseInt(document.getElementById('dp-dur-' + dow)?.value) || 60,
+      capacidad_max:    parseInt(document.getElementById('dp-cap-' + dow)?.value) || 1,
+      activo,
+    });
+  }
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/cat_taller_disponibilidad`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${getSessionToken()}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates,return=minimal',
+      },
+      body: JSON.stringify(rows),
+    });
+    if (!r.ok) throw new Error((await r.json()).message || r.status);
+    showToast('✓ Disponibilidad guardada');
+    await cargarDisponibilidadTab();
+  } catch (e) { showToast('Error: ' + e.message, 'error'); }
+}
+
+// ── Bloqueos ──────────────────────────────────────────────────────
+async function cargarBloqueos() {
+  if (!tallerData?.id) return;
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/cat_taller_bloqueos?taller_id=eq.${tallerData.id}&order=fecha.asc`, {
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${getSessionToken()}` }
+    });
+    bloqueosData = r.ok ? await r.json() : [];
+  } catch { bloqueosData = []; }
+  renderBloqueos();
+}
+
+const TIPO_BLOQ_L = {
+  inspeccion_presupuesto:'Inspección/Pres.', inicio_trabajo:'Inicio trabajo',
+  consulta:'Consulta', reclamo:'Reclamo',
+};
+
+function renderBloqueos() {
+  const cont = document.getElementById('bloqueosList');
+  if (!cont) return;
+  if (!bloqueosData.length) {
+    cont.innerHTML = '<div style="padding:14px 16px;color:var(--ink-4);font-size:13px;text-align:center">Sin fechas bloqueadas.</div>';
+    return;
+  }
+  cont.innerHTML = bloqueosData.map(b => `
+    <div class="bloqueo-item">
+      <div class="bloqueo-fecha">${b.fecha}</div>
+      <div class="bloqueo-meta">${b.tipo_turno ? TIPO_BLOQ_L[b.tipo_turno] || b.tipo_turno : 'Todos los tipos'}${b.motivo ? ' · ' + b.motivo : ''}</div>
+      <button class="bloqueo-del" onclick="eliminarBloqueo('${b.id}')" title="Eliminar">✕</button>
+    </div>`).join('');
+}
+
+function abrirModalBloqueoDesdeTab() {
+  // Reutiliza el modal del drawer overlay de perfil si existe, o crea uno inline
+  const fecha = new Date().toISOString().split('T')[0];
+  const modal = document.createElement('div');
+  modal.id = 'modal-bloq-perfil';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;display:flex;align-items:center;justify-content:center;padding:20px';
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:14px;padding:24px;width:100%;max-width:380px">
+      <div style="font-size:16px;font-weight:700;margin-bottom:16px">🚫 Bloquear fecha</div>
+      <div style="margin-bottom:12px">
+        <label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:5px">Fecha</label>
+        <input id="bloq-fecha-p" type="date" value="${fecha}" style="width:100%;border:1.5px solid #e0e0e0;border-radius:8px;padding:9px 12px;font-size:14px;font-family:inherit;outline:none">
+      </div>
+      <div style="margin-bottom:12px">
+        <label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:5px">Tipo (vacío = todos)</label>
+        <select id="bloq-tipo-p" style="width:100%;border:1.5px solid #e0e0e0;border-radius:8px;padding:9px 12px;font-size:14px;font-family:inherit;outline:none;appearance:none">
+          <option value="">Todos los tipos</option>
+          <option value="inspeccion_presupuesto">Inspección / Presupuesto</option>
+          <option value="inicio_trabajo">Inicio de trabajo</option>
+          <option value="consulta">Consulta</option>
+          <option value="reclamo">Reclamo</option>
+        </select>
+      </div>
+      <div style="margin-bottom:16px">
+        <label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:5px">Motivo (opcional)</label>
+        <input id="bloq-motivo-p" type="text" placeholder="Feriado, vacaciones…" style="width:100%;border:1.5px solid #e0e0e0;border-radius:8px;padding:9px 12px;font-size:14px;font-family:inherit;outline:none">
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onclick="document.getElementById('modal-bloq-perfil').remove()" style="flex:1;padding:11px;border:1.5px solid #e0e0e0;border-radius:8px;background:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">Cancelar</button>
+        <button onclick="guardarBloqueoPerfil()" style="flex:1;padding:11px;border:none;border-radius:8px;background:#E94560;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">Bloquear</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.onclick = e => { if (e.target === modal) modal.remove(); };
+}
+
+async function guardarBloqueoPerfil() {
+  const fecha  = document.getElementById('bloq-fecha-p')?.value;
+  const tipo   = document.getElementById('bloq-tipo-p')?.value || null;
+  const motivo = document.getElementById('bloq-motivo-p')?.value?.trim() || null;
+  if (!fecha) { showToast('Elegí una fecha', 'error'); return; }
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/cat_taller_bloqueos`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${getSessionToken()}`,
+        'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates,return=minimal',
+      },
+      body: JSON.stringify({ taller_id: tallerData.id, fecha, tipo_turno: tipo, motivo }),
+    });
+    if (!r.ok) throw new Error((await r.json()).message || r.status);
+    document.getElementById('modal-bloq-perfil')?.remove();
+    showToast('✓ Fecha bloqueada');
+    await cargarBloqueos();
+  } catch (e) { showToast('Error: ' + e.message, 'error'); }
+}
+
+async function eliminarBloqueo(id) {
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/cat_taller_bloqueos?id=eq.${id}`, {
+      method: 'DELETE',
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${getSessionToken()}` }
+    });
+    showToast('Bloqueo eliminado');
+    await cargarBloqueos();
+  } catch (e) { showToast('Error: ' + e.message, 'error'); }
+}
+
+// ── Vista pública — mejorar actualizarPreview ─────────────────────
+async function actualizarPreviewCompleto() {
+  if (!tallerData?.id) return;
+  // Calificación promedio
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/cat_turnos?taller_id=eq.${tallerData.id}&estado=eq.finalizado&select=calificacion_cliente_al_taller`, {
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${getSessionToken()}` }
+    });
+    if (r.ok) {
+      const turnos = await r.json();
+      const califs = turnos.map(t => t.calificacion_cliente_al_taller).filter(Boolean);
+      const prom = califs.length ? (califs.reduce((a,b)=>a+b,0)/califs.length).toFixed(1) : null;
+      const el = document.getElementById('prevCalif');
+      if (el) el.textContent = prom ? `★ ${prom} (${califs.length} calificaciones)` : '';
+    }
+  } catch {}
+  // Tipos de turno habilitados
+  try {
+    const r2 = await fetch(`${SUPABASE_URL}/rest/v1/cat_taller_disponibilidad?taller_id=eq.${tallerData.id}&activo=eq.true&select=tipo_turno`, {
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${getSessionToken()}` }
+    });
+    if (r2.ok) {
+      const tipos = [...new Set((await r2.json()).map(d => d.tipo_turno))];
+      const tipoL = { inspeccion_presupuesto:'Inspección', inicio_trabajo:'Inicio trabajo', consulta:'Consulta', reclamo:'Reclamo' };
+      const el2 = document.getElementById('prevTiposTurno');
+      if (el2) el2.innerHTML = tipos.map(t => `<span style="font-size:10px;background:rgba(255,255,255,.15);padding:3px 8px;border-radius:10px;color:rgba(255,255,255,.85)">${tipoL[t]||t}</span>`).join('');
+    }
+  } catch {}
+  // Botón solicitar turno
+  const btnT = document.getElementById('prevBtnTurno');
+  if (btnT && tallerData.id) btnT.href = `/solicitar-turno?taller_id=${tallerData.id}`;
+}
+
+// Hookear en switchTab
+const _origSwitchTab = switchTab;
+function switchTab(btn) {
+  _origSwitchTab(btn);
+  if (btn.dataset.tab === 'tab-turnos') cargarDisponibilidadTab();
+  if (btn.dataset.tab === 'tab-publico') { actualizarPreview(); actualizarPreviewCompleto(); }
+}
 </script>
 </body>
 </html>

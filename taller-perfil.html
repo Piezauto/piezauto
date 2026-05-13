@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title id="pageTitle">Taller — Piezauto</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/css/estilos.css">
+  <style>
+    body { background: var(--gris-claro); }
+
+    /* ── Hero ── */
+    .hero {
+      background: linear-gradient(135deg, #1A1A2E 0%, #16213E 100%);
+      color: #fff;
+      padding: 28px 20px 24px;
+    }
+    .hero-inner { max-width: 640px; margin: 0 auto; display: flex; gap: 18px; align-items: flex-start; }
+    .hero-logo {
+      width: 72px; height: 72px; border-radius: 14px;
+      background: rgba(255,255,255,.12); display: flex; align-items: center; justify-content: center;
+      font-size: 28px; flex-shrink: 0; overflow: hidden;
+    }
+    .hero-logo img { width: 100%; height: 100%; object-fit: cover; border-radius: 12px; }
+    .hero-nombre   { font-size: 20px; font-weight: 900; line-height: 1.2; }
+    .hero-dir      { font-size: 13px; color: rgba(255,255,255,.7); margin-top: 4px; }
+    .hero-chips    { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .hero-chip     { font-size: 11px; background: rgba(255,255,255,.15); border-radius: 12px; padding: 3px 10px; }
+    .hero-calif    { margin-top: 10px; display: flex; align-items: center; gap: 6px; }
+    .estrellas-txt { font-size: 16px; }
+    .calif-num     { font-size: 15px; font-weight: 700; }
+    .calif-count   { font-size: 12px; color: rgba(255,255,255,.6); }
+
+    /* ── Botones de acción ── */
+    .hero-btns { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+    .btn-turno {
+      display: inline-flex; align-items: center; gap: 7px;
+      background: var(--rojo); color: #fff; border: none; border-radius: 10px;
+      padding: 11px 20px; font-size: 14px; font-weight: 700; cursor: pointer;
+      text-decoration: none; transition: opacity .15s; font-family: inherit;
+    }
+    .btn-turno:hover { opacity: .88; }
+    .btn-wa {
+      display: inline-flex; align-items: center; gap: 7px;
+      background: #25d366; color: #fff; border: none; border-radius: 10px;
+      padding: 11px 18px; font-size: 14px; font-weight: 700; cursor: pointer;
+      text-decoration: none; transition: opacity .15s;
+    }
+    .btn-wa:hover { opacity: .88; }
+
+    /* ── Contenido ── */
+    .wrap { max-width: 640px; margin: 0 auto; padding: 20px 16px 60px; }
+
+    /* Cards */
+    .card { background: #fff; border-radius: 14px; box-shadow: var(--sombra); margin-bottom: 16px; overflow: hidden; }
+    .card-head { padding: 14px 18px; border-bottom: 1px solid #f0f0f0; }
+    .card-head h3 { font-size: 14px; font-weight: 800; }
+    .card-body { padding: 14px 18px; }
+
+    /* Horarios */
+    .horario-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f8f8f8; font-size: 13px; }
+    .horario-row:last-child { border-bottom: none; }
+    .horario-dia  { font-weight: 700; color: #333; width: 48px; }
+    .horario-hrs  { color: #555; }
+    .horario-cerr { color: #bbb; font-style: italic; }
+
+    /* Disponibilidad turnos */
+    .tipo-turno-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f8f8f8; }
+    .tipo-turno-row:last-child { border-bottom: none; }
+    .tipo-icon-sm { font-size: 18px; width: 28px; text-align: center; flex-shrink: 0; }
+    .tipo-info    { flex: 1; }
+    .tipo-nombre  { font-size: 13px; font-weight: 700; color: #222; }
+    .tipo-dias    { font-size: 11px; color: #888; margin-top: 2px; }
+    .tipo-badge-on  { font-size: 10px; font-weight: 700; background: #dcfce7; color: #15803d; padding: 3px 9px; border-radius: 10px; }
+    .tipo-badge-off { font-size: 10px; font-weight: 700; background: #f0f0f0; color: #aaa; padding: 3px 9px; border-radius: 10px; }
+
+    /* Reseñas */
+    .resena-item { padding: 14px 0; border-bottom: 1px solid #f8f8f8; }
+    .resena-item:last-child { border-bottom: none; }
+    .resena-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .resena-estrellas { color: #f59e0b; font-size: 14px; }
+    .resena-fecha { font-size: 11px; color: #bbb; }
+    .resena-texto { font-size: 13px; color: #555; line-height: 1.5; }
+    .resena-veh   { font-size: 11px; color: #aaa; margin-top: 4px; }
+
+    /* Spinner */
+    .spinner-wrap { display: flex; justify-content: center; padding: 40px; }
+    .spinner { width: 28px; height: 28px; border: 3px solid #eee; border-top-color: var(--rojo); border-radius: 50%; animation: spin .8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Error */
+    .error-wrap { text-align: center; padding: 60px 20px; color: #aaa; }
+    .error-icon { font-size: 48px; margin-bottom: 14px; }
+  </style>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/js/supabase.js"></script>
+<script src="/js/auth-b2c.js"></script>
+
+<!-- Header simple -->
+<div style="background:#1A1A2E;padding:0 16px;height:48px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(0,0,0,.25)">
+  <a href="/" style="font-weight:900;font-size:15px;color:var(--rojo);text-decoration:none">Piezauto</a>
+  <a href="/solicitar-turno.html" style="font-size:12px;color:#aaa;text-decoration:none">Solicitar turno →</a>
+</div>
+
+<!-- HERO (se rellena por JS) -->
+<div id="hero">
+  <div class="spinner-wrap" style="background:#1A1A2E"><div class="spinner" style="border-top-color:#E94560"></div></div>
+</div>
+
+<!-- CONTENIDO -->
+<div class="wrap" id="contenido">
+  <div class="spinner-wrap"><div class="spinner"></div></div>
+</div>
+
+<script>
+const SUPABASE_URL  = 'https://mqxowotdeibllkitkije.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xeG93b3RkZWlibGxraXRraWplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxMzgxNDYsImV4cCI6MjA5MTcxNDE0Nn0.V_Pr0elBurAK7OPKFL3OoZwBmb-bI-Mcz8N1U8yblG8';
+
+const DIAS_SEMANA = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const TIPO_INFO = {
+  inspeccion_presupuesto: { icon:'🔍', label:'Inspección / Presupuesto' },
+  inicio_trabajo:         { icon:'🔧', label:'Inicio de trabajo'        },
+  consulta:               { icon:'💬', label:'Consulta'                  },
+  reclamo:                { icon:'📢', label:'Reclamo'                   },
+};
+
+async function sbGet(tabla, qs) {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${tabla}?${qs}`, {
+    headers: { 'apikey': SUPABASE_ANON }
+  });
+  if (!r.ok) throw new Error(r.status);
+  return r.json();
+}
+
+(async () => {
+  const params   = new URLSearchParams(window.location.search);
+  const tallerId = params.get('taller_id') || params.get('id');
+
+  if (!tallerId) {
+    renderError('No se especificó un taller.');
+    return;
+  }
+
+  // Cargar todo en paralelo
+  const [tallerData, disponibData, resenasData] = await Promise.allSettled([
+    sbGet('cat_recomendaciones_talleres',
+      `select=id,nombre,direccion,localidad,telefono,whatsapp,especialidades,horarios,logo_url&id=eq.${tallerId}&limit=1`),
+    sbGet('cat_taller_disponibilidad',
+      `select=dia_semana,tipo_turno,hora_inicio,hora_fin,activo&taller_id=eq.${tallerId}&activo=eq.true&order=tipo_turno,dia_semana`),
+    sbGet('cat_turnos',
+      `select=calificacion_cliente_al_taller,resena_cliente,vehiculo_marca,vehiculo_modelo,created_at&taller_id=eq.${tallerId}&estado=eq.finalizado&calificacion_cliente_al_taller=not.is.null&order=created_at.desc&limit=5`),
+  ]);
+
+  const taller  = tallerData.value?.[0];
+  const disponib = disponibData.value  || [];
+  const resenas  = resenasData.value   || [];
+
+  if (!taller) { renderError('Taller no encontrado.'); return; }
+
+  // Calificación promedio
+  const califs    = resenas.map(r => r.calificacion_cliente_al_taller).filter(Boolean);
+  const promCalif = califs.length ? (califs.reduce((a,b)=>a+b,0)/califs.length).toFixed(1) : null;
+
+  // Horarios (de cat_recomendaciones_talleres.horarios — JSON de horarios de atención)
+  let horariosData = {};
+  try { if (taller.horarios) horariosData = JSON.parse(taller.horarios); } catch {}
+
+  // ── HERO ────────────────────────────────────────────────────────────
+  document.title = `${taller.nombre} — Piezauto`;
+  document.getElementById('pageTitle').textContent = `${taller.nombre} — Piezauto`;
+
+  const especialidades = Array.isArray(taller.especialidades) ? taller.especialidades : [];
+  const chips = especialidades.map(e => `<span class="hero-chip">${esc(e)}</span>`).join('');
+  const califHtml = promCalif
+    ? `<div class="hero-calif">
+        <span class="estrellas-txt">${'★'.repeat(Math.round(parseFloat(promCalif)))}</span>
+        <span class="calif-num">${promCalif}</span>
+        <span class="calif-count">(${califs.length} reseña${califs.length !== 1 ? 's' : ''})</span>
+      </div>` : '';
+
+  const logoHtml = taller.logo_url
+    ? `<img src="${esc(taller.logo_url)}" alt="${esc(taller.nombre)}">`
+    : '🔧';
+
+  const waLink = taller.whatsapp
+    ? `<a href="https://wa.me/54${taller.whatsapp.replace(/\D/g,'')}" target="_blank" rel="noopener" class="btn-wa">💬 WhatsApp</a>`
+    : '';
+
+  document.getElementById('hero').innerHTML = `
+    <div class="hero">
+      <div class="hero-inner">
+        <div class="hero-logo">${logoHtml}</div>
+        <div style="flex:1">
+          <div class="hero-nombre">${esc(taller.nombre)}</div>
+          <div class="hero-dir">📍 ${esc(taller.direccion || '')}${taller.localidad ? ', ' + esc(taller.localidad) : ''}</div>
+          ${chips ? `<div class="hero-chips">${chips}</div>` : ''}
+          ${califHtml}
+          <div class="hero-btns">
+            <a href="/solicitar-turno.html?taller_id=${tallerId}" class="btn-turno">📅 Solicitar turno</a>
+            ${waLink}
+          </div>
+        </div>
+      </div>
+    </div>`;
+
+  // ── CONTENIDO ────────────────────────────────────────────────────────
+  const cont = document.getElementById('contenido');
+  let html = '';
+
+  // Sección contacto
+  html += `
+    <div class="card">
+      <div class="card-head"><h3>📞 Contacto</h3></div>
+      <div class="card-body">
+        ${taller.telefono ? `<div style="display:flex;gap:10px;align-items:center;padding:6px 0"><span style="font-size:18px">📞</span><a href="tel:${esc(taller.telefono)}" style="color:var(--rojo);font-weight:600;text-decoration:none">${esc(taller.telefono)}</a></div>` : ''}
+        ${taller.whatsapp ? `<div style="display:flex;gap:10px;align-items:center;padding:6px 0"><span style="font-size:18px">💬</span><a href="https://wa.me/54${taller.whatsapp.replace(/\D/g,'')}" target="_blank" style="color:#25d366;font-weight:600;text-decoration:none">WhatsApp</a></div>` : ''}
+        ${taller.localidad ? `<div style="display:flex;gap:10px;align-items:center;padding:6px 0"><span style="font-size:18px">📍</span><span style="font-size:13px;color:#555">${esc(taller.direccion || '')}${taller.localidad ? ', ' + esc(taller.localidad) : ''}</span></div>` : ''}
+      </div>
+    </div>`;
+
+  // Horarios de atención
+  const horaKeys = ['lun','mar','mie','jue','vie','sab','dom'];
+  const hLabelMap = { lun:'Lun', mar:'Mar', mie:'Mié', jue:'Jue', vie:'Vie', sab:'Sáb', dom:'Dom' };
+  const horariosRows = horaKeys.map(k => {
+    const h2 = horariosData[k];
+    if (!h2) return '';
+    return `<div class="horario-row">
+      <div class="horario-dia">${hLabelMap[k]}</div>
+      ${h2.abierto ? `<div class="horario-hrs">${(h2.desde||'').slice(0,5)} – ${(h2.hasta||'').slice(0,5)}</div>` : '<div class="horario-cerr">Cerrado</div>'}
+    </div>`;
+  }).filter(Boolean).join('');
+
+  if (horariosRows) {
+    html += `<div class="card"><div class="card-head"><h3>🕐 Horarios de atención</h3></div><div class="card-body">${horariosRows}</div></div>`;
+  }
+
+  // Disponibilidad de turnos
+  const tiposHabilitados = [...new Set(disponib.map(d => d.tipo_turno))];
+  const TODOS_TIPOS = ['inspeccion_presupuesto','inicio_trabajo','consulta','reclamo'];
+
+  const dispRows = TODOS_TIPOS.map(tipo => {
+    const filas = disponib.filter(d => d.tipo_turno === tipo);
+    const info  = TIPO_INFO[tipo] || { icon:'📋', label: tipo };
+    const tieneDisp = filas.length > 0;
+    const diasStr = filas.map(d => DIAS_SEMANA[d.dia_semana]).join(', ');
+    const horaStr = filas[0] ? `${(filas[0].hora_inicio||'').slice(0,5)}–${(filas[0].hora_fin||'').slice(0,5)}` : '';
+    return `
+      <div class="tipo-turno-row">
+        <div class="tipo-icon-sm">${info.icon}</div>
+        <div class="tipo-info">
+          <div class="tipo-nombre">${info.label}</div>
+          ${tieneDisp ? `<div class="tipo-dias">${diasStr}${horaStr ? ' · ' + horaStr : ''}</div>` : '<div class="tipo-dias">No disponible</div>'}
+        </div>
+        <span class="${tieneDisp ? 'tipo-badge-on' : 'tipo-badge-off'}">${tieneDisp ? 'Disponible' : 'No acepta'}</span>
+      </div>`;
+  }).join('');
+
+  html += `<div class="card"><div class="card-head"><h3>📅 Tipos de turno</h3></div><div class="card-body">${dispRows}</div></div>`;
+
+  // Reseñas
+  if (resenas.length) {
+    const resenasHtml = resenas.filter(r => r.resena_cliente).map(r => {
+      const stars = '★'.repeat(r.calificacion_cliente_al_taller || 0);
+      const fecha = r.created_at ? new Date(r.created_at).toLocaleDateString('es-AR', { month:'long', year:'numeric' }) : '';
+      const veh   = r.vehiculo_marca ? `${r.vehiculo_marca} ${r.vehiculo_modelo || ''}`.trim() : '';
+      return `
+        <div class="resena-item">
+          <div class="resena-header">
+            <span class="resena-estrellas">${stars}</span>
+            <span class="resena-fecha">${fecha}</span>
+          </div>
+          <div class="resena-texto">${esc(r.resena_cliente)}</div>
+          ${veh ? `<div class="resena-veh">🚗 ${esc(veh)}</div>` : ''}
+        </div>`;
+    }).join('');
+
+    if (resenasHtml) {
+      html += `<div class="card"><div class="card-head"><h3>⭐ Reseñas de clientes</h3></div><div class="card-body">${resenasHtml}</div></div>`;
+    }
+  }
+
+  // CTA final
+  html += `
+    <div style="text-align:center;padding:12px 0">
+      <a href="/solicitar-turno.html?taller_id=${tallerId}" class="btn-turno" style="font-size:15px;padding:14px 28px">
+        📅 Solicitar turno en ${esc(taller.nombre)}
+      </a>
+    </div>`;
+
+  cont.innerHTML = html;
+})();
+
+function renderError(msg) {
+  document.getElementById('hero').innerHTML = '<div style="background:#1A1A2E;height:10px"></div>';
+  document.getElementById('contenido').innerHTML = `
+    <div class="error-wrap">
+      <div class="error-icon">🔍</div>
+      <div style="font-size:16px;font-weight:700;color:#555;margin-bottom:8px">Taller no encontrado</div>
+      <div style="font-size:13px;color:#aaa">${msg}</div>
+      <a href="/" style="display:inline-block;margin-top:16px;color:var(--rojo);text-decoration:none;font-weight:600">← Volver al inicio</a>
+    </div>`;
+}
+
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+</script>
+</body>
+</html>
