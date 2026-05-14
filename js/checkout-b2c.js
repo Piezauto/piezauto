@@ -162,149 +162,164 @@ function renderResumen() {
 // ── Confirmar pedido ─────────────────────────────────────────────────
 
 async function confirmarPedido() {
-  const btn = document.getElementById('btn-confirmar');
-  const msg = document.getElementById('checkout-msg');
+  // 1. Validar sesión
+  if (!_cliente || !_cliente.id) {
+    mostrarMsg('Necesitás iniciar sesión para confirmar el pedido.', 'error');
+    setTimeout(() => window.location.href = '/login?redirect=/checkout-b2c', 1500);
+    return;
+  }
 
-  const nombre    = document.getElementById('f-nombre').value.trim();
-  const apellido  = document.getElementById('f-apellido').value.trim();
-  const telefono  = document.getElementById('f-telefono').value.trim();
-  const direccion = document.getElementById('f-direccion').value.trim();
+  // 2. Método de pago no disponible
+  if (_metodoPago === 'debito') {
+    mostrarMsg('Ese medio de pago estará disponible próximamente. Elegí transferencia o efectivo.', 'error');
+    return;
+  }
+
+  // 3. Validar campos obligatorios
+  const nombre       = document.getElementById('f-nombre')?.value?.trim()   || '';
+  const apellido     = document.getElementById('f-apellido')?.value?.trim() || '';
+  const telefono     = document.getElementById('f-telefono')?.value?.trim() || '';
+  const direccion    = document.getElementById('f-direccion')?.value?.trim() || '';
+  const notasCliente = document.getElementById('f-notas')?.value?.trim()    || null;
 
   if (!nombre || !apellido) { mostrarMsg('Completá tu nombre y apellido.', 'error'); return; }
   if (!telefono)            { mostrarMsg('Completá tu teléfono de contacto.', 'error'); return; }
   if (!direccion)           { mostrarMsg('Completá la dirección de entrega.', 'error'); return; }
 
-
-  // Null-check: si no hay sesión, redirigir al login
-  if (!_cliente) {
-    mostrarMsg('Tu sesión expiró. Ingresá de nuevo.', 'error');
-    setTimeout(() => { window.location.href = '/login?redirect=/checkout-b2c'; }, 1500);
+  // 4. Validar carrito
+  const items = cargarCarritoLocal();
+  if (!items || !items.length) {
+    mostrarMsg('El carrito está vacío.', 'error');
     return;
   }
 
-  btn.disabled = true;
+  // 5. Deshabilitar botón
+  const btn = document.getElementById('btn-confirmar');
+  if (btn) { btn.disabled = true; btn.textContent = 'Confirmando pedido...'; }
   mostrarMsg('Confirmando pedido...', 'info');
 
-  // Actualizar datos del cliente si cambió el teléfono
-  if (_cliente && telefono !== _cliente.telefono) {
-    await dbB2C.from('cat_clientes_finales').update({ telefono }).eq('id', _cliente.id);
-  }
+  try {
+    // 6. Actualizar teléfono si cambió
+    if (telefono !== _cliente.telefono) {
+      await dbB2C.from('cat_clientes_finales').update({ telefono }).eq('id', _cliente.id);
+    }
 
-  const { subtotal, total } = calcularTotales();
-  const notasCliente = document.getElementById('f-notas').value.trim() || null;
+    // 7. Calcular totales
+    const { subtotal, total } = calcularTotales();
 
-  // notas JSON (solo para notas del cliente — taller_id y metodo_pago van en columnas propias)
-  const notas = JSON.stringify({
-    metodo_pago:   _metodoPago,
-    taller:        _tallerSel || null,
-    notas_cliente: notasCliente,
-  });
+    const opPayload = {
+      cliente_id:                  _cliente.id,
+      taller_id:                   _tallerSel?.id || null,
+      metodo_pago:                 _metodoPago,
+      estado:                      'pendiente',
+      subtotal,
+      total,
+      descuento:                   0,
+      direccion_entrega:           direccion,
+      pendiente_aprobacion_taller: !!_tallerSel,
+      notas: JSON.stringify({
+        taller:        _tallerSel    || null,
+        notas_cliente: notasCliente,
+      }),
+    };
 
-  const updatePayload = {
-    subtotal, total, descuento: 0,
-    direccion_entrega: direccion,
-    metodo_pago: _metodoPago,
-    taller_id:   _tallerSel?.id || null,
-    pendiente_aprobacion_taller: !!_tallerSel,
-    notas,
-    updated_at: new Date().toISOString(),
-  };
-
-  // Buscar operación pendiente existente (creada por carrito.js)
-  const { data: borradores } = await dbB2C
-    .from('cat_operaciones_b2c')
-    .select('id')
-    .eq('cliente_id', _cliente.id)
-    .eq('estado', 'pendiente')
-    .order('created_at', { ascending: false })
-    .limit(1);
-
-  let operacionId = borradores?.[0]?.id;
-
-  if (operacionId) {
-    await dbB2C.from('cat_operaciones_b2c').update(updatePayload).eq('id', operacionId);
-  } else {
-    // Crear operación si no existe (ej: carrito nunca sincronizó)
-    const items = cargarCarritoLocal();
-    const { data: nueva } = await dbB2C
+    // 8. Buscar borrador existente (creado por carrito.js) o crear operación nueva
+    const { data: borradores } = await dbB2C
       .from('cat_operaciones_b2c')
-      .insert({ cliente_id: _cliente.id, estado: 'pendiente', ...updatePayload })
       .select('id')
-      .single();
+      .eq('cliente_id', _cliente.id)
+      .eq('estado', 'pendiente')
+      .order('created_at', { ascending: false })
+      .limit(1);
 
-    if (!nueva) {
-      mostrarMsg('Error al crear el pedido. Intentá de nuevo.', 'error');
-      btn.disabled = false;
+    let opId = borradores?.[0]?.id;
+
+    if (opId) {
+      await dbB2C.from('cat_operaciones_b2c')
+        .update({ ...opPayload, updated_at: new Date().toISOString() })
+        .eq('id', opId);
+    } else {
+      const { data: op, error: opError } = await dbB2C
+        .from('cat_operaciones_b2c')
+        .insert(opPayload)
+        .select('id')
+        .single();
+      if (opError || !op) throw new Error(opError?.message || 'Error al crear el pedido.');
+      opId = op.id;
+
+      const lineas = items.map(i => ({
+        operacion_id:    opId,
+        sku_id:          i.id,
+        cantidad:        i.cantidad,
+        precio_unitario: i.precio || 0,
+        subtotal:        (i.precio || 0) * i.cantidad,
+      }));
+      if (lineas.length) await dbB2C.from('cat_operaciones_b2c_items').insert(lineas);
+    }
+
+    _operacionId = opId;
+
+    // 9. Notificar al taller
+    if (_tallerSel?.id) {
+      await dbB2C.from('cat_notificaciones_talleres').insert({
+        taller_id:    _tallerSel.id,
+        operacion_id: opId,
+        tipo:         'nueva_operacion',
+        mensaje:      `Nueva operación asignada — $${total.toLocaleString('es-AR')} · ${direccion}`,
+        leida:        false,
+      }).catch(() => {});
+    }
+
+    // 10. Flujo MercadoPago
+    if (_metodoPago === 'mercadopago') {
+      mostrarMsg('Generando link de pago con MercadoPago...', 'info');
+      try {
+        const mpData = await mpCrearPreferencia({
+          operacionId: opId,
+          items: items.map(i => ({
+            descripcion:     i.descripcion || 'Autoparte Piezauto',
+            cantidad:        i.cantidad    || 1,
+            precio_unitario: i.precio      || 0,
+          })),
+          pagador: {
+            nombre:   `${nombre} ${apellido}`.trim(),
+            email:    _cliente.email || '',
+            telefono,
+          },
+          backUrls: {
+            success: `${window.location.origin}/gracias?op=${opId}&pago=aprobado`,
+            failure: `${window.location.origin}/gracias?op=${opId}&pago=fallido`,
+            pending: `${window.location.origin}/gracias?op=${opId}&pago=pendiente`,
+          },
+        });
+        if (mpData?.init_point) {
+          await mpGuardarPreferencia(dbB2C, opId, mpData.preference_id);
+          localStorage.removeItem('piezauto_carrito_b2c');
+          if (typeof actualizarBadgeCarrito === 'function') actualizarBadgeCarrito();
+          window.location.href = mpData.init_point;
+          return;
+        }
+      } catch (mpErr) {
+        console.error('[MP] Error creando preferencia:', mpErr);
+      }
+      // MP falló — pedido registrado, coordinar manualmente
+      mostrarMsg('MercadoPago no disponible ahora. Tu pedido fue registrado — te contactamos por WhatsApp.', 'info');
+      localStorage.removeItem('piezauto_carrito_b2c');
+      if (typeof actualizarBadgeCarrito === 'function') actualizarBadgeCarrito();
+      if (btn) { btn.disabled = false; btn.textContent = 'Confirmar pedido'; }
       return;
     }
 
-    operacionId = nueva.id;
-    const lineas = items.map(i => ({
-      operacion_id: operacionId,
-      sku_id: i.id,
-      cantidad: i.cantidad,
-      precio_unitario: i.precio || 0,
-      subtotal: (i.precio || 0) * i.cantidad,
-    }));
-    if (lineas.length) await dbB2C.from('cat_operaciones_b2c_items').insert(lineas);
+    // 11. Limpiar y redirigir (transferencia / efectivo / manual)
+    localStorage.removeItem('piezauto_carrito_b2c');
+    if (typeof actualizarBadgeCarrito === 'function') actualizarBadgeCarrito();
+    window.location.href = `/gracias?op=${opId}`;
+
+  } catch (err) {
+    console.error('[checkout] Error:', err);
+    mostrarMsg(err.message || 'Error al confirmar el pedido. Intentá de nuevo.', 'error');
+    if (btn) { btn.disabled = false; btn.textContent = 'Confirmar pedido'; }
   }
-
-  _operacionId = operacionId;
-
-  // Notificar al taller si fue seleccionado
-  if (_tallerSel?.id) {
-    await dbB2C.from('cat_notificaciones_talleres').insert({
-      taller_id:    _tallerSel.id,
-      operacion_id: operacionId,
-      tipo:         'nueva_operacion',
-      mensaje:      `Nueva operación asignada — $${total.toLocaleString('es-AR')} · ${direccion}`,
-      leida:        false,
-    });
-  }
-
-  // Limpiar carrito local
-  localStorage.removeItem('piezauto_carrito_b2c');
-  if (typeof actualizarBadgeCarrito === 'function') actualizarBadgeCarrito();
-
-  // Flujo MercadoPago: crear preferencia y redirigir al checkout de MP
-  if (_metodoPago === 'mercadopago') {
-    mostrarMsg('Generando link de pago con MercadoPago...', 'info');
-    try {
-      const items = _itemsCarrito || [];
-      const mpData = await mpCrearPreferencia({
-        operacionId,
-        items: items.map(i => ({
-          descripcion:     i.descripcion || 'Autoparte Piezauto',
-          cantidad:        i.cantidad    || 1,
-          precio_unitario: i.precio      || 0,
-        })),
-        pagador: {
-          nombre:   nombre + ' ' + apellido,
-          email:    _cliente.email || '',
-          telefono: telefono,
-        },
-        backUrls: {
-          success: `${window.location.origin}/gracias?op=${operacionId}&pago=aprobado`,
-          failure: `${window.location.origin}/gracias?op=${operacionId}&pago=fallido`,
-          pending: `${window.location.origin}/gracias?op=${operacionId}&pago=pendiente`,
-        },
-      });
-      if (mpData?.init_point) {
-        await mpGuardarPreferencia(dbB2C, operacionId, mpData.preference_id);
-        window.location.href = mpData.init_point;
-        return;
-      }
-    } catch (mpErr) {
-      console.error('[MP] Error al crear preferencia:', mpErr);
-    }
-    // Si MP falla, caer en flujo manual con mensaje de error
-    mostrarMsg('No pudimos conectar con MercadoPago. El pedido quedó registrado — te contactamos para coordinar el pago.', 'error');
-    btn.disabled = false;
-    return;
-  }
-
-  // Redirect a página de gracias (transferencia / efectivo / manual)
-  window.location.href = `/gracias?op=${operacionId}`;
 }
 
 // ── Utils ─────────────────────────────────────────────────────────────
