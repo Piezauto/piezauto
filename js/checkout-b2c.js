@@ -179,6 +179,13 @@ async function confirmarPedido() {
     return;
   }
 
+  // Null-check: si no hay sesión, redirigir al login
+  if (!_cliente) {
+    mostrarMsg('Tu sesión expiró. Ingresá de nuevo.', 'error');
+    setTimeout(() => { window.location.href = '/login?redirect=/checkout-b2c'; }, 1500);
+    return;
+  }
+
   btn.disabled = true;
   mostrarMsg('Confirmando pedido...', 'info');
 

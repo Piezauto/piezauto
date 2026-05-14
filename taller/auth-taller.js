@@ -45,14 +45,14 @@ async function initTallerHeader() {
   const wrap = document.getElementById('taller-header');
   if (!wrap) return;
 
-  // Badge: operaciones pendientes de aprobación del taller
+  // Badge: operaciones nuevas (estado pendiente) — consistente con la lista
   let unread = 0;
   try {
     const { count } = await dbB2C
       .from('cat_operaciones_b2c')
       .select('id', { count: 'exact', head: true })
       .eq('taller_id', meta.taller_id)
-      .eq('pendiente_aprobacion_taller', true);
+      .eq('estado', 'pendiente');
     unread = count || 0;
   } catch {}
 
