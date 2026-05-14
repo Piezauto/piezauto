@@ -183,7 +183,11 @@ const TIPOS = [
         sel.telefono   = cli.telefono || '';
       }
       // Intentar precargar vehículo principal
-      const { data: veh } = await dbB2C.from('cat_vehiculos_clientes').select('*').eq('cliente_id', sel.cliente_id).eq('es_principal', true).single().catch(() => ({ data: null }));
+      let veh = null;
+      try {
+        const { data: vehData } = await dbB2C.from('cat_vehiculos_clientes').select('*').eq('cliente_id', sel.cliente_id).eq('es_principal', true).single();
+        veh = vehData;
+      } catch (_) {}
       if (veh) {
         sel.veh_marca   = veh.marca  || '';
         sel.veh_modelo  = veh.modelo || '';
@@ -501,12 +505,14 @@ async function confirmarTurno() {
     const { data, error } = await dbB2C.from('cat_turnos').insert(payload).select().single();
     if (error) throw error;
     // Notificar al taller
-    await dbB2C.from('cat_notificaciones_talleres').insert({
-      taller_id: sel.taller_id,
-      turno_id:  data.id,
-      tipo: 'nueva_operacion',
-      mensaje: `Nuevo turno solicitado: ${sel.nombre} — ${sel.tipo.replace(/_/g,' ')} — ${sel.fecha} ${sel.hora_inicio}`,
-    }).catch(() => {});
+    try {
+      await dbB2C.from('cat_notificaciones_talleres').insert({
+        taller_id: sel.taller_id,
+        turno_id:  data.id,
+        tipo: 'nueva_operacion',
+        mensaje: `Nuevo turno solicitado: ${sel.nombre} — ${sel.tipo.replace(/_/g,' ')} — ${sel.fecha} ${sel.hora_inicio}`,
+      });
+    } catch (_) {}
     paso = 5;
     renderPaso();
     document.getElementById('confNum').textContent = data.id.slice(0,8).toUpperCase();
