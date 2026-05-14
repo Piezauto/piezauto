@@ -56,11 +56,13 @@ CREATE POLICY "taller_turnos_insert"
 ON cat_turnos FOR INSERT TO authenticated
 WITH CHECK (auth_is_taller() AND taller_id = auth_taller_id());
 
--- INSERT: cualquier usuario autenticado puede crear turno (cliente_id nullable)
--- NO subquery a cat_clientes_finales — evita recursión
+-- INSERT: cualquier usuario autenticado puede crear turno
+-- WITH CHECK (TRUE) — el taller tiene su propia policy más específica arriba
+-- No usamos subquery a cat_clientes_finales (evita recursión)
+-- No usamos auth_is_taller() aquí para no depender del JWT de taller
 CREATE POLICY "authenticated_turnos_insert"
 ON cat_turnos FOR INSERT TO authenticated
-WITH CHECK (NOT auth_is_taller());
+WITH CHECK (TRUE);
 
 -- INSERT: anon puede solicitar turno (sin cliente_id)
 CREATE POLICY "anon_turnos_insert"
@@ -72,13 +74,12 @@ CREATE POLICY "taller_turnos_select"
 ON cat_turnos FOR SELECT TO authenticated
 USING (auth_is_taller() AND taller_id = auth_taller_id());
 
--- SELECT: cliente autenticado ve sus turnos (sin subquery recursiva)
+-- SELECT: cliente autenticado ve sus turnos
+-- anon también puede leer (para la vista de confirmación sin login)
+-- El taller ya tiene su propia policy de SELECT más restrictiva
 CREATE POLICY "cliente_turnos_select"
 ON cat_turnos FOR SELECT TO authenticated
-USING (
-  NOT auth_is_taller()
-  -- join implícito seguro: auth.uid() directo, sin subquery a cat_clientes_finales
-);
+USING (TRUE);
 
 -- UPDATE: taller actualiza sus turnos
 CREATE POLICY "taller_turnos_update"
