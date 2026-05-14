@@ -145,8 +145,7 @@
 </div>
 
 <script>
-const SUPABASE_URL = 'https://mqxowotdeibllkitkije.supabase.co';
-const ANON_KEY     = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xeG93b3RkZWlibGxraXRraWplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxMzgxNDYsImV4cCI6MjA5MTcxNDE0Nn0.V_Pr0elBurAK7OPKFL3OoZwBmb-bI-Mcz8N1U8yblG8';
+// _B2C_URL y _B2C_KEY disponibles desde auth-b2c.js
 
 let _ops = [];
 
@@ -293,6 +292,21 @@ function parseNotas(notas) {
 function escHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
+
+
+// ── AUTH CHECK ADMIN ─────────────────────────────────────────────
+// Verificar sesión antes de renderizar. El admin debe estar autenticado.
+(async () => {
+  try {
+    const { data: { session } } = await dbB2C.auth.getSession();
+    if (!session) {
+      window.location.href = '/admin/login.html?ref=' + encodeURIComponent(window.location.pathname);
+    }
+  } catch (e) {
+    console.warn('Admin auth check error:', e);
+    window.location.href = '/admin/login.html';
+  }
+})();
 
 document.addEventListener('DOMContentLoaded', () => {
   cargarOperaciones();

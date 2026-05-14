@@ -45,15 +45,15 @@ async function initTallerHeader() {
   const wrap = document.getElementById('taller-header');
   if (!wrap) return;
 
-  // Conteo de notificaciones no leídas
+  // Badge: operaciones pendientes de aprobación del taller
   let unread = 0;
   try {
-    const { data: notifs } = await dbB2C
-      .from('cat_notificaciones_talleres')
-      .select('id', { count: 'exact' })
+    const { count } = await dbB2C
+      .from('cat_operaciones_b2c')
+      .select('id', { count: 'exact', head: true })
       .eq('taller_id', meta.taller_id)
-      .eq('leida', false);
-    unread = notifs?.length || 0;
+      .eq('pendiente_aprobacion_taller', true);
+    unread = count || 0;
   } catch {}
 
   // Página activa

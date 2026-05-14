@@ -214,6 +214,7 @@ function renderTurno() {
       <div class="step-label ${hecho ? 'done' : ''} ${activo ? 'activo' : ''}">${paso.label}</div>
       ${reg ? `<div class="step-fecha">${fmtFechaHora(reg.created_at)}</div>` : ''}
       ${reg?.descripcion ? `<div class="step-desc">${esc(reg.descripcion)}</div>` : ''}
+      ${reg?.imagen_url ? `<img src="${reg.imagen_url}" alt="Progreso" style="max-width:100%;max-height:160px;border-radius:8px;margin-top:6px;object-fit:cover">` : ''}
     </div>`;
   }).join('');
 
@@ -297,6 +298,14 @@ function renderTurno() {
         ${puedeAvanzar ? `
         <div style="margin-top:16px">
           <textarea class="notas-input" id="descProgreso" placeholder="Descripción del estado ${siguientePaso.label} (opcional)" style="min-height:60px"></textarea>
+          <div style="margin-top:10px">
+            <label style="font-size:11px;font-weight:700;color:#aaa;display:block;margin-bottom:6px">Foto del estado (opcional)</label>
+            <input type="file" id="imgProgreso" accept="image/*" onchange="previewImgProgreso(this)" style="font-size:12px;font-family:inherit">
+            <div id="imgProgresoPreview" style="display:none;margin-top:8px">
+              <img id="imgProgresoImg" src="" alt="Preview" style="max-width:100%;max-height:200px;border-radius:8px;object-fit:cover">
+              <button onclick="limpiarImgProgreso()" style="display:block;margin-top:4px;font-size:11px;color:#dc2626;background:none;border:none;cursor:pointer;padding:0">Quitar imagen</button>
+            </div>
+          </div>
           <button class="btn-avanzar" onclick="avanzarProgreso('${siguientePaso.estado}')">
             Avanzar → ${siguientePaso.label}
           </button>
@@ -331,14 +340,56 @@ async function guardarNotas() {
   } catch (e) { showToast('Error: ' + e.message, 'error'); }
 }
 
-async function avanzarProgreso(estado) {
-  const desc = document.getElementById('descProgreso')?.value?.trim() || null;
+function previewImgProgreso(input) {
+  const preview = document.getElementById('imgProgresoPreview');
+  const img     = document.getElementById('imgProgresoImg');
+  if (!input.files?.[0]) { preview.style.display = 'none'; return; }
+  const reader = new FileReader();
+  reader.onload = e => { img.src = e.target.result; preview.style.display = 'block'; };
+  reader.readAsDataURL(input.files[0]);
+}
+
+function limpiarImgProgreso() {
+  document.getElementById('imgProgreso').value = '';
+  document.getElementById('imgProgresoPreview').style.display = 'none';
+}
+
+async function subirImagenProgreso(file) {
+  if (!file) return null;
   try {
-    await dbB2C.from('cat_turno_progreso').insert({ turno_id: turno.id, estado, descripcion: desc });
+    const ext      = file.name.split('.').pop() || 'jpg';
+    const filename = `${turno.id}/${Date.now()}.${ext}`;
+    const { data, error } = await dbB2C.storage
+      .from('turno-imagenes')
+      .upload(filename, file, { contentType: file.type, upsert: false });
+    if (error) { console.warn('Upload error:', error.message); return null; }
+    const { data: urlData } = dbB2C.storage.from('turno-imagenes').getPublicUrl(filename);
+    return urlData?.publicUrl || null;
+  } catch (e) { console.warn('Upload exception:', e.message); return null; }
+}
+
+async function avanzarProgreso(estado) {
+  const desc    = document.getElementById('descProgreso')?.value?.trim() || null;
+  const imgFile = document.getElementById('imgProgreso')?.files?.[0] || null;
+
+  const btn = document.querySelector('.btn-avanzar');
+  if (btn) { btn.disabled = true; btn.textContent = imgFile ? 'Subiendo imagen…' : 'Guardando…'; }
+
+  try {
+    const imagen_url = imgFile ? await subirImagenProgreso(imgFile) : null;
+    await dbB2C.from('cat_turno_progreso').insert({
+      turno_id: turno.id,
+      estado,
+      descripcion: desc,
+      imagen_url,
+    });
     await notificarCliente('progreso_actualizado', 'Progreso actualizado', `Tu vehículo está en estado: ${estado.replace(/_/g,' ')}.`);
     showToast('✓ Progreso actualizado');
     await cargarTurno(turno.id);
-  } catch (e) { showToast('Error: ' + e.message, 'error'); }
+  } catch (e) {
+    showToast('Error: ' + e.message, 'error');
+    if (btn) { btn.disabled = false; btn.textContent = 'Avanzar'; }
+  }
 }
 
 // Calificación

@@ -226,9 +226,12 @@ async function cargarTalleres() {
             ${promedio ? promedio + ' (' + resenas.length + ' reseñas)' : 'Sin reseñas aún'}
           </span>
         </div>
-        <button class="taller-card-btn" onclick="window.location='talleres.html?id=${t.id}'">
-          Ver taller
-        </button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="taller-card-btn" onclick="window.location='talleres.html?id=${t.id}'">
+            Ver taller
+          </button>
+          <a href="/taller-perfil.html?taller_id=${t.id}" style="display:inline-flex;align-items:center;padding:0 14px;height:36px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:13px;font-weight:600;color:#2563eb;text-decoration:none;transition:border-color .15s" onmouseover="this.style.borderColor='#2563eb'" onmouseout="this.style.borderColor='#e0e0e0'">Ver perfil →</a>
+        </div>
       </div>
     `;
   }).join('');

@@ -1110,7 +1110,8 @@ function switchTab(btn) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById(btn.dataset.tab).classList.add('active');
-  if (btn.dataset.tab === 'tab-publico') actualizarPreview();
+  if (btn.dataset.tab === 'tab-publico') { actualizarPreview(); actualizarPreviewCompleto(); }
+  if (btn.dataset.tab === 'tab-turnos')  { cargarDisponibilidadTab(); }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1506,13 +1507,7 @@ async function actualizarPreviewCompleto() {
   if (btnT && tallerData.id) btnT.href = `/solicitar-turno?taller_id=${tallerData.id}`;
 }
 
-// Hookear en switchTab
-const _origSwitchTab = switchTab;
-function switchTab(btn) {
-  _origSwitchTab(btn);
-  if (btn.dataset.tab === 'tab-turnos') cargarDisponibilidadTab();
-  if (btn.dataset.tab === 'tab-publico') { actualizarPreview(); actualizarPreviewCompleto(); }
-}
+// switchTab — lógica de tabs extendida directamente en la función original (ver arriba)
 </script>
 </body>
 </html>

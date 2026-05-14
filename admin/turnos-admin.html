@@ -414,6 +414,21 @@ function showToast(msg, type='ok') {
   clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
 }
 
+
+// ── AUTH CHECK ADMIN ─────────────────────────────────────────────
+// Verificar sesión antes de renderizar. El admin debe estar autenticado.
+(async () => {
+  try {
+    const { data: { session } } = await dbB2C.auth.getSession();
+    if (!session) {
+      window.location.href = '/admin/login.html?ref=' + encodeURIComponent(window.location.pathname);
+    }
+  } catch (e) {
+    console.warn('Admin auth check error:', e);
+    window.location.href = '/admin/login.html';
+  }
+})();
+
 document.addEventListener('DOMContentLoaded', init);
 </script>
 </body>

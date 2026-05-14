@@ -247,8 +247,8 @@ async function renderPaso2(cont) {
       ${talleres.length ? talleres.map(t => `
       <div class="taller-item ${sel.taller_id === t.id ? 'sel' : ''}" onclick="selTaller('${t.id}','${esc(t.nombre)}')">
         <div class="taller-icon">🔧</div>
-        <div>
-          <div class="taller-nombre">${esc(t.nombre)}</div>
+        <div style="flex:1">
+          <div class="taller-nombre">${esc(t.nombre)} <a href="/taller-perfil.html?taller_id=${t.id}" target="_blank" onclick="event.stopPropagation()" style="font-size:11px;color:#2563eb;font-weight:600;text-decoration:none">Ver perfil →</a></div>
           <div class="taller-dir">${esc(t.direccion || '')}${t.localidad ? ', ' + esc(t.localidad) : ''}</div>
         </div>
         <input type="radio" class="taller-radio" name="taller" ${sel.taller_id === t.id ? 'checked' : ''}>

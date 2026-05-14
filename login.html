@@ -182,7 +182,7 @@
     const cliente = await getClienteActual();
     if (cliente) {
       const redirect = new URLSearchParams(window.location.search).get('redirect');
-      window.location.href = redirect || 'perfil.html';
+      window.location.href = redirect || '/perfil.html';
     }
   })();
 
@@ -240,7 +240,7 @@
 
     mostrarOk('¡Bienvenido! Redirigiendo...');
     const redirect = new URLSearchParams(window.location.search).get('redirect');
-    setTimeout(() => { window.location.href = redirect || 'perfil.html'; }, 1000);
+    setTimeout(() => { window.location.href = redirect || '/perfil.html'; }, 1000);
   });
 
   document.getElementById('btn-reset').addEventListener('click', async () => {

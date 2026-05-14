@@ -98,11 +98,12 @@ function renderTallerList(talleres) {
 
   talleres.forEach((t, i) => {
     const dist = t._dist && t._dist < 9999 ? `<span style="font-size:11px;color:#888;margin-left:6px">${t._dist.toFixed(1)} km</span>` : '';
-    const wa   = t.whatsapp ? `<a class="taller-wa" href="https://wa.me/54${t.whatsapp.replace(/\D/g,'')}" target="_blank">WhatsApp</a>` : '';
+    const wa      = t.whatsapp ? `<a class="taller-wa" href="https://wa.me/54${t.whatsapp.replace(/\D/g,'')}" target="_blank">WhatsApp</a>` : '';
+    const perfilLink = `<a href="/taller-perfil.html?taller_id=${t.id}" target="_blank" onclick="event.stopPropagation()" style="font-size:11px;color:#2563eb;font-weight:600;text-decoration:none;margin-left:8px">Ver perfil →</a>`;
     html += `<div class="taller-card" id="taller-card-${i}" onclick="seleccionarTaller(${i})">
       <input type="radio" name="taller" id="taller-radio-${i}">
       <div class="taller-info">
-        <div class="taller-nombre">${escHtml(t.nombre)}${dist}</div>
+        <div class="taller-nombre">${escHtml(t.nombre)}${dist}${perfilLink}</div>
         <div class="taller-dir">${escHtml(t.direccion || '')}</div>
         <div class="taller-loc">${escHtml(t.localidad || '')}</div>
         ${wa}
