@@ -235,10 +235,14 @@ async function confirmarPedido() {
     let opId = borradores?.[0]?.id;
 
     if (opId) {
+      // Actualizar borrador existente
       await dbB2C.from('cat_operaciones_b2c')
         .update({ ...opPayload, updated_at: new Date().toISOString() })
         .eq('id', opId);
+      // Reemplazar items: borrar los anteriores e insertar los del carrito actual
+      await dbB2C.from('cat_operaciones_b2c_items').delete().eq('operacion_id', opId);
     } else {
+      // Crear operación nueva
       const { data: op, error: opError } = await dbB2C
         .from('cat_operaciones_b2c')
         .insert(opPayload)
@@ -246,16 +250,17 @@ async function confirmarPedido() {
         .single();
       if (opError || !op) throw new Error(opError?.message || 'Error al crear el pedido.');
       opId = op.id;
-
-      const lineas = items.map(i => ({
-        operacion_id:    opId,
-        sku_id:          i.id,
-        cantidad:        i.cantidad,
-        precio_unitario: i.precio || 0,
-        subtotal:        (i.precio || 0) * i.cantidad,
-      }));
-      if (lineas.length) await dbB2C.from('cat_operaciones_b2c_items').insert(lineas);
     }
+
+    // Insertar items (tanto para borrador actualizado como para operación nueva)
+    const lineas = items.map(i => ({
+      operacion_id:    opId,
+      sku_id:          i.id,
+      cantidad:        i.cantidad,
+      precio_unitario: i.precio || 0,
+      subtotal:        (i.precio || 0) * i.cantidad,
+    }));
+    if (lineas.length) await dbB2C.from('cat_operaciones_b2c_items').insert(lineas);
 
     _operacionId = opId;
 
