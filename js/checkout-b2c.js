@@ -4,7 +4,7 @@
 const PAGO_INFO = {
   manual:       '📋 <strong>Transferencia bancaria:</strong> te enviamos el CBU/alias por WhatsApp al confirmar. El pedido se activa una vez que confirmamos el pago.',
   efectivo:     '💵 <strong>Efectivo:</strong> abonás al retirar la pieza en el local. Dirección: te la enviamos al confirmar.',
-  mercadopago:  '⏳ <strong>MercadoPago:</strong> la integración estará disponible en los próximos días. Por ahora usá transferencia o efectivo.',
+  mercadopago:  '📱 <strong>MercadoPago:</strong> serás redirigido al checkout de MercadoPago para completar el pago de forma segura.',
   debito:       '⏳ <strong>Débito/Crédito:</strong> próximamente. Por ahora usá transferencia o efectivo.',
 };
 
@@ -174,8 +174,8 @@ async function confirmarPedido() {
   if (!telefono)            { mostrarMsg('Completá tu teléfono de contacto.', 'error'); return; }
   if (!direccion)           { mostrarMsg('Completá la dirección de entrega.', 'error'); return; }
 
-  if (_metodoPago === 'mercadopago' || _metodoPago === 'debito') {
-    mostrarMsg('Ese medio de pago estará disponible próximamente. Elegí transferencia o efectivo.', 'error');
+  if (_metodoPago === 'debito') {
+    mostrarMsg('Débito/Crédito estará disponible próximamente. Elegí transferencia, efectivo o MercadoPago.', 'error');
     return;
   }
 
