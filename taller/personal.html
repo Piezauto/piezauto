@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Personal — Piezauto Point</title>
+  <link rel="stylesheet" href="../css/estilos.css">
+  <style>
+    :root{--brand:#1A1A2E;--accent:#E94560;--ink-1:#111827;--ink-2:#374151;--ink-3:#6B7280;--ink-4:#9CA3AF;--surface:#fff;--surface-2:#F9FAFB;--surface-3:#F3F4F6;--line:#E5E7EB;--line-strong:#D1D5DB;--green:#059669;--green-soft:#ECFDF5;--red:#DC2626;--red-soft:#FEF2F2;--amber:#D97706;--amber-soft:#FFFBEB;--radius:8px;--radius-lg:12px;--shadow-sm:0 1px 3px rgba(0,0,0,.07);--shadow-lg:0 8px 32px rgba(0,0,0,.18)}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--surface-2);color:var(--ink-1);min-height:100vh;font-size:14px;line-height:1.5}
+    button{font-family:inherit}
+    .app-shell{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
+    .topbar{background:var(--brand);color:#fff;padding:0 14px;height:56px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.25);flex-shrink:0}
+    .topbar-back{width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:50%;cursor:pointer}
+    .topbar-back svg{width:20px;height:20px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    .topbar-title{font-size:15px;font-weight:700;flex:1}
+    /* Stats */
+    .stats-bar{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px 12px 4px}
+    .stat-card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--line);padding:12px 14px}
+    .stat-num{font-size:24px;font-weight:800;color:var(--ink-1)}
+    .stat-label{font-size:11px;color:var(--ink-3);font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-top:2px}
+    /* Lista */
+    .lista{flex:1;padding:12px 12px 100px;display:flex;flex-direction:column;gap:8px}
+    /* ROL badges */
+    .rol-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;flex-shrink:0}
+    .rol-chapista{background:#dbeafe;color:#1d4ed8}
+    .rol-pintor{background:#fce7f3;color:#9d174d}
+    .rol-mecanico{background:#d1fae5;color:#065f46}
+    .rol-electricista{background:#fef3c7;color:#92400e}
+    .rol-administrativo{background:#f3e8ff;color:#6b21a8}
+    .rol-otro{background:var(--surface-3);color:var(--ink-2)}
+    /* Card */
+    .card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--line);box-shadow:var(--shadow-sm);padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:box-shadow .15s}
+    .card.inactivo{opacity:.55}
+    .card:hover{box-shadow:var(--shadow-lg)}
+    .card-avatar{width:40px;height:40px;border-radius:50%;background:var(--brand);color:#fff;font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .card-body{flex:1;min-width:0}
+    .card-nombre{font-size:14px;font-weight:700;color:var(--ink-1)}
+    .card-meta{font-size:12px;color:var(--ink-3);margin-top:2px}
+    .card-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+    .costo-hora{font-size:13px;font-weight:700;color:var(--ink-2)}
+    .fab{position:fixed;bottom:24px;right:calc(50% - 240px + 16px);width:56px;height:56px;background:var(--accent);color:#fff;border:none;border-radius:50%;font-size:26px;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-lg);cursor:pointer;z-index:80}
+    .estado-centro{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 24px;text-align:center;gap:12px}
+    .estado-icon{font-size:52px}.estado-titulo{font-size:16px;font-weight:600;color:var(--ink-2)}.estado-sub{font-size:13px;color:var(--ink-3)}
+    .skeleton{background:var(--surface);border-radius:var(--radius-lg);padding:16px;border:1px solid var(--line);animation:pulse 1.4s ease-in-out infinite}
+    .skel-line{background:var(--surface-3);border-radius:4px;margin-bottom:8px}
+    .skel-line.w70{width:70%;height:13px}.skel-line.w45{width:45%;height:11px}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+    /* Drawer */
+    .drawer-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:flex-end;justify-content:center}
+    .drawer-overlay.open{display:flex;animation:fadeIn .2s}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    .drawer{background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-width:480px;max-height:90vh;display:flex;flex-direction:column;animation:slideUp .25s cubic-bezier(.34,1.56,.64,1)}
+    @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+    .drawer-handle{width:36px;height:4px;background:var(--line-strong);border-radius:2px;margin:12px auto 0;flex-shrink:0}
+    .drawer-header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px 10px;border-bottom:1px solid var(--line);flex-shrink:0}
+    .drawer-titulo{font-size:16px;font-weight:700}
+    .drawer-close{width:30px;height:30px;border-radius:50%;background:var(--surface-3);border:none;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink-2)}
+    .drawer-body{overflow-y:auto;flex:1;padding:16px 20px}
+    .drawer-footer{padding:12px 20px 20px;border-top:1px solid var(--line);display:flex;gap:10px;flex-shrink:0}
+    .fg{margin-bottom:12px}
+    .fl{font-size:12px;font-weight:600;color:var(--ink-2);margin-bottom:5px;display:block}
+    .fl .req{color:var(--accent);margin-left:2px}
+    .fi,.fs{width:100%;border:1.5px solid var(--line-strong);border-radius:var(--radius);padding:10px 12px;font-size:14px;font-family:inherit;color:var(--ink-1);background:var(--surface);outline:none;transition:border-color .15s}
+    .fi:focus,.fs:focus{border-color:var(--brand)}
+    .fi::placeholder{color:var(--ink-4)}
+    .fi.error{border-color:var(--red)}
+    .fs{appearance:none}
+    .fr2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0}
+    .toggle-label{font-size:13px;font-weight:600;color:var(--ink-2)}
+    .toggle-sw{position:relative;width:42px;height:24px}
+    .toggle-sw input{opacity:0;width:0;height:0}
+    .toggle-track{position:absolute;inset:0;background:var(--line-strong);border-radius:12px;cursor:pointer;transition:background .2s}
+    .toggle-track::after{content:'';position:absolute;width:18px;height:18px;top:3px;left:3px;background:#fff;border-radius:50%;transition:transform .2s;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+    .toggle-sw input:checked+.toggle-track{background:var(--green)}
+    .toggle-sw input:checked+.toggle-track::after{transform:translateX(18px)}
+    .btn-cancelar{flex:1;padding:12px;border-radius:var(--radius-lg);border:1.5px solid var(--line-strong);background:var(--surface);font-size:14px;font-weight:600;color:var(--ink-2);cursor:pointer}
+    .btn-guardar{flex:2;padding:12px;border-radius:var(--radius-lg);border:none;background:var(--brand);font-size:14px;font-weight:700;color:#fff;cursor:pointer;transition:opacity .15s}
+    .btn-guardar:hover{opacity:.88}
+    .btn-guardar:disabled{opacity:.45;cursor:default}
+    .btn-del{flex:1;padding:12px;border-radius:var(--radius-lg);border:none;background:var(--red-soft);font-size:14px;font-weight:700;color:var(--red);cursor:pointer}
+    .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--ink-1);color:#fff;padding:11px 20px;border-radius:20px;font-size:13px;font-weight:600;box-shadow:var(--shadow-lg);opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:500}
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+    .toast.error{background:var(--accent)}
+  </style>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase.js"></script>
+<script src="../js/auth-b2c.js"></script>
+<script src="auth-taller.js"></script>
+<div id="taller-header"></div>
+<div class="app-shell">
+  <header class="topbar">
+    <div class="topbar-back" onclick="history.back()">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    </div>
+    <span class="topbar-title">Personal del taller</span>
+  </header>
+  <div class="stats-bar">
+    <div class="stat-card"><div class="stat-num" id="statActivos">—</div><div class="stat-label">Activos</div></div>
+    <div class="stat-card"><div class="stat-num" id="statCosto">—</div><div class="stat-label">Costo prom./h</div></div>
+  </div>
+  <div class="lista" id="lista"></div>
+  <button class="fab" onclick="abrirNuevo()">+</button>
+</div>
+
+<div class="drawer-overlay" id="drawerOverlay" onclick="cerrarSiClick(event)">
+  <div class="drawer">
+    <div class="drawer-handle"></div>
+    <div class="drawer-header">
+      <span class="drawer-titulo" id="drawerTitulo">Nuevo operario</span>
+      <button class="drawer-close" onclick="cerrarDrawer()">✕</button>
+    </div>
+    <div class="drawer-body">
+      <div class="fr2">
+        <div class="fg"><label class="fl">Nombre <span class="req">*</span></label><input class="fi" id="f-nombre" type="text" placeholder="Juan"></div>
+        <div class="fg"><label class="fl">Apellido</label><input class="fi" id="f-apellido" type="text" placeholder="García"></div>
+      </div>
+      <div class="fg">
+        <label class="fl">Rol <span class="req">*</span></label>
+        <select class="fs" id="f-rol">
+          <option value="chapista">Chapista</option>
+          <option value="pintor">Pintor</option>
+          <option value="mecanico">Mecánico</option>
+          <option value="electricista">Electricista</option>
+          <option value="administrativo">Administrativo</option>
+          <option value="otro">Otro</option>
+        </select>
+      </div>
+      <div class="fr2">
+        <div class="fg"><label class="fl">Teléfono</label><input class="fi" id="f-tel" type="tel" placeholder="11 5555-1234"></div>
+        <div class="fg"><label class="fl">Costo/hora ($)</label><input class="fi" id="f-costo" type="number" min="0" step="100" placeholder="0"></div>
+      </div>
+      <div class="fg"><label class="fl">Email</label><input class="fi" id="f-email" type="email" placeholder=""></div>
+      <div class="toggle-row">
+        <span class="toggle-label">Operario activo</span>
+        <label class="toggle-sw"><input type="checkbox" id="f-activo" checked><div class="toggle-track"></div></label>
+      </div>
+    </div>
+    <div class="drawer-footer" id="drawerFooter">
+      <button class="btn-cancelar" onclick="cerrarDrawer()">Cancelar</button>
+      <button class="btn-guardar" id="btnGuardar" onclick="guardar()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>
+const TABLA = 'cat_taller_personal';
+const ROL_LABEL = {chapista:'Chapista',pintor:'Pintor',mecanico:'Mecánico',electricista:'Electricista',administrativo:'Administrativo',otro:'Otro'};
+let tallerId=null, items=[], activo=null, guardando=false;
+
+(async()=>{
+  const auth = await requireTallerAuth(); if(!auth) return;
+  await initTallerHeader();
+  tallerId = auth.meta.taller_id;
+  await cargar();
+})();
+
+async function cargar(){
+  document.getElementById('lista').innerHTML = Array(3).fill('<div class="skeleton"><div class="skel-line w70"></div><div class="skel-line w45"></div></div>').join('');
+  const {data} = await dbB2C.from(TABLA).select('*').eq('taller_id',tallerId).order('nombre');
+  items = data||[];
+  const activos = items.filter(x=>x.activo);
+  document.getElementById('statActivos').textContent = activos.length;
+  const costos = activos.map(x=>x.costo_hora||0).filter(x=>x>0);
+  document.getElementById('statCosto').textContent = costos.length ? '$'+Math.round(costos.reduce((a,b)=>a+b,0)/costos.length).toLocaleString('es-AR') : '—';
+  renderLista();
+}
+
+function renderLista(){
+  const c=document.getElementById('lista');
+  if(!items.length){c.innerHTML='<div class="estado-centro"><div class="estado-icon">👷</div><div class="estado-titulo">Sin personal registrado</div><div class="estado-sub">Tocá + para agregar el primer operario.</div></div>';return;}
+  c.innerHTML=items.map(p=>`
+    <div class="card ${p.activo?'':'inactivo'}" onclick="abrirEditar('${p.id}')">
+      <div class="card-avatar">${(p.nombre[0]||'?').toUpperCase()}</div>
+      <div class="card-body">
+        <div class="card-nombre">${esc(p.nombre)} ${esc(p.apellido||'')}</div>
+        <div class="card-meta">${p.tel||p.telefono||'Sin teléfono'}${!p.activo?' · Inactivo':''}</div>
+      </div>
+      <div class="card-right">
+        <span class="rol-badge rol-${p.rol}">${ROL_LABEL[p.rol]||p.rol}</span>
+        ${p.costo_hora?`<span class="costo-hora">$${Math.round(p.costo_hora).toLocaleString('es-AR')}/h</span>`:''}
+      </div>
+    </div>`).join('');
+}
+
+function abrirNuevo(){
+  activo=null;
+  document.getElementById('drawerTitulo').textContent='Nuevo operario';
+  document.getElementById('f-nombre').value='';
+  document.getElementById('f-apellido').value='';
+  document.getElementById('f-rol').value='chapista';
+  document.getElementById('f-tel').value='';
+  document.getElementById('f-costo').value='';
+  document.getElementById('f-email').value='';
+  document.getElementById('f-activo').checked=true;
+  document.getElementById('drawerFooter').innerHTML='<button class="btn-cancelar" onclick="cerrarDrawer()">Cancelar</button><button class="btn-guardar" id="btnGuardar" onclick="guardar()">Guardar</button>';
+  document.getElementById('drawerOverlay').classList.add('open');
+}
+
+function abrirEditar(id){
+  activo=items.find(x=>x.id===id); if(!activo) return;
+  document.getElementById('drawerTitulo').textContent='Editar operario';
+  document.getElementById('f-nombre').value=activo.nombre||'';
+  document.getElementById('f-apellido').value=activo.apellido||'';
+  document.getElementById('f-rol').value=activo.rol||'otro';
+  document.getElementById('f-tel').value=activo.telefono||'';
+  document.getElementById('f-costo').value=activo.costo_hora||'';
+  document.getElementById('f-email').value=activo.email||'';
+  document.getElementById('f-activo').checked=!!activo.activo;
+  document.getElementById('drawerFooter').innerHTML='<button class="btn-del" onclick="eliminar()">Eliminar</button><button class="btn-cancelar" onclick="cerrarDrawer()">Cancelar</button><button class="btn-guardar" id="btnGuardar" onclick="guardar()">Guardar</button>';
+  document.getElementById('drawerOverlay').classList.add('open');
+}
+
+async function guardar(){
+  if(guardando) return;
+  const nombre=(document.getElementById('f-nombre').value||'').trim();
+  if(!nombre){document.getElementById('f-nombre').classList.add('error');return;}
+  document.getElementById('f-nombre').classList.remove('error');
+  guardando=true;
+  const btn=document.getElementById('btnGuardar');
+  btn.disabled=true; btn.textContent='Guardando…';
+  const payload={
+    nombre, apellido:document.getElementById('f-apellido').value.trim()||null,
+    rol:document.getElementById('f-rol').value,
+    telefono:document.getElementById('f-tel').value.trim()||null,
+    email:document.getElementById('f-email').value.trim()||null,
+    costo_hora:parseFloat(document.getElementById('f-costo').value)||0,
+    activo:document.getElementById('f-activo').checked,
+    updated_at:new Date().toISOString(),
+  };
+  try{
+    if(activo){await dbB2C.from(TABLA).update(payload).eq('id',activo.id);showToast('✓ Actualizado');}
+    else{await dbB2C.from(TABLA).insert({...payload,taller_id:tallerId});showToast('✓ Agregado');}
+    cerrarDrawer(); await cargar();
+  }catch(e){showToast('Error: '+e.message,'error');}
+  finally{guardando=false;btn.disabled=false;btn.textContent='Guardar';}
+}
+
+async function eliminar(){
+  if(!activo||!confirm(`¿Eliminar a ${activo.nombre}?`)) return;
+  await dbB2C.from(TABLA).delete().eq('id',activo.id);
+  showToast('Eliminado'); cerrarDrawer(); await cargar();
+}
+
+function cerrarDrawer(){document.getElementById('drawerOverlay').classList.remove('open');}
+function cerrarSiClick(e){if(e.target===document.getElementById('drawerOverlay'))cerrarDrawer();}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+let tt;function showToast(m,t='ok'){const el=document.getElementById('toast');el.textContent=m;el.className='toast show'+(t==='error'?' error':'');clearTimeout(tt);tt=setTimeout(()=>el.classList.remove('show'),3000);}
+</script>
+</body>
+</html>

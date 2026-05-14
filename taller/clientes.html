@@ -624,7 +624,13 @@
       </div>
       <button class="detalle-close" onclick="cerrarDetalle()">✕</button>
     </div>
+    <!-- Tabs datos / historial -->
+    <div style="display:flex;border-bottom:1px solid var(--line);flex-shrink:0">
+      <button id="tab-datos-btn" onclick="switchDetTab('datos')" style="flex:1;padding:10px;font-size:12px;font-weight:700;background:none;border:none;border-bottom:2.5px solid var(--accent);color:var(--accent);cursor:pointer;font-family:inherit">Datos</button>
+      <button id="tab-hist-btn"  onclick="switchDetTab('hist')"  style="flex:1;padding:10px;font-size:12px;font-weight:700;background:none;border:none;border-bottom:2.5px solid transparent;color:var(--ink-3);cursor:pointer;font-family:inherit">Historial ORs</button>
+    </div>
     <div class="detalle-body" id="detBody"></div>
+    <div class="detalle-body" id="detHistorial" style="display:none;overflow-y:auto;flex:1;padding:0 20px"></div>
     <div class="detalle-footer">
       <button class="btn-editar" onclick="editarDesdeDetalle()">✏️ Editar</button>
       <button class="btn-eliminar" onclick="confirmarEliminar()">🗑️ Eliminar</button>
@@ -904,6 +910,8 @@ function abrirDetalle(id) {
       </div>`).join('')
     : '<p style="color:var(--ink-4);font-size:13px;padding:8px 0">Sin datos adicionales.</p>';
 
+  switchDetTab('datos');
+  cargarHistorialOR(id);
   document.getElementById('detalleOverlay').classList.add('open');
 }
 
@@ -1084,6 +1092,53 @@ function showToast(msg, type = 'ok') {
 // ARRANQUE
 // ═══════════════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', init);
+
+function switchDetTab(tab) {
+  const isDatos = tab === 'datos';
+  document.getElementById('detBody').style.display      = isDatos ? '' : 'none';
+  document.getElementById('detHistorial').style.display = isDatos ? 'none' : '';
+  document.getElementById('tab-datos-btn').style.borderBottomColor = isDatos ? 'var(--accent)' : 'transparent';
+  document.getElementById('tab-datos-btn').style.color             = isDatos ? 'var(--accent)' : 'var(--ink-3)';
+  document.getElementById('tab-hist-btn').style.borderBottomColor  = isDatos ? 'transparent' : 'var(--accent)';
+  document.getElementById('tab-hist-btn').style.color              = isDatos ? 'var(--ink-3)' : 'var(--accent)';
+}
+
+async function cargarHistorialOR(clienteId) {
+  const cont = document.getElementById('detHistorial');
+  if (!cont) return;
+  cont.innerHTML = '<div style="text-align:center;padding:20px;color:var(--ink-4);font-size:13px">Cargando…</div>';
+  try {
+    const { data } = await dbB2C.from('cat_ordenes_reparacion')
+      .select('id,numero_or,vehiculo_dominio,vehiculo_marca,vehiculo_modelo,estado,fecha_ingreso,total_cliente')
+      .eq('taller_id', tallerId).eq('cliente_id', clienteId)
+      .order('fecha_ingreso', { ascending: false });
+    if (!data || !data.length) { cont.innerHTML = '<p style="color:var(--ink-4);font-size:13px;padding:12px 0">Sin órdenes para este cliente.</p>'; return; }
+    const EL = {recepcion:'Recepción',diagnostico:'Diagnóstico',esperando_autorizacion:'Esp. autor.',esperando_piezas:'Esp. piezas',en_reparacion:'En reparación',en_pintura:'En pintura',control_calidad:'Control',listo:'Listo',entregado:'Entregado',cancelado:'Cancelado'};
+    cont.innerHTML = data.map(or => `
+      <div onclick="window.location='/taller/orden-detalle.html?id=${or.id}'" style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:11px;font-family:monospace;color:var(--ink-3)">${or.numero_or||'—'}</div>
+          <div style="font-size:14px;font-weight:700">${or.vehiculo_dominio} ${[or.vehiculo_marca,or.vehiculo_modelo].filter(Boolean).join(' ')}</div>
+          <div style="font-size:11px;color:var(--ink-3)">${new Date(or.fecha_ingreso+'T12:00').toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit'})}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;background:var(--surface-3);color:var(--ink-2)">${EL[or.estado]||or.estado}</span>
+          ${or.total_cliente ? '<div style="font-size:13px;font-weight:700;margin-top:3px">$'+Math.round(or.total_cliente).toLocaleString('es-AR')+'</div>' : ''}
+        </div>
+        <span style="color:var(--ink-4)">›</span>
+      </div>`).join('');
+  } catch(e) { cont.innerHTML = '<p style="color:var(--red);font-size:13px">Error: '+e.message+'</p>'; }
+}
+
+function switchDetTab(tab) {
+  const d = tab === 'datos';
+  document.getElementById('detBody').style.display      = d ? '' : 'none';
+  document.getElementById('detHistorial').style.display = d ? 'none' : '';
+  document.getElementById('tab-datos-btn').style.borderBottomColor = d ? 'var(--accent)' : 'transparent';
+  document.getElementById('tab-datos-btn').style.color             = d ? 'var(--accent)' : 'var(--ink-3)';
+  document.getElementById('tab-hist-btn').style.borderBottomColor  = d ? 'transparent' : 'var(--accent)';
+  document.getElementById('tab-hist-btn').style.color              = d ? 'var(--ink-3)' : 'var(--accent)';
+}
 </script>
 </body>
 </html>

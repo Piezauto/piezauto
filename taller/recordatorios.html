@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recordatorios — Piezauto Point</title>
+  <link rel="stylesheet" href="../css/estilos.css">
+  <style>
+    :root{--brand:#1A1A2E;--accent:#E94560;--ink-1:#111827;--ink-2:#374151;--ink-3:#6B7280;--ink-4:#9CA3AF;--surface:#fff;--surface-2:#F9FAFB;--surface-3:#F3F4F6;--line:#E5E7EB;--line-strong:#D1D5DB;--green:#059669;--green-soft:#ECFDF5;--red:#DC2626;--red-soft:#FEF2F2;--amber:#D97706;--amber-soft:#FFFBEB;--radius:8px;--radius-lg:12px;--shadow-sm:0 1px 3px rgba(0,0,0,.07);--shadow-lg:0 8px 32px rgba(0,0,0,.18)}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--surface-2);color:var(--ink-1);min-height:100vh;font-size:14px;line-height:1.5}
+    button{font-family:inherit}
+    .app-shell{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
+    .topbar{background:var(--brand);color:#fff;padding:0 14px;height:56px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.25);flex-shrink:0}
+    .topbar-back{width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:50%;cursor:pointer}
+    .topbar-back svg{width:20px;height:20px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    .topbar-title{font-size:15px;font-weight:700;flex:1}
+    .tabs{display:flex;background:var(--surface);border-bottom:1px solid var(--line);flex-shrink:0}
+    .tab-btn{flex:1;padding:12px 4px;font-size:12px;font-weight:600;color:var(--ink-3);background:none;border:none;border-bottom:2.5px solid transparent;cursor:pointer;font-family:inherit;transition:all .15s}
+    .tab-btn.active{color:var(--brand);border-bottom-color:var(--accent)}
+    .panel{display:none;flex:1;flex-direction:column}
+    .panel.active{display:flex}
+    .panel-body{padding:12px 12px 80px;display:flex;flex-direction:column;gap:10px}
+    /* Recordatorio card */
+    .rec-card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--line);box-shadow:var(--shadow-sm);padding:12px 14px;display:flex;gap:10px;align-items:flex-start}
+    .rec-icon{font-size:22px;flex-shrink:0;padding-top:2px}
+    .rec-body{flex:1;min-width:0}
+    .rec-tipo{font-size:11px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px}
+    .rec-mensaje{font-size:13px;color:var(--ink-1);line-height:1.4}
+    .rec-meta{font-size:11px;color:var(--ink-4);margin-top:4px}
+    .rec-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;flex-shrink:0}
+    .rec-pendiente{background:var(--amber-soft);color:var(--amber)}
+    .rec-enviado{background:var(--green-soft);color:var(--green)}
+    /* Config card */
+    .config-card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--line);box-shadow:var(--shadow-sm);overflow:hidden}
+    .config-head{padding:14px 16px;font-size:14px;font-weight:700;border-bottom:1px solid var(--line)}
+    .config-row{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line)}
+    .config-row:last-child{border-bottom:none}
+    .config-label{font-size:13px;font-weight:600;color:var(--ink-2)}
+    .config-sub{font-size:11px;color:var(--ink-3);margin-top:2px}
+    .toggle-sw{position:relative;width:42px;height:24px}
+    .toggle-sw input{opacity:0;width:0;height:0}
+    .toggle-track{position:absolute;inset:0;background:var(--line-strong);border-radius:12px;cursor:pointer;transition:background .2s}
+    .toggle-track::after{content:'';position:absolute;width:18px;height:18px;top:3px;left:3px;background:#fff;border-radius:50%;transition:transform .2s;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+    .toggle-sw input:checked+.toggle-track{background:var(--green)}
+    .toggle-sw input:checked+.toggle-track::after{transform:translateX(18px)}
+    .fg{margin-bottom:12px;padding:0 16px}
+    .fl{font-size:12px;font-weight:600;color:var(--ink-2);margin-bottom:5px;display:block}
+    .fi,.fta{width:100%;border:1.5px solid var(--line-strong);border-radius:var(--radius);padding:10px 12px;font-size:14px;font-family:inherit;color:var(--ink-1);background:var(--surface);outline:none;transition:border-color .15s}
+    .fi:focus,.fta:focus{border-color:var(--brand)}
+    .fta{resize:none;min-height:60px}
+    .plantilla-card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--line);box-shadow:var(--shadow-sm);padding:12px 14px;margin-bottom:8px}
+    .plantilla-tipo{font-size:11px;font-weight:700;color:var(--ink-3);text-transform:uppercase;margin-bottom:6px}
+    .btn-guardar-config{display:block;width:calc(100% - 24px);margin:0 12px;padding:13px;border-radius:var(--radius-lg);border:none;background:var(--brand);color:#fff;font-size:14px;font-weight:700;cursor:pointer;transition:opacity .15s}
+    .btn-guardar-config:hover{opacity:.88}
+    /* FAB */
+    .fab{position:fixed;bottom:24px;right:calc(50% - 240px + 16px);width:56px;height:56px;background:var(--accent);color:#fff;border:none;border-radius:50%;font-size:26px;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-lg);cursor:pointer;z-index:80}
+    /* Drawer */
+    .drawer-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:flex-end;justify-content:center}
+    .drawer-overlay.open{display:flex;animation:fadeIn .2s}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    .drawer{background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-width:480px;max-height:90vh;display:flex;flex-direction:column;animation:slideUp .25s cubic-bezier(.34,1.56,.64,1)}
+    @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+    .drawer-handle{width:36px;height:4px;background:var(--line-strong);border-radius:2px;margin:12px auto 0;flex-shrink:0}
+    .drawer-header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px 10px;border-bottom:1px solid var(--line);flex-shrink:0}
+    .drawer-titulo{font-size:16px;font-weight:700}
+    .drawer-close{width:30px;height:30px;border-radius:50%;background:var(--surface-3);border:none;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+    .drawer-body{overflow-y:auto;flex:1;padding:16px 20px}
+    .drawer-footer{padding:12px 20px 20px;border-top:1px solid var(--line);display:flex;gap:10px;flex-shrink:0}
+    .btn-cancelar{flex:1;padding:12px;border-radius:var(--radius-lg);border:1.5px solid var(--line-strong);background:var(--surface);font-size:14px;font-weight:600;color:var(--ink-2);cursor:pointer}
+    .btn-guardar{flex:2;padding:12px;border-radius:var(--radius-lg);border:none;background:var(--brand);font-size:14px;font-weight:700;color:#fff;cursor:pointer}
+    .fs-dr{width:100%;border:1.5px solid var(--line-strong);border-radius:var(--radius);padding:10px 12px;font-size:14px;font-family:inherit;outline:none;appearance:none}
+    .fs-dr:focus{border-color:var(--brand)}
+    .empty{text-align:center;padding:40px 24px;color:var(--ink-4);font-size:13px}
+    .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--ink-1);color:#fff;padding:11px 20px;border-radius:20px;font-size:13px;font-weight:600;box-shadow:var(--shadow-lg);opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:500}
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+    .toast.error{background:var(--accent)}
+    .spinner-wrap{display:flex;justify-content:center;padding:40px}
+    .spinner{width:24px;height:24px;border:3px solid #eee;border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase.js"></script>
+<script src="../js/auth-b2c.js"></script>
+<script src="auth-taller.js"></script>
+<div id="taller-header"></div>
+<div class="app-shell">
+  <header class="topbar">
+    <div class="topbar-back" onclick="history.back()">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    </div>
+    <span class="topbar-title">Recordatorios</span>
+  </header>
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="tab-pendientes" onclick="switchTab(this)">Pendientes</button>
+    <button class="tab-btn" data-tab="tab-enviados" onclick="switchTab(this)">Enviados</button>
+    <button class="tab-btn" data-tab="tab-config" onclick="switchTab(this)">⚙️ Config</button>
+  </nav>
+
+  <div class="panel active" id="tab-pendientes">
+    <div class="panel-body" id="listaPendientes"><div class="spinner-wrap"><div class="spinner"></div></div></div>
+    <button class="fab" onclick="abrirNuevo()">+</button>
+  </div>
+
+  <div class="panel" id="tab-enviados">
+    <div class="panel-body" id="listaEnviados"><div class="empty">Cargando…</div></div>
+  </div>
+
+  <div class="panel" id="tab-config">
+    <div class="panel-body">
+      <div class="config-card">
+        <div class="config-head">Canales de envío</div>
+        <div class="config-row">
+          <div><div class="config-label">WhatsApp</div><div class="config-sub">Mensajes automáticos al cliente</div></div>
+          <label class="toggle-sw"><input type="checkbox" id="cfg-wa" checked><div class="toggle-track"></div></label>
+        </div>
+        <div class="config-row">
+          <div><div class="config-label">Email</div><div class="config-sub">Notificaciones por correo</div></div>
+          <label class="toggle-sw"><input type="checkbox" id="cfg-email"><div class="toggle-track"></div></label>
+        </div>
+        <div class="fg" style="padding:12px 16px 16px">
+          <label class="fl">Número WhatsApp del taller (para envíos)</label>
+          <input class="fi" id="cfg-wa-numero" type="tel" placeholder="5411 5555-1234">
+        </div>
+      </div>
+      <div class="config-card">
+        <div class="config-head">Plantillas de mensajes</div>
+        ${['or_lista','or_demorada','vtv','service','inactividad'].map(tipo=>`
+        <div class="plantilla-card">
+          <div class="plantilla-tipo">${tipoLabel(tipo)}</div>
+          <textarea class="fta" id="tpl-${tipo}" rows="2" placeholder="Mensaje para ${tipoLabel(tipo)}...">${defaultMsg(tipo)}</textarea>
+        </div>`).join('')}
+      </div>
+      <button class="btn-guardar-config" onclick="guardarConfig()">Guardar configuración</button>
+    </div>
+  </div>
+</div>
+
+<div class="drawer-overlay" id="drawerOverlay" onclick="cerrarSiClick(event)">
+  <div class="drawer">
+    <div class="drawer-handle"></div>
+    <div class="drawer-header">
+      <span class="drawer-titulo">Nuevo recordatorio</span>
+      <button class="drawer-close" onclick="cerrarDrawer()">✕</button>
+    </div>
+    <div class="drawer-body">
+      <div style="margin-bottom:12px">
+        <label class="fl">Tipo</label>
+        <select class="fs-dr" id="r-tipo">
+          <option value="or_lista">OR lista para retirar</option>
+          <option value="or_demorada">OR demorada</option>
+          <option value="vtv">VTV próxima</option>
+          <option value="service">Service próximo</option>
+          <option value="cumpleanos">Cumpleaños</option>
+          <option value="inactividad">Cliente inactivo</option>
+          <option value="custom">Personalizado</option>
+        </select>
+      </div>
+      <div style="margin-bottom:12px">
+        <label class="fl">Canal</label>
+        <select class="fs-dr" id="r-canal">
+          <option value="whatsapp">WhatsApp</option>
+          <option value="email">Email</option>
+          <option value="ambos">Ambos</option>
+        </select>
+      </div>
+      <div style="margin-bottom:12px">
+        <label class="fl">Mensaje</label>
+        <textarea class="fta" id="r-mensaje" rows="3" placeholder="Mensaje a enviar al cliente…"></textarea>
+      </div>
+      <div style="margin-bottom:12px">
+        <label class="fl">Fecha de envío</label>
+        <input class="fi" id="r-fecha" type="datetime-local">
+      </div>
+    </div>
+    <div class="drawer-footer">
+      <button class="btn-cancelar" onclick="cerrarDrawer()">Cancelar</button>
+      <button class="btn-guardar" onclick="guardarRecordatorio()">Crear</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const TIPO_ICON={or_lista:'🔔',or_demorada:'⏰',vtv:'📋',service:'🔧',cumpleanos:'🎂',inactividad:'💤',custom:'📝'};
+let tallerId=null;
+
+function tipoLabel(t){return{or_lista:'OR lista para retirar',or_demorada:'OR demorada',vtv:'VTV próxima',service:'Service próximo',cumpleanos:'Cumpleaños',inactividad:'Cliente inactivo',custom:'Personalizado'}[t]||t;}
+function defaultMsg(t){return{or_lista:'Hola {nombre}! Tu vehículo {dominio} está listo para retirar en nuestro taller. Te esperamos!',or_demorada:'Hola {nombre}, te informamos que el trabajo en tu {dominio} requiere un poco más de tiempo. Te avisamos en cuanto esté listo.',vtv:'Hola {nombre}! Te recordamos que la VTV de tu {dominio} vence próximamente. Podemos ayudarte a prepararla.',service:'Hola {nombre}! Es hora del service de tu {dominio}. Contactanos para coordinar.',inactividad:'Hola {nombre}! Hace tiempo que no te vemos. Si necesitás trabajo en tu auto, estamos a disposición.'}[t]||'';}
+
+(async()=>{
+  const auth=await requireTallerAuth(); if(!auth) return;
+  await initTallerHeader();
+  tallerId=auth.meta.taller_id;
+  await Promise.all([cargarPendientes(),cargarEnviados()]);
+  // Fecha default = ahora + 1h
+  const d=new Date(Date.now()+3600000);
+  document.getElementById('r-fecha').value=d.toISOString().slice(0,16);
+})();
+
+async function cargarPendientes(){
+  const {data}=await dbB2C.from('cat_taller_recordatorios').select('*,cat_taller_clientes(nombre,apellido)').eq('taller_id',tallerId).eq('enviado',false).order('fecha_envio');
+  renderLista('listaPendientes',data||[],false);
+}
+async function cargarEnviados(){
+  const {data}=await dbB2C.from('cat_taller_recordatorios').select('*,cat_taller_clientes(nombre,apellido)').eq('taller_id',tallerId).eq('enviado',true).order('enviado_at',{ascending:false}).limit(30);
+  renderLista('listaEnviados',data||[],true);
+}
+
+function renderLista(containerId,items,enviados){
+  const c=document.getElementById(containerId);
+  if(!items.length){c.innerHTML=`<div class="empty">${enviados?'Sin recordatorios enviados.':'Sin recordatorios pendientes. Tocá + para crear uno.'}</div>`;return;}
+  c.innerHTML=items.map(r=>{
+    const cliNombre=r.cat_taller_clientes?`${r.cat_taller_clientes.nombre} ${r.cat_taller_clientes.apellido||''}`.trim():'Sin cliente';
+    const fecha=r.enviado?new Date(r.enviado_at).toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):new Date(r.fecha_envio).toLocaleDateString('es-AR',{weekday:'short',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+    const canal={whatsapp:'📱 WhatsApp',email:'📧 Email',ambos:'📱📧 WhatsApp + Email'}[r.canal]||r.canal;
+    return`
+    <div class="rec-card">
+      <div class="rec-icon">${TIPO_ICON[r.tipo]||'📝'}</div>
+      <div class="rec-body">
+        <div class="rec-tipo">${tipoLabel(r.tipo)} · ${canal}</div>
+        <div class="rec-mensaje">${esc(r.mensaje.slice(0,80))}${r.mensaje.length>80?'…':''}</div>
+        <div class="rec-meta">${cliNombre} · ${fecha}</div>
+      </div>
+      <span class="rec-badge ${enviados?'rec-enviado':'rec-pendiente'}">${enviados?'Enviado':'Pendiente'}</span>
+    </div>`;
+  }).join('');
+}
+
+function abrirNuevo(){
+  document.getElementById('r-mensaje').value='';
+  document.getElementById('drawerOverlay').classList.add('open');
+}
+
+async function guardarRecordatorio(){
+  const tipo=document.getElementById('r-tipo').value;
+  const canal=document.getElementById('r-canal').value;
+  const mensaje=document.getElementById('r-mensaje').value.trim();
+  const fechaStr=document.getElementById('r-fecha').value;
+  if(!mensaje||!fechaStr){showToast('Completá mensaje y fecha','error');return;}
+  try{
+    await dbB2C.from('cat_taller_recordatorios').insert({taller_id:tallerId,tipo,canal,mensaje,fecha_envio:new Date(fechaStr).toISOString(),enviado:false});
+    showToast('✓ Recordatorio creado');
+    cerrarDrawer();
+    await cargarPendientes();
+  }catch(e){showToast('Error: '+e.message,'error');}
+}
+
+function guardarConfig(){
+  // En producción: guardar en perfil del taller o tabla de config
+  showToast('✓ Configuración guardada (aplica en próximo deploy)');
+}
+
+function switchTab(btn){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(btn.dataset.tab).classList.add('active');
+}
+
+function cerrarDrawer(){document.getElementById('drawerOverlay').classList.remove('open');}
+function cerrarSiClick(e){if(e.target===document.getElementById('drawerOverlay'))cerrarDrawer();}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+let tt;function showToast(m,t='ok'){const el=document.getElementById('toast');el.textContent=m;el.className='toast show'+(t==='error'?' error':'');clearTimeout(tt);tt=setTimeout(()=>el.classList.remove('show'),3000);}
+</script>
+</body>
+</html>

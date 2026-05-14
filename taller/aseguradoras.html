@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aseguradoras — Piezauto Point</title>
+  <link rel="stylesheet" href="../css/estilos.css">
+  <style>
+    :root{--brand:#1A1A2E;--accent:#E94560;--ink-1:#111827;--ink-2:#374151;--ink-3:#6B7280;--ink-4:#9CA3AF;--surface:#fff;--surface-2:#F9FAFB;--surface-3:#F3F4F6;--line:#E5E7EB;--line-strong:#D1D5DB;--green:#059669;--green-soft:#ECFDF5;--red:#DC2626;--red-soft:#FEF2F2;--radius:8px;--radius-lg:12px;--shadow-sm:0 1px 3px rgba(0,0,0,.07);--shadow-lg:0 8px 32px rgba(0,0,0,.18)}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--surface-2);color:var(--ink-1);min-height:100vh;font-size:14px;line-height:1.5;overflow-x:hidden}
+    button{font-family:inherit}
+    .app-shell{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
+    .topbar{background:var(--brand);color:#fff;padding:0 14px;height:56px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.25);flex-shrink:0}
+    .topbar-back{width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:50%;cursor:pointer}
+    .topbar-back svg{width:20px;height:20px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    .topbar-title{font-size:15px;font-weight:700;flex:1}
+    .lista{flex:1;padding:12px 12px 100px;display:flex;flex-direction:column;gap:8px}
+    .card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--line);box-shadow:var(--shadow-sm);padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:box-shadow .15s}
+    .card:hover{box-shadow:var(--shadow-lg)}
+    .card-avatar{width:40px;height:40px;border-radius:50%;background:var(--brand);color:#fff;font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .card-body{flex:1;min-width:0}
+    .card-nombre{font-size:14px;font-weight:700;color:var(--ink-1)}
+    .card-meta{font-size:12px;color:var(--ink-3);margin-top:2px}
+    .card-arrow{color:var(--ink-4);font-size:18px}
+    .fab{position:fixed;bottom:24px;right:calc(50% - 240px + 16px);width:56px;height:56px;background:var(--accent);color:#fff;border:none;border-radius:50%;font-size:26px;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-lg);cursor:pointer;z-index:80}
+    .estado-centro{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 24px;text-align:center;gap:12px}
+    .estado-icon{font-size:52px}.estado-titulo{font-size:16px;font-weight:600;color:var(--ink-2)}.estado-sub{font-size:13px;color:var(--ink-3)}
+    .skeleton{background:var(--surface);border-radius:var(--radius-lg);padding:16px;border:1px solid var(--line);animation:pulse 1.4s ease-in-out infinite}
+    .skel-line{background:var(--surface-3);border-radius:4px;margin-bottom:8px}
+    .skel-line.w70{width:70%;height:13px}.skel-line.w45{width:45%;height:11px}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+    /* Drawer */
+    .drawer-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:flex-end;justify-content:center}
+    .drawer-overlay.open{display:flex;animation:fadeIn .2s}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    .drawer{background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-width:480px;max-height:90vh;display:flex;flex-direction:column;animation:slideUp .25s cubic-bezier(.34,1.56,.64,1)}
+    @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+    .drawer-handle{width:36px;height:4px;background:var(--line-strong);border-radius:2px;margin:12px auto 0;flex-shrink:0}
+    .drawer-header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px 10px;border-bottom:1px solid var(--line);flex-shrink:0}
+    .drawer-titulo{font-size:16px;font-weight:700}
+    .drawer-close{width:30px;height:30px;border-radius:50%;background:var(--surface-3);border:none;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink-2)}
+    .drawer-body{overflow-y:auto;flex:1;padding:16px 20px}
+    .drawer-footer{padding:12px 20px 20px;border-top:1px solid var(--line);display:flex;gap:10px;flex-shrink:0}
+    .fg{margin-bottom:12px}
+    .fl{font-size:12px;font-weight:600;color:var(--ink-2);margin-bottom:5px;display:block}
+    .fl .req{color:var(--accent);margin-left:2px}
+    .fi{width:100%;border:1.5px solid var(--line-strong);border-radius:var(--radius);padding:10px 12px;font-size:14px;font-family:inherit;color:var(--ink-1);background:var(--surface);outline:none;transition:border-color .15s}
+    .fi:focus{border-color:var(--brand)}
+    .fi::placeholder{color:var(--ink-4)}
+    .fi.error{border-color:var(--red)}
+    .btn-cancelar{flex:1;padding:12px;border-radius:var(--radius-lg);border:1.5px solid var(--line-strong);background:var(--surface);font-size:14px;font-weight:600;color:var(--ink-2);cursor:pointer}
+    .btn-guardar{flex:2;padding:12px;border-radius:var(--radius-lg);border:none;background:var(--brand);font-size:14px;font-weight:700;color:#fff;cursor:pointer;transition:opacity .15s}
+    .btn-guardar:hover{opacity:.88}
+    .btn-guardar:disabled{opacity:.45;cursor:default}
+    .btn-del{flex:1;padding:12px;border-radius:var(--radius-lg);border:none;background:var(--red-soft);font-size:14px;font-weight:700;color:var(--red);cursor:pointer}
+    .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--ink-1);color:#fff;padding:11px 20px;border-radius:20px;font-size:13px;font-weight:600;box-shadow:var(--shadow-lg);opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:500}
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+    .toast.error{background:var(--accent)}
+  </style>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase.js"></script>
+<script src="../js/auth-b2c.js"></script>
+<script src="auth-taller.js"></script>
+<div id="taller-header"></div>
+<div class="app-shell">
+  <header class="topbar">
+    <div class="topbar-back" onclick="history.back()">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    </div>
+    <span class="topbar-title">Aseguradoras</span>
+  </header>
+  <div class="lista" id="lista"></div>
+  <button class="fab" onclick="abrirNueva()">+</button>
+</div>
+
+<div class="drawer-overlay" id="drawerOverlay" onclick="cerrarSiClick(event)">
+  <div class="drawer">
+    <div class="drawer-handle"></div>
+    <div class="drawer-header">
+      <span class="drawer-titulo" id="drawerTitulo">Nueva aseguradora</span>
+      <button class="drawer-close" onclick="cerrarDrawer()">✕</button>
+    </div>
+    <div class="drawer-body">
+      <div class="fg"><label class="fl">Nombre <span class="req">*</span></label><input class="fi" id="f-nombre" type="text" placeholder="Federación Patronal"></div>
+      <div class="fg"><label class="fl">Contacto</label><input class="fi" id="f-contacto" type="text" placeholder="Nombre del contacto"></div>
+      <div class="fg"><label class="fl">Teléfono</label><input class="fi" id="f-tel" type="tel" placeholder="11 5555-1234"></div>
+      <div class="fg"><label class="fl">Email</label><input class="fi" id="f-email" type="email" placeholder="liquidaciones@aseg.com"></div>
+      <div class="fg"><label class="fl">Notas</label><input class="fi" id="f-notas" type="text" placeholder="Obs., perito habitual, etc."></div>
+    </div>
+    <div class="drawer-footer" id="drawerFooter">
+      <button class="btn-cancelar" onclick="cerrarDrawer()">Cancelar</button>
+      <button class="btn-guardar" id="btnGuardar" onclick="guardar()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>
+const TABLA = 'cat_taller_aseguradoras';
+let tallerId = null, items = [], activo = null, guardando = false;
+
+(async () => {
+  const auth = await requireTallerAuth(); if (!auth) return;
+  await initTallerHeader();
+  tallerId = auth.meta.taller_id;
+  await cargar();
+})();
+
+async function cargar() {
+  document.getElementById('lista').innerHTML = Array(3).fill('<div class="skeleton"><div class="skel-line w70"></div><div class="skel-line w45"></div></div>').join('');
+  const { data } = await dbB2C.from(TABLA).select('*').eq('taller_id', tallerId).order('nombre');
+  items = data || [];
+  renderLista();
+}
+
+function renderLista() {
+  const c = document.getElementById('lista');
+  if (!items.length) { c.innerHTML = '<div class="estado-centro"><div class="estado-icon">🏢</div><div class="estado-titulo">Sin aseguradoras</div><div class="estado-sub">Tocá + para agregar la primera.</div></div>'; return; }
+  c.innerHTML = items.map(it => `
+    <div class="card" onclick="abrirEditar('${it.id}')">
+      <div class="card-avatar">${(it.nombre[0]||'?').toUpperCase()}</div>
+      <div class="card-body">
+        <div class="card-nombre">${esc(it.nombre)}</div>
+        <div class="card-meta">${[it.contacto, it.telefono].filter(Boolean).join(' · ') || 'Sin contacto'}</div>
+      </div>
+      <div class="card-arrow">›</div>
+    </div>`).join('');
+}
+
+function abrirNueva() {
+  activo = null;
+  document.getElementById('drawerTitulo').textContent = 'Nueva aseguradora';
+  ['nombre','contacto','tel','email','notas'].forEach(k => { const el = document.getElementById('f-'+k); if(el) el.value=''; });
+  document.getElementById('drawerFooter').innerHTML = '<button class="btn-cancelar" onclick="cerrarDrawer()">Cancelar</button><button class="btn-guardar" id="btnGuardar" onclick="guardar()">Guardar</button>';
+  document.getElementById('drawerOverlay').classList.add('open');
+}
+
+function abrirEditar(id) {
+  activo = items.find(x => x.id === id); if (!activo) return;
+  document.getElementById('drawerTitulo').textContent = 'Editar aseguradora';
+  document.getElementById('f-nombre').value   = activo.nombre || '';
+  document.getElementById('f-contacto').value = activo.contacto || '';
+  document.getElementById('f-tel').value      = activo.telefono || '';
+  document.getElementById('f-email').value    = activo.email || '';
+  document.getElementById('f-notas').value    = activo.notas || '';
+  document.getElementById('drawerFooter').innerHTML = '<button class="btn-del" onclick="eliminar()">Eliminar</button><button class="btn-cancelar" onclick="cerrarDrawer()">Cancelar</button><button class="btn-guardar" id="btnGuardar" onclick="guardar()">Guardar</button>';
+  document.getElementById('drawerOverlay').classList.add('open');
+}
+
+async function guardar() {
+  if (guardando) return;
+  const nombre = (document.getElementById('f-nombre').value || '').trim();
+  if (!nombre) { document.getElementById('f-nombre').classList.add('error'); return; }
+  document.getElementById('f-nombre').classList.remove('error');
+  guardando = true;
+  const btn = document.getElementById('btnGuardar');
+  btn.disabled = true; btn.textContent = 'Guardando…';
+  const payload = { nombre, contacto: document.getElementById('f-contacto').value.trim()||null, telefono: document.getElementById('f-tel').value.trim()||null, email: document.getElementById('f-email').value.trim()||null, notas: document.getElementById('f-notas').value.trim()||null };
+  try {
+    if (activo) { await dbB2C.from(TABLA).update(payload).eq('id', activo.id); showToast('✓ Actualizada'); }
+    else { await dbB2C.from(TABLA).insert({ ...payload, taller_id: tallerId }); showToast('✓ Agregada'); }
+    cerrarDrawer(); await cargar();
+  } catch(e) { showToast('Error: '+e.message,'error'); }
+  finally { guardando=false; btn.disabled=false; btn.textContent='Guardar'; }
+}
+
+async function eliminar() {
+  if (!activo || !confirm(`¿Eliminar "${activo.nombre}"?`)) return;
+  await dbB2C.from(TABLA).delete().eq('id', activo.id);
+  showToast('Eliminada'); cerrarDrawer(); await cargar();
+}
+
+function cerrarDrawer() { document.getElementById('drawerOverlay').classList.remove('open'); }
+function cerrarSiClick(e) { if (e.target === document.getElementById('drawerOverlay')) cerrarDrawer(); }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+let tt; function showToast(m,t='ok'){const el=document.getElementById('toast');el.textContent=m;el.className='toast show'+(t==='error'?' error':'');clearTimeout(tt);tt=setTimeout(()=>el.classList.remove('show'),3000);}
+</script>
+</body>
+</html>

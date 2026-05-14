@@ -189,7 +189,38 @@
 </style>
 </head>
 <body>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+async function cargarBadgeOrdenes(tid) {
+  try {
+    const { count } = await dbB2C.from('cat_ordenes_reparacion').select('id', { count: 'exact', head: true })
+      .eq('taller_id', tid).not('estado', 'in', '("entregado","cancelado")');
+    const el = document.getElementById('badge-ordenes');
+    if (count > 0) { el.className = 'mod-badge alerta'; el.textContent = `${count} activa${count !== 1 ? 's' : ''}`; }
+    else { el.className = 'mod-badge ok'; el.textContent = 'Sin activas'; }
+  } catch { setBadgeError('badge-ordenes'); }
+}
+
+async function cargarBadgePersonal(tid) {
+  try {
+    const { count } = await dbB2C.from('cat_taller_personal').select('id', { count: 'exact', head: true })
+      .eq('taller_id', tid).eq('activo', true);
+    const el = document.getElementById('badge-personal');
+    el.className = 'mod-badge ok';
+    el.textContent = `${count || 0} activo${count !== 1 ? 's' : ''}`;
+  } catch { setBadgeError('badge-personal'); }
+}
+
+async function cargarBadgeRecordatorios(tid) {
+  try {
+    const hoy = new Date().toISOString();
+    const { count } = await dbB2C.from('cat_taller_recordatorios').select('id', { count: 'exact', head: true })
+      .eq('taller_id', tid).eq('enviado', false).lte('fecha_envio', hoy);
+    const el = document.getElementById('badge-recordatorios');
+    if (count > 0) { el.className = 'mod-badge alerta'; el.textContent = `${count} pendiente${count !== 1 ? 's' : ''}`; }
+    else { el.className = 'mod-badge ok'; el.textContent = 'Al día'; }
+  } catch { setBadgeError('badge-recordatorios'); }
+}
+</script>
 <script src="../js/supabase.js"></script>
 <script src="../js/auth-b2c.js"></script>
 <script src="auth-taller.js"></script>
@@ -282,6 +313,34 @@
       <div class="mod-badge" id="badge-finanzas"><div class="badge-spin"></div></div>
     </a>
 
+    <a class="mod-card" href="/taller/ordenes.html">
+      <div class="mod-icon">📋</div>
+      <div class="mod-nombre">Órdenes de Rep.</div>
+      <div class="mod-desc">ORs activas, estados y pipeline de trabajo</div>
+      <div class="mod-badge alerta" id="badge-ordenes"><div class="badge-spin"></div></div>
+    </a>
+
+    <a class="mod-card" href="/taller/personal.html">
+      <div class="mod-icon">👷</div>
+      <div class="mod-nombre">Personal</div>
+      <div class="mod-desc">Operarios, roles y costo por hora</div>
+      <div class="mod-badge ok" id="badge-personal"><div class="badge-spin"></div></div>
+    </a>
+
+    <a class="mod-card" href="/taller/aseguradoras.html">
+      <div class="mod-icon">🏢</div>
+      <div class="mod-nombre">Aseguradoras</div>
+      <div class="mod-desc">Compañías con las que trabajás</div>
+      <div class="mod-badge info">Gestionar</div>
+    </a>
+
+    <a class="mod-card" href="/taller/recordatorios.html">
+      <div class="mod-icon">🔔</div>
+      <div class="mod-nombre">Recordatorios</div>
+      <div class="mod-desc">Alertas automáticas a clientes</div>
+      <div class="mod-badge" id="badge-recordatorios"><div class="badge-spin"></div></div>
+    </a>
+
     <a class="mod-card" href="/taller/perfil.html">
       <div class="mod-icon">⚙️</div>
       <div class="mod-nombre">Perfil</div>
@@ -324,6 +383,9 @@
   await Promise.allSettled([
     cargarBadgeOperaciones(tallerId),
     cargarBadgeAgenda(tallerId),
+    cargarBadgeOrdenes(tallerId),
+    cargarBadgePersonal(tallerId),
+    cargarBadgeRecordatorios(tallerId),
     cargarBadgePresupuestos(tallerId),
     cargarBadgePedidos(tallerId),
     cargarBadgeClientes(tallerId),

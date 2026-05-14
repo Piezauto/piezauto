@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Orden de Reparación — Piezauto Point</title>
+  <link rel="stylesheet" href="../css/estilos.css">
+  <style>
+    :root{--brand:#1A1A2E;--brand-mid:#16213E;--accent:#E94560;--ink-1:#111827;--ink-2:#374151;--ink-3:#6B7280;--ink-4:#9CA3AF;--surface:#fff;--surface-2:#F9FAFB;--surface-3:#F3F4F6;--line:#E5E7EB;--line-strong:#D1D5DB;--green:#059669;--green-soft:#ECFDF5;--red:#DC2626;--red-soft:#FEF2F2;--amber:#D97706;--amber-soft:#FFFBEB;--blue:#2563EB;--blue-soft:#EFF6FF;--radius:8px;--radius-lg:12px;--shadow-sm:0 1px 3px rgba(0,0,0,.07);--shadow-lg:0 8px 32px rgba(0,0,0,.18)}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--surface-2);color:var(--ink-1);min-height:100vh;font-size:14px;line-height:1.5}
+    button{font-family:inherit}
+    .app-shell{max-width:520px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
+    /* Topbar */
+    .topbar{background:var(--brand);color:#fff;padding:0 14px;height:56px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.25);flex-shrink:0}
+    .topbar-back{width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:50%;cursor:pointer}
+    .topbar-back svg{width:20px;height:20px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    .topbar-title{font-size:15px;font-weight:700;flex:1}
+    .topbar-badge{background:rgba(255,255,255,.15);font-size:11px;font-weight:700;padding:3px 9px;border-radius:10px}
+    /* Cuerpo */
+    .body-or{flex:1;overflow-y:auto;padding-bottom:100px}
+    /* Sección acordeón */
+    .seccion{background:var(--surface);margin:8px 12px;border-radius:var(--radius-lg);border:1px solid var(--line);box-shadow:var(--shadow-sm);overflow:hidden}
+    .sec-header{display:flex;align-items:center;gap:10px;padding:13px 16px;cursor:pointer;background:var(--surface)}
+    .sec-header:hover{background:var(--surface-2)}
+    .sec-num{width:24px;height:24px;border-radius:50%;background:var(--brand);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .sec-titulo{font-size:14px;font-weight:700;flex:1}
+    .sec-caret{color:var(--ink-3);font-size:16px;transition:transform .2s}
+    .sec-caret.open{transform:rotate(180deg)}
+    .sec-body{display:none;padding:8px 16px 16px;background:var(--surface-2)}
+    .sec-body.open{display:block}
+    /* Campos */
+    .fg{margin-bottom:12px}
+    .fl{font-size:12px;font-weight:600;color:var(--ink-2);margin-bottom:5px;display:block}
+    .fl .req{color:var(--accent);margin-left:2px}
+    .fi,.fs,.fta{width:100%;border:1.5px solid var(--line-strong);border-radius:var(--radius);padding:10px 12px;font-size:14px;font-family:inherit;color:var(--ink-1);background:var(--surface);outline:none;transition:border-color .15s}
+    .fi:focus,.fs:focus,.fta:focus{border-color:var(--brand)}
+    .fi::placeholder,.fta::placeholder{color:var(--ink-4)}
+    .fi.error{border-color:var(--red)}
+    .fta{resize:none;min-height:70px}
+    .fs{appearance:none}
+    .fr2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .fr3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+    .fl-label{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin:12px 0 8px;display:block}
+    /* Toggle */
+    .toggle-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line)}
+    .toggle-label{font-size:13px;font-weight:600;color:var(--ink-2)}
+    .toggle-sw{position:relative;width:42px;height:24px}
+    .toggle-sw input{opacity:0;width:0;height:0}
+    .toggle-track{position:absolute;inset:0;background:var(--line-strong);border-radius:12px;cursor:pointer;transition:background .2s}
+    .toggle-track::after{content:'';position:absolute;width:18px;height:18px;top:3px;left:3px;background:#fff;border-radius:50%;transition:transform .2s;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+    .toggle-sw input:checked+.toggle-track{background:var(--green)}
+    .toggle-sw input:checked+.toggle-track::after{transform:translateX(18px)}
+    /* Firma canvas */
+    .firma-wrap{background:var(--surface);border:1.5px solid var(--line-strong);border-radius:var(--radius);overflow:hidden;touch-action:none}
+    #firmaCanvas{display:block;width:100%;height:160px;cursor:crosshair}
+    .firma-actions{display:flex;gap:8px;margin-top:8px}
+    .btn-firma{padding:7px 14px;border-radius:var(--radius);border:1.5px solid var(--line-strong);background:var(--surface);font-size:12px;font-weight:600;cursor:pointer;color:var(--ink-2);transition:background .12s}
+    .btn-firma:hover{background:var(--surface-3)}
+    .btn-firma.prim{background:var(--brand);border-color:var(--brand);color:#fff}
+    /* Fotos */
+    .fotos-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+    .foto-thumb{aspect-ratio:1;border-radius:var(--radius);overflow:hidden;position:relative;background:var(--surface-3)}
+    .foto-thumb img{width:100%;height:100%;object-fit:cover}
+    .foto-tipo{position:absolute;bottom:4px;left:4px;background:rgba(0,0,0,.6);color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:6px}
+    .foto-del{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:rgba(220,38,38,.85);border:none;color:#fff;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+    .btn-upload{display:flex;align-items:center;gap:6px;padding:9px 14px;border-radius:var(--radius);border:1.5px dashed var(--line-strong);background:var(--surface);font-size:12px;font-weight:600;color:var(--ink-2);cursor:pointer;transition:border-color .15s}
+    .btn-upload:hover{border-color:var(--brand);color:var(--brand)}
+    /* Horas table */
+    .horas-table{width:100%;border-collapse:collapse;font-size:12px}
+    .horas-table th{background:var(--brand);color:#fff;padding:8px 10px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase}
+    .horas-table td{padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+    .horas-table input,.horas-table select{border:1px solid var(--line-strong);border-radius:4px;padding:4px 6px;font-size:11px;font-family:inherit;background:var(--surface);outline:none;width:100%}
+    .horas-del{width:24px;height:24px;border-radius:50%;border:none;background:var(--red-soft);color:var(--red);font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+    .btn-add-row{display:flex;align-items:center;gap:5px;padding:7px 12px;border-radius:var(--radius);border:1.5px dashed var(--line-strong);background:var(--surface);font-size:12px;font-weight:600;color:var(--ink-2);cursor:pointer;margin-top:8px;transition:border-color .15s}
+    .btn-add-row:hover{border-color:var(--brand);color:var(--brand)}
+    /* Totales */
+    .totales-card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--line);padding:14px;margin:8px 12px}
+    .tot-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:13px}
+    .tot-row.total{border-top:1px solid var(--line);margin-top:6px;padding-top:10px;font-size:16px;font-weight:700}
+    /* Estado pills */
+    .estado-select{padding:6px 12px;border-radius:var(--radius);border:1.5px solid var(--line-strong);font-size:13px;font-weight:600;cursor:pointer;outline:none;font-family:inherit}
+    /* Footer acciones */
+    .footer-bar{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--line);padding:10px 16px;display:flex;gap:8px;max-width:520px;margin:0 auto;z-index:80;box-shadow:0 -4px 16px rgba(0,0,0,.08)}
+    .btn-acc{flex:1;padding:11px;border-radius:var(--radius-lg);font-size:13px;font-weight:700;cursor:pointer;border:none;display:flex;align-items:center;justify-content:center;gap:5px;transition:opacity .15s}
+    .btn-acc:hover{opacity:.88}
+    .btn-guardar-or{background:var(--brand);color:#fff}
+    .btn-imprimir-or{background:var(--surface-3);color:var(--ink-2);border:1.5px solid var(--line-strong)}
+    /* Busqueda cliente */
+    .cli-resultados{background:var(--surface);border:1px solid var(--line-strong);border-top:none;border-radius:0 0 8px 8px;max-height:160px;overflow-y:auto;position:absolute;z-index:50;width:100%}
+    .cli-item{padding:9px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--line)}
+    .cli-item:hover{background:var(--surface-2)}
+    .cli-wrap{position:relative}
+    /* Spinner */
+    .spinner-wrap{display:flex;justify-content:center;padding:40px}
+    .spinner{width:28px;height:28px;border:3px solid #eee;border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    /* Toast */
+    .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--ink-1);color:#fff;padding:11px 20px;border-radius:20px;font-size:13px;font-weight:600;box-shadow:var(--shadow-lg);opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:500}
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+    .toast.error{background:var(--accent)}
+    /* PRINT */
+    @media print {
+      .topbar,.footer-bar,.sec-header .sec-caret,.btn-firma,.btn-upload,.horas-del,.btn-add-row{display:none!important}
+      .sec-body{display:block!important}
+      .app-shell{max-width:100%}
+      body{background:#fff}
+    }
+  </style>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase.js"></script>
+<script src="../js/auth-b2c.js"></script>
+<script src="auth-taller.js"></script>
+<div id="taller-header"></div>
+
+<div class="app-shell">
+  <header class="topbar">
+    <div class="topbar-back" onclick="history.back()">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    </div>
+    <span class="topbar-title" id="topbarTitle">Orden de Reparación</span>
+    <span class="topbar-badge" id="topbarEstado"></span>
+  </header>
+
+  <div class="body-or" id="bodyOr">
+    <div class="spinner-wrap"><div class="spinner"></div></div>
+  </div>
+
+  <div class="footer-bar">
+    <button class="btn-acc btn-imprimir-or" onclick="window.print()">🖨️ Imprimir</button>
+    <button class="btn-acc btn-guardar-or" id="btnGuardar" onclick="guardar()">💾 Guardar OR</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── ESTADO GLOBAL ────────────────────────────────────────────────
+let tallerId=null, orId=null, orData=null;
+let personal=[], aseguradoras=[], clientes=[];
+let horasRows=[], fotosExistentes=[], trabajos=[];
+let firmaCtx=null, firmaDibujo=false;
+let guardando=false;
+
+const ESTADOS_OR=[
+  ['recepcion','Recepción'],['diagnostico','Diagnóstico'],
+  ['esperando_autorizacion','Esperando autorización'],['esperando_piezas','Esperando piezas'],
+  ['en_reparacion','En reparación'],['en_pintura','En pintura'],
+  ['control_calidad','Control de calidad'],['listo','Listo'],
+  ['entregado','Entregado'],['cancelado','Cancelado']
+];
+
+// ─── INIT ─────────────────────────────────────────────────────────
+(async()=>{
+  const auth=await requireTallerAuth(); if(!auth) return;
+  await initTallerHeader();
+  tallerId=auth.meta.taller_id;
+  const params=new URLSearchParams(window.location.search);
+  orId=params.get('id');
+
+  await Promise.all([cargarPersonal(),cargarAseguradoras(),cargarClientes()]);
+
+  if(orId){ await cargarOR(orId); }
+  else { renderForm(); }
+})();
+
+async function cargarPersonal(){
+  const {data}=await dbB2C.from('cat_taller_personal').select('id,nombre,apellido,costo_hora').eq('taller_id',tallerId).eq('activo',true).order('nombre');
+  personal=data||[];
+}
+async function cargarAseguradoras(){
+  const {data}=await dbB2C.from('cat_taller_aseguradoras').select('id,nombre').eq('taller_id',tallerId).order('nombre');
+  aseguradoras=data||[];
+}
+async function cargarClientes(){
+  const {data}=await dbB2C.from('cat_taller_clientes').select('id,nombre,apellido,telefono').eq('taller_id',tallerId).order('nombre');
+  clientes=data||[];
+}
+
+async function cargarOR(id){
+  const [{data:or},{data:fotos},{data:horas}]=await Promise.all([
+    dbB2C.from('cat_ordenes_reparacion').select('*').eq('id',id).single(),
+    dbB2C.from('cat_or_fotos').select('*').eq('or_id',id).order('created_at'),
+    dbB2C.from('cat_or_horas').select('*').eq('or_id',id).order('created_at'),
+  ]);
+  orData=or;
+  fotosExistentes=fotos||[];
+  horasRows=(horas||[]).map(h=>({...h,_id:h.id}));
+  trabajos=Array.isArray(or?.trabajos_realizar)?or.trabajos_realizar:[];
+  renderForm();
+}
+
+// ─── RENDER FORM ─────────────────────────────────────────────────
+function renderForm(){
+  const d=orData||{};
+  const esNueva=!orId;
+  document.getElementById('topbarTitle').textContent=esNueva?'Nueva OR':`OR ${d.numero_or||''}`;
+  document.getElementById('topbarEstado').textContent=esNueva?'':'';
+
+  const selEstado=ESTADOS_OR.map(([v,l])=>`<option value="${v}" ${d.estado===v?'selected':''}>${l}</option>`).join('');
+  const selPersonal=personal.map(p=>`<option value="${p.id}" data-costo="${p.costo_hora||0}">${p.nombre} ${p.apellido||''}</option>`).join('');
+  const selAseg=aseguradoras.map(a=>`<option value="${a.nombre}">${a.nombre}</option>`).join('');
+
+  const horasHTML=renderHorasTable();
+  const fotosHTML=renderFotosGrid();
+  const trabajosHTML=renderTrabajosLista();
+
+  document.getElementById('bodyOr').innerHTML=`
+  <!-- S1: Datos del vehículo y cliente -->
+  <div class="seccion">
+    <div class="sec-header" onclick="toggleSec('s1')">
+      <div class="sec-num">1</div>
+      <div class="sec-titulo">Vehículo y cliente</div>
+      <div class="sec-caret open" id="caret-s1">▾</div>
+    </div>
+    <div class="sec-body open" id="s1">
+      <div style="height:8px"></div>
+      <div class="fr2">
+        <div class="fg"><label class="fl">Dominio / Patente <span class="req">*</span></label>
+          <input class="fi" id="f-dominio" type="text" placeholder="ABC 123" value="${esc(d.vehiculo_dominio||'')}" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+        </div>
+        <div class="fg"><label class="fl">Km</label><input class="fi" id="f-km" type="number" placeholder="85000" value="${d.vehiculo_km||''}"></div>
+      </div>
+      <div class="fr3">
+        <div class="fg"><label class="fl">Marca</label><input class="fi" id="f-marca" type="text" placeholder="Peugeot" value="${esc(d.vehiculo_marca||'')}"></div>
+        <div class="fg"><label class="fl">Modelo</label><input class="fi" id="f-modelo" type="text" placeholder="208" value="${esc(d.vehiculo_modelo||'')}"></div>
+        <div class="fg"><label class="fl">Año</label><input class="fi" id="f-anio" type="number" placeholder="2019" value="${d.vehiculo_anio||''}"></div>
+      </div>
+      <div class="fr2">
+        <div class="fg"><label class="fl">Color</label><input class="fi" id="f-color" type="text" placeholder="Blanco" value="${esc(d.vehiculo_color||'')}"></div>
+        <div class="fg"><label class="fl">Combustible</label>
+          <select class="fs" id="f-combustible">
+            ${['Nafta','Diesel','GNC','Híbrido','Eléctrico','Otro'].map(c=>`<option ${d.vehiculo_combustible===c?'selected':''}>${c}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <span class="fl-label">Cliente</span>
+      <div class="fg cli-wrap">
+        <input class="fi" id="f-cli-buscar" type="text" placeholder="Buscar por nombre o tel…" oninput="buscarCliente()" autocomplete="off" value="${d.cliente_id?'':''}" >
+        <div class="cli-resultados" id="cliResultados" style="display:none"></div>
+      </div>
+      <input type="hidden" id="f-cli-id" value="${d.cliente_id||''}">
+      <div class="fg"><label class="fl">Nombre del cliente</label><input class="fi" id="f-cli-nombre" type="text" placeholder="O ingresar manualmente" value=""></div>
+      <div class="fg"><label class="fl">Descripción del ingreso</label><textarea class="fta" id="f-descripcion" placeholder="Ej: Paragolpe delantero dañado, arañazo lateral…">${esc(d.descripcion_ingreso||'')}</textarea></div>
+      <div class="fr2">
+        <div class="fg"><label class="fl">Fecha ingreso</label><input class="fi" id="f-fecha-ingreso" type="date" value="${d.fecha_ingreso||hoy()}"></div>
+        <div class="fg"><label class="fl">Fecha estimada entrega</label><input class="fi" id="f-fecha-entrega" type="date" value="${d.fecha_estimada_entrega||''}"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- S2: Firma digital -->
+  <div class="seccion">
+    <div class="sec-header" onclick="toggleSec('s2')">
+      <div class="sec-num">2</div>
+      <div class="sec-titulo">Firma de recepción</div>
+      <div class="sec-caret" id="caret-s2">▾</div>
+    </div>
+    <div class="sec-body" id="s2">
+      <div style="height:8px"></div>
+      <div class="fg"><label class="fl">Nombre del firmante</label><input class="fi" id="f-firma-nombre" type="text" placeholder="Juan García" value="${esc(d.firma_cliente_nombre||'')}"></div>
+      <div class="firma-wrap"><canvas id="firmaCanvas" width="800" height="300"></canvas></div>
+      <div class="firma-actions">
+        <button class="btn-firma" onclick="limpiarFirma()">🗑️ Limpiar</button>
+        ${d.firma_cliente_svg?'<span style="font-size:12px;color:var(--green);font-weight:600">✓ Firma guardada</span>':'<span style="font-size:12px;color:var(--ink-4)">Dibujá la firma en el recuadro</span>'}
+      </div>
+    </div>
+  </div>
+
+  <!-- S3: Seguro -->
+  <div class="seccion">
+    <div class="sec-header" onclick="toggleSec('s3')">
+      <div class="sec-num">3</div>
+      <div class="sec-titulo">Seguro</div>
+      <div class="sec-caret" id="caret-s3">▾</div>
+    </div>
+    <div class="sec-body" id="s3">
+      <div style="height:8px"></div>
+      <div class="toggle-row">
+        <span class="toggle-label">Trabajo con seguro</span>
+        <label class="toggle-sw"><input type="checkbox" id="f-tiene-seguro" ${d.tiene_seguro?'checked':''} onchange="toggleSeguro()"><div class="toggle-track"></div></label>
+      </div>
+      <div id="sec-seguro-campos" style="${d.tiene_seguro?'':'display:none'};margin-top:12px">
+        <div class="fg"><label class="fl">Compañía aseguradora</label>
+          <select class="fs" id="f-aseg"><option value="">— Otra —</option>${selAseg}</select>
+        </div>
+        <div class="fr2">
+          <div class="fg"><label class="fl">Nro. póliza</label><input class="fi" id="f-poliza" type="text" value="${esc(d.nro_poliza||'')}"></div>
+          <div class="fg"><label class="fl">Nro. siniestro</label><input class="fi" id="f-siniestro" type="text" value="${esc(d.nro_siniestro||'')}"></div>
+        </div>
+        <div class="fr2">
+          <div class="fg"><label class="fl">Nro. peritación</label><input class="fi" id="f-peritacion" type="text" value="${esc(d.nro_peritacion||'')}"></div>
+          <div class="fg"><label class="fl">Perito</label><input class="fi" id="f-perito" type="text" value="${esc(d.perito_nombre||'')}"></div>
+        </div>
+        <div class="fg"><label class="fl">Franquicia ($)</label><input class="fi" id="f-franquicia" type="number" min="0" step="100" value="${d.monto_franquicia||0}"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- S4: Fotos -->
+  <div class="seccion">
+    <div class="sec-header" onclick="toggleSec('s4')">
+      <div class="sec-num">4</div>
+      <div class="sec-titulo">Fotos (${fotosExistentes.length})</div>
+      <div class="sec-caret" id="caret-s4">▾</div>
+    </div>
+    <div class="sec-body" id="s4">
+      <div style="height:8px"></div>
+      <div class="fotos-grid" id="fotosGrid">${fotosHTML}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <label class="btn-upload">
+          📷 Agregar foto
+          <input type="file" accept="image/*" multiple style="display:none" onchange="subirFotos(this.files)">
+        </label>
+        <select class="fs" id="f-foto-tipo" style="width:auto;flex:1">
+          <option value="ingreso">Ingreso</option>
+          <option value="proceso">Proceso</option>
+          <option value="entrega">Entrega</option>
+          <option value="dano">Daño</option>
+          <option value="otro">Otro</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- S5: Diagnóstico y trabajos -->
+  <div class="seccion">
+    <div class="sec-header" onclick="toggleSec('s5')">
+      <div class="sec-num">5</div>
+      <div class="sec-titulo">Diagnóstico y trabajos</div>
+      <div class="sec-caret" id="caret-s5">▾</div>
+    </div>
+    <div class="sec-body" id="s5">
+      <div style="height:8px"></div>
+      <div class="fg"><label class="fl">Diagnóstico</label><textarea class="fta" id="f-diagnostico" rows="3" placeholder="Descripción técnica del daño…">${esc(d.diagnostico||'')}</textarea></div>
+      <span class="fl-label">Trabajos a realizar</span>
+      <div id="trabajosLista">${trabajosHTML}</div>
+      <button class="btn-add-row" onclick="agregarTrabajo()">+ Agregar trabajo</button>
+      <div class="fg" style="margin-top:12px"><label class="fl">Estado de la OR</label>
+        <select class="fs estado-select" id="f-estado" onchange="actualizarBadgeEstado()">${selEstado}</select>
+      </div>
+    </div>
+  </div>
+
+  <!-- S6: Personal y horas -->
+  <div class="seccion">
+    <div class="sec-header" onclick="toggleSec('s6')">
+      <div class="sec-num">6</div>
+      <div class="sec-titulo">Personal y horas</div>
+      <div class="sec-caret" id="caret-s6">▾</div>
+    </div>
+    <div class="sec-body" id="s6">
+      <div style="height:8px;overflow-x:auto">
+      <table class="horas-table" id="horasTable">
+        <thead><tr><th>Operario</th><th>Descripción</th><th>Hs</th><th>$/h</th><th>Sub</th><th></th></tr></thead>
+        <tbody id="horasTbody">${horasHTML}</tbody>
+      </table>
+      </div>
+      <button class="btn-add-row" onclick="agregarHoraRow()">+ Agregar operario</button>
+      <div style="display:flex;justify-content:flex-end;margin-top:8px;font-size:14px;font-weight:700">
+        Total MO: <span id="totalMO" style="margin-left:8px;color:var(--brand)">$0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- S7: Totales y acciones -->
+  <div class="seccion" style="margin-bottom:8px">
+    <div class="sec-header" onclick="toggleSec('s7')">
+      <div class="sec-num">7</div>
+      <div class="sec-titulo">Totales</div>
+      <div class="sec-caret" id="caret-s7">▾</div>
+    </div>
+    <div class="sec-body" id="s7">
+      <div style="height:8px"></div>
+      <div class="fg"><label class="fl">Total piezas ($)</label><input class="fi" id="f-total-piezas" type="number" min="0" step="100" value="${d.total_piezas||0}" oninput="recalcular()"></div>
+      <div class="fg"><label class="fl">Monto cubierto por seguro ($)</label><input class="fi" id="f-total-seguro" type="number" min="0" step="100" value="${d.total_seguro||0}" oninput="recalcular()"></div>
+      <div class="fg"><label class="fl">Notas internas</label><textarea class="fta" id="f-notas-internas" rows="2">${esc(d.notas_internas||'')}</textarea></div>
+      <div class="tot-row"><span>Piezas</span><span id="tot-piezas">$0</span></div>
+      <div class="tot-row"><span>Mano de obra</span><span id="tot-mo">$0</span></div>
+      <div class="tot-row"><span>Seguro cubre</span><span id="tot-seg" style="color:var(--green)">$0</span></div>
+      <div class="tot-row total"><span>Total cliente</span><span id="tot-cli" style="color:var(--accent)">$0</span></div>
+      ${orId?`<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+        <button onclick="window.location='/taller/presupuestos.html?or_id=${orId}'" style="flex:1;padding:9px;border-radius:var(--radius);border:1.5px solid var(--line-strong);background:var(--surface);font-size:12px;font-weight:700;cursor:pointer">📄 Presupuesto</button>
+        <button onclick="window.location='/taller/pedidos.html?or_id=${orId}'" style="flex:1;padding:9px;border-radius:var(--radius);border:1.5px solid var(--line-strong);background:var(--surface);font-size:12px;font-weight:700;cursor:pointer">📦 Pedido piezas</button>
+      </div>`:''}
+    </div>
+  </div>`;
+
+  initFirmaCanvas();
+  recalcularHoras();
+  recalcular();
+  actualizarBadgeEstado();
+}
+
+function renderFotosGrid(){
+  const tipoLabel={ingreso:'Ingreso',proceso:'Proceso',entrega:'Entrega',dano:'Daño',otro:'Otro'};
+  return fotosExistentes.map(f=>`
+    <div class="foto-thumb">
+      <img src="${esc(f.url)}" loading="lazy">
+      <span class="foto-tipo">${tipoLabel[f.tipo]||f.tipo}</span>
+      <button class="foto-del" onclick="eliminarFoto('${f.id}')">✕</button>
+    </div>`).join('');
+}
+
+function renderHorasTable(){
+  const selPersonal=personal.map(p=>`<option value="${p.id}" data-costo="${p.costo_hora||0}">${p.nombre} ${p.apellido||''}</option>`).join('');
+  return horasRows.map((row,i)=>`
+    <tr id="hora-row-${i}">
+      <td><select onchange="onPersonalChange(${i},this)" style="min-width:80px"><option value="">—</option>${selPersonal.replace(`value="${row.personal_id}"`,`value="${row.personal_id}" selected`)}</select></td>
+      <td><input type="text" value="${esc(row.descripcion||'')}" oninput="horasRows[${i}].descripcion=this.value"></td>
+      <td><input type="number" min="0" step=".5" value="${row.horas||0}" style="width:50px" oninput="horasRows[${i}].horas=+this.value;recalcularHoras()"></td>
+      <td><input type="number" min="0" step="100" value="${row.costo_hora||0}" style="width:60px" oninput="horasRows[${i}].costo_hora=+this.value;recalcularHoras()"></td>
+      <td id="sub-${i}">$0</td>
+      <td><button class="horas-del" onclick="quitarHoraRow(${i})">✕</button></td>
+    </tr>`).join('');
+}
+
+function renderTrabajosLista(){
+  return trabajos.map((t,i)=>`
+    <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center">
+      <input class="fi" type="text" value="${esc(t.descripcion||'')}" placeholder="Descripción del trabajo" style="flex:1;padding:8px 10px" oninput="trabajos[${i}].descripcion=this.value">
+      <button onclick="trabajos.splice(${i},1);document.getElementById('trabajosLista').innerHTML=renderTrabajosLista()" style="width:28px;height:28px;border-radius:50%;border:none;background:var(--red-soft);color:var(--red);cursor:pointer;font-size:13px">✕</button>
+    </div>`).join('');
+}
+
+// ─── FIRMA CANVAS ─────────────────────────────────────────────────
+function initFirmaCanvas(){
+  const canvas=document.getElementById('firmaCanvas'); if(!canvas) return;
+  const rect=()=>canvas.getBoundingClientRect();
+  firmaCtx=canvas.getContext('2d');
+  firmaCtx.strokeStyle='#1A1A2E'; firmaCtx.lineWidth=2; firmaCtx.lineCap='round';
+  // Si hay firma guardada, dibujarla
+  if(orData?.firma_cliente_svg){
+    const img=new Image(); img.onload=()=>firmaCtx.drawImage(img,0,0,canvas.width,canvas.height);
+    img.src='data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(orData.firma_cliente_svg)));
+  }
+  const pos=(e)=>{
+    const r=rect();
+    const sc=canvas.width/r.width;
+    const t=e.touches?e.touches[0]:e;
+    return{x:(t.clientX-r.left)*sc,y:(t.clientY-r.top)*sc};
+  };
+  canvas.onmousedown=canvas.ontouchstart=(e)=>{e.preventDefault();firmaDibujo=true;const p=pos(e);firmaCtx.beginPath();firmaCtx.moveTo(p.x,p.y)};
+  canvas.onmousemove=canvas.ontouchmove=(e)=>{e.preventDefault();if(!firmaDibujo)return;const p=pos(e);firmaCtx.lineTo(p.x,p.y);firmaCtx.stroke()};
+  canvas.onmouseup=canvas.ontouchend=()=>firmaDibujo=false;
+  canvas.onmouseleave=()=>firmaDibujo=false;
+}
+
+function limpiarFirma(){
+  const canvas=document.getElementById('firmaCanvas'); if(!canvas) return;
+  firmaCtx.clearRect(0,0,canvas.width,canvas.height);
+}
+
+function obtenerFirmaSVG(){
+  const canvas=document.getElementById('firmaCanvas'); if(!canvas) return null;
+  const data=canvas.toDataURL('image/png');
+  // Guardamos como data URL embebida en SVG para preservar
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${canvas.width}" height="${canvas.height}"><image href="${data}" width="${canvas.width}" height="${canvas.height}"/></svg>`;
+}
+
+// ─── FOTOS ────────────────────────────────────────────────────────
+async function subirFotos(files){
+  if(!orId){showToast('Guardá la OR primero para poder subir fotos','error');return;}
+  const tipo=document.getElementById('f-foto-tipo').value;
+  showToast('Subiendo fotos…');
+  for(const file of files){
+    const ext=file.name.split('.').pop()||'jpg';
+    const path=`${orId}/${Date.now()}.${ext}`;
+    const {data,error}=await dbB2C.storage.from('or-fotos').upload(path,file,{contentType:file.type,upsert:false});
+    if(error){showToast('Error al subir: '+error.message,'error');continue;}
+    const {data:{publicUrl}}=dbB2C.storage.from('or-fotos').getPublicUrl(path);
+    const {data:foto}=await dbB2C.from('cat_or_fotos').insert({or_id:orId,url:publicUrl,tipo}).select().single();
+    fotosExistentes.push(foto);
+  }
+  document.getElementById('fotosGrid').innerHTML=renderFotosGrid();
+  showToast('✓ Fotos subidas');
+}
+
+async function eliminarFoto(id){
+  if(!confirm('¿Eliminar esta foto?')) return;
+  await dbB2C.from('cat_or_fotos').delete().eq('id',id);
+  fotosExistentes=fotosExistentes.filter(f=>f.id!==id);
+  document.getElementById('fotosGrid').innerHTML=renderFotosGrid();
+  showToast('Foto eliminada');
+}
+
+// ─── HORAS ────────────────────────────────────────────────────────
+function agregarHoraRow(){
+  horasRows.push({personal_id:'',descripcion:'',horas:0,costo_hora:0});
+  document.getElementById('horasTbody').innerHTML=renderHorasTable();
+  recalcularHoras();
+}
+
+function quitarHoraRow(i){
+  horasRows.splice(i,1);
+  document.getElementById('horasTbody').innerHTML=renderHorasTable();
+  recalcularHoras();
+}
+
+function onPersonalChange(i,sel){
+  const opt=sel.options[sel.selectedIndex];
+  horasRows[i].personal_id=sel.value;
+  horasRows[i].costo_hora=parseFloat(opt.dataset.costo||0);
+  const tr=document.getElementById('hora-row-'+i);
+  if(tr){const costoInput=tr.querySelectorAll('input')[2];if(costoInput)costoInput.value=horasRows[i].costo_hora;}
+  recalcularHoras();
+}
+
+function recalcularHoras(){
+  let total=0;
+  horasRows.forEach((row,i)=>{
+    const sub=(row.horas||0)*(row.costo_hora||0);
+    const el=document.getElementById('sub-'+i);
+    if(el)el.textContent='$'+Math.round(sub).toLocaleString('es-AR');
+    total+=sub;
+  });
+  const el=document.getElementById('totalMO');
+  if(el)el.textContent='$'+Math.round(total).toLocaleString('es-AR');
+  recalcular();
+}
+
+function recalcular(){
+  const piezas=parseFloat(document.getElementById('f-total-piezas')?.value)||0;
+  const seguro=parseFloat(document.getElementById('f-total-seguro')?.value)||0;
+  const mo=horasRows.reduce((s,r)=>(s+(r.horas||0)*(r.costo_hora||0)),0);
+  const total=piezas+mo;
+  const cliente=Math.max(0,total-seguro);
+  const fmt=n=>'$'+Math.round(n).toLocaleString('es-AR');
+  const s=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  s('tot-piezas',fmt(piezas));
+  s('tot-mo',fmt(mo));
+  s('tot-seg',fmt(seguro));
+  s('tot-cli',fmt(cliente));
+}
+
+// ─── TRABAJOS ─────────────────────────────────────────────────────
+function agregarTrabajo(){
+  trabajos.push({descripcion:''});
+  document.getElementById('trabajosLista').innerHTML=renderTrabajosLista();
+}
+
+// ─── BÚSQUEDA CLIENTE ─────────────────────────────────────────────
+let cliTimer;
+function buscarCliente(){
+  const q=(document.getElementById('f-cli-buscar').value||'').trim().toLowerCase();
+  clearTimeout(cliTimer);
+  const res=document.getElementById('cliResultados');
+  if(q.length<2){res.style.display='none';return;}
+  cliTimer=setTimeout(()=>{
+    const found=clientes.filter(c=>`${c.nombre} ${c.apellido||''} ${c.telefono||''}`.toLowerCase().includes(q)).slice(0,6);
+    if(!found.length){res.style.display='none';return;}
+    res.innerHTML=found.map(c=>`<div class="cli-item" onclick="selCliente(${JSON.stringify(c).replace(/"/g,'&quot;')})">${esc(c.nombre)} ${esc(c.apellido||'')}${c.telefono?' · '+esc(c.telefono):''}</div>`).join('');
+    res.style.display='block';
+  },200);
+}
+
+function selCliente(c){
+  document.getElementById('f-cli-id').value=c.id;
+  document.getElementById('f-cli-buscar').value=`${c.nombre||''} ${c.apellido||''}`.trim();
+  document.getElementById('f-cli-nombre').value=`${c.nombre||''} ${c.apellido||''}`.trim();
+  document.getElementById('cliResultados').style.display='none';
+}
+
+// ─── TOGGLE SEGURO ────────────────────────────────────────────────
+function toggleSeguro(){
+  const on=document.getElementById('f-tiene-seguro').checked;
+  document.getElementById('sec-seguro-campos').style.display=on?'':'none';
+}
+
+// ─── ESTADO BADGE ─────────────────────────────────────────────────
+const ESTADO_COLORS={recepcion:'#6B7280',diagnostico:'#2563EB',esperando_autorizacion:'#D97706',esperando_piezas:'#D97706',en_reparacion:'#7C3AED',en_pintura:'#DB2777',control_calidad:'#0891B2',listo:'#059669',entregado:'#059669',cancelado:'#DC2626'};
+function actualizarBadgeEstado(){
+  const v=document.getElementById('f-estado')?.value;
+  const badge=document.getElementById('topbarEstado');
+  if(badge&&v){badge.textContent=ESTADOS_OR.find(([k])=>k===v)?.[1]||v;badge.style.background=ESTADO_COLORS[v]||'rgba(255,255,255,.15)';}
+}
+
+// ─── GUARDAR ──────────────────────────────────────────────────────
+async function guardar(){
+  if(guardando) return;
+  const dominio=(document.getElementById('f-dominio')?.value||'').trim();
+  if(!dominio){document.getElementById('f-dominio')?.classList.add('error');showToast('El dominio es obligatorio','error');return;}
+  document.getElementById('f-dominio')?.classList.remove('error');
+
+  guardando=true;
+  const btn=document.getElementById('btnGuardar');
+  btn.disabled=true; btn.textContent='Guardando…';
+
+  const mo=horasRows.reduce((s,r)=>(s+(r.horas||0)*(r.costo_hora||0)),0);
+  const piezas=parseFloat(document.getElementById('f-total-piezas')?.value)||0;
+  const seguro=parseFloat(document.getElementById('f-total-seguro')?.value)||0;
+
+  const payload={
+    taller_id:tallerId,
+    vehiculo_dominio:dominio,
+    vehiculo_marca:document.getElementById('f-marca')?.value.trim()||null,
+    vehiculo_modelo:document.getElementById('f-modelo')?.value.trim()||null,
+    vehiculo_anio:parseInt(document.getElementById('f-anio')?.value)||null,
+    vehiculo_color:document.getElementById('f-color')?.value.trim()||null,
+    vehiculo_km:parseInt(document.getElementById('f-km')?.value)||null,
+    vehiculo_combustible:document.getElementById('f-combustible')?.value||null,
+    cliente_id:document.getElementById('f-cli-id')?.value||null,
+    descripcion_ingreso:document.getElementById('f-descripcion')?.value.trim()||null,
+    diagnostico:document.getElementById('f-diagnostico')?.value.trim()||null,
+    trabajos_realizar:trabajos,
+    estado:document.getElementById('f-estado')?.value||'recepcion',
+    fecha_ingreso:document.getElementById('f-fecha-ingreso')?.value||hoy(),
+    fecha_estimada_entrega:document.getElementById('f-fecha-entrega')?.value||null,
+    tiene_seguro:document.getElementById('f-tiene-seguro')?.checked||false,
+    compania_seguro:document.getElementById('f-aseg')?.value||null,
+    nro_poliza:document.getElementById('f-poliza')?.value.trim()||null,
+    nro_siniestro:document.getElementById('f-siniestro')?.value.trim()||null,
+    nro_peritacion:document.getElementById('f-peritacion')?.value.trim()||null,
+    perito_nombre:document.getElementById('f-perito')?.value.trim()||null,
+    monto_franquicia:parseFloat(document.getElementById('f-franquicia')?.value)||0,
+    firma_cliente_nombre:document.getElementById('f-firma-nombre')?.value.trim()||null,
+    firma_cliente_svg:obtenerFirmaSVG(),
+    total_piezas:piezas,
+    total_mo:mo,
+    total_seguro:seguro,
+    total_cliente:Math.max(0,piezas+mo-seguro),
+    notas_internas:document.getElementById('f-notas-internas')?.value.trim()||null,
+    updated_at:new Date().toISOString(),
+  };
+
+  try{
+    let savedId=orId;
+    if(orId){
+      await dbB2C.from('cat_ordenes_reparacion').update(payload).eq('id',orId);
+    } else {
+      // Generar número OR
+      const {count}=await dbB2C.from('cat_ordenes_reparacion').select('id',{count:'exact',head:true}).eq('taller_id',tallerId);
+      payload.numero_or=`OR-${new Date().getFullYear()}-${String((count||0)+1).padStart(4,'0')}`;
+      const {data:nueva,error}=await dbB2C.from('cat_ordenes_reparacion').insert(payload).select('id').single();
+      if(error||!nueva) throw new Error(error?.message||'Error al crear la OR');
+      savedId=nueva.id;
+      orId=savedId;
+      window.history.replaceState({},'',`?id=${savedId}`);
+    }
+
+    // Guardar horas
+    if(savedId){
+      await dbB2C.from('cat_or_horas').delete().eq('or_id',savedId);
+      const horasValidas=horasRows.filter(r=>r.personal_id&&(r.horas||0)>0);
+      if(horasValidas.length){
+        await dbB2C.from('cat_or_horas').insert(horasValidas.map(r=>({or_id:savedId,personal_id:r.personal_id,descripcion:r.descripcion||'-',horas:r.horas||0,costo_hora:r.costo_hora||0,fecha:hoy()})));
+      }
+    }
+
+    showToast('✓ OR guardada correctamente');
+    document.getElementById('topbarTitle').textContent=`OR ${payload.numero_or||orData?.numero_or||''}`;
+    actualizarBadgeEstado();
+  }catch(e){
+    showToast('Error: '+e.message,'error');
+  }finally{
+    guardando=false; btn.disabled=false; btn.textContent='💾 Guardar OR';
+  }
+}
+
+// ─── UTILS ────────────────────────────────────────────────────────
+function toggleSec(id){
+  const body=document.getElementById(id);
+  const caret=document.getElementById('caret-'+id);
+  const open=body.classList.contains('open');
+  body.classList.toggle('open',!open);
+  caret.classList.toggle('open',!open);
+}
+
+function hoy(){return new Date().toISOString().split('T')[0];}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+let tt;function showToast(m,t='ok'){const el=document.getElementById('toast');el.textContent=m;el.className='toast show'+(t==='error'?' error':'');clearTimeout(tt);tt=setTimeout(()=>el.classList.remove('show'),3500);}
+</script>
+</body>
+</html>

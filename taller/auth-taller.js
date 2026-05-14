@@ -69,6 +69,10 @@ async function initTallerHeader() {
     { href: '/taller/clientes.html',     label: 'Clientes',     icon: '👥' },
     { href: '/taller/inventario.html',   label: 'Inventario',   icon: '🏪' },
     { href: '/taller/finanzas.html',     label: 'Finanzas',     icon: '💰' },
+    { href: '/taller/ordenes.html',      label: 'ORs',          icon: '📋' },
+    { href: '/taller/personal.html',     label: 'Personal',     icon: '👷' },
+    { href: '/taller/aseguradoras.html', label: 'Aseguradoras', icon: '🏢' },
+    { href: '/taller/recordatorios.html',label: 'Recordatorios',icon: '🔔' },
     { href: '/taller/perfil.html',       label: 'Perfil',       icon: '⚙️' },
   ];
 

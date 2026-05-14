@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Órdenes de Reparación — Piezauto Point</title>
+  <link rel="stylesheet" href="../css/estilos.css">
+  <style>
+    :root{--brand:#1A1A2E;--accent:#E94560;--ink-1:#111827;--ink-2:#374151;--ink-3:#6B7280;--ink-4:#9CA3AF;--surface:#fff;--surface-2:#F9FAFB;--surface-3:#F3F4F6;--line:#E5E7EB;--line-strong:#D1D5DB;--green:#059669;--green-soft:#ECFDF5;--red:#DC2626;--red-soft:#FEF2F2;--amber:#D97706;--amber-soft:#FFFBEB;--blue:#2563EB;--blue-soft:#EFF6FF;--radius:8px;--radius-lg:12px;--shadow-sm:0 1px 3px rgba(0,0,0,.07);--shadow-lg:0 8px 32px rgba(0,0,0,.18)}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--surface-2);color:var(--ink-1);min-height:100vh;font-size:14px;line-height:1.5}
+    button{font-family:inherit}
+    .app-shell{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
+    .topbar{background:var(--brand);color:#fff;padding:0 14px;height:56px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.25);flex-shrink:0}
+    .topbar-back{width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:50%;cursor:pointer}
+    .topbar-back svg{width:20px;height:20px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    .topbar-title{font-size:15px;font-weight:700;flex:1}
+    /* Pipeline */
+    .pipeline-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:10px 12px 4px;flex-shrink:0;background:var(--surface);border-bottom:1px solid var(--line)}
+    .pipeline-wrap::-webkit-scrollbar{display:none}
+    .pipeline{display:flex;gap:6px;min-width:max-content}
+    .pipe-pill{padding:6px 12px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;border:2px solid transparent;transition:all .15s;white-space:nowrap}
+    .pipe-pill.active{border-color:var(--brand);background:var(--brand);color:#fff}
+    .pipe-count{display:inline-block;background:rgba(0,0,0,.15);border-radius:10px;padding:0 5px;margin-left:4px;font-size:10px}
+    .pipe-pill.active .pipe-count{background:rgba(255,255,255,.25)}
+    /* Búsqueda */
+    .search-bar{background:var(--surface-2);padding:10px 12px;position:sticky;top:56px;z-index:90;flex-shrink:0}
+    .search-wrap{display:flex;align-items:center;background:#fff;border:1.5px solid var(--line-strong);border-radius:var(--radius-lg);padding:0 12px;gap:8px}
+    .search-wrap:focus-within{border-color:var(--brand)}
+    .search-input{flex:1;border:none;outline:none;background:transparent;font-size:14px;color:var(--ink-1);padding:10px 0;font-family:inherit}
+    .search-input::placeholder{color:var(--ink-4)}
+    /* Lista */
+    .lista{flex:1;padding:8px 12px 100px;display:flex;flex-direction:column;gap:8px}
+    /* Card OR */
+    .or-card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--line);box-shadow:var(--shadow-sm);overflow:hidden;cursor:pointer;transition:box-shadow .15s}
+    .or-card:hover{box-shadow:var(--shadow-lg)}
+    .or-stripe{height:4px}
+    .or-body{padding:12px 14px 10px}
+    .or-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:6px}
+    .or-numero{font-family:'Courier New',monospace;font-size:11px;font-weight:700;color:var(--ink-3)}
+    .or-dominio{font-size:17px;font-weight:800;color:var(--ink-1)}
+    .or-auto{font-size:12px;color:var(--ink-3);margin-top:1px}
+    .or-right{text-align:right;flex-shrink:0}
+    .or-total{font-size:15px;font-weight:800;color:var(--ink-1)}
+    .or-dias{font-size:11px;color:var(--ink-4);margin-top:2px}
+    .or-footer{display:flex;align-items:center;justify-content:space-between;padding:8px 14px 10px;border-top:1px solid var(--line)}
+    .estado-badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:10px}
+    /* Estado colors */
+    .est-recepcion{background:#F3F4F6;color:#374151}
+    .est-diagnostico{background:var(--blue-soft);color:var(--blue)}
+    .est-esperando_autorizacion,.est-esperando_piezas{background:var(--amber-soft);color:var(--amber)}
+    .est-en_reparacion{background:#F5F3FF;color:#7C3AED}
+    .est-en_pintura{background:#FDF2F8;color:#DB2777}
+    .est-control_calidad{background:#ECFEFF;color:#0E7490}
+    .est-listo{background:var(--green-soft);color:var(--green)}
+    .est-entregado{background:#F0FDF4;color:#166534}
+    .est-cancelado{background:var(--red-soft);color:var(--red)}
+    /* Stripe colors */
+    .str-recepcion{background:#9CA3AF}
+    .str-diagnostico{background:var(--blue)}
+    .str-esperando_autorizacion,.str-esperando_piezas{background:var(--amber)}
+    .str-en_reparacion{background:#7C3AED}
+    .str-en_pintura{background:#DB2777}
+    .str-control_calidad{background:#0E7490}
+    .str-listo{background:var(--green)}
+    .str-entregado{background:#166534}
+    .str-cancelado{background:var(--red)}
+    /* Pill colors */
+    .pill-recepcion{background:#F3F4F6;color:#374151}
+    .pill-diagnostico{background:var(--blue-soft);color:var(--blue)}
+    .pill-esperando_autorizacion,.pill-esperando_piezas{background:var(--amber-soft);color:var(--amber)}
+    .pill-en_reparacion{background:#F5F3FF;color:#7C3AED}
+    .pill-en_pintura{background:#FDF2F8;color:#DB2777}
+    .pill-control_calidad{background:#ECFEFF;color:#0E7490}
+    .pill-listo{background:var(--green-soft);color:var(--green)}
+    .pill-entregado{background:#F0FDF4;color:#166534}
+    .pill-cancelado{background:var(--red-soft);color:var(--red)}
+    .fab{position:fixed;bottom:24px;right:calc(50% - 240px + 16px);width:56px;height:56px;background:var(--accent);color:#fff;border:none;border-radius:50%;font-size:26px;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-lg);cursor:pointer;z-index:80}
+    .estado-centro{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 24px;text-align:center;gap:12px}
+    .estado-icon{font-size:52px}.estado-titulo{font-size:16px;font-weight:600;color:var(--ink-2)}.estado-sub{font-size:13px;color:var(--ink-3)}
+    .skeleton{background:var(--surface);border-radius:var(--radius-lg);padding:16px;border:1px solid var(--line);animation:pulse 1.4s ease-in-out infinite}
+    .skel-line{background:var(--surface-3);border-radius:4px;margin-bottom:8px}
+    .skel-line.w70{width:70%;height:13px}.skel-line.w45{width:45%;height:11px}.skel-line.w55{width:55%;height:11px}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+  </style>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase.js"></script>
+<script src="../js/auth-b2c.js"></script>
+<script src="auth-taller.js"></script>
+<div id="taller-header"></div>
+<div class="app-shell">
+  <header class="topbar">
+    <div class="topbar-back" onclick="history.back()">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    </div>
+    <span class="topbar-title">Órdenes de Reparación</span>
+  </header>
+  <div class="pipeline-wrap"><div class="pipeline" id="pipeline"></div></div>
+  <div class="search-bar">
+    <div class="search-wrap">
+      <span>🔍</span>
+      <input class="search-input" id="searchInput" type="text" placeholder="Buscar por dominio o nro. OR…" oninput="filtrar()">
+    </div>
+  </div>
+  <div class="lista" id="lista"></div>
+  <button class="fab" onclick="window.location='/taller/orden-detalle.html?nuevo=1'">+</button>
+</div>
+<script>
+const ESTADOS=[
+  ['todos','Todas','#374151'],
+  ['recepcion','Recepción','#9CA3AF'],
+  ['diagnostico','Diagnóstico','#2563EB'],
+  ['esperando_autorizacion','Esp. autor.','#D97706'],
+  ['esperando_piezas','Esp. piezas','#D97706'],
+  ['en_reparacion','En reparación','#7C3AED'],
+  ['en_pintura','En pintura','#DB2777'],
+  ['control_calidad','Control calidad','#0E7490'],
+  ['listo','Listo 🔔','#059669'],
+  ['entregado','Entregado','#166534'],
+  ['cancelado','Cancelado','#DC2626'],
+];
+const ESTADO_LABEL=Object.fromEntries(ESTADOS.map(([v,,],)=>[v,ESTADOS.find(([k])=>k===v)?.[1]||v]));
+
+let tallerId=null, todas=[], filtradas=[], estadoActual='todos';
+
+(async()=>{
+  const auth=await requireTallerAuth(); if(!auth) return;
+  await initTallerHeader();
+  tallerId=auth.meta.taller_id;
+  renderPipeline({});
+  await cargar();
+})();
+
+async function cargar(){
+  document.getElementById('lista').innerHTML=Array(4).fill('<div class="skeleton"><div class="skel-line w70"></div><div class="skel-line w55"></div><div class="skel-line w45"></div></div>').join('');
+  const {data}=await dbB2C.from('cat_ordenes_reparacion').select('id,numero_or,vehiculo_dominio,vehiculo_marca,vehiculo_modelo,estado,fecha_ingreso,total_cliente,total_piezas,total_mo').eq('taller_id',tallerId).order('created_at',{ascending:false});
+  todas=data||[];
+  // Contar por estado
+  const conteos={};
+  todas.forEach(or=>conteos[or.estado]=(conteos[or.estado]||0)+1);
+  renderPipeline(conteos);
+  filtrar();
+}
+
+function renderPipeline(conteos){
+  document.getElementById('pipeline').innerHTML=ESTADOS.map(([v,l,c])=>{
+    const n=v==='todos'?todas.length:(conteos[v]||0);
+    const cls=estadoActual===v?'active':'';
+    return `<div class="pipe-pill ${cls} pill-${v}" onclick="setEstado('${v}')" style="${estadoActual===v?'':'background:'+c+'1A;color:'+c}">${l}<span class="pipe-count">${n}</span></div>`;
+  }).join('');
+}
+
+function setEstado(estado){estadoActual=estado;renderPipeline({});filtrar();}
+
+let deb;
+function filtrar(){
+  clearTimeout(deb);
+  deb=setTimeout(()=>{
+    const q=(document.getElementById('searchInput').value||'').trim().toLowerCase();
+    filtradas=todas.filter(or=>{
+      if(estadoActual!=='todos'&&or.estado!==estadoActual) return false;
+      if(q&&!(or.vehiculo_dominio||'').toLowerCase().includes(q)&&!(or.numero_or||'').toLowerCase().includes(q)) return false;
+      return true;
+    });
+    renderLista();
+  },100);
+}
+
+function renderLista(){
+  const c=document.getElementById('lista');
+  if(!filtradas.length){
+    c.innerHTML='<div class="estado-centro"><div class="estado-icon">📋</div><div class="estado-titulo">Sin órdenes</div><div class="estado-sub">Tocá + para crear la primera OR.</div></div>';
+    return;
+  }
+  const hoy=new Date();
+  c.innerHTML=filtradas.map(or=>{
+    const dias=Math.floor((hoy-new Date(or.fecha_ingreso+'T00:00:00'))/(86400000));
+    const total=or.total_cliente||or.total_piezas+or.total_mo||0;
+    return`
+    <div class="or-card" onclick="window.location='/taller/orden-detalle.html?id=${or.id}'">
+      <div class="or-stripe str-${or.estado}"></div>
+      <div class="or-body">
+        <div class="or-top">
+          <div>
+            <div class="or-numero">${or.numero_or||'—'}</div>
+            <div class="or-dominio">${esc(or.vehiculo_dominio)}</div>
+            <div class="or-auto">${[or.vehiculo_marca,or.vehiculo_modelo].filter(Boolean).join(' ')||'Sin datos del auto'}</div>
+          </div>
+          <div class="or-right">
+            <div class="or-total">${total?'$'+Math.round(total).toLocaleString('es-AR'):'—'}</div>
+            <div class="or-dias">${dias===0?'Hoy':dias===1?'1 día':dias+' días'}</div>
+          </div>
+        </div>
+      </div>
+      <div class="or-footer">
+        <span class="estado-badge est-${or.estado}">${ESTADO_LABEL[or.estado]||or.estado}</span>
+        <span style="font-size:11px;color:var(--ink-4)">${new Date(or.fecha_ingreso+'T12:00').toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit'})}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+</script>
+</body>
+</html>
