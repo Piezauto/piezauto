@@ -174,10 +174,6 @@ async function confirmarPedido() {
   if (!telefono)            { mostrarMsg('Completá tu teléfono de contacto.', 'error'); return; }
   if (!direccion)           { mostrarMsg('Completá la dirección de entrega.', 'error'); return; }
 
-  if (_metodoPago === 'debito') {
-    mostrarMsg('Débito/Crédito estará disponible próximamente. Elegí transferencia, efectivo o MercadoPago.', 'error');
-    return;
-  }
 
   // Null-check: si no hay sesión, redirigir al login
   if (!_cliente) {
@@ -270,7 +266,44 @@ async function confirmarPedido() {
   localStorage.removeItem('piezauto_carrito_b2c');
   if (typeof actualizarBadgeCarrito === 'function') actualizarBadgeCarrito();
 
-  // Redirect a página de gracias
+  // Flujo MercadoPago: crear preferencia y redirigir al checkout de MP
+  if (_metodoPago === 'mercadopago') {
+    mostrarMsg('Generando link de pago con MercadoPago...', 'info');
+    try {
+      const items = _itemsCarrito || [];
+      const mpData = await mpCrearPreferencia({
+        operacionId,
+        items: items.map(i => ({
+          descripcion:     i.descripcion || 'Autoparte Piezauto',
+          cantidad:        i.cantidad    || 1,
+          precio_unitario: i.precio      || 0,
+        })),
+        pagador: {
+          nombre:   nombre + ' ' + apellido,
+          email:    _cliente.email || '',
+          telefono: telefono,
+        },
+        backUrls: {
+          success: `${window.location.origin}/gracias?op=${operacionId}&pago=aprobado`,
+          failure: `${window.location.origin}/gracias?op=${operacionId}&pago=fallido`,
+          pending: `${window.location.origin}/gracias?op=${operacionId}&pago=pendiente`,
+        },
+      });
+      if (mpData?.init_point) {
+        await mpGuardarPreferencia(dbB2C, operacionId, mpData.preference_id);
+        window.location.href = mpData.init_point;
+        return;
+      }
+    } catch (mpErr) {
+      console.error('[MP] Error al crear preferencia:', mpErr);
+    }
+    // Si MP falla, caer en flujo manual con mensaje de error
+    mostrarMsg('No pudimos conectar con MercadoPago. El pedido quedó registrado — te contactamos para coordinar el pago.', 'error');
+    btn.disabled = false;
+    return;
+  }
+
+  // Redirect a página de gracias (transferencia / efectivo / manual)
   window.location.href = `/gracias?op=${operacionId}`;
 }
 
