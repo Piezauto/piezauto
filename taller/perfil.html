@@ -1529,7 +1529,7 @@ async function actualizarPreviewCompleto() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// SERVICIOS HABILITADOS
+// SERVICIOS HABILITADOS — con validación de estado
 // ═══════════════════════════════════════════════════════════════
 const SERVICIOS_CATALOGO = [
   { id: 'aceite',         nombre: 'Cambio de aceite',           icono: '🛢️' },
@@ -1547,8 +1547,18 @@ const SERVICIOS_CATALOGO = [
   { id: 'general',        nombre: 'Servicio general',            icono: '🔩' },
 ];
 
+// Mapa servicio_id → fila completa de BD (con estado_validacion etc.)
+let serviciosEnBD = {};
+// Set de servicios actualmente marcados (checkbox)
 let serviciosSeleccionados = new Set();
 let serviciosCargados = false;
+
+const SVC_ESTADO_BADGE = {
+  auto_declarado: '<span style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;background:#f3f4f6;color:#6b7280;padding:2px 7px;border-radius:8px">⏳ En validación</span>',
+  en_revision:    '<span style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;background:#fffbeb;color:#D97706;padding:2px 7px;border-radius:8px">👁 En revisión</span>',
+  aprobado:       '<span style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;background:#ecfdf5;color:#059669;padding:2px 7px;border-radius:8px">✓ Aprobado</span>',
+  suspendido:     '<span style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;background:#fff0f0;color:#E63946;padding:2px 7px;border-radius:8px">⚠ Suspendido</span>',
+};
 
 async function cargarServicios() {
   if (serviciosCargados) return;
@@ -1556,8 +1566,13 @@ async function cargarServicios() {
   if (!tallerData?.id) return;
 
   try {
-    const rows = await supabaseGet('cat_taller_servicios', `select=servicio_id&taller_id=eq.${tallerData.id}`);
-    serviciosSeleccionados = new Set((rows || []).map(r => r.servicio_id));
+    const rows = await supabaseGet(
+      'cat_taller_servicios',
+      `select=servicio_id,estado_validacion,motivo_estado,documentacion_url,fecha_solicitud,fecha_aprobacion&taller_id=eq.${tallerData.id}`
+    );
+    serviciosEnBD = {};
+    (rows || []).forEach(r => { serviciosEnBD[r.servicio_id] = r; });
+    serviciosSeleccionados = new Set(Object.keys(serviciosEnBD));
     serviciosCargados = true;
     renderServiciosGrid();
   } catch (err) {
@@ -1568,20 +1583,79 @@ async function cargarServicios() {
 function renderServiciosGrid() {
   const grid = document.getElementById('servicios-grid');
   grid.innerHTML = SERVICIOS_CATALOGO.map((s, i) => {
-    const checked = serviciosSeleccionados.has(s.id);
-    const borderRight = i % 2 === 0 ? '1px solid var(--line)' : 'none';
-    const borderBottom = i < SERVICIOS_CATALOGO.length - 2 ? '1px solid var(--line)' : 'none';
-    return `<label style="display:flex;align-items:center;gap:10px;padding:13px 14px;cursor:pointer;border-right:${borderRight};border-bottom:${borderBottom}">
-      <input type="checkbox" id="srv-${s.id}" ${checked ? 'checked' : ''} onchange="toggleServicio('${s.id}',this.checked)" style="accent-color:var(--accent);width:16px;height:16px;flex-shrink:0">
-      <span style="font-size:18px">${s.icono}</span>
-      <span style="font-size:12px;font-weight:600;color:var(--ink-2);line-height:1.3">${s.nombre}</span>
-    </label>`;
+    const checked  = serviciosSeleccionados.has(s.id);
+    const dbRow    = serviciosEnBD[s.id];
+    const estado   = dbRow?.estado_validacion;
+    const motivo   = dbRow?.motivo_estado;
+    const borderTop = i > 0 ? '1px solid var(--line)' : 'none';
+
+    let estadoHtml = '';
+    if (checked && estado) {
+      estadoHtml = SVC_ESTADO_BADGE[estado] || '';
+      if (estado === 'suspendido' && motivo) {
+        estadoHtml += `<div style="font-size:10px;color:#E63946;margin-top:3px;font-style:italic">${motivo}</div>`;
+      }
+      if (estado === 'auto_declarado') {
+        estadoHtml += '<div style="font-size:10px;color:#888;margin-top:3px;line-height:1.4">Solicitud enviada. Piezauto validará tu habilitación.</div>';
+      }
+    }
+
+    const puedeSubirDoc = checked && estado && (estado === 'auto_declarado' || estado === 'en_revision');
+    const docBtn = puedeSubirDoc
+      ? `<button onclick="abrirSubirDoc('${s.id}',event)" style="margin-top:6px;font-size:10px;padding:4px 9px;background:#f3f4f6;color:#555;border:1px solid #ddd;border-radius:6px;cursor:pointer;font-family:inherit">📎 Subir documentación</button>`
+      : '';
+
+    return `<div style="padding:13px 14px;border-top:${borderTop}">
+      <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer">
+        <input type="checkbox" id="srv-${s.id}" ${checked ? 'checked' : ''} onchange="toggleServicio('${s.id}',this.checked)" style="accent-color:var(--accent);width:16px;height:16px;flex-shrink:0;margin-top:2px">
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span style="font-size:18px">${s.icono}</span>
+            <span style="font-size:13px;font-weight:600;color:var(--ink-2)">${s.nombre}</span>
+            ${estadoHtml}
+          </div>
+          ${docBtn}
+        </div>
+      </label>
+    </div>`;
   }).join('');
 }
 
 function toggleServicio(id, checked) {
   if (checked) serviciosSeleccionados.add(id);
   else serviciosSeleccionados.delete(id);
+}
+
+// Subir documentación a través de un input file → URL simulada (Storage real en futuro)
+function abrirSubirDoc(servicioId, evt) {
+  evt.preventDefault();
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*,.pdf';
+  input.onchange = async () => {
+    if (!input.files[0]) return;
+    const file  = input.files[0];
+    const token = getSessionToken();
+    const tid   = tallerData.id;
+    // Por ahora guardamos nombre del archivo como placeholder hasta tener Storage configurado
+    const urlPlaceholder = `doc_${servicioId}_${Date.now()}_${file.name}`;
+    try {
+      await fetch(`${SUPABASE_URL}/rest/v1/cat_taller_servicios?taller_id=eq.${tid}&servicio_id=eq.${servicioId}`, {
+        method: 'PATCH',
+        headers: {
+          'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json', 'Prefer': 'return=minimal',
+        },
+        body: JSON.stringify({ documentacion_url: urlPlaceholder }),
+      });
+      showToast('✓ Documentación registrada (subida a Storage pendiente)');
+      serviciosCargados = false;
+      await cargarServicios();
+    } catch (e) {
+      showToast('Error al guardar doc: ' + e.message, 'error');
+    }
+  };
+  input.click();
 }
 
 async function guardarServicios() {
@@ -1591,32 +1665,44 @@ async function guardarServicios() {
   btn.textContent = 'Guardando…';
 
   const token = getSessionToken();
-  const tid = tallerData.id;
+  const tid   = tallerData.id;
 
   try {
-    // Borrar los existentes y reinsertar los seleccionados
-    const delRes = await fetch(`${SUPABASE_URL}/rest/v1/cat_taller_servicios?taller_id=eq.${tid}`, {
-      method: 'DELETE',
-      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}` },
-    });
-    if (!delRes.ok) throw new Error('Error al borrar servicios previos');
+    const existentes = new Set(Object.keys(serviciosEnBD));
+    const nuevos     = [...serviciosSeleccionados].filter(id => !existentes.has(id));
+    const borrar     = [...existentes].filter(id => !serviciosSeleccionados.has(id));
 
-    const rows = [...serviciosSeleccionados].map(sid => ({ taller_id: tid, servicio_id: sid }));
-    if (rows.length) {
+    // INSERT solo los nuevos (con estado auto_declarado por defecto)
+    if (nuevos.length) {
       const insRes = await fetch(`${SUPABASE_URL}/rest/v1/cat_taller_servicios`, {
         method: 'POST',
         headers: {
-          'apikey': SUPABASE_ANON_KEY,
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Prefer': 'return=minimal',
+          'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json', 'Prefer': 'return=minimal',
         },
-        body: JSON.stringify(rows),
+        body: JSON.stringify(nuevos.map(id => ({
+          taller_id: tid, servicio_id: id,
+          estado_validacion: 'auto_declarado',
+          fecha_solicitud: new Date().toISOString(),
+        }))),
       });
-      if (!insRes.ok) throw new Error('Error al guardar servicios');
+      if (!insRes.ok) throw new Error('Error al agregar servicios nuevos');
     }
 
-    showToast('✓ Servicios actualizados');
+    // DELETE solo los que se desmarcaron
+    for (const id of borrar) {
+      await fetch(`${SUPABASE_URL}/rest/v1/cat_taller_servicios?taller_id=eq.${tid}&servicio_id=eq.${id}`, {
+        method: 'DELETE',
+        headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}` },
+      });
+    }
+
+    const msg = nuevos.length
+      ? `✓ ${nuevos.length} servicio(s) nuevo(s) solicitado(s) — Piezauto los validará pronto.`
+      : '✓ Servicios actualizados';
+    showToast(msg);
+    serviciosCargados = false;
+    await cargarServicios();
   } catch (err) {
     showToast('Error: ' + err.message, 'error');
   } finally {

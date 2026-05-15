@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Validación de Servicios — Admin Piezauto</title>
+  <style>
+    :root {
+      --rojo: #E63946; --rojo-dark: #c1121f;
+      --negro: #1a1a1a; --gris-claro: #f8f8f8; --gris: #e0e0e0;
+      --gris-text: #666; --blanco: #fff; --radio: 8px;
+      --sombra: 0 2px 12px rgba(0,0,0,.08);
+      --verde: #059669; --verde-soft: #ecfdf5;
+      --amarillo: #D97706; --amarillo-soft: #fffbeb;
+      --azul: #2563EB; --azul-soft: #eff6ff;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--gris-claro); color: #222; font-size: 14px; min-height: 100vh; }
+
+    /* Layout */
+    .page-wrap { display: flex; min-height: 100vh; }
+    .sidebar {
+      width: 240px; background: var(--negro); color: #fff;
+      padding: 20px 0; position: sticky; top: 0; height: 100vh;
+      overflow-y: auto; flex-shrink: 0;
+    }
+    .sidebar-logo { padding: 0 16px 20px; font-size: 16px; font-weight: 800; color: #fff; border-bottom: 1px solid rgba(255,255,255,.1); margin-bottom: 12px; }
+    .sidebar-link { display: block; padding: 10px 16px; color: rgba(255,255,255,.75); font-size: 13px; font-weight: 600; text-decoration: none; transition: background .15s; }
+    .sidebar-link:hover, .sidebar-link.active { background: rgba(255,255,255,.1); color: #fff; }
+    .sidebar-section { font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,.4); padding: 12px 16px 6px; }
+    .content { flex: 1; padding: 28px; overflow-x: hidden; }
+
+    /* Header */
+    .page-title { font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+    .page-sub { font-size: 13px; color: var(--gris-text); margin-bottom: 24px; }
+
+    /* Stats */
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+    .stat-card { background: #fff; border-radius: var(--radio); padding: 18px; box-shadow: var(--sombra); }
+    .stat-label { font-size: 11px; font-weight: 700; color: var(--gris-text); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 8px; }
+    .stat-val { font-size: 28px; font-weight: 800; }
+    .stat-sub { font-size: 11px; color: var(--gris-text); margin-top: 4px; }
+    .c-rojo { color: var(--rojo); }
+    .c-verde { color: var(--verde); }
+    .c-amarillo { color: var(--amarillo); }
+    .c-azul { color: var(--azul); }
+
+    /* Filters */
+    .filtros { display: flex; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; align-items: center; }
+    .filtro-select { border: 1.5px solid var(--gris); border-radius: var(--radio); padding: 8px 12px; font-size: 13px; font-family: inherit; outline: none; background: #fff; min-width: 160px; }
+    .filtro-select:focus { border-color: var(--rojo); }
+
+    /* Tabla */
+    .table-wrap { background: #fff; border-radius: 12px; box-shadow: var(--sombra); overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; }
+    thead th { background: #f8f8f8; padding: 12px 14px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--gris-text); white-space: nowrap; }
+    tbody tr { border-top: 1px solid #f0f0f0; transition: background .1s; }
+    tbody tr:hover { background: #fafafa; }
+    td { padding: 12px 14px; font-size: 13px; vertical-align: middle; }
+
+    /* Badges */
+    .badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 10px; white-space: nowrap; }
+    .badge-auto    { background: #f3f4f6; color: #6b7280; }
+    .badge-revision{ background: var(--amarillo-soft); color: var(--amarillo); }
+    .badge-aprobado{ background: var(--verde-soft); color: var(--verde); }
+    .badge-suspendido { background: #fff0f0; color: var(--rojo); }
+
+    /* Acciones inline */
+    .btn-sm { display: inline-flex; align-items: center; gap: 4px; padding: 5px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; border: none; font-family: inherit; transition: opacity .15s; }
+    .btn-sm:hover { opacity: .85; }
+    .btn-aprobar   { background: var(--verde-soft); color: var(--verde); }
+    .btn-revision  { background: var(--amarillo-soft); color: var(--amarillo); }
+    .btn-suspender { background: #fff0f0; color: var(--rojo); }
+    .btn-primary   { background: var(--rojo); color: #fff; }
+
+    /* Modal */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 300; align-items: center; justify-content: center; padding: 16px; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: #fff; border-radius: 14px; padding: 24px; width: 100%; max-width: 480px; box-shadow: 0 8px 32px rgba(0,0,0,.2); }
+    .modal-title { font-size: 17px; font-weight: 800; margin-bottom: 16px; }
+    .form-grupo { margin-bottom: 14px; }
+    .form-label { font-size: 11px; font-weight: 700; color: var(--gris-text); text-transform: uppercase; letter-spacing: .04em; display: block; margin-bottom: 5px; }
+    .form-input  { width: 100%; border: 1.5px solid var(--gris); border-radius: var(--radio); padding: 9px 12px; font-size: 14px; font-family: inherit; outline: none; }
+    .form-input:focus { border-color: var(--rojo); }
+    .modal-btns { display: flex; gap: 10px; margin-top: 18px; }
+    .btn-cancel { flex: 1; padding: 11px; border: 1.5px solid var(--gris); border-radius: var(--radio); background: #fff; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
+    .btn-confirm { flex: 1; padding: 11px; border: none; border-radius: var(--radio); background: var(--rojo); color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; }
+
+    /* Imagen doc */
+    .doc-thumb { width: 40px; height: 40px; object-fit: cover; border-radius: 6px; border: 1px solid #ddd; cursor: pointer; }
+    .no-doc { font-size: 11px; color: #bbb; }
+
+    /* Empty */
+    .empty-state { text-align: center; padding: 48px 16px; color: #aaa; }
+    .empty-icon { font-size: 40px; margin-bottom: 12px; }
+
+    /* Loading */
+    .spin { display: inline-block; width: 20px; height: 20px; border: 3px solid #eee; border-top-color: var(--rojo); border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; margin-right: 6px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Toast */
+    .toast { position: fixed; bottom: 24px; right: 24px; background: #1a1a1a; color: #fff; padding: 12px 20px; border-radius: 10px; font-size: 13px; font-weight: 600; opacity: 0; transform: translateY(10px); transition: opacity .25s, transform .25s; pointer-events: none; z-index: 400; }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.error { background: var(--rojo); }
+
+    @media (max-width: 900px) {
+      .stats-row { grid-template-columns: 1fr 1fr; }
+      .sidebar { display: none; }
+      .content { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+<div class="page-wrap">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">Piezauto Admin</div>
+    <div class="sidebar-section">Red de Talleres</div>
+    <a class="sidebar-link" href="index.html">🔧 Talleres</a>
+    <a class="sidebar-link active" href="talleres-validacion.html">✅ Validación servicios</a>
+    <a class="sidebar-link" href="talleres-externos.html">🔍 Talleres externos</a>
+    <a class="sidebar-link" href="turnos-admin.html">📅 Turnos</a>
+    <a class="sidebar-link" href="operaciones-taller.html">📋 Operaciones Point</a>
+    <div class="sidebar-section">Administración</div>
+    <a class="sidebar-link" href="index.html">← Volver al panel</a>
+  </aside>
+
+  <!-- Content -->
+  <main class="content">
+    <div class="page-title">✅ Validación de servicios</div>
+    <div class="page-sub">Revisá y aprobá los servicios que los talleres declaran ofrecer.</div>
+
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">Pendientes</div>
+        <div class="stat-val c-amarillo" id="stat-pendientes">—</div>
+        <div class="stat-sub">auto_declarado + en_revisión</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Aprobados este mes</div>
+        <div class="stat-val c-verde" id="stat-aprobados">—</div>
+        <div class="stat-sub">desde el 1° del mes</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Suspendidos</div>
+        <div class="stat-val c-rojo" id="stat-suspendidos">—</div>
+        <div class="stat-sub">requieren atención</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total en red</div>
+        <div class="stat-val c-azul" id="stat-total">—</div>
+        <div class="stat-sub">servicios declarados</div>
+      </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filtros">
+      <select class="filtro-select" id="f-estado" onchange="cargar()">
+        <option value="">Todos los estados</option>
+        <option value="auto_declarado">⏳ Auto-declarado</option>
+        <option value="en_revision">👁 En revisión</option>
+        <option value="aprobado">✅ Aprobado</option>
+        <option value="suspendido">⚠ Suspendido</option>
+      </select>
+      <select class="filtro-select" id="f-servicio" onchange="cargar()">
+        <option value="">Todos los servicios</option>
+        <option value="aceite">Cambio de aceite</option>
+        <option value="frenos">Frenos</option>
+        <option value="amortiguadores">Amortiguadores</option>
+        <option value="neumaticos">Neumáticos</option>
+        <option value="bateria">Batería</option>
+        <option value="filtros">Filtros</option>
+        <option value="correa">Correa</option>
+        <option value="embrague">Embrague</option>
+        <option value="electrico">Eléctrico</option>
+        <option value="suspension">Suspensión</option>
+        <option value="escape">Escape</option>
+        <option value="vtv">VTV</option>
+        <option value="general">Servicio general</option>
+      </select>
+      <button onclick="cargar()" class="btn-sm btn-primary" style="padding:9px 16px;font-size:13px">🔄 Actualizar</button>
+    </div>
+
+    <!-- Tabla -->
+    <div class="table-wrap">
+      <div id="tabla-wrap">
+        <div style="padding:32px;text-align:center;color:#aaa"><span class="spin"></span> Cargando…</div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Modal cambiar estado -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">Cambiar estado</div>
+    <div class="form-grupo">
+      <label class="form-label">Nuevo estado</label>
+      <select class="form-input" id="modal-estado">
+        <option value="auto_declarado">⏳ Auto-declarado</option>
+        <option value="en_revision">👁 En revisión</option>
+        <option value="aprobado">✅ Aprobado</option>
+        <option value="suspendido">⚠ Suspendido</option>
+      </select>
+    </div>
+    <div class="form-grupo">
+      <label class="form-label">Motivo / Notas</label>
+      <textarea class="form-input" id="modal-motivo" rows="3" placeholder="Indicá el motivo del cambio de estado…"></textarea>
+    </div>
+    <div class="form-grupo">
+      <label class="form-label">URL documentación (opcional)</label>
+      <input type="url" class="form-input" id="modal-doc-url" placeholder="https://…">
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn-confirm" onclick="guardarEstado()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = 'https://mqxowotdeibllkitkije.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xeG93b3RkZWlibGxraXRraWplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxMzgxNDYsImV4cCI6MjA5MTcxNDE0Nn0.V_Pr0elBurAK7OPKFL3OoZwBmb-bI-Mcz8N1U8yblG8';
+
+const SERVICIOS = {
+  aceite:'🛢️ Aceite', frenos:'🔴 Frenos', amortiguadores:'🔧 Amortiguadores',
+  neumaticos:'🛞 Neumáticos', bateria:'🔋 Batería', filtros:'🌬️ Filtros',
+  correa:'⚙️ Correa', embrague:'🚗 Embrague', electrico:'⚡ Eléctrico',
+  suspension:'🏎️ Suspensión', escape:'💨 Escape', vtv:'📋 VTV', general:'🔩 General',
+};
+
+let _filas = [];
+let _editKey = null; // {taller_id, servicio_id}
+
+async function api(path, opts={}) {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    ...opts,
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', ...(opts.headers||{}) },
+  });
+  if (!r.ok) { const e = await r.json().catch(()=>{}); throw new Error(e?.message || r.status); }
+  return r.json().catch(()=>null);
+}
+
+async function cargar() {
+  document.getElementById('tabla-wrap').innerHTML = '<div style="padding:32px;text-align:center;color:#aaa"><span class="spin"></span> Cargando…</div>';
+  const estado   = document.getElementById('f-estado').value;
+  const servicio = document.getElementById('f-servicio').value;
+
+  let qs = 'select=taller_id,servicio_id,estado_validacion,fecha_solicitud,fecha_aprobacion,aprobado_por,motivo_estado,documentacion_url,notas_admin,cat_recomendaciones_talleres!taller_id(id,nombre,localidad)&order=fecha_solicitud.asc';
+  if (estado)   qs += `&estado_validacion=eq.${estado}`;
+  if (servicio) qs += `&servicio_id=eq.${servicio}`;
+
+  const data = await api(`cat_taller_servicios?${qs}`).catch(e => { renderError(e.message); return null; });
+  if (!data) return;
+
+  _filas = data;
+  renderStats(data);
+  renderTabla(data);
+}
+
+function renderStats(data) {
+  const mes = new Date(); mes.setDate(1); mes.setHours(0,0,0,0);
+  document.getElementById('stat-pendientes').textContent  = data.filter(r => r.estado_validacion === 'auto_declarado' || r.estado_validacion === 'en_revision').length;
+  document.getElementById('stat-aprobados').textContent   = data.filter(r => r.estado_validacion === 'aprobado' && r.fecha_aprobacion && new Date(r.fecha_aprobacion) >= mes).length;
+  document.getElementById('stat-suspendidos').textContent = data.filter(r => r.estado_validacion === 'suspendido').length;
+  document.getElementById('stat-total').textContent       = data.length;
+}
+
+const BADGE = {
+  auto_declarado: '<span class="badge badge-auto">⏳ Auto-declarado</span>',
+  en_revision:    '<span class="badge badge-revision">👁 En revisión</span>',
+  aprobado:       '<span class="badge badge-aprobado">✅ Aprobado</span>',
+  suspendido:     '<span class="badge badge-suspendido">⚠ Suspendido</span>',
+};
+
+function renderTabla(data) {
+  if (!data.length) {
+    document.getElementById('tabla-wrap').innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><p>No hay servicios que coincidan con los filtros.</p></div>';
+    return;
+  }
+  const rows = data.map(r => {
+    const t = r.cat_recomendaciones_talleres;
+    const svc = SERVICIOS[r.servicio_id] || r.servicio_id;
+    const doc = r.documentacion_url
+      ? `<a href="${esc(r.documentacion_url)}" target="_blank"><img class="doc-thumb" src="${esc(r.documentacion_url)}" onerror="this.outerHTML='<span class=\\'badge badge-aprobado\\' style=\\'font-size:10px\\'>📄 Doc</span>'" alt="Doc"></a>`
+      : '<span class="no-doc">Sin doc</span>';
+    const fecha = r.fecha_solicitud ? new Date(r.fecha_solicitud).toLocaleDateString('es-AR') : '—';
+    return `<tr>
+      <td><strong>${esc(t?.nombre||'—')}</strong><br><span style="font-size:11px;color:#aaa">${esc(t?.localidad||'')}</span></td>
+      <td>${svc}</td>
+      <td>${BADGE[r.estado_validacion] || r.estado_validacion}</td>
+      <td style="font-size:11px;color:#888">${fecha}</td>
+      <td style="max-width:180px;font-size:12px;color:#555;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(r.motivo_estado||'')}">${esc(r.motivo_estado||'—')}</td>
+      <td>${doc}</td>
+      <td>
+        <button class="btn-sm btn-aprobar"   onclick="abrirModal('${r.taller_id}','${r.servicio_id}','aprobado')">✅ Aprobar</button>
+        <button class="btn-sm btn-revision"  onclick="abrirModal('${r.taller_id}','${r.servicio_id}','en_revision')" style="margin-left:4px">👁 Revisar</button>
+        <button class="btn-sm btn-suspender" onclick="abrirModal('${r.taller_id}','${r.servicio_id}','suspendido')" style="margin-left:4px">⚠ Suspender</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('tabla-wrap').innerHTML = `
+    <table>
+      <thead><tr>
+        <th>Taller</th><th>Servicio</th><th>Estado</th><th>Solicitud</th><th>Motivo</th><th>Doc</th><th>Acciones</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function renderError(msg) {
+  document.getElementById('tabla-wrap').innerHTML = `<div class="empty-state"><div class="empty-icon">❌</div><p>${esc(msg)}</p></div>`;
+}
+
+function abrirModal(tallerId, servicioId, estadoPre) {
+  _editKey = { taller_id: tallerId, servicio_id: servicioId };
+  const fila = _filas.find(r => r.taller_id === tallerId && r.servicio_id === servicioId);
+  const t = fila?.cat_recomendaciones_talleres;
+  document.getElementById('modal-title').textContent = `Cambiar estado — ${t?.nombre||'Taller'} / ${SERVICIOS[servicioId]||servicioId}`;
+  document.getElementById('modal-estado').value  = estadoPre || fila?.estado_validacion || 'auto_declarado';
+  document.getElementById('modal-motivo').value  = fila?.motivo_estado || '';
+  document.getElementById('modal-doc-url').value = fila?.documentacion_url || '';
+  document.getElementById('modal').classList.add('open');
+}
+
+function cerrarModal() {
+  document.getElementById('modal').classList.remove('open');
+  _editKey = null;
+}
+
+async function guardarEstado() {
+  if (!_editKey) return;
+  const nuevoEstado = document.getElementById('modal-estado').value;
+  const motivo      = document.getElementById('modal-motivo').value.trim();
+  const docUrl      = document.getElementById('modal-doc-url').value.trim();
+
+  const payload = {
+    estado_validacion: nuevoEstado,
+    motivo_estado:     motivo || null,
+    documentacion_url: docUrl || null,
+    aprobado_por:      'admin',
+  };
+  if (nuevoEstado === 'aprobado')   payload.fecha_aprobacion = new Date().toISOString();
+  if (nuevoEstado === 'suspendido') payload.fecha_suspension = new Date().toISOString();
+
+  try {
+    await api(`cat_taller_servicios?taller_id=eq.${_editKey.taller_id}&servicio_id=eq.${_editKey.servicio_id}`, {
+      method: 'PATCH',
+      headers: { 'Prefer': 'return=minimal' },
+      body: JSON.stringify(payload),
+    });
+    showToast('✓ Estado actualizado');
+    cerrarModal();
+    cargar();
+  } catch (e) {
+    showToast('Error: ' + e.message, 'error');
+  }
+}
+
+let _tt;
+function showToast(m, t='ok') {
+  const el = document.getElementById('toast');
+  el.textContent = m;
+  el.className = 'toast show' + (t==='error' ? ' error' : '');
+  clearTimeout(_tt);
+  _tt = setTimeout(() => el.classList.remove('show'), 3500);
+}
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+cargar();
+</script>
+</body>
+</html>

@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Talleres Externos — Admin Piezauto</title>
+  <style>
+    :root {
+      --rojo: #E63946; --rojo-dark: #c1121f;
+      --negro: #1a1a1a; --gris-claro: #f8f8f8; --gris: #e0e0e0;
+      --gris-text: #666; --blanco: #fff; --radio: 8px;
+      --sombra: 0 2px 12px rgba(0,0,0,.08);
+      --verde: #059669; --verde-soft: #ecfdf5;
+      --amarillo: #D97706; --amarillo-soft: #fffbeb;
+      --azul: #2563EB; --azul-soft: #eff6ff;
+      --violeta: #7C3AED;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--gris-claro); color: #222; font-size: 14px; min-height: 100vh; }
+
+    .page-wrap { display: flex; min-height: 100vh; }
+    .sidebar { width: 240px; background: var(--negro); color: #fff; padding: 20px 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; flex-shrink: 0; }
+    .sidebar-logo { padding: 0 16px 20px; font-size: 16px; font-weight: 800; color: #fff; border-bottom: 1px solid rgba(255,255,255,.1); margin-bottom: 12px; }
+    .sidebar-link { display: block; padding: 10px 16px; color: rgba(255,255,255,.75); font-size: 13px; font-weight: 600; text-decoration: none; transition: background .15s; }
+    .sidebar-link:hover, .sidebar-link.active { background: rgba(255,255,255,.1); color: #fff; }
+    .sidebar-section { font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,.4); padding: 12px 16px 6px; }
+    .content { flex: 1; padding: 28px; overflow-x: hidden; }
+
+    .page-title { font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+    .page-sub { font-size: 13px; color: var(--gris-text); margin-bottom: 24px; }
+
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+    .stat-card { background: #fff; border-radius: var(--radio); padding: 18px; box-shadow: var(--sombra); }
+    .stat-label { font-size: 11px; font-weight: 700; color: var(--gris-text); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 8px; }
+    .stat-val { font-size: 28px; font-weight: 800; }
+    .stat-sub { font-size: 11px; color: var(--gris-text); margin-top: 4px; }
+    .c-rojo { color: var(--rojo); } .c-verde { color: var(--verde); } .c-amarillo { color: var(--amarillo); } .c-azul { color: var(--azul); } .c-violeta { color: var(--violeta); }
+
+    .filtros { display: flex; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; align-items: center; }
+    .filtro-select, .filtro-input { border: 1.5px solid var(--gris); border-radius: var(--radio); padding: 8px 12px; font-size: 13px; font-family: inherit; outline: none; background: #fff; min-width: 150px; }
+    .filtro-select:focus, .filtro-input:focus { border-color: var(--rojo); }
+
+    .table-wrap { background: #fff; border-radius: 12px; box-shadow: var(--sombra); overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; min-width: 800px; }
+    thead th { background: #f8f8f8; padding: 11px 12px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--gris-text); white-space: nowrap; cursor: pointer; user-select: none; }
+    thead th:hover { background: #f0f0f0; }
+    tbody tr { border-top: 1px solid #f0f0f0; cursor: pointer; transition: background .1s; }
+    tbody tr:hover { background: #fafafa; }
+    td { padding: 11px 12px; font-size: 13px; vertical-align: middle; }
+
+    /* Estado badges */
+    .badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 10px; white-space: nowrap; }
+    .b-detectado   { background: #f3f4f6; color: #6b7280; }
+    .b-pre_contacto{ background: #eff6ff; color: var(--azul); }
+    .b-contactado  { background: #fffbeb; color: var(--amarillo); }
+    .b-interesado  { background: #f3e8ff; color: var(--violeta); }
+    .b-negociando  { background: #fef3c7; color: #b45309; }
+    .b-onboarded   { background: var(--verde-soft); color: var(--verde); }
+    .b-rechazado   { background: #fff0f0; color: var(--rojo); }
+    .b-descartado  { background: #f3f4f6; color: #9ca3af; }
+
+    .chip { display: inline-block; background: #f3f4f6; border-radius: 5px; padding: 2px 7px; font-size: 10px; font-weight: 600; margin: 1px 2px 1px 0; color: #555; }
+
+    /* Menciones badge */
+    .menciones-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 26px; height: 22px; background: var(--rojo); color: #fff; border-radius: 11px; font-size: 11px; font-weight: 800; }
+
+    /* Drawer */
+    .drawer-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: 200; }
+    .drawer-overlay.open { display: block; }
+    .drawer {
+      position: fixed; top: 0; right: -520px; width: 520px; height: 100vh;
+      background: #fff; box-shadow: -4px 0 24px rgba(0,0,0,.15);
+      transition: right .25s ease; overflow-y: auto; z-index: 201; padding: 24px;
+    }
+    .drawer.open { right: 0; }
+    .drawer-close { position: absolute; top: 16px; right: 16px; background: none; border: none; font-size: 20px; cursor: pointer; color: #888; }
+    .drawer-title { font-size: 20px; font-weight: 800; margin-bottom: 4px; }
+    .drawer-sub { font-size: 13px; color: var(--gris-text); margin-bottom: 20px; }
+
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+    .info-item { background: #f8f8f8; border-radius: 8px; padding: 12px; }
+    .info-label { font-size: 10px; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 3px; }
+    .info-val { font-size: 13px; font-weight: 600; }
+
+    .timeline { margin-bottom: 20px; }
+    .timeline-title { font-size: 12px; font-weight: 700; color: var(--gris-text); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 10px; }
+    .tl-item { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
+    .tl-dot { width: 8px; height: 8px; background: var(--rojo); border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+    .tl-body { flex: 1; }
+    .tl-txt { font-size: 13px; color: #333; }
+    .tl-fecha { font-size: 11px; color: #aaa; margin-top: 2px; }
+
+    .pipeline-wrap { margin-bottom: 20px; }
+    .pipeline-title { font-size: 12px; font-weight: 700; color: var(--gris-text); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 12px; }
+    .form-grupo { margin-bottom: 12px; }
+    .form-label { font-size: 11px; font-weight: 700; color: var(--gris-text); text-transform: uppercase; letter-spacing: .04em; display: block; margin-bottom: 5px; }
+    .form-input { width: 100%; border: 1.5px solid var(--gris); border-radius: var(--radio); padding: 9px 12px; font-size: 13px; font-family: inherit; outline: none; }
+    .form-input:focus { border-color: var(--rojo); }
+    .btn-guardar-pipeline { width: 100%; padding: 11px; background: var(--rojo); color: #fff; border: none; border-radius: var(--radio); font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; margin-top: 8px; }
+
+    .btn-sm { display: inline-flex; align-items: center; gap: 4px; padding: 5px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; border: none; font-family: inherit; }
+
+    .spin { display: inline-block; width: 20px; height: 20px; border: 3px solid #eee; border-top-color: var(--rojo); border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; margin-right: 6px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .toast { position: fixed; bottom: 24px; right: 24px; background: #1a1a1a; color: #fff; padding: 12px 20px; border-radius: 10px; font-size: 13px; font-weight: 600; opacity: 0; transform: translateY(10px); transition: opacity .25s, transform .25s; pointer-events: none; z-index: 500; }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.error { background: var(--rojo); }
+
+    .empty-state { text-align: center; padding: 48px; color: #aaa; }
+    .empty-icon { font-size: 40px; margin-bottom: 12px; }
+
+    @media (max-width: 900px) {
+      .stats-row { grid-template-columns: 1fr 1fr; }
+      .sidebar { display: none; }
+      .content { padding: 16px; }
+      .drawer { width: 100%; right: -100%; }
+    }
+  </style>
+</head>
+<body>
+<div class="page-wrap">
+  <aside class="sidebar">
+    <div class="sidebar-logo">Piezauto Admin</div>
+    <div class="sidebar-section">Red de Talleres</div>
+    <a class="sidebar-link" href="index.html">🔧 Talleres</a>
+    <a class="sidebar-link" href="talleres-validacion.html">✅ Validación servicios</a>
+    <a class="sidebar-link active" href="talleres-externos.html">🔍 Talleres externos</a>
+    <a class="sidebar-link" href="turnos-admin.html">📅 Turnos</a>
+    <a class="sidebar-link" href="operaciones-taller.html">📋 Operaciones Point</a>
+    <div class="sidebar-section">Administración</div>
+    <a class="sidebar-link" href="index.html">← Volver al panel</a>
+  </aside>
+
+  <main class="content">
+    <div class="page-title">🔍 Talleres externos detectados</div>
+    <div class="page-sub">Talleres capturados automáticamente de las cargas manuales de clientes. Pipeline comercial para sumarlos a la Red Piezauto.</div>
+
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-label">Total detectados</div><div class="stat-val c-azul" id="stat-total">—</div><div class="stat-sub">únicos por teléfono</div></div>
+      <div class="stat-card"><div class="stat-label">En contacto</div><div class="stat-val c-amarillo" id="stat-contacto">—</div><div class="stat-sub">pre_contacto + contactado + interesado</div></div>
+      <div class="stat-card"><div class="stat-label">Onboarded</div><div class="stat-val c-verde" id="stat-onboarded">—</div><div class="stat-sub">ya en la Red Piezauto</div></div>
+      <div class="stat-card"><div class="stat-label">Descartados</div><div class="stat-val" id="stat-descartados" style="color:#aaa">—</div><div class="stat-sub">rechazado + descartado</div></div>
+    </div>
+
+    <div class="filtros">
+      <select class="filtro-select" id="f-estado" onchange="cargar()">
+        <option value="">Todos los estados</option>
+        <option value="detectado">Detectado</option>
+        <option value="pre_contacto">Pre-contacto</option>
+        <option value="contactado">Contactado</option>
+        <option value="interesado">Interesado</option>
+        <option value="negociando">Negociando</option>
+        <option value="onboarded">Onboarded</option>
+        <option value="rechazado">Rechazado</option>
+        <option value="descartado">Descartado</option>
+      </select>
+      <input class="filtro-input" type="text" id="f-localidad" placeholder="Filtrar por localidad..." oninput="filtrarLocal()">
+      <select class="filtro-select" id="f-orden" onchange="cargar()">
+        <option value="cantidad_menciones">↓ Por menciones</option>
+        <option value="ultimo_avistamiento">↓ Último avistamiento</option>
+        <option value="primer_avistamiento">↓ Primer avistamiento</option>
+      </select>
+      <button onclick="cargar()" class="btn-sm" style="background:var(--rojo);color:#fff;padding:9px 16px;font-size:13px">🔄 Actualizar</button>
+    </div>
+
+    <div class="table-wrap" style="overflow-x:auto">
+      <div id="tabla-wrap">
+        <div style="padding:32px;text-align:center;color:#aaa"><span class="spin"></span> Cargando…</div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Drawer detalle -->
+<div class="drawer-overlay" id="drawer-overlay" onclick="cerrarDrawer()"></div>
+<div class="drawer" id="drawer">
+  <button class="drawer-close" onclick="cerrarDrawer()">✕</button>
+  <div id="drawer-content">Cargando…</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = 'https://mqxowotdeibllkitkije.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xeG93b3RkZWlibGxraXRraWplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxMzgxNDYsImV4cCI6MjA5MTcxNDE0Nn0.V_Pr0elBurAK7OPKFL3OoZwBmb-bI-Mcz8N1U8yblG8';
+
+let _datos = [];
+let _datosFiltrados = [];
+let _editId = null;
+
+const BADGE_CLASS = {
+  detectado:'b-detectado', pre_contacto:'b-pre_contacto', contactado:'b-contactado',
+  interesado:'b-interesado', negociando:'b-negociando', onboarded:'b-onboarded',
+  rechazado:'b-rechazado', descartado:'b-descartado',
+};
+const BADGE_LABEL = {
+  detectado:'🔵 Detectado', pre_contacto:'📞 Pre-contacto', contactado:'✉️ Contactado',
+  interesado:'✨ Interesado', negociando:'🤝 Negociando', onboarded:'✅ Onboarded',
+  rechazado:'❌ Rechazado', descartado:'🗑 Descartado',
+};
+
+const SERVICIOS = {
+  aceite:'Aceite', frenos:'Frenos', amortiguadores:'Amortiguadores', neumaticos:'Neumáticos',
+  bateria:'Batería', filtros:'Filtros', correa:'Correa', embrague:'Embrague',
+  electrico:'Eléctrico', suspension:'Suspensión', escape:'Escape', vtv:'VTV', general:'General',
+};
+
+async function api(path, opts={}) {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    ...opts,
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type':'application/json', ...(opts.headers||{}) },
+  });
+  if (!r.ok) { const e = await r.json().catch(()=>{}); throw new Error(e?.message || r.status); }
+  return r.json().catch(()=>null);
+}
+
+async function cargar() {
+  document.getElementById('tabla-wrap').innerHTML = '<div style="padding:32px;text-align:center;color:#aaa"><span class="spin"></span> Cargando…</div>';
+
+  const estado = document.getElementById('f-estado').value;
+  const orden  = document.getElementById('f-orden').value;
+
+  let qs = `select=*&order=${orden}.desc&limit=200`;
+  if (estado) qs += `&estado_comercial=eq.${estado}`;
+
+  const data = await api(`cat_talleres_externos_capturados?${qs}`).catch(e => { renderError(e.message); return null; });
+  if (!data) return;
+
+  _datos = data;
+  filtrarLocal();
+  renderStats(data);
+}
+
+function filtrarLocal() {
+  const localidad = document.getElementById('f-localidad').value.trim().toLowerCase();
+  _datosFiltrados = localidad
+    ? _datos.filter(r => (r.localidad||'').toLowerCase().includes(localidad) || (r.nombre||'').toLowerCase().includes(localidad))
+    : [..._datos];
+  renderTabla(_datosFiltrados);
+}
+
+function renderStats(data) {
+  document.getElementById('stat-total').textContent     = data.length;
+  document.getElementById('stat-contacto').textContent  = data.filter(r => ['pre_contacto','contactado','interesado','negociando'].includes(r.estado_comercial)).length;
+  document.getElementById('stat-onboarded').textContent = data.filter(r => r.estado_comercial === 'onboarded').length;
+  document.getElementById('stat-descartados').textContent = data.filter(r => ['rechazado','descartado'].includes(r.estado_comercial)).length;
+}
+
+function renderTabla(data) {
+  if (!data.length) {
+    document.getElementById('tabla-wrap').innerHTML = '<div class="empty-state"><div class="empty-icon">🔍</div><p>No se encontraron talleres externos.</p></div>';
+    return;
+  }
+  const rows = data.map(r => {
+    const svcs = (Array.isArray(r.servicios_mencionados) ? r.servicios_mencionados : []).slice(0, 4).map(s =>
+      `<span class="chip">${SERVICIOS[s]||s}</span>`
+    ).join('');
+    const primerA = r.primer_avistamiento ? new Date(r.primer_avistamiento).toLocaleDateString('es-AR') : '—';
+    const ultimoA = r.ultimo_avistamiento ? new Date(r.ultimo_avistamiento).toLocaleDateString('es-AR') : '—';
+    return `<tr onclick="abrirDrawer('${r.id}')">
+      <td><strong>${esc(r.nombre)}</strong></td>
+      <td style="font-size:12px">${esc(r.telefono_raw||r.telefono_normalizado||'—')}</td>
+      <td style="font-size:12px;color:#555">${esc(r.localidad||'—')}</td>
+      <td><span class="menciones-badge">${r.cantidad_menciones||1}</span></td>
+      <td>${svcs}</td>
+      <td style="font-size:11px;color:#888">${primerA}</td>
+      <td style="font-size:11px;color:#888">${ultimoA}</td>
+      <td><span class="badge ${BADGE_CLASS[r.estado_comercial]||''}">${BADGE_LABEL[r.estado_comercial]||r.estado_comercial}</span></td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('tabla-wrap').innerHTML = `
+    <table>
+      <thead><tr>
+        <th>Nombre</th><th>Teléfono</th><th>Localidad</th><th>Menciones</th><th>Servicios</th><th>1° avistamiento</th><th>Último</th><th>Estado</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function renderError(msg) {
+  document.getElementById('tabla-wrap').innerHTML = `<div class="empty-state"><div class="empty-icon">❌</div><p>${esc(msg)}</p></div>`;
+}
+
+// ─── DRAWER ──────────────────────────────────────────────────────────────────
+async function abrirDrawer(id) {
+  _editId = id;
+  document.getElementById('drawer-overlay').classList.add('open');
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('drawer-content').innerHTML = '<div style="padding:40px;text-align:center;color:#aaa"><span class="spin"></span> Cargando…</div>';
+
+  const r = _datos.find(x => x.id === id);
+  if (!r) return;
+
+  // Cargar menciones (trabajos que lo mencionaron)
+  let menciones = [];
+  try {
+    const m = await api(`cat_vehiculo_trabajos?select=descripcion,fecha,servicio_id,cat_clientes_finales!cliente_id(nombre,apellido)&taller_externo_id=eq.${id}&order=fecha.desc&limit=20`);
+    menciones = m || [];
+  } catch(_) {}
+
+  const svcs = (Array.isArray(r.servicios_mencionados) ? r.servicios_mencionados : []).map(s =>
+    `<span class="chip">${SERVICIOS[s]||s}</span>`
+  ).join('') || '<span style="color:#bbb;font-size:12px">Sin datos</span>';
+
+  const timelineHtml = menciones.length === 0
+    ? '<p style="color:#bbb;font-size:12px;text-align:center;padding:12px 0">Sin menciones cargadas aún</p>'
+    : menciones.map(m => {
+        const cli = m.cat_clientes_finales;
+        return `<div class="tl-item">
+          <div class="tl-dot"></div>
+          <div class="tl-body">
+            <div class="tl-txt">${esc(m.descripcion||'Trabajo registrado')} — ${SERVICIOS[m.servicio_id]||m.servicio_id||'—'}</div>
+            <div class="tl-fecha">${m.fecha ? new Date(m.fecha+'T00:00:00').toLocaleDateString('es-AR') : '—'}${cli ? ' · ' + esc(cli.nombre||'') + ' ' + esc(cli.apellido||'') : ''}</div>
+          </div>
+        </div>`;
+      }).join('');
+
+  document.getElementById('drawer-content').innerHTML = `
+    <div class="drawer-title">${esc(r.nombre)}</div>
+    <div class="drawer-sub">${esc(r.localidad||'')} — ${esc(r.telefono_raw||r.telefono_normalizado||'Sin teléfono')}</div>
+
+    <div class="info-grid">
+      <div class="info-item"><div class="info-label">Menciones</div><div class="info-val" style="font-size:22px;color:var(--rojo)">${r.cantidad_menciones||1}</div></div>
+      <div class="info-item"><div class="info-label">Estado</div><div class="info-val"><span class="badge ${BADGE_CLASS[r.estado_comercial]||''}">${BADGE_LABEL[r.estado_comercial]||r.estado_comercial}</span></div></div>
+      <div class="info-item"><div class="info-label">1° avistamiento</div><div class="info-val">${r.primer_avistamiento ? new Date(r.primer_avistamiento).toLocaleDateString('es-AR') : '—'}</div></div>
+      <div class="info-item"><div class="info-label">Último avistamiento</div><div class="info-val">${r.ultimo_avistamiento ? new Date(r.ultimo_avistamiento).toLocaleDateString('es-AR') : '—'}</div></div>
+    </div>
+
+    <div style="margin-bottom:16px">
+      <div class="timeline-title">Servicios mencionados</div>
+      ${svcs}
+    </div>
+
+    <div class="timeline" style="margin-bottom:20px">
+      <div class="timeline-title">Menciones registradas</div>
+      ${timelineHtml}
+    </div>
+
+    <div class="pipeline-wrap">
+      <div class="pipeline-title">Acciones comerciales</div>
+
+      <div class="form-grupo">
+        <label class="form-label">Estado comercial</label>
+        <select class="form-input" id="d-estado">
+          ${['detectado','pre_contacto','contactado','interesado','negociando','onboarded','rechazado','descartado'].map(s =>
+            `<option value="${s}" ${r.estado_comercial===s?'selected':''}>${BADGE_LABEL[s]}</option>`
+          ).join('')}
+        </select>
+      </div>
+
+      <div class="form-grupo">
+        <label class="form-label">Responsable comercial</label>
+        <input type="text" class="form-input" id="d-responsable" placeholder="Nombre del vendedor asignado" value="${esc(r.responsable_comercial||'')}">
+      </div>
+
+      <div class="form-grupo" id="d-motivo-wrap" style="${['rechazado','descartado'].includes(r.estado_comercial)?'':'display:none'}">
+        <label class="form-label">Motivo de descarte <span style="color:var(--rojo)">*</span></label>
+        <input type="text" class="form-input" id="d-motivo" placeholder="Motivo..." value="${esc(r.motivo_descarte||'')}">
+      </div>
+
+      <div class="form-grupo" id="d-red-wrap" style="${r.estado_comercial==='onboarded'?'':'display:none'}">
+        <label class="form-label">ID en Red Piezauto (taller_red_id)</label>
+        <input type="text" class="form-input" id="d-red-id" placeholder="UUID del taller en cat_recomendaciones_talleres" value="${esc(r.taller_red_id||'')}">
+      </div>
+
+      <div class="form-grupo">
+        <label class="form-label">Notas comerciales</label>
+        <textarea class="form-input" id="d-notas" rows="3" placeholder="Historial de conversaciones, interés, objeciones…">${esc(r.notas_comerciales||'')}</textarea>
+      </div>
+
+      <button class="btn-guardar-pipeline" onclick="guardarPipeline()">💾 Guardar</button>
+      <div id="d-msg" style="font-size:12px;text-align:center;margin-top:8px;min-height:16px"></div>
+    </div>`;
+
+  // Mostrar campo motivo/red al cambiar estado
+  document.getElementById('d-estado').addEventListener('change', function() {
+    const v = this.value;
+    document.getElementById('d-motivo-wrap').style.display = ['rechazado','descartado'].includes(v) ? 'block' : 'none';
+    document.getElementById('d-red-wrap').style.display    = v === 'onboarded' ? 'block' : 'none';
+  });
+}
+
+function cerrarDrawer() {
+  document.getElementById('drawer-overlay').classList.remove('open');
+  document.getElementById('drawer').classList.remove('open');
+  _editId = null;
+}
+
+async function guardarPipeline() {
+  if (!_editId) return;
+  const nuevoEstado    = document.getElementById('d-estado').value;
+  const responsable    = document.getElementById('d-responsable').value.trim();
+  const motivo         = document.getElementById('d-motivo')?.value.trim();
+  const notas          = document.getElementById('d-notas').value.trim();
+  const redId          = document.getElementById('d-red-id')?.value.trim();
+  const msg            = document.getElementById('d-msg');
+
+  if (['rechazado','descartado'].includes(nuevoEstado) && !motivo) {
+    msg.style.color = '#c00'; msg.textContent = 'Ingresá el motivo de descarte.'; return;
+  }
+
+  const payload = {
+    estado_comercial:       nuevoEstado,
+    responsable_comercial:  responsable || null,
+    notas_comerciales:      notas || null,
+    motivo_descarte:        ['rechazado','descartado'].includes(nuevoEstado) ? motivo : null,
+    taller_red_id:          nuevoEstado === 'onboarded' && redId ? redId : null,
+    ultima_actividad_fecha: new Date().toISOString(),
+    updated_at:             new Date().toISOString(),
+  };
+  if (nuevoEstado === 'onboarded') payload.fecha_onboarding = new Date().toISOString();
+  if (['contactado','pre_contacto'].includes(nuevoEstado)) payload.primer_contacto_fecha = new Date().toISOString();
+
+  try {
+    await api(`cat_talleres_externos_capturados?id=eq.${_editId}`, {
+      method: 'PATCH',
+      headers: { 'Prefer': 'return=minimal' },
+      body: JSON.stringify(payload),
+    });
+    showToast('✓ Pipeline actualizado');
+    msg.style.color = '#059669'; msg.textContent = '¡Guardado!';
+    cerrarDrawer();
+    cargar();
+  } catch(e) {
+    msg.style.color = '#c00'; msg.textContent = 'Error: ' + e.message;
+  }
+}
+
+let _tt;
+function showToast(m, t='ok') {
+  const el = document.getElementById('toast');
+  el.textContent = m; el.className = 'toast show' + (t==='error'?' error':'');
+  clearTimeout(_tt); _tt = setTimeout(() => el.classList.remove('show'), 3500);
+}
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+cargar();
+</script>
+</body>
+</html>

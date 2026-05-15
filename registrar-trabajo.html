@@ -158,18 +158,35 @@
         <div class="origen-btn" id="origen-manual" onclick="selOrigen('manual')">
           <div class="origen-icono">✍️</div>
           <div class="origen-label">Carga manual</div>
-          <div class="origen-sub">Lo cargás vos</div>
+          <div class="origen-sub">Lo cargás vos mismo</div>
         </div>
-        <div class="origen-btn" id="origen-taller" onclick="selOrigen('taller')">
+        <div class="origen-btn" id="origen-taller_externo" onclick="selOrigen('taller_externo')">
           <div class="origen-icono">🔧</div>
-          <div class="origen-label">En un taller</div>
-          <div class="origen-sub">Seleccionás el taller</div>
+          <div class="origen-label">Taller no registrado</div>
+          <div class="origen-sub">Fuera de la red Piezauto</div>
         </div>
       </div>
-      <div id="taller-sel-wrap" style="display:none;margin-top:14px">
+      <div id="taller-ext-wrap" style="display:none;margin-top:16px">
+        <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 12px;font-size:12px;color:#92400e;margin-bottom:14px">
+          💡 Estos datos nos ayudan a sumar nuevos talleres a la Red Piezauto
+        </div>
         <div class="form-grupo">
-          <label class="form-label">Taller (opcional)</label>
-          <input type="text" id="taller-nombre-input" class="form-input" placeholder="Nombre del taller...">
+          <label class="form-label">Nombre del taller (opcional)</label>
+          <input type="text" id="te-nombre" class="form-input" placeholder="Ej: Taller Rodríguez">
+        </div>
+        <div class="form-grupo">
+          <label class="form-label">Teléfono <span style="color:var(--rojo)">*</span></label>
+          <input type="tel" id="te-telefono" class="form-input" placeholder="Ej: 1135678900" oninput="validarTallerExt()">
+        </div>
+        <div class="form-2col">
+          <div class="form-grupo">
+            <label class="form-label">Dirección (opcional)</label>
+            <input type="text" id="te-direccion" class="form-input" placeholder="Ej: Av. San Martín 1234">
+          </div>
+          <div class="form-grupo">
+            <label class="form-label">Localidad (opcional)</label>
+            <input type="text" id="te-localidad" class="form-input" placeholder="Ej: Ramos Mejía">
+          </div>
         </div>
       </div>
     </div>
@@ -348,8 +365,15 @@ function selOrigen(origen) {
   document.querySelectorAll('.origen-btn').forEach(b => b.classList.remove('selected'));
   document.getElementById('origen-' + origen).classList.add('selected');
   _origenSel = origen;
-  document.getElementById('btn-2').disabled = false;
-  document.getElementById('taller-sel-wrap').style.display = origen === 'taller' ? 'block' : 'none';
+  const isExt = origen === 'taller_externo';
+  document.getElementById('taller-ext-wrap').style.display = isExt ? 'block' : 'none';
+  document.getElementById('btn-2').disabled = isExt; // ext requires phone
+  if (isExt) validarTallerExt();
+}
+
+function validarTallerExt() {
+  const tel = document.getElementById('te-telefono').value.trim();
+  document.getElementById('btn-2').disabled = !tel;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -375,21 +399,37 @@ async function confirmarTrabajo() {
   const desc = document.getElementById('det-desc').value.trim();
   if (!desc) { showMsg('Completá la descripción del trabajo.', 'error'); return; }
 
+  const esTallerExt = _origenSel === 'taller_externo';
+  if (esTallerExt) {
+    const tel = document.getElementById('te-telefono').value.trim();
+    if (!tel) { showMsg('El teléfono del taller es obligatorio.', 'error'); return; }
+  }
+
   const btn = document.getElementById('btn-confirmar');
   btn.disabled = true;
   btn.textContent = 'Guardando...';
   showMsg('', '');
 
-  const { error } = await dbB2C.from('cat_vehiculo_trabajos').insert({
-    vehiculo_id:   _vhSel.id,
-    servicio_id:   _svcSel,
-    descripcion:   desc,
-    fecha:         document.getElementById('det-fecha').value || new Date().toISOString().slice(0, 10),
-    km_registrado: parseInt(document.getElementById('det-km').value) || null,
-    notas:         document.getElementById('det-notas').value.trim() || null,
-    origen:        _origenSel || 'manual',
-    aprobado:      true, // carga manual siempre aprobada
-  });
+  const payload = {
+    vehiculo_id:    _vhSel.id,
+    servicio_id:    _svcSel,
+    servicio_codigo: _svcSel,
+    descripcion:    desc,
+    fecha:          document.getElementById('det-fecha').value || new Date().toISOString().slice(0, 10),
+    km_registrado:  parseInt(document.getElementById('det-km').value) || null,
+    notas:          document.getElementById('det-notas').value.trim() || null,
+    origen:         _origenSel || 'manual',
+    aprobado:       true,
+  };
+
+  if (esTallerExt) {
+    payload.taller_externo_nombre    = document.getElementById('te-nombre').value.trim()    || null;
+    payload.taller_externo_telefono  = document.getElementById('te-telefono').value.trim();
+    payload.taller_externo_direccion = document.getElementById('te-direccion').value.trim() || null;
+    payload.taller_externo_localidad = document.getElementById('te-localidad').value.trim() || null;
+  }
+
+  const { error } = await dbB2C.from('cat_vehiculo_trabajos').insert(payload);
 
   if (error) {
     showMsg('Error al guardar: ' + error.message, 'error');
