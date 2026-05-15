@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Carnet Digital — Piezauto</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="stylesheet" href="css/estilos.css">
+  <style>
+    body { background: var(--gris-claro); }
+
+    /* Hero */
+    .vh-hero {
+      background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+      color: #fff;
+      padding: 20px 16px 16px;
+    }
+    .vh-hero-back { display: inline-flex; align-items: center; gap: 6px; color: rgba(255,255,255,.7); font-size: 13px; text-decoration: none; margin-bottom: 14px; }
+    .vh-hero-back:hover { color: #fff; }
+    .vh-nombre { font-size: 22px; font-weight: 800; }
+    .vh-sub { font-size: 13px; color: rgba(255,255,255,.65); margin-top: 4px; }
+    .vh-meta { display: flex; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
+    .vh-chip { background: rgba(255,255,255,.12); border-radius: 20px; padding: 4px 12px; font-size: 12px; font-weight: 600; }
+
+    /* Tabs */
+    .vh-tabs {
+      display: flex;
+      background: #fff;
+      border-bottom: 2px solid #f0f0f0;
+      overflow-x: auto;
+      scrollbar-width: none;
+      position: sticky;
+      top: 0;
+      z-index: 90;
+    }
+    .vh-tabs::-webkit-scrollbar { display: none; }
+    .vh-tab {
+      flex-shrink: 0;
+      padding: 13px 14px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #888;
+      border: none;
+      border-bottom: 2.5px solid transparent;
+      background: none;
+      cursor: pointer;
+      transition: color .15s, border-color .15s;
+      white-space: nowrap;
+    }
+    .vh-tab.active { color: var(--rojo); border-bottom-color: var(--rojo); }
+
+    /* Panels */
+    .vh-panel { display: none; padding: 16px; max-width: 720px; margin: 0 auto; }
+    .vh-panel.active { display: block; }
+
+    /* Card */
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 18px;
+      box-shadow: var(--sombra);
+      margin-bottom: 14px;
+    }
+    .card-title { font-size: 14px; font-weight: 700; margin-bottom: 14px; color: #222; display: flex; align-items: center; gap: 8px; }
+    .card-title span { font-size: 18px; }
+
+    /* Historial */
+    .trabajo-item {
+      display: flex;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid #f5f5f5;
+      align-items: flex-start;
+    }
+    .trabajo-item:last-child { border-bottom: none; }
+    .trabajo-icono { font-size: 22px; flex-shrink: 0; margin-top: 2px; }
+    .trabajo-body { flex: 1; }
+    .trabajo-titulo { font-size: 14px; font-weight: 700; color: #222; }
+    .trabajo-fecha  { font-size: 11px; color: #aaa; margin-top: 2px; }
+    .trabajo-taller { font-size: 12px; color: #666; margin-top: 3px; }
+    .trabajo-km     { font-size: 11px; color: #888; margin-top: 2px; }
+    .badge-pendiente { display: inline-block; background: #fff8e1; color: #b45309; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px; margin-left: 6px; }
+    .badge-aprobado  { display: inline-block; background: #ecfdf5; color: #059669; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px; margin-left: 6px; }
+
+    /* Documentos */
+    .doc-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #f5f5f5; }
+    .doc-item:last-child { border-bottom: none; }
+    .doc-icono { font-size: 24px; flex-shrink: 0; }
+    .doc-body { flex: 1; }
+    .doc-nombre { font-size: 14px; font-weight: 600; color: #222; }
+    .doc-vence  { font-size: 11px; color: #888; margin-top: 2px; }
+    .doc-vence.vencido { color: #c00; font-weight: 700; }
+    .doc-vence.pronto  { color: #d97706; font-weight: 700; }
+
+    /* Recordatorios */
+    .rem-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-bottom: 1px solid #f5f5f5; }
+    .rem-item:last-child { border-bottom: none; }
+    .rem-icono { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
+    .rem-body { flex: 1; }
+    .rem-titulo { font-size: 13px; font-weight: 700; color: #222; }
+    .rem-desc   { font-size: 12px; color: #666; margin-top: 3px; }
+    .rem-activo { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+    .rem-toggle { width: 36px; height: 20px; background: #ccc; border-radius: 20px; position: relative; cursor: pointer; transition: background .2s; flex-shrink: 0; }
+    .rem-toggle.on { background: var(--rojo); }
+    .rem-toggle::after { content: ''; position: absolute; width: 14px; height: 14px; background: #fff; border-radius: 50%; top: 3px; left: 3px; transition: transform .2s; }
+    .rem-toggle.on::after { transform: translateX(16px); }
+
+    /* Config */
+    .cfg-row { display: flex; align-items: center; gap: 12px; padding: 13px 0; border-bottom: 1px solid #f5f5f5; }
+    .cfg-row:last-child { border-bottom: none; }
+    .cfg-label-wrap { flex: 1; }
+    .cfg-label { font-size: 14px; font-weight: 600; color: #222; }
+    .cfg-sub   { font-size: 12px; color: #888; margin-top: 2px; }
+    .cfg-input { border: 1.5px solid #ddd; border-radius: 8px; padding: 7px 10px; font-size: 13px; font-family: inherit; outline: none; width: 140px; }
+
+    /* Toggle css */
+    .toggle-wrap { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
+    .toggle-wrap input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider { position: absolute; inset: 0; background: #ccc; border-radius: 24px; transition: background .2s; cursor: pointer; }
+    .toggle-slider::before { content: ''; position: absolute; height: 18px; width: 18px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: transform .2s; }
+    .toggle-wrap input:checked + .toggle-slider { background: var(--rojo); }
+    .toggle-wrap input:checked + .toggle-slider::before { transform: translateX(20px); }
+
+    /* FAB */
+    .fab {
+      position: fixed; bottom: 24px; right: 20px;
+      background: var(--rojo); color: #fff;
+      width: 52px; height: 52px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; box-shadow: 0 4px 16px rgba(230,57,70,.45);
+      text-decoration: none; cursor: pointer; border: none;
+      transition: transform .15s, box-shadow .15s; z-index: 80;
+    }
+    .fab:hover { transform: scale(1.07); box-shadow: 0 6px 20px rgba(230,57,70,.55); }
+
+    /* Btn */
+    .btn-primary { display: inline-flex; align-items: center; gap: 6px; background: var(--rojo); color: #fff; border: none; border-radius: 8px; padding: 10px 16px; font-size: 13px; font-weight: 700; cursor: pointer; text-decoration: none; font-family: inherit; transition: opacity .15s; }
+    .btn-primary:hover { opacity: .88; }
+    .btn-ghost { display: inline-flex; align-items: center; gap: 6px; background: #fff; color: #444; border: 1.5px solid #ddd; border-radius: 8px; padding: 10px 16px; font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none; font-family: inherit; }
+
+    /* Empty state */
+    .empty { text-align: center; padding: 32px 16px; color: #aaa; }
+    .empty-icon { font-size: 36px; margin-bottom: 10px; }
+    .empty-txt { font-size: 14px; color: #666; }
+    .empty-sub  { font-size: 12px; color: #aaa; margin-top: 4px; }
+
+    /* Loading */
+    .loading-txt { color: #aaa; font-size: 13px; text-align: center; padding: 24px 0; }
+
+    /* Form inline */
+    .form-label { font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 5px; display: block; }
+    .form-input { width: 100%; border: 1.5px solid #ddd; border-radius: 8px; padding: 9px 12px; font-size: 14px; font-family: inherit; outline: none; box-sizing: border-box; }
+    .form-input:focus { border-color: var(--rojo); }
+    .form-row-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+    .form-grupo { margin-bottom: 12px; }
+  </style>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script src="js/auth-b2c.js"></script>
+<script src="js/utils-b2c.js"></script>
+
+<div id="header-b2c-root"></div>
+<script src="js/header-b2c.js"></script>
+
+<!-- Hero del vehículo -->
+<div class="vh-hero" id="vh-hero">
+  <a href="/perfil" class="vh-hero-back">← Volver a mi perfil</a>
+  <div class="vh-nombre" id="vh-nombre">Cargando...</div>
+  <div class="vh-sub"    id="vh-sub"></div>
+  <div class="vh-meta"   id="vh-meta"></div>
+</div>
+
+<!-- Tabs -->
+<nav class="vh-tabs">
+  <button class="vh-tab active" data-tab="tab-resumen"       onclick="switchVhTab(this)">📊 Resumen</button>
+  <button class="vh-tab"        data-tab="tab-historial"     onclick="switchVhTab(this)">🔧 Historial</button>
+  <button class="vh-tab"        data-tab="tab-documentos"    onclick="switchVhTab(this)">📁 Documentos</button>
+  <button class="vh-tab"        data-tab="tab-recordatorios" onclick="switchVhTab(this)">🔔 Recordatorios</button>
+  <button class="vh-tab"        data-tab="tab-config"        onclick="switchVhTab(this)">⚙️ Config</button>
+</nav>
+
+<!-- Panel: Resumen -->
+<div class="vh-panel active" id="tab-resumen">
+  <div class="card">
+    <div class="card-title"><span>📊</span> Estado del vehículo</div>
+    <div id="resumen-contenido" class="loading-txt">Cargando...</div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span>🔧</span> Último trabajo</div>
+    <div id="resumen-ultimo" class="loading-txt">Cargando...</div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span>🔔</span> Recordatorios activos</div>
+    <div id="resumen-recordatorios" class="loading-txt">Cargando...</div>
+  </div>
+  <a href="/registrar-trabajo" class="btn-primary" style="width:100%;justify-content:center;padding:13px;font-size:15px;box-sizing:border-box;border-radius:10px">
+    + Registrar trabajo manual
+  </a>
+</div>
+
+<!-- Panel: Historial -->
+<div class="vh-panel" id="tab-historial">
+  <div class="card">
+    <div class="card-title" style="justify-content:space-between">
+      <span style="display:flex;align-items:center;gap:8px"><span>🔧</span> Historial de trabajos</span>
+      <a href="/registrar-trabajo" class="btn-primary" style="font-size:12px;padding:7px 12px">+ Nuevo</a>
+    </div>
+    <div id="historial-lista" class="loading-txt">Cargando...</div>
+  </div>
+</div>
+
+<!-- Panel: Documentos -->
+<div class="vh-panel" id="tab-documentos">
+  <div class="card">
+    <div class="card-title" style="justify-content:space-between">
+      <span style="display:flex;align-items:center;gap:8px"><span>📁</span> Documentos</span>
+      <button onclick="abrirModalDoc()" class="btn-primary" style="font-size:12px;padding:7px 12px">+ Agregar</button>
+    </div>
+    <div id="doc-lista" class="loading-txt">Cargando...</div>
+  </div>
+
+  <!-- Modal documento -->
+  <div id="modal-doc" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;display:none;align-items:center;justify-content:center;padding:16px">
+    <div style="background:#fff;border-radius:16px;padding:24px;width:100%;max-width:440px;box-shadow:0 8px 32px rgba(0,0,0,.2)">
+      <div style="font-size:16px;font-weight:800;margin-bottom:16px">📁 Nuevo documento</div>
+      <div class="form-grupo">
+        <label class="form-label">Tipo</label>
+        <select id="doc-tipo" class="form-input">
+          <option value="vtv">VTV</option>
+          <option value="seguro">Seguro</option>
+          <option value="patente">Patente</option>
+          <option value="otro">Otro</option>
+        </select>
+      </div>
+      <div class="form-grupo">
+        <label class="form-label">Nombre</label>
+        <input type="text" id="doc-nombre" class="form-input" placeholder="Ej: VTV 2025">
+      </div>
+      <div class="form-grupo">
+        <label class="form-label">Vence el (opcional)</label>
+        <input type="date" id="doc-vence" class="form-input">
+      </div>
+      <div style="display:flex;gap:10px;margin-top:16px">
+        <button onclick="cerrarModalDoc()" class="btn-ghost" style="flex:1;justify-content:center">Cancelar</button>
+        <button onclick="guardarDoc()" class="btn-primary" style="flex:1;justify-content:center" id="btn-guardar-doc">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Panel: Recordatorios -->
+<div class="vh-panel" id="tab-recordatorios">
+  <div class="card">
+    <div class="card-title" style="justify-content:space-between">
+      <span style="display:flex;align-items:center;gap:8px"><span>🔔</span> Mis recordatorios</span>
+      <button onclick="abrirModalRem()" class="btn-primary" style="font-size:12px;padding:7px 12px">+ Nuevo</button>
+    </div>
+    <div id="rem-lista" class="loading-txt">Cargando...</div>
+  </div>
+
+  <!-- Modal recordatorio -->
+  <div id="modal-rem" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:center;justify-content:center;padding:16px">
+    <div style="background:#fff;border-radius:16px;padding:24px;width:100%;max-width:440px;box-shadow:0 8px 32px rgba(0,0,0,.2)">
+      <div style="font-size:16px;font-weight:800;margin-bottom:16px">🔔 Nuevo recordatorio</div>
+      <div class="form-grupo">
+        <label class="form-label">Tipo</label>
+        <select id="rem-tipo" class="form-input" onchange="renderRemTipo()">
+          <option value="fecha">Por fecha</option>
+          <option value="km">Por kilometraje</option>
+          <option value="vtv">VTV</option>
+          <option value="seguro">Seguro</option>
+          <option value="aceite">Aceite</option>
+          <option value="general">General</option>
+        </select>
+      </div>
+      <div class="form-grupo">
+        <label class="form-label">Título</label>
+        <input type="text" id="rem-titulo" class="form-input" placeholder="Ej: Renovar VTV">
+      </div>
+      <div class="form-grupo" id="rem-fecha-wrap">
+        <label class="form-label">Fecha</label>
+        <input type="date" id="rem-fecha" class="form-input">
+      </div>
+      <div class="form-grupo" id="rem-km-wrap" style="display:none">
+        <label class="form-label">Kilometraje</label>
+        <input type="number" id="rem-km" class="form-input" placeholder="Ej: 80000">
+      </div>
+      <div class="form-grupo">
+        <label class="form-label">Canal</label>
+        <select id="rem-canal" class="form-input">
+          <option value="app">App</option>
+          <option value="whatsapp">WhatsApp</option>
+          <option value="email">Email</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:16px">
+        <button onclick="cerrarModalRem()" class="btn-ghost" style="flex:1;justify-content:center">Cancelar</button>
+        <button onclick="guardarRem()" class="btn-primary" style="flex:1;justify-content:center" id="btn-guardar-rem">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Panel: Configuración -->
+<div class="vh-panel" id="tab-config">
+  <div class="card" id="cfg-panel">
+    <div class="card-title"><span>⚙️</span> Datos del vehículo</div>
+    <div id="cfg-contenido" class="loading-txt">Cargando...</div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────────────────────
+let _vehiculoId = null;
+let _vehiculo   = null;
+let _cliente    = null;
+let _trabajos   = [];
+let _docs       = [];
+let _rems       = [];
+
+const SERVICIOS_ICONOS = {
+  aceite: '🛢️', frenos: '🔴', amortiguadores: '🔧', neumaticos: '🛞',
+  bateria: '🔋', filtros: '🌬️', correa: '⚙️', embrague: '🚗',
+  electrico: '⚡', suspension: '🏎️', escape: '💨', vtv: '📋', general: '🔩',
+};
+const SERVICIOS_NOMBRES = {
+  aceite: 'Cambio de aceite', frenos: 'Frenos', amortiguadores: 'Amortiguadores',
+  neumaticos: 'Neumáticos', bateria: 'Batería', filtros: 'Filtros', correa: 'Correa',
+  embrague: 'Embrague', electrico: 'Eléctrico', suspension: 'Suspensión',
+  escape: 'Escape', vtv: 'VTV / Inspección', general: 'Servicio general',
+};
+
+// ─────────────────────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+  if (typeof initHeaderB2C === 'function') initHeaderB2C();
+
+  _cliente = await getClienteActual();
+  if (!_cliente) { window.location.href = '/login?redirect=/mi-vehiculo'; return; }
+
+  const params = new URLSearchParams(window.location.search);
+  _vehiculoId = params.get('v');
+  if (!_vehiculoId) { window.location.href = '/perfil'; return; }
+
+  await cargarVehiculo();
+});
+
+async function cargarVehiculo() {
+  const { data, error } = await dbB2C
+    .from('cat_clientes_vehiculos')
+    .select('*')
+    .eq('id', _vehiculoId)
+    .single();
+
+  if (error || !data) {
+    document.getElementById('vh-nombre').textContent = 'Vehículo no encontrado';
+    return;
+  }
+  _vehiculo = data;
+
+  // Update URL slug param for registrar-trabajo link
+  document.querySelectorAll('a[href="/registrar-trabajo"]').forEach(a => {
+    a.href = `/registrar-trabajo?v=${_vehiculoId}`;
+  });
+
+  // Render hero
+  document.getElementById('vh-nombre').textContent =
+    [data.marca, data.modelo, data.anio].filter(Boolean).join(' ');
+  document.getElementById('vh-sub').textContent =
+    data.version ? data.version : '';
+
+  const metas = [];
+  if (data.patente) metas.push('<div class="vh-chip">🔢 ' + esc(data.patente) + '</div>');
+  if (data.color)   metas.push('<div class="vh-chip">🎨 ' + esc(data.color) + '</div>');
+  if (data.km_actual) metas.push('<div class="vh-chip">🛣️ ' + Number(data.km_actual).toLocaleString('es-AR') + ' km</div>');
+  document.getElementById('vh-meta').innerHTML = metas.join('');
+
+  document.title = [data.marca, data.modelo, data.anio].filter(Boolean).join(' ') + ' — Piezauto';
+
+  await Promise.all([cargarTrabajos(), cargarDocs(), cargarRems()]);
+  renderResumen();
+}
+
+// ─────────────────────────────────────────────────────────────
+// TABS
+// ─────────────────────────────────────────────────────────────
+function switchVhTab(btn) {
+  document.querySelectorAll('.vh-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.vh-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(btn.dataset.tab).classList.add('active');
+  if (btn.dataset.tab === 'tab-config') renderCfg();
+}
+
+// ─────────────────────────────────────────────────────────────
+// RESUMEN
+// ─────────────────────────────────────────────────────────────
+function renderResumen() {
+  // Estado general
+  const cont = document.getElementById('resumen-contenido');
+  const kmActual = _vehiculo?.km_actual || 0;
+  cont.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div style="text-align:center;padding:12px;background:#f8f8f8;border-radius:8px">
+        <div style="font-size:24px;font-weight:800;color:var(--rojo)">${_trabajos.length}</div>
+        <div style="font-size:11px;color:#888;margin-top:2px">Trabajos registrados</div>
+      </div>
+      <div style="text-align:center;padding:12px;background:#f8f8f8;border-radius:8px">
+        <div style="font-size:24px;font-weight:800;color:#1a1a1a">${kmActual.toLocaleString('es-AR')}</div>
+        <div style="font-size:11px;color:#888;margin-top:2px">Km actuales</div>
+      </div>
+    </div>`;
+
+  // Último trabajo
+  const ult = document.getElementById('resumen-ultimo');
+  if (_trabajos.length === 0) {
+    ult.innerHTML = '<div class="empty"><div class="empty-icon">🔧</div><div class="empty-txt">Sin trabajos registrados</div></div>';
+  } else {
+    const t = _trabajos[0];
+    const icono = SERVICIOS_ICONOS[t.servicio_id] || '🔧';
+    ult.innerHTML = `
+      <div class="trabajo-item" style="padding:0">
+        <div class="trabajo-icono">${icono}</div>
+        <div class="trabajo-body">
+          <div class="trabajo-titulo">${esc(t.descripcion)}</div>
+          <div class="trabajo-fecha">${fmtFecha(t.fecha)}</div>
+          ${t.km_registrado ? `<div class="trabajo-km">🛣️ ${Number(t.km_registrado).toLocaleString('es-AR')} km</div>` : ''}
+        </div>
+      </div>`;
+  }
+
+  // Recordatorios activos
+  const rem = document.getElementById('resumen-recordatorios');
+  const activos = _rems.filter(r => r.activo);
+  if (activos.length === 0) {
+    rem.innerHTML = '<div style="color:#aaa;font-size:13px;text-align:center;padding:8px 0">Sin recordatorios activos</div>';
+  } else {
+    rem.innerHTML = activos.slice(0, 3).map(r => `
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f5f5f5">
+        <span style="font-size:18px">🔔</span>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:600">${esc(r.titulo)}</div>
+          <div style="font-size:11px;color:#aaa">${r.fecha_trigger ? fmtFecha(r.fecha_trigger) : (r.km_trigger ? r.km_trigger.toLocaleString('es-AR') + ' km' : '')}</div>
+        </div>
+      </div>`).join('');
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// HISTORIAL
+// ─────────────────────────────────────────────────────────────
+async function cargarTrabajos() {
+  const { data, error } = await dbB2C
+    .from('cat_vehiculo_trabajos')
+    .select('*')
+    .eq('vehiculo_id', _vehiculoId)
+    .order('fecha', { ascending: false });
+
+  _trabajos = data || [];
+  renderHistorial();
+}
+
+function renderHistorial() {
+  const wrap = document.getElementById('historial-lista');
+  if (_trabajos.length === 0) {
+    wrap.innerHTML = `<div class="empty">
+      <div class="empty-icon">🔧</div>
+      <div class="empty-txt">Sin trabajos registrados</div>
+      <div class="empty-sub">Registrá el primer trabajo de este vehículo</div>
+    </div>`;
+    return;
+  }
+  wrap.innerHTML = _trabajos.map(t => {
+    const icono = SERVICIOS_ICONOS[t.servicio_id] || '🔧';
+    const badge = t.aprobado
+      ? '<span class="badge-aprobado">Aprobado</span>'
+      : '<span class="badge-pendiente">Pendiente</span>';
+    return `<div class="trabajo-item">
+      <div class="trabajo-icono">${icono}</div>
+      <div class="trabajo-body">
+        <div class="trabajo-titulo">${esc(t.descripcion)}${badge}</div>
+        <div class="trabajo-fecha">${fmtFecha(t.fecha)}</div>
+        ${t.km_registrado ? `<div class="trabajo-km">🛣️ ${Number(t.km_registrado).toLocaleString('es-AR')} km</div>` : ''}
+        ${t.notas ? `<div class="trabajo-taller" style="margin-top:4px;font-style:italic;font-size:11px">${esc(t.notas)}</div>` : ''}
+      </div>
+      ${!t.aprobado ? `<button onclick="aprobarTrabajo('${t.id}')" style="font-size:11px;padding:6px 10px;background:#ecfdf5;color:#059669;border:1px solid #6ee7b7;border-radius:6px;cursor:pointer;font-family:inherit;white-space:nowrap">Aprobar</button>` : ''}
+    </div>`;
+  }).join('');
+}
+
+async function aprobarTrabajo(id) {
+  const { error } = await dbB2C
+    .from('cat_vehiculo_trabajos')
+    .update({ aprobado: true, aprobado_at: new Date().toISOString() })
+    .eq('id', id);
+  if (error) { mostrarNotificacion('Error: ' + error.message, 'error'); return; }
+  await cargarTrabajos();
+  mostrarNotificacion('Trabajo aprobado', 'exito');
+}
+
+// ─────────────────────────────────────────────────────────────
+// DOCUMENTOS
+// ─────────────────────────────────────────────────────────────
+const DOC_ICONOS = { vtv: '📋', seguro: '🛡️', patente: '🔢', otro: '📄' };
+
+async function cargarDocs() {
+  const { data } = await dbB2C
+    .from('cat_vehiculo_documentos')
+    .select('*')
+    .eq('vehiculo_id', _vehiculoId)
+    .order('created_at', { ascending: false });
+  _docs = data || [];
+  renderDocs();
+}
+
+function renderDocs() {
+  const wrap = document.getElementById('doc-lista');
+  if (_docs.length === 0) {
+    wrap.innerHTML = '<div class="empty"><div class="empty-icon">📁</div><div class="empty-txt">Sin documentos</div></div>';
+    return;
+  }
+  const hoy = new Date();
+  wrap.innerHTML = _docs.map(d => {
+    const icono = DOC_ICONOS[d.tipo] || '📄';
+    let venceHtml = '';
+    if (d.vence_at) {
+      const vdate = new Date(d.vence_at);
+      const dias  = Math.ceil((vdate - hoy) / 86400000);
+      const cls   = dias < 0 ? 'vencido' : dias < 30 ? 'pronto' : '';
+      const txt   = dias < 0 ? 'Vencido el ' + fmtFecha(d.vence_at) : 'Vence ' + fmtFecha(d.vence_at);
+      venceHtml = `<div class="doc-vence ${cls}">${txt}</div>`;
+    }
+    return `<div class="doc-item">
+      <div class="doc-icono">${icono}</div>
+      <div class="doc-body">
+        <div class="doc-nombre">${esc(d.nombre)}</div>
+        ${venceHtml}
+      </div>
+      <button onclick="eliminarDoc('${d.id}')" style="font-size:11px;padding:5px 9px;background:#fff0f0;color:var(--rojo);border:1px solid #ffd0d0;border-radius:6px;cursor:pointer;font-family:inherit">Eliminar</button>
+    </div>`;
+  }).join('');
+}
+
+function abrirModalDoc() {
+  document.getElementById('modal-doc').style.display = 'flex';
+}
+function cerrarModalDoc() {
+  document.getElementById('modal-doc').style.display = 'none';
+  document.getElementById('doc-nombre').value = '';
+  document.getElementById('doc-vence').value = '';
+}
+
+async function guardarDoc() {
+  const nombre = document.getElementById('doc-nombre').value.trim();
+  if (!nombre) { mostrarNotificacion('Ingresá un nombre para el documento', 'error'); return; }
+  const btn = document.getElementById('btn-guardar-doc');
+  btn.disabled = true;
+  const { error } = await dbB2C.from('cat_vehiculo_documentos').insert({
+    vehiculo_id: _vehiculoId,
+    tipo:   document.getElementById('doc-tipo').value,
+    nombre,
+    vence_at: document.getElementById('doc-vence').value || null,
+  });
+  btn.disabled = false;
+  if (error) { mostrarNotificacion('Error: ' + error.message, 'error'); return; }
+  cerrarModalDoc();
+  await cargarDocs();
+  mostrarNotificacion('Documento agregado', 'exito');
+}
+
+async function eliminarDoc(id) {
+  mostrarConfirm('¿Eliminar este documento?', async () => {
+    const { error } = await dbB2C.from('cat_vehiculo_documentos').delete().eq('id', id);
+    if (error) { mostrarNotificacion('Error: ' + error.message, 'error'); return; }
+    await cargarDocs();
+  });
+}
+
+// ─────────────────────────────────────────────────────────────
+// RECORDATORIOS
+// ─────────────────────────────────────────────────────────────
+async function cargarRems() {
+  const { data } = await dbB2C
+    .from('cat_recordatorios')
+    .select('*')
+    .eq('vehiculo_id', _vehiculoId)
+    .order('created_at', { ascending: false });
+  _rems = data || [];
+  renderRems();
+}
+
+function renderRems() {
+  const wrap = document.getElementById('rem-lista');
+  if (_rems.length === 0) {
+    wrap.innerHTML = '<div class="empty"><div class="empty-icon">🔔</div><div class="empty-txt">Sin recordatorios</div><div class="empty-sub">Agregá uno para no olvidar nada importante</div></div>';
+    return;
+  }
+  wrap.innerHTML = _rems.map(r => `
+    <div class="rem-item">
+      <div class="rem-icono">🔔</div>
+      <div class="rem-body">
+        <div class="rem-titulo">${esc(r.titulo)}</div>
+        <div class="rem-desc">
+          ${r.fecha_trigger ? '📅 ' + fmtFecha(r.fecha_trigger) : ''}
+          ${r.km_trigger    ? '🛣️ ' + Number(r.km_trigger).toLocaleString('es-AR') + ' km' : ''}
+          ${!r.fecha_trigger && !r.km_trigger ? 'General' : ''}
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
+        <div class="rem-toggle ${r.activo ? 'on' : ''}" onclick="toggleRem('${r.id}', ${!r.activo})"></div>
+        <button onclick="eliminarRem('${r.id}')" style="font-size:10px;padding:4px 8px;background:#fff0f0;color:var(--rojo);border:1px solid #ffd0d0;border-radius:5px;cursor:pointer;font-family:inherit">Eliminar</button>
+      </div>
+    </div>`).join('');
+}
+
+function abrirModalRem() {
+  document.getElementById('modal-rem').style.display = 'flex';
+}
+function cerrarModalRem() {
+  document.getElementById('modal-rem').style.display = 'none';
+  document.getElementById('rem-titulo').value = '';
+}
+function renderRemTipo() {
+  const tipo = document.getElementById('rem-tipo').value;
+  document.getElementById('rem-fecha-wrap').style.display = tipo === 'km' ? 'none' : 'block';
+  document.getElementById('rem-km-wrap').style.display    = tipo === 'km' ? 'block' : 'none';
+}
+
+async function guardarRem() {
+  const titulo = document.getElementById('rem-titulo').value.trim();
+  if (!titulo) { mostrarNotificacion('Ingresá un título', 'error'); return; }
+  const tipo  = document.getElementById('rem-tipo').value;
+  const fecha = document.getElementById('rem-fecha').value || null;
+  const km    = parseInt(document.getElementById('rem-km').value) || null;
+  const btn   = document.getElementById('btn-guardar-rem');
+  btn.disabled = true;
+  const { error } = await dbB2C.from('cat_recordatorios').insert({
+    vehiculo_id:   _vehiculoId,
+    cliente_id:    _cliente.id,
+    tipo,
+    titulo,
+    fecha_trigger: tipo !== 'km' ? fecha : null,
+    km_trigger:    tipo === 'km' ? km    : null,
+    canal:         document.getElementById('rem-canal').value,
+    activo:        true,
+  });
+  btn.disabled = false;
+  if (error) { mostrarNotificacion('Error: ' + error.message, 'error'); return; }
+  cerrarModalRem();
+  await cargarRems();
+  mostrarNotificacion('Recordatorio creado', 'exito');
+}
+
+async function toggleRem(id, activo) {
+  const { error } = await dbB2C.from('cat_recordatorios').update({ activo }).eq('id', id);
+  if (error) { mostrarNotificacion('Error: ' + error.message, 'error'); return; }
+  const r = _rems.find(r => r.id === id);
+  if (r) r.activo = activo;
+  renderRems();
+}
+
+async function eliminarRem(id) {
+  mostrarConfirm('¿Eliminar este recordatorio?', async () => {
+    const { error } = await dbB2C.from('cat_recordatorios').delete().eq('id', id);
+    if (error) { mostrarNotificacion('Error: ' + error.message, 'error'); return; }
+    await cargarRems();
+  });
+}
+
+// ─────────────────────────────────────────────────────────────
+// CONFIG
+// ─────────────────────────────────────────────────────────────
+function renderCfg() {
+  const v = _vehiculo;
+  if (!v) return;
+  document.getElementById('cfg-contenido').innerHTML = `
+    <div class="cfg-row">
+      <div class="cfg-label-wrap"><div class="cfg-label">Marca</div></div>
+      <input class="cfg-input" id="cfg-marca" value="${esc(v.marca || '')}">
+    </div>
+    <div class="cfg-row">
+      <div class="cfg-label-wrap"><div class="cfg-label">Modelo</div></div>
+      <input class="cfg-input" id="cfg-modelo" value="${esc(v.modelo || '')}">
+    </div>
+    <div class="cfg-row">
+      <div class="cfg-label-wrap"><div class="cfg-label">Año</div></div>
+      <input class="cfg-input" id="cfg-anio" type="number" value="${v.anio || ''}">
+    </div>
+    <div class="cfg-row">
+      <div class="cfg-label-wrap"><div class="cfg-label">Patente</div></div>
+      <input class="cfg-input" id="cfg-patente" value="${esc(v.patente || '')}">
+    </div>
+    <div class="cfg-row">
+      <div class="cfg-label-wrap"><div class="cfg-label">VIN / Chasis</div></div>
+      <input class="cfg-input" id="cfg-vin" value="${esc(v.vin || '')}">
+    </div>
+    <div class="cfg-row">
+      <div class="cfg-label-wrap"><div class="cfg-label">Color</div></div>
+      <input class="cfg-input" id="cfg-color" value="${esc(v.color || '')}">
+    </div>
+    <div class="cfg-row">
+      <div class="cfg-label-wrap"><div class="cfg-label">Km actuales</div></div>
+      <input class="cfg-input" id="cfg-km" type="number" value="${v.km_actual || ''}">
+    </div>
+    <button onclick="guardarCfg()" id="btn-cfg" style="margin-top:14px;width:100%;padding:12px;background:var(--rojo);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">Guardar cambios</button>
+    <div id="cfg-msg" style="font-size:12px;text-align:center;margin-top:8px;min-height:16px"></div>`;
+}
+
+async function guardarCfg() {
+  const btn = document.getElementById('btn-cfg');
+  const msg = document.getElementById('cfg-msg');
+  btn.disabled = true;
+  const { error } = await dbB2C
+    .from('cat_clientes_vehiculos')
+    .update({
+      marca:     document.getElementById('cfg-marca').value.trim(),
+      modelo:    document.getElementById('cfg-modelo').value.trim(),
+      anio:      parseInt(document.getElementById('cfg-anio').value) || null,
+      patente:   document.getElementById('cfg-patente').value.trim() || null,
+      vin:       document.getElementById('cfg-vin').value.trim() || null,
+      color:     document.getElementById('cfg-color').value.trim() || null,
+      km_actual: parseInt(document.getElementById('cfg-km').value) || 0,
+    })
+    .eq('id', _vehiculoId);
+
+  btn.disabled = false;
+  if (error) {
+    msg.style.color = '#c00';
+    msg.textContent = 'Error: ' + error.message;
+  } else {
+    msg.style.color = '#059669';
+    msg.textContent = '¡Guardado!';
+    await cargarVehiculo();
+    setTimeout(() => { if (msg) msg.textContent = ''; }, 2500);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// UTILS
+// ─────────────────────────────────────────────────────────────
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function fmtFecha(iso) {
+  if (!iso) return '';
+  const d = new Date(iso + (iso.length === 10 ? 'T00:00:00' : ''));
+  return d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+</script>
+</body>
+</html>

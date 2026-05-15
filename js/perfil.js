@@ -8,6 +8,7 @@ async function iniciarPerfil() {
   }
   renderPerfil(cliente);
   await cargarVehiculos(cliente.id);
+  renderPreferencias(cliente);
 }
 
 function renderPerfil(cliente) {
@@ -65,6 +66,7 @@ async function cargarVehiculos(clienteId) {
         ${v.color ? `<div class="vehiculo-meta">Color: ${v.color}</div>` : ''}
       </div>
       <div class="vehiculo-acciones">
+        <a href="/mi-vehiculo?v=${v.id}" class="btn btn-rojo" style="font-size:12px;padding:7px 12px;">📋 Carnet</a>
         <a href="vehiculos.html?editar=${v.id}" class="btn btn-blanco" style="font-size:12px;padding:7px 12px;">Editar</a>
         <button onclick="eliminarVehiculo('${v.id}')" class="btn" style="font-size:12px;padding:7px 12px;background:#fff0f0;color:var(--rojo);border:1px solid #ffd0d0;">Eliminar</button>
       </div>
@@ -132,6 +134,70 @@ async function guardarPerfil(e) {
 
   btnGuardar.disabled = false;
   btnGuardar.textContent = 'Guardar cambios';
+}
+
+// ── Preferencias ─────────────────────────────────────────────
+function renderPreferencias(cliente) {
+  const wrap = document.getElementById('prefs-wrap');
+  if (!wrap) return;
+
+  const autoaprobar = !!cliente.autoaprobar_trabajos;
+  const canal       = cliente.notif_canal || 'app';
+
+  wrap.innerHTML = `
+    <div class="pref-row">
+      <div class="pref-info">
+        <div class="pref-label">Aprobar trabajos automáticamente</div>
+        <div class="pref-sub">Los trabajos registrados por talleres se agregan al historial sin requerir tu aprobación.</div>
+      </div>
+      <label class="toggle-wrap">
+        <input type="checkbox" id="pref-autoaprobar" ${autoaprobar ? 'checked' : ''}>
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+    <div class="pref-row" style="border-top:1px solid #f0f0f0;padding-top:14px;margin-top:0">
+      <div class="pref-info">
+        <div class="pref-label">Canal de notificaciones</div>
+        <div class="pref-sub">Cómo querés recibir recordatorios y avisos.</div>
+      </div>
+      <select id="pref-canal" style="border:1.5px solid #ddd;border-radius:8px;padding:7px 10px;font-size:13px;font-family:inherit;outline:none">
+        <option value="app"      ${canal==='app'       ? 'selected' : ''}>En la app</option>
+        <option value="whatsapp" ${canal==='whatsapp'  ? 'selected' : ''}>WhatsApp</option>
+        <option value="email"    ${canal==='email'     ? 'selected' : ''}>Email</option>
+      </select>
+    </div>
+    <button onclick="guardarPreferencias()" id="btn-guardar-prefs" style="margin-top:14px;width:100%;padding:11px;background:var(--rojo);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">Guardar preferencias</button>
+    <div id="prefs-msg" style="font-size:12px;text-align:center;margin-top:8px;min-height:16px;color:#888"></div>`;
+}
+
+async function guardarPreferencias() {
+  const btn  = document.getElementById('btn-guardar-prefs');
+  const msg  = document.getElementById('prefs-msg');
+  btn.disabled = true;
+  btn.textContent = 'Guardando…';
+
+  const cliente = await getClienteActual();
+  if (!cliente) { window.location.href = '/login'; return; }
+
+  const { error } = await dbB2C
+    .from('cat_clientes_finales')
+    .update({
+      autoaprobar_trabajos: document.getElementById('pref-autoaprobar').checked,
+      notif_canal:          document.getElementById('pref-canal').value,
+    })
+    .eq('id', cliente.id);
+
+  if (error) {
+    msg.style.color = '#c00';
+    msg.textContent = 'Error: ' + error.message;
+  } else {
+    msg.style.color = '#059669';
+    msg.textContent = '¡Preferencias guardadas!';
+    setTimeout(() => { msg.textContent = ''; }, 3000);
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Guardar preferencias';
 }
 
 async function cerrarSesion() {

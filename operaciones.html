@@ -103,9 +103,21 @@
   <!-- TABS OPERACIONES / TURNOS -->
   <div style="display:flex;gap:0;border-bottom:2px solid #eee;margin-bottom:20px">
     <button class="ops-tab active" id="tab-ops-btn"    onclick="switchOpsTab('ops')"    style="padding:10px 18px;font-size:13px;font-weight:700;background:none;border:none;border-bottom:2.5px solid var(--rojo);color:var(--rojo);cursor:pointer;font-family:inherit;margin-bottom:-2px">Mis pedidos</button>
-    <button class="ops-tab"        id="tab-turnos-btn" onclick="switchOpsTab('turnos')"  style="padding:10px 18px;font-size:13px;font-weight:700;background:none;border:none;border-bottom:2.5px solid transparent;color:#aaa;cursor:pointer;font-family:inherit;margin-bottom:-2px">
+    <button class="ops-tab"        id="tab-turnos-btn"    onclick="switchOpsTab('turnos')"   style="padding:10px 18px;font-size:13px;font-weight:700;background:none;border:none;border-bottom:2.5px solid transparent;color:#aaa;cursor:pointer;font-family:inherit;margin-bottom:-2px">
       📅 Mis turnos <span id="badge-turnos" style="display:none;background:var(--rojo);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px"></span>
     </button>
+    <button class="ops-tab"        id="tab-vehiculos-btn" onclick="switchOpsTab('vehiculos')" style="padding:10px 18px;font-size:13px;font-weight:700;background:none;border:none;border-bottom:2.5px solid transparent;color:#aaa;cursor:pointer;font-family:inherit;margin-bottom:-2px">
+      🚗 Mis vehículos
+    </button>
+  </div>
+
+  <!-- SECCIÓN VEHÍCULOS -->
+  <div id="seccion-vehiculos" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+      <div style="font-size:13px;color:#888">Tus vehículos y su historial de trabajos</div>
+      <a href="/registrar-trabajo" style="display:inline-flex;align-items:center;gap:6px;background:var(--rojo);color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:13px;font-weight:700;text-decoration:none">+ Registrar trabajo</a>
+    </div>
+    <div id="lista-vehiculos-ops"><div style="text-align:center;padding:30px;color:#bbb">Cargando vehículos…</div></div>
   </div>
 
   <!-- SECCIÓN TURNOS -->
@@ -326,14 +338,18 @@ document.addEventListener('DOMContentLoaded', initPage);
 let turnosData = [];
 
 function switchOpsTab(tab) {
-  const isOps = tab === 'ops';
-  document.getElementById('seccion-ops').style.display    = isOps ? '' : 'none';
-  document.getElementById('seccion-turnos').style.display = isOps ? 'none' : '';
-  document.getElementById('tab-ops-btn').style.borderBottomColor    = isOps ? 'var(--rojo)' : 'transparent';
-  document.getElementById('tab-ops-btn').style.color                = isOps ? 'var(--rojo)' : '#aaa';
-  document.getElementById('tab-turnos-btn').style.borderBottomColor = isOps ? 'transparent' : 'var(--rojo)';
-  document.getElementById('tab-turnos-btn').style.color             = isOps ? '#aaa' : 'var(--rojo)';
-  if (!isOps && !turnosData.length) cargarTurnos();
+  const tabs = ['ops', 'turnos', 'vehiculos'];
+  tabs.forEach(t => {
+    const secEl = document.getElementById('seccion-' + t);
+    const btnEl = document.getElementById('tab-' + t + '-btn');
+    if (!secEl || !btnEl) return;
+    const isActive = t === tab;
+    secEl.style.display = isActive ? '' : 'none';
+    btnEl.style.borderBottomColor = isActive ? 'var(--rojo)' : 'transparent';
+    btnEl.style.color             = isActive ? 'var(--rojo)' : '#aaa';
+  });
+  if (tab === 'turnos'    && !turnosData.length)    cargarTurnos();
+  if (tab === 'vehiculos' && !vehiculosOpsLoaded)   cargarVehiculosOps();
 }
 
 async function cargarTurnos() {
@@ -429,6 +445,63 @@ async function enviarCalifTurno() {
     document.getElementById('modal-calif-turno').remove();
     turnosData = []; cargarTurnos();
   } catch (e) { alert('Error: ' + e.message); }
+}
+
+// ─── VEHÍCULOS ───────────────────────────────────────────────────────────────
+let vehiculosOpsLoaded = false;
+
+async function cargarVehiculosOps() {
+  vehiculosOpsLoaded = true;
+  const cont = document.getElementById('lista-vehiculos-ops');
+  const cliente = await getClienteActual();
+  if (!cliente) { cont.innerHTML = '<div style="text-align:center;padding:20px;color:#aaa;font-size:13px">Iniciá sesión para ver tus vehículos.</div>'; return; }
+
+  const { data: vhs, error } = await dbB2C
+    .from('cat_clientes_vehiculos')
+    .select('id, marca, modelo, anio, patente, km_actual')
+    .eq('cliente_id', cliente.id)
+    .order('created_at', { ascending: false });
+
+  if (error || !vhs?.length) {
+    cont.innerHTML = `<div style="text-align:center;padding:32px 0;color:#aaa">
+      <div style="font-size:36px;margin-bottom:10px">🚗</div>
+      <div style="font-size:14px;color:#666">No tenés vehículos registrados.</div>
+      <a href="/vehiculos" style="display:inline-block;margin-top:14px;color:var(--rojo);font-weight:700;font-size:13px">+ Agregar vehículo</a>
+    </div>`;
+    return;
+  }
+
+  // Para cada vehículo cargar el último trabajo
+  const ids = vhs.map(v => v.id);
+  const { data: trabajos } = await dbB2C
+    .from('cat_vehiculo_trabajos')
+    .select('vehiculo_id, descripcion, fecha, servicio_id')
+    .in('vehiculo_id', ids)
+    .order('fecha', { ascending: false });
+
+  const ultimoPor = {};
+  (trabajos || []).forEach(t => { if (!ultimoPor[t.vehiculo_id]) ultimoPor[t.vehiculo_id] = t; });
+
+  const escH = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  cont.innerHTML = vhs.map(v => {
+    const label = [v.marca, v.modelo, v.anio].filter(Boolean).join(' ');
+    const ult   = ultimoPor[v.id];
+    return `<div style="border:1.5px solid #e8e8e8;border-radius:10px;padding:14px;margin-bottom:10px;background:#fff">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+        <div>
+          <div style="font-size:15px;font-weight:700">${escH(label)}</div>
+          ${v.patente ? `<div style="font-size:12px;color:#888;margin-top:2px">🔢 ${escH(v.patente)}</div>` : ''}
+          ${v.km_actual ? `<div style="font-size:12px;color:#888;margin-top:2px">🛣️ ${Number(v.km_actual).toLocaleString('es-AR')} km</div>` : ''}
+          ${ult ? `<div style="font-size:12px;color:#666;margin-top:6px;padding:6px 8px;background:#f8f8f8;border-radius:6px">🔧 Último: ${escH(ult.descripcion)} — ${new Date(ult.fecha+'T00:00:00').toLocaleDateString('es-AR')}</div>` : '<div style="font-size:12px;color:#bbb;margin-top:6px">Sin trabajos registrados</div>'}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
+          <a href="/mi-vehiculo?v=${v.id}" style="display:inline-flex;align-items:center;gap:4px;background:var(--rojo);color:#fff;border-radius:7px;padding:7px 12px;font-size:12px;font-weight:700;text-decoration:none">📋 Carnet</a>
+          <a href="/registrar-trabajo?v=${v.id}" style="display:inline-flex;align-items:center;gap:4px;background:#f5f5f5;color:#444;border:1px solid #ddd;border-radius:7px;padding:7px 12px;font-size:12px;font-weight:600;text-decoration:none">+ Trabajo</a>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
 }
 </script>
 </body>

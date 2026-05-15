@@ -652,10 +652,56 @@ async function guardar(){
     showToast('✓ OR guardada correctamente');
     document.getElementById('topbarTitle').textContent=`OR ${payload.numero_or||orData?.numero_or||''}`;
     actualizarBadgeEstado();
+
+    // Hook carnet digital: registrar trabajo al entregar el vehículo
+    if (payload.estado === 'entregado' && savedId) {
+      registrarTrabajoEnCarnet(savedId, payload).catch(() => {});
+    }
   }catch(e){
     showToast('Error: '+e.message,'error');
   }finally{
     guardando=false; btn.disabled=false; btn.textContent='💾 Guardar OR';
+  }
+}
+
+// ─── CARNET DIGITAL ───────────────────────────────────────────────
+async function registrarTrabajoEnCarnet(orSavedId, or) {
+  if (!or.vehiculo_dominio) return;
+  // Buscar vehículo por patente (normalizada, sin espacios)
+  const domNorm = (or.vehiculo_dominio || '').replace(/\s/g, '').toUpperCase();
+  const { data: vhs } = await dbB2C
+    .from('cat_clientes_vehiculos')
+    .select('id, cliente_id, km_actual')
+    .ilike('patente', domNorm)
+    .limit(1);
+
+  const vh = vhs?.[0];
+  if (!vh) return;
+
+  // Chequear preferencia de autoaprobación del cliente
+  const { data: cli } = await dbB2C
+    .from('cat_clientes_finales')
+    .select('autoaprobar_trabajos')
+    .eq('id', vh.cliente_id)
+    .single();
+
+  const aprobado = cli?.autoaprobar_trabajos || false;
+  const desc = (or.diagnostico || or.descripcion_ingreso || 'Reparación en taller').slice(0, 200);
+
+  await dbB2C.from('cat_vehiculo_trabajos').insert({
+    vehiculo_id:   vh.id,
+    taller_id:     or.taller_id,
+    or_id:         orSavedId,
+    descripcion:   desc,
+    fecha:         hoy(),
+    km_registrado: or.vehiculo_km || null,
+    origen:        'or',
+    aprobado,
+    aprobado_at:   aprobado ? new Date().toISOString() : null,
+  });
+
+  if (or.vehiculo_km && or.vehiculo_km > (vh.km_actual || 0)) {
+    await dbB2C.from('cat_clientes_vehiculos').update({ km_actual: or.vehiculo_km }).eq('id', vh.id);
   }
 }
 

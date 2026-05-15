@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registrar trabajo — Piezauto</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="stylesheet" href="css/estilos.css">
+  <style>
+    body { background: var(--gris-claro); }
+
+    .wiz-wrap { max-width: 560px; margin: 0 auto; padding: 24px 16px 60px; }
+
+    /* Breadcrumb pasos */
+    .wiz-steps { display: flex; align-items: center; gap: 0; margin-bottom: 28px; }
+    .wiz-step  { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; color: #bbb; flex: 1; }
+    .wiz-step.active { color: var(--rojo); }
+    .wiz-step.done   { color: #059669; }
+    .wiz-step-num {
+      width: 24px; height: 24px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 800;
+      background: #e8e8e8; color: #bbb; flex-shrink: 0;
+      transition: background .2s, color .2s;
+    }
+    .wiz-step.active .wiz-step-num { background: var(--rojo); color: #fff; }
+    .wiz-step.done   .wiz-step-num { background: #059669; color: #fff; }
+    .wiz-sep { flex: 1; height: 2px; background: #e8e8e8; max-width: 24px; }
+    .wiz-sep.done { background: #059669; }
+
+    /* Panels */
+    .wiz-panel { display: none; }
+    .wiz-panel.active { display: block; }
+
+    /* Card */
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 22px;
+      box-shadow: var(--sombra);
+      margin-bottom: 16px;
+    }
+    .card-title { font-size: 16px; font-weight: 800; margin-bottom: 18px; color: #1a1a1a; display: flex; align-items: center; gap: 8px; }
+
+    /* Form */
+    .form-label { font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 5px; display: block; }
+    .form-input  { width: 100%; border: 1.5px solid #ddd; border-radius: 8px; padding: 10px 12px; font-size: 14px; font-family: inherit; outline: none; box-sizing: border-box; transition: border-color .2s; }
+    .form-input:focus { border-color: var(--rojo); }
+    .form-grupo { margin-bottom: 14px; }
+    .form-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    /* Selector de vehículo */
+    .vh-sel-card {
+      border: 2px solid #e8e8e8; border-radius: 10px; padding: 14px;
+      cursor: pointer; transition: border-color .2s, background .2s;
+      display: flex; align-items: center; gap: 12px; margin-bottom: 10px;
+    }
+    .vh-sel-card.selected { border-color: var(--rojo); background: #fff5f5; }
+    .vh-sel-card input { accent-color: var(--rojo); flex-shrink: 0; }
+    .vh-sel-nombre { font-size: 14px; font-weight: 700; }
+    .vh-sel-sub    { font-size: 12px; color: #888; margin-top: 2px; }
+
+    /* Servicio grid */
+    .svc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .svc-btn {
+      border: 2px solid #e8e8e8; border-radius: 10px; padding: 14px 10px;
+      cursor: pointer; text-align: center; transition: border-color .2s, background .2s;
+      background: #fff;
+    }
+    .svc-btn.selected { border-color: var(--rojo); background: #fff5f5; }
+    .svc-icono { font-size: 24px; margin-bottom: 5px; }
+    .svc-label { font-size: 11px; font-weight: 700; color: #333; line-height: 1.3; }
+
+    /* Origen */
+    .origen-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .origen-btn {
+      border: 2px solid #e8e8e8; border-radius: 10px; padding: 16px 12px;
+      cursor: pointer; text-align: center; transition: border-color .2s, background .2s;
+      background: #fff;
+    }
+    .origen-btn.selected { border-color: var(--rojo); background: #fff5f5; }
+    .origen-icono { font-size: 28px; margin-bottom: 6px; }
+    .origen-label { font-size: 13px; font-weight: 700; }
+    .origen-sub   { font-size: 11px; color: #888; margin-top: 3px; }
+
+    /* Nav */
+    .wiz-nav { display: flex; gap: 12px; margin-top: 4px; }
+    .btn-back { flex: 1; padding: 13px; background: #fff; color: #444; border: 1.5px solid #ddd; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .btn-next { flex: 2; padding: 13px; background: var(--rojo); color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 800; cursor: pointer; font-family: inherit; transition: opacity .15s; }
+    .btn-next:disabled { opacity: .5; cursor: default; }
+    .btn-next:hover:not(:disabled) { opacity: .9; }
+
+    /* Msg */
+    #wiz-msg { font-size: 13px; text-align: center; margin-top: 10px; min-height: 18px; }
+
+    /* Breadcrumb */
+    .breadcrumb { font-size: 13px; color: #888; padding: 16px 16px 0; max-width: 560px; margin: 0 auto; display: flex; align-items: center; gap: 6px; }
+    .breadcrumb a { color: var(--rojo); text-decoration: none; }
+  </style>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script src="js/auth-b2c.js"></script>
+<script src="js/utils-b2c.js"></script>
+
+<div id="header-b2c-root"></div>
+<script src="js/header-b2c.js"></script>
+
+<div class="breadcrumb" id="breadcrumb-wrap">
+  <a href="/perfil" id="back-link">← Volver</a>
+  <span>›</span>
+  <strong>Registrar trabajo</strong>
+</div>
+
+<div class="wiz-wrap">
+
+  <!-- Stepper -->
+  <div class="wiz-steps" id="wiz-stepper">
+    <div class="wiz-step active" id="stp-0"><div class="wiz-step-num">1</div><span>Vehículo</span></div>
+    <div class="wiz-sep" id="sep-0"></div>
+    <div class="wiz-step" id="stp-1"><div class="wiz-step-num">2</div><span>Servicio</span></div>
+    <div class="wiz-sep" id="sep-1"></div>
+    <div class="wiz-step" id="stp-2"><div class="wiz-step-num">3</div><span>Origen</span></div>
+    <div class="wiz-sep" id="sep-2"></div>
+    <div class="wiz-step" id="stp-3"><div class="wiz-step-num">4</div><span>Detalles</span></div>
+  </div>
+
+  <!-- Paso 1: Vehículo -->
+  <div class="wiz-panel active" id="paso-0">
+    <div class="card">
+      <div class="card-title">🚗 ¿A qué vehículo corresponde?</div>
+      <div id="vh-list"><p style="color:#aaa;font-size:13px">Cargando vehículos...</p></div>
+    </div>
+    <div class="wiz-nav">
+      <button class="btn-next" id="btn-0" onclick="irPaso(1)" disabled>Siguiente →</button>
+    </div>
+  </div>
+
+  <!-- Paso 2: Servicio -->
+  <div class="wiz-panel" id="paso-1">
+    <div class="card">
+      <div class="card-title">🔧 ¿Qué servicio fue?</div>
+      <div class="svc-grid" id="svc-grid"></div>
+    </div>
+    <div class="wiz-nav">
+      <button class="btn-back" onclick="irPaso(0)">← Atrás</button>
+      <button class="btn-next" id="btn-1" onclick="irPaso(2)" disabled>Siguiente →</button>
+    </div>
+  </div>
+
+  <!-- Paso 3: Origen -->
+  <div class="wiz-panel" id="paso-2">
+    <div class="card">
+      <div class="card-title">📍 ¿Dónde fue el trabajo?</div>
+      <div class="origen-grid">
+        <div class="origen-btn" id="origen-manual" onclick="selOrigen('manual')">
+          <div class="origen-icono">✍️</div>
+          <div class="origen-label">Carga manual</div>
+          <div class="origen-sub">Lo cargás vos</div>
+        </div>
+        <div class="origen-btn" id="origen-taller" onclick="selOrigen('taller')">
+          <div class="origen-icono">🔧</div>
+          <div class="origen-label">En un taller</div>
+          <div class="origen-sub">Seleccionás el taller</div>
+        </div>
+      </div>
+      <div id="taller-sel-wrap" style="display:none;margin-top:14px">
+        <div class="form-grupo">
+          <label class="form-label">Taller (opcional)</label>
+          <input type="text" id="taller-nombre-input" class="form-input" placeholder="Nombre del taller...">
+        </div>
+      </div>
+    </div>
+    <div class="wiz-nav">
+      <button class="btn-back" onclick="irPaso(1)">← Atrás</button>
+      <button class="btn-next" id="btn-2" onclick="irPaso(3)" disabled>Siguiente →</button>
+    </div>
+  </div>
+
+  <!-- Paso 4: Detalles -->
+  <div class="wiz-panel" id="paso-3">
+    <div class="card">
+      <div class="card-title">📝 Detalles del trabajo</div>
+      <div class="form-grupo">
+        <label class="form-label">Descripción <span style="color:var(--rojo)">*</span></label>
+        <input type="text" id="det-desc" class="form-input" placeholder="Ej: Cambio de aceite 10W40 + filtro">
+      </div>
+      <div class="form-2col">
+        <div class="form-grupo">
+          <label class="form-label">Fecha</label>
+          <input type="date" id="det-fecha" class="form-input">
+        </div>
+        <div class="form-grupo">
+          <label class="form-label">Km al momento</label>
+          <input type="number" id="det-km" class="form-input" placeholder="Ej: 72000">
+        </div>
+      </div>
+      <div class="form-grupo">
+        <label class="form-label">Notas (opcional)</label>
+        <textarea id="det-notas" class="form-input" rows="2" placeholder="Observaciones adicionales..."></textarea>
+      </div>
+    </div>
+    <div class="wiz-nav">
+      <button class="btn-back" onclick="irPaso(2)">← Atrás</button>
+      <button class="btn-next" id="btn-confirmar" onclick="confirmarTrabajo()">✓ Registrar trabajo</button>
+    </div>
+    <div id="wiz-msg"></div>
+  </div>
+
+  <!-- Confirmación -->
+  <div class="wiz-panel" id="paso-ok" style="text-align:center;padding:24px 0">
+    <div style="font-size:56px;margin-bottom:16px">✅</div>
+    <div style="font-size:22px;font-weight:800;color:#1a1a1a;margin-bottom:8px">¡Trabajo registrado!</div>
+    <div style="font-size:14px;color:#666;margin-bottom:28px;line-height:1.6">El trabajo fue guardado en el historial de tu vehículo.</div>
+    <a id="link-carnet" href="/mi-vehiculo" class="btn-next" style="display:inline-block;padding:14px 28px;border-radius:10px;text-decoration:none;font-size:15px">Ver carnet del vehículo</a>
+  </div>
+
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────
+// ESTADO
+// ─────────────────────────────────────────────────────────────
+let _paso       = 0;
+let _cliente    = null;
+let _vehiculos  = [];
+let _vhSel      = null; // vehiculo seleccionado
+let _svcSel     = null;
+let _origenSel  = null;
+
+const SERVICIOS = [
+  { id: 'aceite',         nombre: 'Cambio de aceite',    icono: '🛢️' },
+  { id: 'frenos',         nombre: 'Frenos',              icono: '🔴' },
+  { id: 'amortiguadores', nombre: 'Amortiguadores',       icono: '🔧' },
+  { id: 'neumaticos',     nombre: 'Neumáticos',           icono: '🛞' },
+  { id: 'bateria',        nombre: 'Batería',              icono: '🔋' },
+  { id: 'filtros',        nombre: 'Filtros',              icono: '🌬️' },
+  { id: 'correa',         nombre: 'Correa',               icono: '⚙️' },
+  { id: 'embrague',       nombre: 'Embrague',             icono: '🚗' },
+  { id: 'electrico',      nombre: 'Eléctrico',            icono: '⚡' },
+  { id: 'suspension',     nombre: 'Suspensión',           icono: '🏎️' },
+  { id: 'escape',         nombre: 'Escape',               icono: '💨' },
+  { id: 'vtv',            nombre: 'VTV',                  icono: '📋' },
+  { id: 'general',        nombre: 'Servicio general',     icono: '🔩' },
+];
+
+// ─────────────────────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+  if (typeof initHeaderB2C === 'function') initHeaderB2C();
+
+  _cliente = await getClienteActual();
+  if (!_cliente) { window.location.href = '/login?redirect=/registrar-trabajo'; return; }
+
+  // Si viene con ?v=ID pre-seleccionar ese vehículo
+  const params = new URLSearchParams(window.location.search);
+  const vId = params.get('v');
+
+  const link = document.getElementById('back-link');
+  if (vId) link.href = `/mi-vehiculo?v=${vId}`;
+
+  // Setear fecha por defecto
+  document.getElementById('det-fecha').value = new Date().toISOString().slice(0, 10);
+
+  await cargarVehiculos(vId);
+  renderSvcGrid();
+});
+
+// ─────────────────────────────────────────────────────────────
+// PASO 1: VEHÍCULO
+// ─────────────────────────────────────────────────────────────
+async function cargarVehiculos(preselId) {
+  const wrap = document.getElementById('vh-list');
+  const { data, error } = await dbB2C
+    .from('cat_clientes_vehiculos')
+    .select('id, marca, modelo, anio, patente')
+    .eq('cliente_id', _cliente.id)
+    .order('created_at', { ascending: false });
+
+  if (error || !data?.length) {
+    wrap.innerHTML = `<div style="text-align:center;padding:20px 0;color:#aaa">
+      <div style="font-size:32px;margin-bottom:8px">🚗</div>
+      <p style="font-size:14px;color:#666">Todavía no tenés vehículos registrados.</p>
+      <a href="/vehiculos" style="color:var(--rojo);font-weight:700;font-size:13px">+ Agregar vehículo</a>
+    </div>`;
+    return;
+  }
+
+  _vehiculos = data;
+  wrap.innerHTML = data.map((v, i) => {
+    const label = [v.marca, v.modelo, v.anio].filter(Boolean).join(' ');
+    return `<div class="vh-sel-card" id="vh-card-${i}" onclick="selVehiculo(${i})">
+      <input type="radio" name="vh" id="vh-radio-${i}">
+      <div>
+        <div class="vh-sel-nombre">${esc(label)}</div>
+        ${v.patente ? `<div class="vh-sel-sub">🔢 ${esc(v.patente)}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+
+  // Pre-seleccionar si viene con ?v=
+  if (preselId) {
+    const idx = data.findIndex(v => v.id === preselId);
+    if (idx >= 0) selVehiculo(idx);
+  }
+}
+
+function selVehiculo(idx) {
+  document.querySelectorAll('.vh-sel-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById(`vh-card-${idx}`).classList.add('selected');
+  document.getElementById(`vh-radio-${idx}`).checked = true;
+  _vhSel = _vehiculos[idx];
+  document.getElementById('btn-0').disabled = false;
+}
+
+// ─────────────────────────────────────────────────────────────
+// PASO 2: SERVICIO
+// ─────────────────────────────────────────────────────────────
+function renderSvcGrid() {
+  document.getElementById('svc-grid').innerHTML = SERVICIOS.map(s =>
+    `<div class="svc-btn" id="svc-${s.id}" onclick="selSvc('${s.id}')">
+      <div class="svc-icono">${s.icono}</div>
+      <div class="svc-label">${s.nombre}</div>
+    </div>`
+  ).join('');
+}
+
+function selSvc(id) {
+  document.querySelectorAll('.svc-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('svc-' + id).classList.add('selected');
+  _svcSel = id;
+  document.getElementById('btn-1').disabled = false;
+
+  // Pre-llenar descripción
+  const svc = SERVICIOS.find(s => s.id === id);
+  if (svc && !document.getElementById('det-desc').value) {
+    document.getElementById('det-desc').value = svc.nombre;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// PASO 3: ORIGEN
+// ─────────────────────────────────────────────────────────────
+function selOrigen(origen) {
+  document.querySelectorAll('.origen-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('origen-' + origen).classList.add('selected');
+  _origenSel = origen;
+  document.getElementById('btn-2').disabled = false;
+  document.getElementById('taller-sel-wrap').style.display = origen === 'taller' ? 'block' : 'none';
+}
+
+// ─────────────────────────────────────────────────────────────
+// NAV
+// ─────────────────────────────────────────────────────────────
+function irPaso(n) {
+  document.getElementById('paso-' + _paso).classList.remove('active');
+  document.getElementById('stp-' + _paso).classList.remove('active');
+  document.getElementById('stp-' + _paso).classList.add('done');
+  if (_paso < 3) document.getElementById('sep-' + _paso).classList.add('done');
+
+  _paso = n;
+  document.getElementById('paso-' + _paso).classList.add('active');
+  document.getElementById('stp-' + _paso).classList.add('active');
+  document.getElementById('stp-' + _paso).classList.remove('done');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ─────────────────────────────────────────────────────────────
+// CONFIRMAR
+// ─────────────────────────────────────────────────────────────
+async function confirmarTrabajo() {
+  const desc = document.getElementById('det-desc').value.trim();
+  if (!desc) { showMsg('Completá la descripción del trabajo.', 'error'); return; }
+
+  const btn = document.getElementById('btn-confirmar');
+  btn.disabled = true;
+  btn.textContent = 'Guardando...';
+  showMsg('', '');
+
+  const { error } = await dbB2C.from('cat_vehiculo_trabajos').insert({
+    vehiculo_id:   _vhSel.id,
+    servicio_id:   _svcSel,
+    descripcion:   desc,
+    fecha:         document.getElementById('det-fecha').value || new Date().toISOString().slice(0, 10),
+    km_registrado: parseInt(document.getElementById('det-km').value) || null,
+    notas:         document.getElementById('det-notas').value.trim() || null,
+    origen:        _origenSel || 'manual',
+    aprobado:      true, // carga manual siempre aprobada
+  });
+
+  if (error) {
+    showMsg('Error al guardar: ' + error.message, 'error');
+    btn.disabled = false;
+    btn.textContent = '✓ Registrar trabajo';
+    return;
+  }
+
+  // Actualizar km si se ingresó
+  const km = parseInt(document.getElementById('det-km').value);
+  if (km && km > (_vhSel.km_actual || 0)) {
+    await dbB2C.from('cat_clientes_vehiculos').update({ km_actual: km }).eq('id', _vhSel.id);
+  }
+
+  // Ir a confirmación
+  document.getElementById('paso-3').classList.remove('active');
+  document.getElementById('paso-ok').classList.add('active');
+  document.getElementById('link-carnet').href = `/mi-vehiculo?v=${_vhSel.id}`;
+  document.getElementById('wiz-stepper').style.display = 'none';
+}
+
+// ─────────────────────────────────────────────────────────────
+// UTILS
+// ─────────────────────────────────────────────────────────────
+function showMsg(txt, tipo) {
+  const el = document.getElementById('wiz-msg');
+  el.textContent = txt;
+  el.style.color = tipo === 'error' ? '#c00' : '#888';
+}
+
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>

@@ -185,7 +185,7 @@ const TIPOS = [
       // Intentar precargar vehículo principal
       let veh = null;
       try {
-        const { data: vehData } = await dbB2C.from('cat_vehiculos_clientes').select('*').eq('cliente_id', sel.cliente_id).eq('es_principal', true).single();
+        const { data: vehData } = await dbB2C.from('cat_clientes_vehiculos').select('*').eq('cliente_id', sel.cliente_id).order('created_at', { ascending: false }).limit(1).single();
         veh = vehData;
       } catch (_) {}
       if (veh) {
@@ -444,6 +444,14 @@ function renderPaso4(cont) {
         <input class="fi" id="f-notas" type="text" placeholder="Horarios preferidos, acceso especial, etc." value="${esc(sel.notas)}">
       </div>
 
+      <label style="display:flex;align-items:flex-start;gap:10px;padding:12px 0;cursor:pointer">
+        <input type="checkbox" id="f-autoaprobar" style="margin-top:2px;accent-color:var(--rojo);width:16px;height:16px;flex-shrink:0" ${sel.autoaprobar ? 'checked' : ''}>
+        <span>
+          <strong style="font-size:13px">Aprobar trabajos automáticamente</strong><br>
+          <span style="font-size:11px;color:#888;line-height:1.5">Si el taller registra trabajos en tu carnet a partir de este turno, se agregarán sin requerir tu aprobación.</span>
+        </span>
+      </label>
+
       <div class="nav-btns">
         <button class="btn btn-back" onclick="irPaso(3)">← Atrás</button>
         <button class="btn btn-primary" onclick="confirmarTurno()">Confirmar turno</button>
@@ -476,8 +484,9 @@ async function confirmarTurno() {
   sel.veh_modelo = document.getElementById('f-modelo').value.trim();
   sel.veh_anio   = document.getElementById('f-anio').value;
   sel.veh_dominio= document.getElementById('f-dominio').value.trim();
-  sel.motivo     = document.getElementById('f-motivo').value.trim();
-  sel.notas      = document.getElementById('f-notas').value.trim();
+  sel.motivo       = document.getElementById('f-motivo').value.trim();
+  sel.notas        = document.getElementById('f-notas').value.trim();
+  sel.autoaprobar  = document.getElementById('f-autoaprobar')?.checked || false;
 
   if (!sel.nombre)   { document.getElementById('f-nombre').classList.add('error'); showToast('El nombre es obligatorio','error'); return; }
   if (!sel.telefono) { document.getElementById('f-telefono').classList.add('error'); showToast('El teléfono es obligatorio','error'); return; }
@@ -504,6 +513,10 @@ async function confirmarTurno() {
   try {
     const { data, error } = await dbB2C.from('cat_turnos').insert(payload).select().single();
     if (error) throw error;
+    // Guardar preferencia autoaprobar si el cliente está logueado
+    if (sel.cliente_id && sel.autoaprobar) {
+      await dbB2C.from('cat_clientes_finales').update({ autoaprobar_trabajos: true }).eq('id', sel.cliente_id).catch(() => {});
+    }
     // Notificar al taller
     try {
       await dbB2C.from('cat_notificaciones_talleres').insert({

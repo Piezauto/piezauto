@@ -231,6 +231,16 @@
       .vehiculo-acciones { width: 100%; }
       .perfil-hero-inner { flex-wrap: wrap; }
     }
+    .pref-row { display: flex; align-items: flex-start; gap: 14px; padding: 4px 0 14px; }
+    .pref-info { flex: 1; }
+    .pref-label { font-size: 14px; font-weight: 600; color: #222; }
+    .pref-sub { font-size: 12px; color: var(--gris-text); margin-top: 3px; line-height: 1.5; }
+    .toggle-wrap { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; margin-top: 2px; }
+    .toggle-wrap input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider { position: absolute; inset: 0; background: #ccc; border-radius: 24px; transition: background .2s; cursor: pointer; }
+    .toggle-slider::before { content: ''; position: absolute; height: 18px; width: 18px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: transform .2s; }
+    .toggle-wrap input:checked + .toggle-slider { background: var(--rojo); }
+    .toggle-wrap input:checked + .toggle-slider::before { transform: translateX(20px); }
   </style>
 </head>
 <body class="perfil-page">
@@ -351,6 +361,18 @@
     </div>
     <div class="seccion-card-body">
       <div id="vehiculos-lista">
+        <p style="color:var(--gris-text);font-size:13px;">Cargando...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Preferencias -->
+  <div class="seccion-card">
+    <div class="seccion-card-header">
+      <span class="seccion-card-titulo">⚙️ Preferencias</span>
+    </div>
+    <div class="seccion-card-body">
+      <div id="prefs-wrap">
         <p style="color:var(--gris-text);font-size:13px;">Cargando...</p>
       </div>
     </div>
