@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Insights — Piezauto Admin</title>
+  <link rel="stylesheet" href="../css/estilos.css">
+  <style>
+    body { background: #f0f0f0; margin: 0; font-family: inherit; }
+    .admin-wrap { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+    .admin-sidebar {
+      background: var(--negro); padding: 24px 0;
+      display: flex; flex-direction: column; overflow-y: auto;
+      position: sticky; top: 0; max-height: 100vh;
+    }
+    .admin-sidebar-logo {
+      font-size: 18px; font-weight: 800; padding: 0 20px 24px;
+      border-bottom: 1px solid #333; margin-bottom: 16px;
+      background: linear-gradient(135deg,#E63946 0%,#ff6b6b 50%,#c1121f 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .admin-nav-item {
+      display: block; padding: 12px 20px; color: #aaa; font-size: 14px;
+      font-weight: 500; cursor: pointer; transition: background .15s, color .15s;
+      border-left: 3px solid transparent; text-decoration: none;
+    }
+    .admin-nav-item:hover, .admin-nav-item.activo { background: #222; color: #fff; border-left-color: var(--rojo); }
+    .sidebar-section-label { font-size: 10px; color: #555; text-transform: uppercase; letter-spacing: .1em; padding: 16px 20px 4px; font-weight: 700; }
+    .sidebar-divider { border: none; border-top: 1px solid #2a2a2a; margin: 8px 0; }
+    .admin-content { padding: 32px; overflow-y: auto; }
+    .admin-titulo  { font-size: 22px; font-weight: 800; margin-bottom: 24px; }
+
+    /* KPI hero */
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap: 14px; margin-bottom: 32px; }
+    .kpi-card { background: #fff; border-radius: 12px; padding: 20px 16px; box-shadow: var(--sombra); text-align: center; }
+    .kpi-num   { font-size: 32px; font-weight: 900; color: var(--rojo); line-height: 1; }
+    .kpi-label { font-size: 11px; color: #888; margin-top: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+
+    /* tabs */
+    .tabs-bar { display: flex; gap: 4px; background: #fff; border-radius: 10px; padding: 6px; box-shadow: var(--sombra); margin-bottom: 24px; flex-wrap: wrap; }
+    .tab-btn { padding: 8px 14px; border: none; background: none; border-radius: 7px; font-size: 13px; font-weight: 600; color: #888; cursor: pointer; transition: background .15s, color .15s; white-space: nowrap; }
+    .tab-btn.activo { background: var(--rojo); color: #fff; }
+    .tab-panel { display: none; }
+    .tab-panel.activo { display: block; }
+
+    /* cards */
+    .card { background: #fff; border-radius: 12px; padding: 22px; box-shadow: var(--sombra); margin-bottom: 20px; }
+    .card-title { font-size: 15px; font-weight: 800; margin-bottom: 18px; color: #1a1a1a; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+    /* tabla insight */
+    .tabla-ins { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .tabla-ins th { padding: 9px 12px; text-align: left; font-weight: 700; color: #555; background: #f8f8f8; }
+    .tabla-ins td { padding: 9px 12px; border-bottom: 1px solid #f0f0f0; color: #333; }
+    .tabla-ins tr:last-child td { border-bottom: none; }
+
+    .chart-wrap { position: relative; height: 220px; }
+
+    /* export btn */
+    .btn-export { padding: 7px 14px; border: 1.5px solid #ddd; border-radius: 7px; background: #fff; color: #555; font-size: 12px; font-weight: 700; cursor: pointer; transition: border-color .15s; float: right; margin-top: -44px; }
+    .btn-export:hover { border-color: var(--rojo); color: var(--rojo); }
+
+    /* loading spinner */
+    .kpi-skeleton { background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.2s infinite; border-radius: 4px; height: 36px; }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+    #permiso-wall { position: fixed; inset: 0; background: var(--negro); display: flex; align-items: center; justify-content: center; z-index: 9999; flex-direction: column; gap: 16px; }
+    #permiso-wall h2 { color: #fff; font-size: 22px; }
+    #permiso-wall p  { color: #888; font-size: 15px; }
+    #permiso-wall a  { color: var(--rojo); }
+
+    @media (max-width:700px) { .admin-wrap { grid-template-columns: 1fr; } .admin-sidebar { display: none; } .grid-2 { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+<script>
+if (!sessionStorage.getItem('pz_admin')) window.location.replace('login.html');
+</script>
+
+<div id="permiso-wall" style="display:none">
+  <h2>🔒 Sin acceso</h2>
+  <p>Tu rol no tiene permiso para ver insights.</p>
+  <a href="index.html">← Volver al panel</a>
+</div>
+
+<div class="admin-wrap">
+  <aside class="admin-sidebar">
+    <div class="admin-sidebar-logo">Piezauto Admin</div>
+    <div class="sidebar-section-label">Equipo</div>
+    <a class="admin-nav-item" href="usuarios-internos.html">👥 Usuarios internos</a>
+    <a class="admin-nav-item activo" href="insights.html">📊 Insights</a>
+    <a class="admin-nav-item" href="auditoria.html">🔍 Auditoría</a>
+    <hr class="sidebar-divider" style="margin-top:auto">
+    <a class="admin-nav-item" href="index.html" style="color:#888;font-size:13px">← Volver al panel</a>
+    <span class="admin-nav-item" onclick="cerrarSesion()" style="color:#c00;font-size:13px">🚪 Cerrar sesión</span>
+  </aside>
+
+  <main class="admin-content">
+    <div class="admin-titulo">📊 Insights</div>
+
+    <!-- Hero KPIs -->
+    <div class="kpi-grid" id="kpi-grid">
+      <div class="kpi-card"><div class="kpi-skeleton"></div><div class="kpi-label">Cargando...</div></div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs-bar">
+      <button class="tab-btn activo" onclick="switchTab('clientes')">👥 Clientes</button>
+      <button class="tab-btn" onclick="switchTab('operaciones')">💳 Operaciones</button>
+      <button class="tab-btn" onclick="switchTab('talleres-red')">🔧 Talleres Red</button>
+      <button class="tab-btn" onclick="switchTab('catalogo')">📦 Catálogo</button>
+      <button class="tab-btn" onclick="switchTab('vehiculos')">🚗 Vehículos</button>
+      <button class="tab-btn" onclick="switchTab('talleres-ext')">🔍 Talleres externos</button>
+    </div>
+
+    <!-- Tab: Clientes -->
+    <div class="tab-panel activo" id="tab-clientes">
+      <div class="card">
+        <div class="card-title">Clientes nuevos por mes (últimos 6 meses)</div>
+        <div class="chart-wrap"><canvas id="chart-clientes-mes"></canvas></div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Top localidades</div>
+          <div id="tabla-localidades"><p style="color:#aaa;font-size:13px">Cargando...</p></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Canales de notificación</div>
+          <div class="chart-wrap"><canvas id="chart-canales"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Operaciones -->
+    <div class="tab-panel" id="tab-operaciones">
+      <div class="card">
+        <div class="card-title">Facturación mensual (últimos 6 meses)</div>
+        <div class="chart-wrap"><canvas id="chart-fact-mensual"></canvas></div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Ticket promedio</div>
+          <div id="ticket-wrap" style="text-align:center;padding:20px 0">
+            <div style="font-size:48px;font-weight:900;color:var(--rojo)" id="stat-ticket">—</div>
+            <div style="font-size:13px;color:#888;margin-top:6px">Promedio por operación completada</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Métodos de pago</div>
+          <div class="chart-wrap"><canvas id="chart-metodos-pago"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Talleres Red -->
+    <div class="tab-panel" id="tab-talleres-red">
+      <div class="card">
+        <div class="card-title">Top talleres por volumen
+          <button class="btn-export" onclick="exportarCSV('top-talleres')">⬇ CSV</button>
+        </div>
+        <div id="tabla-talleres-wrap"><p style="color:#aaa;font-size:13px">Cargando...</p></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Calificación promedio por taller</div>
+        <div class="chart-wrap"><canvas id="chart-calif-talleres"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Tab: Catálogo -->
+    <div class="tab-panel" id="tab-catalogo">
+      <div class="card">
+        <div class="card-title">Top SKUs vendidos
+          <button class="btn-export" onclick="exportarCSV('top-skus')">⬇ CSV</button>
+        </div>
+        <div id="tabla-skus-wrap"><p style="color:#aaa;font-size:13px">Cargando...</p></div>
+      </div>
+    </div>
+
+    <!-- Tab: Vehículos -->
+    <div class="tab-panel" id="tab-vehiculos">
+      <div class="card">
+        <div class="card-title">Modelos más frecuentes
+          <button class="btn-export" onclick="exportarCSV('vehiculos')">⬇ CSV</button>
+        </div>
+        <div id="tabla-vehiculos-wrap"><p style="color:#aaa;font-size:13px">Cargando...</p></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Top marcas</div>
+        <div class="chart-wrap"><canvas id="chart-marcas"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Tab: Talleres externos -->
+    <div class="tab-panel" id="tab-talleres-ext">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Pipeline comercial</div>
+          <div class="chart-wrap"><canvas id="chart-pipeline"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Menciones más frecuentes</div>
+          <div id="tabla-ext-wrap"><p style="color:#aaa;font-size:13px">Cargando...</p></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<script src="../js/supabase.js"></script>
+<script>
+// ─── PERMISOS ───────────────────────────────────────────────────────────────
+const ROLES_CON_ACCESO = ['owner', 'comercial', 'analista'];
+let _rolActual = null;
+let _topTalleres = [], _topSkus = [], _vehiculos = [];
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await verificarPermiso();
+  await Promise.all([
+    cargarKPIs(),
+    cargarTabClientes(),
+    cargarTabOperaciones(),
+    cargarTabTalleres(),
+    cargarTabCatalogo(),
+    cargarTabVehiculos(),
+    cargarTabExt(),
+  ]);
+});
+
+async function verificarPermiso() {
+  const { data: { session } } = await db.auth.getSession();
+  if (!session) { _rolActual = 'owner'; return; }
+
+  const { data } = await db.from('cat_usuarios_internos')
+    .select('rol_codigo').eq('auth_user_id', session.user.id).single();
+  _rolActual = data?.rol_codigo || 'owner';
+
+  if (!ROLES_CON_ACCESO.includes(_rolActual)) {
+    document.getElementById('permiso-wall').style.display = 'flex';
+  }
+}
+
+// ─── KPIs HERO ──────────────────────────────────────────────────────────────
+async function cargarKPIs() {
+  const { data } = await db.from('v_metricas_globales').select('*').single();
+  if (!data) return;
+
+  const fmt = n => Number(n || 0).toLocaleString('es-AR');
+  const fmtPeso = n => '$' + Number(n || 0).toLocaleString('es-AR', { maximumFractionDigits: 0 });
+
+  const kpis = [
+    { num: fmt(data.total_clientes),             label: 'Clientes totales'        },
+    { num: fmt(data.clientes_nuevos_30d),         label: 'Clientes nuevos 30d'     },
+    { num: fmt(data.total_operaciones),           label: 'Operaciones totales'     },
+    { num: fmt(data.operaciones_30d),             label: 'Operaciones 30d'         },
+    { num: fmtPeso(data.facturacion_30d),         label: 'Facturación 30d'         },
+    { num: fmt(data.talleres_activos),            label: 'Talleres activos'        },
+    { num: fmt(data.talleres_externos_capturados),label: 'Talleres ext. capturados'},
+    { num: fmt(data.turnos_30d),                  label: 'Turnos 30d'              },
+    { num: fmt(data.ors_activas),                 label: 'ORs activas'             },
+    { num: fmt(data.vehiculos_registrados),       label: 'Vehículos registrados'   },
+  ];
+
+  document.getElementById('kpi-grid').innerHTML = kpis.map(k => `
+    <div class="kpi-card">
+      <div class="kpi-num">${k.num}</div>
+      <div class="kpi-label">${k.label}</div>
+    </div>`).join('');
+}
+
+// ─── TAB CLIENTES ────────────────────────────────────────────────────────────
+async function cargarTabClientes() {
+  const meses = ultimos6Meses();
+
+  const { data: clientes } = await db.from('cat_clientes_finales')
+    .select('created_at, localidad, notif_canal')
+    .gte('created_at', meses[0].inicio);
+
+  if (!clientes) return;
+
+  // Clientes nuevos por mes
+  const porMes = meses.map(m => clientes.filter(c =>
+    c.created_at >= m.inicio && c.created_at < m.fin).length);
+
+  dibujarLinea('chart-clientes-mes', meses.map(m => m.label), porMes, 'Clientes nuevos');
+
+  // Top localidades
+  const byLocal = {};
+  clientes.forEach(c => { if (c.localidad) byLocal[c.localidad] = (byLocal[c.localidad] || 0) + 1; });
+  const sorted = Object.entries(byLocal).sort((a, b) => b[1] - a[1]).slice(0, 8);
+  document.getElementById('tabla-localidades').innerHTML = tablaSimple(['Localidad', 'Clientes'], sorted);
+
+  // Canales
+  const byCanal = {};
+  clientes.forEach(c => { const ch = c.notif_canal || 'email'; byCanal[ch] = (byCanal[ch] || 0) + 1; });
+  dibujarDonut('chart-canales', Object.keys(byCanal), Object.values(byCanal));
+}
+
+// ─── TAB OPERACIONES ─────────────────────────────────────────────────────────
+async function cargarTabOperaciones() {
+  const meses = ultimos6Meses();
+
+  const { data: ops } = await db.from('cat_operaciones_b2c')
+    .select('created_at, total, estado, metodo_pago')
+    .gte('created_at', meses[0].inicio);
+
+  if (!ops) return;
+
+  // Facturación mensual
+  const facturacion = meses.map(m =>
+    ops.filter(o => o.estado === 'completado' && o.created_at >= m.inicio && o.created_at < m.fin)
+       .reduce((s, o) => s + (Number(o.total) || 0), 0));
+
+  dibujarBarras('chart-fact-mensual', meses.map(m => m.label), facturacion, 'Facturación');
+
+  // Ticket promedio
+  const completadas = ops.filter(o => o.estado === 'completado' && o.total);
+  const ticket = completadas.length ? completadas.reduce((s, o) => s + Number(o.total), 0) / completadas.length : 0;
+  document.getElementById('stat-ticket').textContent =
+    '$' + ticket.toLocaleString('es-AR', { maximumFractionDigits: 0 });
+
+  // Métodos de pago
+  const byMetodo = {};
+  ops.forEach(o => { if (o.metodo_pago) byMetodo[o.metodo_pago] = (byMetodo[o.metodo_pago] || 0) + 1; });
+  dibujarDonut('chart-metodos-pago', Object.keys(byMetodo), Object.values(byMetodo));
+}
+
+// ─── TAB TALLERES RED ────────────────────────────────────────────────────────
+async function cargarTabTalleres() {
+  const { data } = await db.from('v_top_talleres').select('*').limit(15);
+  if (!data) return;
+  _topTalleres = data;
+
+  document.getElementById('tabla-talleres-wrap').innerHTML = `
+    <table class="tabla-ins">
+      <thead><tr><th>Taller</th><th>Localidad</th><th>Ops</th><th>Turnos</th><th>ORs</th><th>Facturación</th><th>Calif.</th></tr></thead>
+      <tbody>
+        ${data.map(t => `<tr>
+          <td><strong>${esc(t.nombre)}</strong></td>
+          <td style="color:#888">${esc(t.localidad || '—')}</td>
+          <td>${t.total_operaciones}</td>
+          <td>${t.total_turnos}</td>
+          <td>${t.total_ors}</td>
+          <td>$${Number(t.facturacion_total).toLocaleString('es-AR', {maximumFractionDigits:0})}</td>
+          <td>${Number(t.calif_promedio).toFixed(1)} ⭐</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+
+  const top5 = data.slice(0, 5);
+  dibujarBarrasHoriz('chart-calif-talleres', top5.map(t => t.nombre), top5.map(t => Number(t.calif_promedio).toFixed(1)), 'Calificación');
+}
+
+// ─── TAB CATÁLOGO ────────────────────────────────────────────────────────────
+async function cargarTabCatalogo() {
+  const { data } = await db.from('v_skus_mas_vendidos').select('*').limit(20);
+  if (!data) return;
+  _topSkus = data;
+
+  document.getElementById('tabla-skus-wrap').innerHTML = `
+    <table class="tabla-ins">
+      <thead><tr><th>SKU / Descripción</th><th>OEM</th><th>Precio lista</th><th>Veces vendido</th><th>Unidades</th><th>Facturación</th></tr></thead>
+      <tbody>
+        ${data.map(s => `<tr>
+          <td><strong>${esc(s.descripcion || '—')}</strong></td>
+          <td style="color:#888;font-size:12px">${esc(s.codigo_oem || '—')}</td>
+          <td>$${Number(s.precio_lista || 0).toLocaleString('es-AR',{maximumFractionDigits:0})}</td>
+          <td>${s.veces_vendido}</td>
+          <td>${s.unidades_vendidas}</td>
+          <td>$${Number(s.facturacion_total).toLocaleString('es-AR',{maximumFractionDigits:0})}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+// ─── TAB VEHÍCULOS ───────────────────────────────────────────────────────────
+async function cargarTabVehiculos() {
+  const { data } = await db.from('v_vehiculos_frecuentes').select('*').limit(20);
+  if (!data) return;
+  _vehiculos = data;
+
+  document.getElementById('tabla-vehiculos-wrap').innerHTML = `
+    <table class="tabla-ins">
+      <thead><tr><th>Marca</th><th>Modelo</th><th>Año</th><th>Cantidad</th><th>Clientes distintos</th></tr></thead>
+      <tbody>
+        ${data.map(v => `<tr>
+          <td><strong>${esc(v.marca)}</strong></td>
+          <td>${esc(v.modelo || '—')}</td>
+          <td>${v.anio || '—'}</td>
+          <td>${v.cantidad}</td>
+          <td>${v.clientes_distintos}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+
+  // Top marcas chart
+  const byMarca = {};
+  data.forEach(v => { byMarca[v.marca] = (byMarca[v.marca] || 0) + Number(v.cantidad); });
+  const sorted = Object.entries(byMarca).sort((a, b) => b[1] - a[1]).slice(0, 6);
+  dibujarDonut('chart-marcas', sorted.map(x => x[0]), sorted.map(x => x[1]));
+}
+
+// ─── TAB TALLERES EXTERNOS ───────────────────────────────────────────────────
+async function cargarTabExt() {
+  const { data } = await db.from('cat_talleres_externos_capturados')
+    .select('estado_comercial, cantidad_menciones, nombre')
+    .order('cantidad_menciones', { ascending: false });
+
+  if (!data) return;
+
+  // Pipeline donut
+  const byEstado = {};
+  data.forEach(t => { byEstado[t.estado_comercial] = (byEstado[t.estado_comercial] || 0) + 1; });
+  dibujarDonut('chart-pipeline', Object.keys(byEstado), Object.values(byEstado));
+
+  // Top menciones
+  document.getElementById('tabla-ext-wrap').innerHTML = tablaSimple(
+    ['Taller', 'Menciones'],
+    data.slice(0, 10).map(t => [t.nombre, t.cantidad_menciones])
+  );
+}
+
+// ─── TABS ────────────────────────────────────────────────────────────────────
+function switchTab(id) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('activo'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('activo'));
+  event.target.classList.add('activo');
+  document.getElementById('tab-' + id).classList.add('activo');
+}
+
+// ─── CHARTS ──────────────────────────────────────────────────────────────────
+const COLORES = ['#E63946','#457b9d','#2a9d8f','#e9c46a','#f4a261','#264653','#6d6875'];
+
+function dibujarLinea(canvasId, labels, data, label) {
+  const ctx = document.getElementById(canvasId);
+  if (!ctx) return;
+  new Chart(ctx, { type: 'line', data: {
+    labels, datasets: [{ label, data, borderColor: '#E63946', backgroundColor: 'rgba(230,57,70,.1)', fill: true, tension: .35 }]
+  }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
+}
+
+function dibujarBarras(canvasId, labels, data, label) {
+  const ctx = document.getElementById(canvasId);
+  if (!ctx) return;
+  new Chart(ctx, { type: 'bar', data: {
+    labels, datasets: [{ label, data, backgroundColor: '#E63946', borderRadius: 6 }]
+  }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
+}
+
+function dibujarBarrasHoriz(canvasId, labels, data, label) {
+  const ctx = document.getElementById(canvasId);
+  if (!ctx) return;
+  new Chart(ctx, { type: 'bar', data: {
+    labels, datasets: [{ label, data, backgroundColor: COLORES, borderRadius: 4 }]
+  }, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
+}
+
+function dibujarDonut(canvasId, labels, data) {
+  const ctx = document.getElementById(canvasId);
+  if (!ctx) return;
+  new Chart(ctx, { type: 'doughnut', data: {
+    labels, datasets: [{ data, backgroundColor: COLORES }]
+  }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } } });
+}
+
+// ─── UTILS ───────────────────────────────────────────────────────────────────
+function ultimos6Meses() {
+  const meses = [];
+  const ahora = new Date();
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(ahora.getFullYear(), ahora.getMonth() - i, 1);
+    const fin = new Date(d.getFullYear(), d.getMonth() + 1, 1);
+    meses.push({
+      label: d.toLocaleDateString('es-AR', { month: 'short', year: '2-digit' }),
+      inicio: d.toISOString(),
+      fin: fin.toISOString(),
+    });
+  }
+  return meses;
+}
+
+function tablaSimple(headers, rows) {
+  return `<table class="tabla-ins">
+    <thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead>
+    <tbody>${rows.map(r => `<tr>${(Array.isArray(r) ? r : r).map(c => `<td>${esc(String(c))}</td>`).join('')}</tr>`).join('')}</tbody>
+  </table>`;
+}
+
+function exportarCSV(tipo) {
+  let rows = [], headers = [];
+  if (tipo === 'top-talleres') {
+    headers = ['Taller','Localidad','Operaciones','Turnos','ORs','Facturación','Calificación'];
+    rows = _topTalleres.map(t => [t.nombre, t.localidad, t.total_operaciones, t.total_turnos, t.total_ors, t.facturacion_total, t.calif_promedio]);
+  } else if (tipo === 'top-skus') {
+    headers = ['Descripción','OEM','Precio lista','Veces vendido','Unidades','Facturación'];
+    rows = _topSkus.map(s => [s.descripcion, s.codigo_oem, s.precio_lista, s.veces_vendido, s.unidades_vendidas, s.facturacion_total]);
+  } else if (tipo === 'vehiculos') {
+    headers = ['Marca','Modelo','Año','Cantidad','Clientes'];
+    rows = _vehiculos.map(v => [v.marca, v.modelo, v.anio, v.cantidad, v.clientes_distintos]);
+  }
+  const csv = [headers, ...rows].map(r => r.map(c => `"${String(c || '').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent('﻿' + csv);
+  a.download = `piezauto_${tipo}_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
+function cerrarSesion() {
+  sessionStorage.removeItem('pz_admin');
+  window.location.href = 'login.html';
+}
+
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>

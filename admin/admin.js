@@ -3521,3 +3521,94 @@ async function cargarProductosCarrito() {
     <tbody>${Object.entries(conteo).sort((a,b) => b[1]-a[1]).map(([k,v]) => `<tr><td>${k}</td><td><strong>${v}</strong></td></tr>`).join('')}</tbody>
   </table>`;
 }
+
+// ── PERMISOS DINÁMICOS DEL SIDEBAR ────────────────────────────
+// Mapa: nav item ID → permiso requerido (null = siempre visible, 'owner' = solo owner)
+const PERM_SIDEBAR = {
+  'nav-dashboard':          null,
+  'nav-pedidos':            'operaciones',
+  'nav-cupones':            'operaciones',
+  'nav-reportes':           'insights',
+  'nav-logistica':          'operaciones',
+  'nav-productos':          'configuracion_sistema',
+  'nav-nuevo-producto':     'configuracion_sistema',
+  'nav-categorias':         'configuracion_sistema',
+  'nav-marcas':             'configuracion_sistema',
+  'nav-inventario':         'operaciones',
+  'nav-ofertas':            'configuracion_sistema',
+  'nav-combos':             'configuracion_sistema',
+  'nav-pagos':              'comprobantes',
+  'nav-talleres':           'talleres_red',
+  'nav-nuevo-taller':       'talleres_red',
+  'nav-invitaciones':       'invitaciones_beta',
+  'nav-turnos':             'turnos',
+  'nav-op-taller':          'operaciones',
+  'nav-validacion-svc':     'validacion_servicios',
+  'nav-talleres-ext':       'talleres_externos',
+  'nav-comprobantes':       'comprobantes',
+  'nav-facturacion-point':  'comprobantes',
+  'nav-devoluciones':       'operaciones',
+  'nav-mensajes-internos':  'operaciones',
+  'nav-modelos':            'configuracion_sistema',
+  'nav-vendedores':         'configuracion_sistema',
+  'nav-banners':            'configuracion_sistema',
+  'nav-consultas':          'operaciones',
+  'nav-configuracion':      'configuracion_sistema',
+  'nav-estado-sistema':     'configuracion_sistema',
+  'nav-usuarios-internos':  'owner',
+  'nav-insights':           'insights',
+  'nav-auditoria':          'owner',
+};
+
+async function aplicarPermisosAdmin() {
+  let permisos = null;
+  let rolCodigo = null;
+
+  try {
+    const { data: { session } } = await db.auth.getSession();
+    if (session?.user?.id) {
+      const { data } = await db.from('cat_usuarios_internos')
+        .select('rol_codigo, cat_admin_roles(permisos)')
+        .eq('auth_user_id', session.user.id)
+        .single();
+      if (data) {
+        rolCodigo = data.rol_codigo;
+        permisos  = data.cat_admin_roles?.permisos || {};
+      }
+    }
+  } catch (_) {}
+
+  // Sin sesión Supabase Auth → asumir owner (login clásico)
+  if (!permisos) return;
+
+  const esOwner = permisos.all === true;
+
+  for (const [navId, permiso] of Object.entries(PERM_SIDEBAR)) {
+    const el = document.getElementById(navId);
+    if (!el) continue;
+    if (permiso === null) continue;
+
+    let tieneAcceso = esOwner;
+    if (!tieneAcceso) {
+      if (permiso === 'owner') {
+        tieneAcceso = rolCodigo === 'owner';
+      } else {
+        const val = permisos[permiso];
+        tieneAcceso = val === true || val === 'lectura' || val === 'limitado';
+      }
+    }
+    if (!tieneAcceso) el.style.display = 'none';
+  }
+
+  // Ocultar sección "Equipo" si no es owner ni analista
+  if (!esOwner && rolCodigo !== 'analista') {
+    const secEquipo = document.getElementById('sec-equipo');
+    if (secEquipo) secEquipo.style.display = 'none';
+  }
+}
+
+// Protección de URL: si llegan a admin/index.html sin permiso de insights/auditoría
+// los nuevos items son navegaciones externas (href), no paneles. El muro lo manejan las propias páginas.
+document.addEventListener('DOMContentLoaded', () => {
+  aplicarPermisosAdmin();
+});

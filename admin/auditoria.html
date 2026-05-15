@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Auditoría — Piezauto Admin</title>
+  <link rel="stylesheet" href="../css/estilos.css">
+  <style>
+    body { background: #f0f0f0; margin: 0; font-family: inherit; }
+    .admin-wrap { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+    .admin-sidebar {
+      background: var(--negro); padding: 24px 0;
+      display: flex; flex-direction: column; overflow-y: auto;
+      position: sticky; top: 0; max-height: 100vh;
+    }
+    .admin-sidebar-logo {
+      font-size: 18px; font-weight: 800; padding: 0 20px 24px;
+      border-bottom: 1px solid #333; margin-bottom: 16px;
+      background: linear-gradient(135deg,#E63946 0%,#ff6b6b 50%,#c1121f 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .admin-nav-item {
+      display: block; padding: 12px 20px; color: #aaa; font-size: 14px;
+      font-weight: 500; cursor: pointer; transition: background .15s, color .15s;
+      border-left: 3px solid transparent; text-decoration: none;
+    }
+    .admin-nav-item:hover, .admin-nav-item.activo { background: #222; color: #fff; border-left-color: var(--rojo); }
+    .sidebar-section-label { font-size: 10px; color: #555; text-transform: uppercase; letter-spacing: .1em; padding: 16px 20px 4px; font-weight: 700; }
+    .sidebar-divider { border: none; border-top: 1px solid #2a2a2a; margin: 8px 0; }
+    .admin-content { padding: 32px; }
+    .admin-titulo  { font-size: 22px; font-weight: 800; margin-bottom: 24px; }
+
+    /* filtros */
+    .filtros-bar { background: #fff; border-radius: 10px; padding: 16px 20px; box-shadow: var(--sombra); margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+    .f-grupo { display: flex; flex-direction: column; gap: 5px; }
+    .f-grupo label { font-size: 11px; font-weight: 700; color: #666; text-transform: uppercase; }
+    .f-grupo input, .f-grupo select { padding: 8px 10px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 13px; outline: none; background: #fff; min-width: 140px; }
+    .f-grupo input:focus, .f-grupo select:focus { border-color: var(--rojo); }
+    .btn-filtrar { padding: 8px 18px; border: none; border-radius: 8px; background: var(--rojo); color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; align-self: flex-end; }
+    .btn-filtrar:hover { opacity: .88; }
+    .btn-export { padding: 8px 14px; border: 1.5px solid #ddd; border-radius: 7px; background: #fff; color: #555; font-size: 12px; font-weight: 700; cursor: pointer; align-self: flex-end; }
+    .btn-export:hover { border-color: var(--rojo); color: var(--rojo); }
+
+    /* tabla */
+    .tabla-admin { width: 100%; border-collapse: collapse; background: #fff; border-radius: 10px; overflow: hidden; box-shadow: var(--sombra); }
+    .tabla-admin th { background: #f5f5f5; padding: 12px 14px; text-align: left; font-size: 12px; font-weight: 700; color: #555; }
+    .tabla-admin td { padding: 10px 14px; border-bottom: 1px solid #f0f0f0; font-size: 13px; vertical-align: top; }
+    .tabla-admin tr:last-child td { border-bottom: none; }
+    .tabla-admin tr:hover td { background: #fafafa; }
+
+    .badge { padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+    .badge-insert { background: #d1fae5; color: #065f46; }
+    .badge-update { background: #dbeafe; color: #1e40af; }
+    .badge-delete { background: #fce8e8; color: #c00; }
+    .badge-login  { background: #e0e7ff; color: #3730a3; }
+    .badge-default { background: #f0f0f0; color: #555; }
+
+    /* cambios expandibles */
+    .cambios-pre { font-size: 11px; font-family: monospace; color: #555; white-space: pre-wrap; word-break: break-all; max-height: 80px; overflow: hidden; transition: max-height .2s; cursor: pointer; }
+    .cambios-pre.expandido { max-height: 400px; }
+
+    /* paginacion */
+    .paginacion { display: flex; align-items: center; gap: 10px; margin-top: 16px; justify-content: flex-end; }
+    .pag-btn { padding: 7px 14px; border: 1.5px solid #ddd; border-radius: 7px; background: #fff; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .pag-btn:hover:not(:disabled) { border-color: var(--rojo); color: var(--rojo); }
+    .pag-btn:disabled { opacity: .4; cursor: default; }
+    .pag-info { font-size: 13px; color: #888; }
+
+    #permiso-wall { position: fixed; inset: 0; background: var(--negro); display: flex; align-items: center; justify-content: center; z-index: 9999; flex-direction: column; gap: 16px; }
+    #permiso-wall h2 { color: #fff; font-size: 22px; }
+    #permiso-wall p  { color: #888; font-size: 15px; }
+    #permiso-wall a  { color: var(--rojo); }
+
+    @media (max-width:700px) { .admin-wrap { grid-template-columns: 1fr; } .admin-sidebar { display: none; } }
+  </style>
+</head>
+<body>
+<script>
+if (!sessionStorage.getItem('pz_admin')) window.location.replace('login.html');
+</script>
+
+<div id="permiso-wall" style="display:none">
+  <h2>🔒 Sin acceso</h2>
+  <p>Solo Owner y Analista pueden ver el log de auditoría.</p>
+  <a href="index.html">← Volver al panel</a>
+</div>
+
+<div class="admin-wrap">
+  <aside class="admin-sidebar">
+    <div class="admin-sidebar-logo">Piezauto Admin</div>
+    <div class="sidebar-section-label">Equipo</div>
+    <a class="admin-nav-item" href="usuarios-internos.html">👥 Usuarios internos</a>
+    <a class="admin-nav-item" href="insights.html">📊 Insights</a>
+    <a class="admin-nav-item activo" href="auditoria.html">🔍 Auditoría</a>
+    <hr class="sidebar-divider" style="margin-top:auto">
+    <a class="admin-nav-item" href="index.html" style="color:#888;font-size:13px">← Volver al panel</a>
+    <span class="admin-nav-item" onclick="cerrarSesion()" style="color:#c00;font-size:13px">🚪 Cerrar sesión</span>
+  </aside>
+
+  <main class="admin-content">
+    <div class="admin-titulo">🔍 Log de auditoría</div>
+
+    <!-- Filtros -->
+    <div class="filtros-bar">
+      <div class="f-grupo">
+        <label>Usuario</label>
+        <input type="text" id="f-usuario" placeholder="Email del usuario..." oninput="filtrar()">
+      </div>
+      <div class="f-grupo">
+        <label>Acción</label>
+        <select id="f-accion" onchange="filtrar()">
+          <option value="">Todas</option>
+          <option value="insert">INSERT</option>
+          <option value="update">UPDATE</option>
+          <option value="delete">DELETE</option>
+          <option value="login">LOGIN</option>
+        </select>
+      </div>
+      <div class="f-grupo">
+        <label>Tabla</label>
+        <input type="text" id="f-tabla" placeholder="Nombre de tabla..." oninput="filtrar()">
+      </div>
+      <div class="f-grupo">
+        <label>Desde</label>
+        <input type="date" id="f-desde" onchange="filtrar()">
+      </div>
+      <div class="f-grupo">
+        <label>Hasta</label>
+        <input type="date" id="f-hasta" onchange="filtrar()">
+      </div>
+      <button class="btn-export" onclick="exportarCSV()">⬇ CSV</button>
+    </div>
+
+    <!-- Tabla -->
+    <div id="tabla-wrap"><p style="color:#aaa">Cargando...</p></div>
+
+    <!-- Paginación -->
+    <div class="paginacion">
+      <button class="pag-btn" id="btn-prev" onclick="cambiarPag(-1)" disabled>← Anterior</button>
+      <span class="pag-info" id="pag-info">—</span>
+      <button class="pag-btn" id="btn-next" onclick="cambiarPag(1)" disabled>Siguiente →</button>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase.js"></script>
+<script>
+const POR_PAG = 50;
+let _pagina   = 0;
+let _total    = 0;
+let _logs     = [];
+let _rolActual = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await verificarPermiso();
+  await cargarLogs();
+});
+
+async function verificarPermiso() {
+  const { data: { session } } = await db.auth.getSession();
+  if (!session) { _rolActual = 'owner'; return; }
+
+  const { data } = await db.from('cat_usuarios_internos')
+    .select('rol_codigo').eq('auth_user_id', session.user.id).single();
+  _rolActual = data?.rol_codigo || 'owner';
+
+  if (!['owner', 'analista'].includes(_rolActual)) {
+    document.getElementById('permiso-wall').style.display = 'flex';
+  }
+}
+
+async function cargarLogs() {
+  let q = db.from('cat_audit_log')
+    .select('*', { count: 'exact' })
+    .order('created_at', { ascending: false })
+    .range(_pagina * POR_PAG, (_pagina + 1) * POR_PAG - 1);
+
+  const fUsuario = document.getElementById('f-usuario').value.trim();
+  const fAccion  = document.getElementById('f-accion').value;
+  const fTabla   = document.getElementById('f-tabla').value.trim();
+  const fDesde   = document.getElementById('f-desde').value;
+  const fHasta   = document.getElementById('f-hasta').value;
+
+  if (fUsuario) q = q.ilike('usuario_email', `%${fUsuario}%`);
+  if (fAccion)  q = q.ilike('accion', `%${fAccion}%`);
+  if (fTabla)   q = q.ilike('tabla_afectada', `%${fTabla}%`);
+  if (fDesde)   q = q.gte('created_at', fDesde + 'T00:00:00');
+  if (fHasta)   q = q.lte('created_at', fHasta + 'T23:59:59');
+
+  const { data, error, count } = await q;
+
+  if (error) {
+    document.getElementById('tabla-wrap').innerHTML = `<p style="color:#c00">Error: ${error.message}</p>`;
+    return;
+  }
+
+  _logs  = data || [];
+  _total = count || 0;
+  renderTabla();
+  actualizarPaginacion();
+}
+
+function renderTabla() {
+  if (!_logs.length) {
+    document.getElementById('tabla-wrap').innerHTML = '<p style="color:#aaa;text-align:center;padding:40px">Sin registros para los filtros aplicados.</p>';
+    return;
+  }
+
+  document.getElementById('tabla-wrap').innerHTML = `
+    <table class="tabla-admin">
+      <thead><tr>
+        <th>Fecha</th>
+        <th>Usuario</th>
+        <th>Acción</th>
+        <th>Tabla</th>
+        <th>Registro</th>
+        <th>Cambios</th>
+      </tr></thead>
+      <tbody>
+        ${_logs.map((r, i) => `<tr>
+          <td style="white-space:nowrap;color:#888;font-size:12px">${new Date(r.created_at).toLocaleString('es-AR')}</td>
+          <td style="font-size:12px">${esc(r.usuario_email || '—')}</td>
+          <td><span class="badge ${badgeAccion(r.accion)}">${esc(r.accion?.toUpperCase() || '—')}</span></td>
+          <td style="font-size:12px;color:#666">${esc(r.tabla_afectada || '—')}</td>
+          <td style="font-size:11px;color:#888;max-width:120px;overflow:hidden;text-overflow:ellipsis">${esc(r.registro_id || '—')}</td>
+          <td style="max-width:220px">
+            ${r.cambios
+              ? `<pre class="cambios-pre" onclick="this.classList.toggle('expandido')">${esc(JSON.stringify(r.cambios, null, 2))}</pre>`
+              : '<span style="color:#bbb;font-size:12px">—</span>'}
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+function badgeAccion(accion) {
+  if (!accion) return 'badge-default';
+  const a = accion.toLowerCase();
+  if (a.includes('insert')) return 'badge-insert';
+  if (a.includes('update')) return 'badge-update';
+  if (a.includes('delete')) return 'badge-delete';
+  if (a.includes('login'))  return 'badge-login';
+  return 'badge-default';
+}
+
+function actualizarPaginacion() {
+  const totalPags = Math.ceil(_total / POR_PAG);
+  document.getElementById('pag-info').textContent = `Pág. ${_pagina + 1} de ${totalPags || 1} (${_total} registros)`;
+  document.getElementById('btn-prev').disabled = _pagina === 0;
+  document.getElementById('btn-next').disabled = (_pagina + 1) >= totalPags;
+}
+
+async function filtrar() {
+  _pagina = 0;
+  await cargarLogs();
+}
+
+async function cambiarPag(dir) {
+  _pagina = Math.max(0, _pagina + dir);
+  await cargarLogs();
+}
+
+function exportarCSV() {
+  const headers = ['Fecha', 'Usuario', 'Acción', 'Tabla', 'Registro ID', 'Cambios'];
+  const rows = _logs.map(r => [
+    new Date(r.created_at).toLocaleString('es-AR'),
+    r.usuario_email || '',
+    r.accion || '',
+    r.tabla_afectada || '',
+    r.registro_id || '',
+    r.cambios ? JSON.stringify(r.cambios) : '',
+  ]);
+  const csv = [headers, ...rows].map(r => r.map(c => `"${String(c || '').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent('﻿' + csv);
+  a.download = `piezauto_auditoria_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
+function cerrarSesion() {
+  sessionStorage.removeItem('pz_admin');
+  window.location.href = 'login.html';
+}
+
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>

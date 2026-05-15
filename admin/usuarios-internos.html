@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Usuarios internos — Piezauto Admin</title>
+  <link rel="stylesheet" href="../css/estilos.css">
+  <style>
+    body { background: #f0f0f0; margin: 0; font-family: inherit; }
+    .admin-wrap { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+    .admin-sidebar {
+      background: var(--negro); padding: 24px 0;
+      display: flex; flex-direction: column; overflow-y: auto;
+      position: sticky; top: 0; max-height: 100vh;
+    }
+    .admin-sidebar-logo {
+      font-size: 18px; font-weight: 800; padding: 0 20px 24px;
+      border-bottom: 1px solid #333; margin-bottom: 16px;
+      background: linear-gradient(135deg,#E63946 0%,#ff6b6b 50%,#c1121f 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .admin-nav-item {
+      display: block; padding: 12px 20px; color: #aaa; font-size: 14px;
+      font-weight: 500; cursor: pointer; transition: background .15s, color .15s;
+      border-left: 3px solid transparent; text-decoration: none;
+    }
+    .admin-nav-item:hover, .admin-nav-item.activo {
+      background: #222; color: #fff; border-left-color: var(--rojo);
+    }
+    .sidebar-section-label {
+      font-size: 10px; color: #555; text-transform: uppercase;
+      letter-spacing: .1em; padding: 16px 20px 4px; font-weight: 700;
+    }
+    .sidebar-divider { border: none; border-top: 1px solid #2a2a2a; margin: 8px 0; }
+    .admin-content { padding: 32px; }
+    .admin-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
+    .admin-titulo { font-size: 22px; font-weight: 800; }
+
+    /* tabla */
+    .tabla-admin { width: 100%; border-collapse: collapse; background: #fff; border-radius: 10px; overflow: hidden; box-shadow: var(--sombra); }
+    .tabla-admin th { background: #f5f5f5; padding: 12px 14px; text-align: left; font-size: 13px; font-weight: 700; color: #555; }
+    .tabla-admin td { padding: 12px 14px; border-bottom: 1px solid #f0f0f0; font-size: 14px; vertical-align: middle; }
+    .tabla-admin tr:last-child td { border-bottom: none; }
+
+    /* badges */
+    .badge { padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .badge-owner         { background: #1a1a1a; color: #fff; }
+    .badge-admin_op      { background: #dbeafe; color: #1e40af; }
+    .badge-comercial     { background: #d1fae5; color: #065f46; }
+    .badge-soporte       { background: #fef3c7; color: #92400e; }
+    .badge-analista      { background: #ede9fe; color: #5b21b6; }
+    .badge-activo        { background: #e6f7ee; color: #1a7a3f; }
+    .badge-inactivo      { background: #fce8e8; color: #c00; }
+
+    /* btn */
+    .btn-rojo   { background: var(--rojo); color: #fff; border: none; border-radius: 8px; padding: 10px 18px; font-size: 14px; font-weight: 700; cursor: pointer; transition: opacity .15s; }
+    .btn-rojo:hover { opacity: .88; }
+    .accion-btn { padding: 6px 12px; border-radius: 6px; border: none; font-size: 12px; font-weight: 600; cursor: pointer; margin-right: 4px; }
+    .accion-editar   { background: #e8f0fe; color: #1a56c4; }
+    .accion-desact   { background: #fce8e8; color: #c00; }
+    .accion-activar  { background: #e6f7ee; color: #1a7a3f; }
+
+    /* modal */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 1000; align-items: center; justify-content: center; }
+    .modal-overlay.activo { display: flex; }
+    .modal-box { background: #fff; border-radius: 14px; width: 90%; max-width: 540px; padding: 28px; box-shadow: 0 20px 60px rgba(0,0,0,.25); }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid #eee; }
+    .modal-titulo { font-size: 18px; font-weight: 800; }
+    .modal-cerrar { background: #f0f0f0; border: none; border-radius: 50%; width: 32px; height: 32px; font-size: 16px; cursor: pointer; }
+
+    .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-grupo { margin-bottom: 0; }
+    .form-label { font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 5px; display: block; }
+    .form-input { width: 100%; border: 1.5px solid #ddd; border-radius: 8px; padding: 10px 12px; font-size: 14px; font-family: inherit; outline: none; box-sizing: border-box; transition: border-color .2s; background: #fff; }
+    .form-input:focus { border-color: var(--rojo); }
+    .full { grid-column: 1 / -1; }
+
+    .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+    .btn-cancel { background: #f0f0f0; color: #444; border: none; border-radius: 8px; padding: 10px 18px; font-size: 14px; font-weight: 600; cursor: pointer; }
+    .form-msg { font-size: 13px; margin-top: 10px; min-height: 18px; }
+
+    #permiso-wall { position: fixed; inset: 0; background: var(--negro); display: flex; align-items: center; justify-content: center; z-index: 9999; flex-direction: column; gap: 16px; }
+    #permiso-wall h2 { color: #fff; font-size: 22px; }
+    #permiso-wall p  { color: #888; font-size: 15px; }
+    #permiso-wall a  { color: var(--rojo); }
+
+    @media (max-width:700px) { .admin-wrap { grid-template-columns: 1fr; } .admin-sidebar { display: none; } }
+  </style>
+</head>
+<body>
+<script>
+if (!sessionStorage.getItem('pz_admin')) window.location.replace('login.html');
+</script>
+
+<!-- Muro de permisos (se oculta si el usuario es owner) -->
+<div id="permiso-wall" style="display:none">
+  <h2>🔒 Acceso restringido</h2>
+  <p>Solo el Owner puede gestionar usuarios internos.</p>
+  <a href="index.html">← Volver al panel</a>
+</div>
+
+<div class="admin-wrap">
+  <aside class="admin-sidebar">
+    <div class="admin-sidebar-logo">Piezauto Admin</div>
+    <div class="sidebar-section-label">Equipo</div>
+    <a class="admin-nav-item activo" href="usuarios-internos.html">👥 Usuarios internos</a>
+    <a class="admin-nav-item" href="insights.html">📊 Insights</a>
+    <a class="admin-nav-item" href="auditoria.html">🔍 Auditoría</a>
+    <hr class="sidebar-divider" style="margin-top:auto">
+    <a class="admin-nav-item" href="index.html" style="color:#888;font-size:13px">← Volver al panel</a>
+    <span class="admin-nav-item" onclick="cerrarSesion()" style="color:#c00;font-size:13px">🚪 Cerrar sesión</span>
+  </aside>
+
+  <main class="admin-content">
+    <div class="admin-header">
+      <div class="admin-titulo">👥 Usuarios internos</div>
+      <button class="btn-rojo" onclick="abrirModalNuevo()">+ Nuevo usuario</button>
+    </div>
+
+    <div id="usuarios-wrap">
+      <p style="color:#aaa">Cargando...</p>
+    </div>
+  </main>
+</div>
+
+<!-- Modal crear/editar -->
+<div class="modal-overlay" id="modal-usuario">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-titulo" id="modal-titulo">Nuevo usuario</div>
+      <button class="modal-cerrar" onclick="cerrarModal()">✕</button>
+    </div>
+    <input type="hidden" id="edit-id">
+    <div class="form-grid-2">
+      <div class="form-grupo">
+        <label class="form-label">Nombre <span style="color:var(--rojo)">*</span></label>
+        <input type="text" id="inp-nombre" class="form-input" placeholder="Nombre">
+      </div>
+      <div class="form-grupo">
+        <label class="form-label">Apellido</label>
+        <input type="text" id="inp-apellido" class="form-input" placeholder="Apellido">
+      </div>
+      <div class="form-grupo full">
+        <label class="form-label">Email <span style="color:var(--rojo)">*</span> (debe existir en Supabase Auth)</label>
+        <input type="email" id="inp-email" class="form-input" placeholder="usuario@piezauto.com">
+      </div>
+      <div class="form-grupo">
+        <label class="form-label">Rol <span style="color:var(--rojo)">*</span></label>
+        <select id="inp-rol" class="form-input">
+          <option value="owner">Owner</option>
+          <option value="admin_operativo">Admin operativo</option>
+          <option value="comercial">Comercial</option>
+          <option value="soporte">Soporte</option>
+          <option value="analista">Analista</option>
+        </select>
+      </div>
+      <div class="form-grupo">
+        <label class="form-label">Estado</label>
+        <select id="inp-activo" class="form-input">
+          <option value="true">Activo</option>
+          <option value="false">Inactivo</option>
+        </select>
+      </div>
+      <div class="form-grupo full">
+        <label class="form-label">Notas (opcional)</label>
+        <input type="text" id="inp-notas" class="form-input" placeholder="Ej: responsable del área comercial">
+      </div>
+    </div>
+    <div class="form-msg" id="modal-msg"></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn-rojo" onclick="guardarUsuario()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase.js"></script>
+<script>
+const SUPA_URL = 'https://mqxowotdeibllkitkije.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xeG93b3RkZWlibGxraXRraWplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxMzgxNDYsImV4cCI6MjA5MTcxNDE0Nn0.V_Pr0elBurAK7OPKFL3OoZwBmb-bI-Mcz8N1U8yblG8';
+
+let _usuarios  = [];
+let _rolActual = null;
+
+// ─── INIT ───────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+  await verificarPermiso();
+  await cargarUsuarios();
+});
+
+async function verificarPermiso() {
+  const { data: { session } } = await db.auth.getSession();
+  if (!session) { _rolActual = 'owner'; return; } // old-style admin login
+
+  const { data } = await db.from('cat_usuarios_internos')
+    .select('rol_codigo')
+    .eq('auth_user_id', session.user.id)
+    .single();
+
+  _rolActual = data?.rol_codigo || 'owner';
+
+  if (_rolActual !== 'owner') {
+    document.getElementById('permiso-wall').style.display = 'flex';
+  }
+}
+
+async function cargarUsuarios() {
+  const { data, error } = await db
+    .from('cat_usuarios_internos')
+    .select('*, cat_admin_roles(nombre, permisos)')
+    .order('created_at', { ascending: false });
+
+  if (error) { document.getElementById('usuarios-wrap').innerHTML = `<p style="color:#c00">Error: ${error.message}</p>`; return; }
+
+  _usuarios = data || [];
+  renderTabla();
+}
+
+function renderTabla() {
+  if (!_usuarios.length) {
+    document.getElementById('usuarios-wrap').innerHTML = '<p style="color:#aaa;text-align:center;padding:40px">No hay usuarios registrados todavía.</p>';
+    return;
+  }
+
+  const ROL_BADGE = {
+    owner:           'badge-owner',
+    admin_operativo: 'badge-admin_op',
+    comercial:       'badge-comercial',
+    soporte:         'badge-soporte',
+    analista:        'badge-analista',
+  };
+
+  document.getElementById('usuarios-wrap').innerHTML = `
+    <table class="tabla-admin">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Email</th>
+          <th>Rol</th>
+          <th>Último acceso</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${_usuarios.map(u => `
+          <tr>
+            <td><strong>${esc(u.nombre)} ${esc(u.apellido || '')}</strong></td>
+            <td style="color:#666">${esc(u.email)}</td>
+            <td><span class="badge ${ROL_BADGE[u.rol_codigo] || ''}">${esc(u.cat_admin_roles?.nombre || u.rol_codigo)}</span></td>
+            <td style="color:#888;font-size:12px">${u.ultimo_acceso ? new Date(u.ultimo_acceso).toLocaleDateString('es-AR') : '—'}</td>
+            <td><span class="badge ${u.activo ? 'badge-activo' : 'badge-inactivo'}">${u.activo ? 'Activo' : 'Inactivo'}</span></td>
+            <td>
+              <button class="accion-btn accion-editar" onclick="abrirModalEditar('${u.id}')">Editar</button>
+              <button class="accion-btn ${u.activo ? 'accion-desact' : 'accion-activar'}"
+                onclick="toggleActivo('${u.id}', ${u.activo})">${u.activo ? 'Desactivar' : 'Activar'}</button>
+            </td>
+          </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+// ─── MODAL NUEVO ─────────────────────────────────────────────
+function abrirModalNuevo() {
+  document.getElementById('edit-id').value    = '';
+  document.getElementById('inp-nombre').value  = '';
+  document.getElementById('inp-apellido').value = '';
+  document.getElementById('inp-email').value   = '';
+  document.getElementById('inp-rol').value     = 'admin_operativo';
+  document.getElementById('inp-activo').value  = 'true';
+  document.getElementById('inp-notas').value   = '';
+  document.getElementById('inp-email').disabled = false;
+  document.getElementById('modal-titulo').textContent = 'Nuevo usuario';
+  document.getElementById('modal-msg').textContent = '';
+  document.getElementById('modal-usuario').classList.add('activo');
+}
+
+function abrirModalEditar(id) {
+  const u = _usuarios.find(x => x.id === id);
+  if (!u) return;
+  document.getElementById('edit-id').value     = u.id;
+  document.getElementById('inp-nombre').value  = u.nombre;
+  document.getElementById('inp-apellido').value = u.apellido || '';
+  document.getElementById('inp-email').value   = u.email;
+  document.getElementById('inp-rol').value     = u.rol_codigo;
+  document.getElementById('inp-activo').value  = String(u.activo);
+  document.getElementById('inp-notas').value   = u.notas || '';
+  document.getElementById('inp-email').disabled = true; // email no editable
+  document.getElementById('modal-titulo').textContent = 'Editar usuario';
+  document.getElementById('modal-msg').textContent = '';
+  document.getElementById('modal-usuario').classList.add('activo');
+}
+
+function cerrarModal() {
+  document.getElementById('modal-usuario').classList.remove('activo');
+}
+
+async function guardarUsuario() {
+  const id      = document.getElementById('edit-id').value;
+  const nombre  = document.getElementById('inp-nombre').value.trim();
+  const email   = document.getElementById('inp-email').value.trim().toLowerCase();
+  const rol     = document.getElementById('inp-rol').value;
+  const activo  = document.getElementById('inp-activo').value === 'true';
+  const apellido = document.getElementById('inp-apellido').value.trim();
+  const notas   = document.getElementById('inp-notas').value.trim();
+  const msg     = document.getElementById('modal-msg');
+
+  if (!nombre || !email || !rol) { msg.style.color = '#c00'; msg.textContent = 'Completá nombre, email y rol.'; return; }
+
+  const payload = { nombre, apellido: apellido || null, rol_codigo: rol, activo, notas: notas || null, updated_at: new Date().toISOString() };
+
+  let error;
+  if (id) {
+    ({ error } = await db.from('cat_usuarios_internos').update(payload).eq('id', id));
+  } else {
+    // Buscar auth_user_id por email en Auth (no accesible con anon key, lo dejamos null y el admin lo linkea)
+    ({ error } = await db.from('cat_usuarios_internos').insert({ ...payload, email }));
+  }
+
+  if (error) { msg.style.color = '#c00'; msg.textContent = 'Error: ' + error.message; return; }
+
+  cerrarModal();
+  await cargarUsuarios();
+}
+
+async function toggleActivo(id, activo) {
+  await db.from('cat_usuarios_internos').update({ activo: !activo, updated_at: new Date().toISOString() }).eq('id', id);
+  await cargarUsuarios();
+}
+
+function cerrarSesion() {
+  sessionStorage.removeItem('pz_admin');
+  window.location.href = 'login.html';
+}
+
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
