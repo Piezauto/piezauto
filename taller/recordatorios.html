@@ -127,11 +127,26 @@
       </div>
       <div class="config-card">
         <div class="config-head">Plantillas de mensajes</div>
-        ${['or_lista','or_demorada','vtv','service','inactividad'].map(tipo=>`
         <div class="plantilla-card">
-          <div class="plantilla-tipo">${tipoLabel(tipo)}</div>
-          <textarea class="fta" id="tpl-${tipo}" rows="2" placeholder="Mensaje para ${tipoLabel(tipo)}...">${defaultMsg(tipo)}</textarea>
-        </div>`).join('')}
+          <div class="plantilla-tipo">OR lista para retirar</div>
+          <textarea class="fta" id="tpl-or_lista" rows="2">Hola {nombre}! Tu vehículo {dominio} está listo para retirar en nuestro taller. Te esperamos!</textarea>
+        </div>
+        <div class="plantilla-card">
+          <div class="plantilla-tipo">OR demorada</div>
+          <textarea class="fta" id="tpl-or_demorada" rows="2">Hola {nombre}, el trabajo en tu {dominio} requiere un poco más de tiempo. Te avisamos en cuanto esté listo.</textarea>
+        </div>
+        <div class="plantilla-card">
+          <div class="plantilla-tipo">VTV próxima</div>
+          <textarea class="fta" id="tpl-vtv" rows="2">Hola {nombre}! Te recordamos que la VTV de tu {dominio} vence próximamente. Podemos ayudarte a prepararla.</textarea>
+        </div>
+        <div class="plantilla-card">
+          <div class="plantilla-tipo">Service próximo</div>
+          <textarea class="fta" id="tpl-service" rows="2">Hola {nombre}! Es hora del service de tu {dominio}. Contactanos para coordinar.</textarea>
+        </div>
+        <div class="plantilla-card">
+          <div class="plantilla-tipo">Cliente inactivo</div>
+          <textarea class="fta" id="tpl-inactividad" rows="2">Hola {nombre}! Hace tiempo que no te vemos. Si necesitás trabajo en tu auto, estamos a tu disposición.</textarea>
+        </div>
       </div>
       <button class="btn-guardar-config" onclick="guardarConfig()">Guardar configuración</button>
     </div>

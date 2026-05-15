@@ -189,7 +189,7 @@
 </style>
 </head>
 <body>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 async function cargarBadgeOrdenes(tid) {
   try {
     const { count } = await dbB2C.from('cat_ordenes_reparacion').select('id', { count: 'exact', head: true })
