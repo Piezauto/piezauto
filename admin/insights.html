@@ -112,6 +112,7 @@ if (!sessionStorage.getItem('pz_admin')) window.location.replace('login.html');
       <button class="tab-btn" onclick="switchTab('catalogo')">📦 Catálogo</button>
       <button class="tab-btn" onclick="switchTab('vehiculos')">🚗 Vehículos</button>
       <button class="tab-btn" onclick="switchTab('talleres-ext')">🔍 Talleres externos</button>
+      <button class="tab-btn" onclick="switchTab('tipos')">🏪 Por tipo</button>
     </div>
 
     <!-- Tab: Clientes -->
@@ -204,6 +205,24 @@ if (!sessionStorage.getItem('pz_admin')) window.location.replace('login.html');
         </div>
       </div>
     </div>
+
+    <!-- Tab: Distribución por tipo -->
+    <div class="tab-panel" id="tab-tipos">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Distribución por tipo de establecimiento</div>
+          <div class="chart-wrap"><canvas id="chart-tipo-dist"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Cantidad por tipo</div>
+          <div id="tabla-tipos-wrap"><p style="color:#aaa;font-size:13px">Cargando...</p></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Lubricentros con stock crítico</div>
+        <div id="tabla-stock-critico"><p style="color:#aaa;font-size:13px">Cargando...</p></div>
+      </div>
+    </div>
   </main>
 </div>
 
@@ -226,6 +245,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     cargarTabCatalogo(),
     cargarTabVehiculos(),
     cargarTabExt(),
+    cargarTabTipos(),
   ]);
 });
 
@@ -420,6 +440,67 @@ async function cargarTabExt() {
     ['Taller', 'Menciones'],
     data.slice(0, 10).map(t => [t.nombre, t.cantidad_menciones])
   );
+}
+
+// ─── TAB TIPOS ───────────────────────────────────────────────────────────────
+const TIPO_LABEL_FULL = {
+  taller_chapa_pintura:   '🎨 Chapa y pintura',
+  taller_mecanico:        '🔧 Taller mecánico',
+  lubricentro:            '🛢️ Lubricentro',
+  gomeria:                '🛞 Gomería',
+  electricidad_automotor: '⚡ Electricidad automotor',
+  cerrajeria_automotor:   '🔑 Cerrajería automotor',
+  mixto:                  '🏪 Mixto',
+  otro:                   '🔩 Otro',
+};
+
+async function cargarTabTipos() {
+  const [{ data: talleresTipo }, { data: stockCrit }] = await Promise.all([
+    db.from('cat_recomendaciones_talleres').select('tipo_establecimiento').eq('activo', true),
+    db.from('v_stock_critico_por_taller').select('*').limit(10),
+  ]);
+
+  // Distribución por tipo
+  if (talleresTipo) {
+    const byTipo = {};
+    talleresTipo.forEach(t => {
+      const k = t.tipo_establecimiento || 'otro';
+      byTipo[k] = (byTipo[k] || 0) + 1;
+    });
+    const sorted = Object.entries(byTipo).sort((a, b) => b[1] - a[1]);
+
+    dibujarDonut('chart-tipo-dist',
+      sorted.map(([k]) => TIPO_LABEL_FULL[k] || k),
+      sorted.map(([, v]) => v));
+
+    document.getElementById('tabla-tipos-wrap').innerHTML = `
+      <table class="tabla-ins">
+        <thead><tr><th>Tipo</th><th>Cantidad</th></tr></thead>
+        <tbody>
+          ${sorted.map(([k, v]) => `<tr>
+            <td>${TIPO_LABEL_FULL[k] || esc(k)}</td>
+            <td><strong>${v}</strong></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`;
+  }
+
+  // Stock crítico (lubricentros)
+  if (!stockCrit?.length) {
+    document.getElementById('tabla-stock-critico').innerHTML = '<p style="color:#aaa;font-size:13px;text-align:center;padding:20px">Sin stock crítico detectado.</p>';
+  } else {
+    document.getElementById('tabla-stock-critico').innerHTML = `
+      <table class="tabla-ins">
+        <thead><tr><th>Taller</th><th>Items críticos</th><th>Productos</th></tr></thead>
+        <tbody>
+          ${stockCrit.map(r => `<tr>
+            <td><strong>${esc(r.taller_nombre)}</strong></td>
+            <td><span style="background:#fce8e8;color:#c00;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700">${r.items_criticos} items</span></td>
+            <td style="font-size:12px;color:#666">${(Array.isArray(r.items) ? r.items : []).slice(0, 3).map(esc).join(', ')}${r.items?.length > 3 ? '...' : ''}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`;
+  }
 }
 
 // ─── TABS ────────────────────────────────────────────────────────────────────

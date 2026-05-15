@@ -161,7 +161,7 @@ const _timeoutId = setTimeout(() => {
   // Cargar todo en paralelo — sbGetSafe nunca lanza, siempre devuelve array
   const [tallerArr, disponib, resenas] = await Promise.all([
     sbGetSafe('cat_recomendaciones_talleres',
-      `select=id,nombre,direccion,localidad,telefono,whatsapp,especialidades,horarios,logo_url&id=eq.${tallerId}&limit=1`),
+      `select=id,nombre,direccion,localidad,telefono,whatsapp,especialidades,horarios,logo_url,tipo_establecimiento,atencion_express,sin_turno_previo,rango_precios_referencial&id=eq.${tallerId}&limit=1`),
     sbGetSafe('cat_taller_disponibilidad',
       `select=dia_semana,tipo_turno,hora_inicio,hora_fin,activo&taller_id=eq.${tallerId}&activo=eq.true&order=tipo_turno,dia_semana`),
     sbGetSafe('cat_turnos',
@@ -196,8 +196,24 @@ const _timeoutId = setTimeout(() => {
   document.title = `${taller.nombre} — Piezauto`;
   document.getElementById('pageTitle').textContent = `${taller.nombre} — Piezauto`;
 
+  const TIPO_LABEL = {
+    taller_chapa_pintura:   '🎨 Chapa y pintura',
+    taller_mecanico:        '🔧 Taller mecánico',
+    lubricentro:            '🛢️ Lubricentro',
+    gomeria:                '🛞 Gomería',
+    electricidad_automotor: '⚡ Electricidad automotor',
+    cerrajeria_automotor:   '🔑 Cerrajería automotor',
+    mixto:                  '🏪 Mixto',
+    otro:                   '🔩 Otro',
+  };
   const especialidades = Array.isArray(taller.especialidades) ? taller.especialidades : [];
-  const chips = especialidades.map(e => `<span class="hero-chip">${esc(e)}</span>`).join('');
+  const tipoBadge = taller.tipo_establecimiento
+    ? `<span class="hero-chip" style="background:rgba(230,57,70,.25);color:#ffb3b7;font-weight:700">${TIPO_LABEL[taller.tipo_establecimiento] || taller.tipo_establecimiento}</span>`
+    : '';
+  const expressBadge = taller.atencion_express
+    ? `<span class="hero-chip" style="background:rgba(209,250,229,.2);color:#a7f3d0;font-weight:700">🚀 Sin turno previo</span>`
+    : '';
+  const chips = [tipoBadge, expressBadge, ...especialidades.map(e => `<span class="hero-chip">${esc(e)}</span>`)].filter(Boolean).join('');
   const califHtml = promCalif
     ? `<div class="hero-calif">
         <span class="estrellas-txt">${'★'.repeat(Math.round(parseFloat(promCalif)))}</span>
@@ -233,6 +249,24 @@ const _timeoutId = setTimeout(() => {
   // ── CONTENIDO ────────────────────────────────────────────────────────
   const cont = document.getElementById('contenido');
   let html = '';
+
+  // Rango de precios referencial (si existe)
+  const precios = taller.rango_precios_referencial;
+  if (precios && typeof precios === 'object' && Object.keys(precios).length > 0) {
+    html += `<div class="card">
+      <div class="card-head"><h3>💰 Precios referenciales</h3></div>
+      <div class="card-body">
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
+          ${Object.entries(precios).map(([svc, rango]) => `
+            <tr>
+              <td style="padding:6px 0;border-bottom:1px solid #f0f0f0;color:#444">${esc(svc)}</td>
+              <td style="padding:6px 0;border-bottom:1px solid #f0f0f0;text-align:right;font-weight:700;color:var(--rojo)">$${esc(String(rango))}</td>
+            </tr>`).join('')}
+        </table>
+        <p style="font-size:11px;color:#aaa;margin-top:8px">Precios orientativos, sujetos a diagnóstico.</p>
+      </div>
+    </div>`;
+  }
 
   // Sección contacto
   html += `

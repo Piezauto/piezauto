@@ -247,6 +247,21 @@ let _vhSel      = null; // vehiculo seleccionado
 let _svcSel     = null;
 let _origenSel  = null;
 
+// Tipo de taller sugerido por servicio (para el hint del paso 2)
+const SVC_TIPO_SUGERIDO = {
+  aceite:         { tipo: 'lubricentro',         label: '🛢️ Lubricentro' },
+  filtros:        { tipo: 'lubricentro',         label: '🛢️ Lubricentro' },
+  neumaticos:     { tipo: 'gomeria',             label: '🛞 Gomería' },
+  electrico:      { tipo: 'electricidad_automotor', label: '⚡ Electricidad automotor' },
+  frenos:         { tipo: 'taller_mecanico',     label: '🔧 Taller mecánico' },
+  amortiguadores: { tipo: 'taller_mecanico',     label: '🔧 Taller mecánico' },
+  suspension:     { tipo: 'taller_mecanico',     label: '🔧 Taller mecánico' },
+  correa:         { tipo: 'taller_mecanico',     label: '🔧 Taller mecánico' },
+  embrague:       { tipo: 'taller_mecanico',     label: '🔧 Taller mecánico' },
+  escape:         { tipo: 'taller_mecanico',     label: '🔧 Taller mecánico' },
+  bateria:        { tipo: 'electricidad_automotor', label: '⚡ Electricidad automotor' },
+};
+
 const SERVICIOS = [
   { id: 'aceite',         nombre: 'Cambio de aceite',    icono: '🛢️' },
   { id: 'frenos',         nombre: 'Frenos',              icono: '🔴' },
@@ -356,6 +371,18 @@ function selSvc(id) {
   if (svc && !document.getElementById('det-desc').value) {
     document.getElementById('det-desc').value = svc.nombre;
   }
+
+  // Hint de tipo de establecimiento sugerido
+  let hint = document.getElementById('svc-tipo-hint');
+  if (!hint) {
+    hint = document.createElement('div');
+    hint.id = 'svc-tipo-hint';
+    hint.style.cssText = 'margin-top:12px;padding:8px 12px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;font-size:12px;color:#92400e';
+    document.getElementById('svc-grid').after(hint);
+  }
+  const sugerido = SVC_TIPO_SUGERIDO[id];
+  hint.style.display = sugerido ? 'block' : 'none';
+  if (sugerido) hint.innerHTML = `💡 Este servicio suele hacerse en un <strong>${sugerido.label}</strong>`;
 }
 
 // ─────────────────────────────────────────────────────────────

@@ -933,9 +933,36 @@ if (!sessionStorage.getItem('pz_admin')) {
               <option value="false">Inactivo (oculto)</option>
             </select>
           </div>
+          <div class="form-group">
+            <label>Tipo de establecimiento</label>
+            <select id="t-tipo-establecimiento" onchange="actualizarCamposTipo()">
+              <option value="taller_chapa_pintura">🎨 Taller chapa y pintura</option>
+              <option value="taller_mecanico">🔧 Taller mecánico</option>
+              <option value="lubricentro">🛢️ Lubricentro</option>
+              <option value="gomeria">🛞 Gomería</option>
+              <option value="electricidad_automotor">⚡ Electricidad automotor</option>
+              <option value="cerrajeria_automotor">🔑 Cerrajería automotor</option>
+              <option value="mixto">🏪 Mixto (varios servicios)</option>
+              <option value="otro">🔩 Otro</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Duración de turno default (minutos)</label>
+            <input type="number" id="t-duracion-turno" min="15" step="15" value="60" placeholder="Ej: 60">
+          </div>
+          <div class="form-group full" id="t-express-wrap" style="display:none">
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-weight:600">
+              <input type="checkbox" id="t-sin-turno-previo" style="width:18px;height:18px;accent-color:var(--rojo)">
+              🚀 Atención express sin turno previo
+            </label>
+          </div>
           <div class="form-group full">
             <label>Descripción</label>
             <textarea id="t-descripcion" rows="4" placeholder="Descripción del taller, especialidades, servicios..."></textarea>
+          </div>
+          <div class="form-group full">
+            <label>Rango de precios referencial (JSON — ej: {"Cambio de aceite": "8000-12000"})</label>
+            <textarea id="t-precios-ref" rows="3" placeholder='{"Cambio de aceite": "8000-12000", "Alineación": "5000-8000"}'></textarea>
           </div>
         </div>
         <div style="display:flex;gap:12px;margin-top:20px">

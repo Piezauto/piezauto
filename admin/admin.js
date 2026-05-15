@@ -603,18 +603,26 @@ async function guardarTaller() {
   if (!nombre) { msg.textContent = '⚠️ El nombre es obligatorio.'; msg.style.color = '#c00'; return; }
   if (!email)  { msg.textContent = '⚠️ El email es obligatorio.';  msg.style.color = '#c00'; return; }
 
+  let preciosRef = {};
+  try { preciosRef = JSON.parse(document.getElementById('t-precios-ref').value.trim() || '{}'); } catch (_) {}
+
   const datos = {
     nombre, email,
-    telefono:         document.getElementById('t-telefono').value.trim()  || null,
-    whatsapp:         document.getElementById('t-whatsapp').value.trim()  || null,
-    localidad:        document.getElementById('t-localidad').value.trim() || null,
-    zona:             document.getElementById('t-zona').value.trim()      || null,
-    direccion:        document.getElementById('t-direccion').value.trim() || null,
-    horario_apertura: document.getElementById('t-apertura').value         || null,
-    horario_cierre:   document.getElementById('t-cierre').value           || null,
-    descripcion:      document.getElementById('t-descripcion').value.trim()|| null,
-    logo_url:         document.getElementById('t-logo').value.trim()      || null,
-    activo:           document.getElementById('t-activo').value === 'true',
+    telefono:                    document.getElementById('t-telefono').value.trim()  || null,
+    whatsapp:                    document.getElementById('t-whatsapp').value.trim()  || null,
+    localidad:                   document.getElementById('t-localidad').value.trim() || null,
+    zona:                        document.getElementById('t-zona').value.trim()      || null,
+    direccion:                   document.getElementById('t-direccion').value.trim() || null,
+    horario_apertura:            document.getElementById('t-apertura').value         || null,
+    horario_cierre:              document.getElementById('t-cierre').value           || null,
+    descripcion:                 document.getElementById('t-descripcion').value.trim()|| null,
+    logo_url:                    document.getElementById('t-logo').value.trim()      || null,
+    activo:                      document.getElementById('t-activo').value === 'true',
+    tipo_establecimiento:        document.getElementById('t-tipo-establecimiento').value,
+    duracion_turno_default:      parseInt(document.getElementById('t-duracion-turno').value) || 60,
+    sin_turno_previo:            document.getElementById('t-sin-turno-previo').checked,
+    atencion_express:            document.getElementById('t-sin-turno-previo').checked,
+    rango_precios_referencial:   preciosRef,
   };
   const password = document.getElementById('t-password').value;
   if (password) datos.password_hash = password;
@@ -652,7 +660,12 @@ async function editarTaller(id) {
   document.getElementById('t-cierre').value    = t.horario_cierre || '';
   document.getElementById('t-descripcion').value = t.descripcion || '';
   document.getElementById('t-logo').value      = t.logo_url || '';
-  document.getElementById('t-activo').value    = t.activo ? 'true' : 'false';
+  document.getElementById('t-activo').value                = t.activo ? 'true' : 'false';
+  document.getElementById('t-tipo-establecimiento').value  = t.tipo_establecimiento || 'taller_chapa_pintura';
+  document.getElementById('t-duracion-turno').value        = t.duracion_turno_default || 60;
+  document.getElementById('t-sin-turno-previo').checked    = !!t.sin_turno_previo;
+  document.getElementById('t-precios-ref').value           = t.rango_precios_referencial ? JSON.stringify(t.rango_precios_referencial, null, 2) : '';
+  actualizarCamposTipo();
   mostrarPanel('nuevo-taller');
 }
 
@@ -661,9 +674,26 @@ function limpiarFormularioTaller() {
   document.getElementById('taller-form-titulo').textContent = 'Nuevo taller';
   ['t-nombre','t-email','t-password','t-telefono','t-whatsapp',
    't-localidad','t-zona','t-direccion','t-apertura','t-cierre',
-   't-descripcion','t-logo'].forEach(id => { document.getElementById(id).value = ''; });
-  document.getElementById('t-activo').value = 'true';
+   't-descripcion','t-logo','t-precios-ref'].forEach(id => { document.getElementById(id).value = ''; });
+  document.getElementById('t-activo').value                = 'true';
+  document.getElementById('t-tipo-establecimiento').value  = 'taller_chapa_pintura';
+  document.getElementById('t-duracion-turno').value        = '60';
+  document.getElementById('t-sin-turno-previo').checked    = false;
   document.getElementById('taller-form-mensaje').textContent = '';
+  actualizarCamposTipo();
+}
+
+function actualizarCamposTipo() {
+  const tipo = document.getElementById('t-tipo-establecimiento').value;
+  const expressWrap = document.getElementById('t-express-wrap');
+  const showExpress = tipo === 'lubricentro' || tipo === 'gomeria' || tipo === 'mixto';
+  expressWrap.style.display = showExpress ? 'block' : 'none';
+  // Sugerir duración según tipo
+  const durInput = document.getElementById('t-duracion-turno');
+  if (!durInput.dataset.manualEdit) {
+    const sugeridos = { lubricentro: 30, gomeria: 30, taller_mecanico: 90, taller_chapa_pintura: 60, mixto: 45 };
+    if (sugeridos[tipo]) durInput.value = sugeridos[tipo];
+  }
 }
 
 async function eliminarTaller(id, nombre) {

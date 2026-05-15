@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stock — Piezauto Point</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --accent:     #E63946;
+      --negro:      #1a1a1a;
+      --gris-claro: #f8f8f8;
+      --sombra:     0 2px 12px rgba(0,0,0,.08);
+      --radius:     10px;
+    }
+    body { background: var(--gris-claro); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+
+    /* Header */
+    .header { background: var(--negro); color: #fff; padding: 14px 18px; display: flex; align-items: center; gap: 12px; }
+    .header-logo { font-size: 15px; font-weight: 900; background: linear-gradient(135deg,#E63946,#ff6b6b); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .header-title { font-size: 14px; font-weight: 600; color: #aaa; }
+    .header-sep { flex: 1; }
+    .header-back { color: #888; font-size: 13px; text-decoration: none; }
+
+    /* Wrap */
+    .wrap { max-width: 760px; margin: 0 auto; padding: 20px 16px 60px; }
+
+    /* Filtros */
+    .filtros-bar { background: #fff; border-radius: var(--radius); padding: 14px 16px; box-shadow: var(--sombra); margin-bottom: 16px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .filtro-sel { padding: 7px 12px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 13px; outline: none; background: #fff; }
+    .filtro-sel:focus { border-color: var(--accent); }
+    .filtro-busq { flex: 1; min-width: 160px; padding: 7px 12px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 13px; outline: none; }
+    .filtro-busq:focus { border-color: var(--accent); }
+    .btn-nuevo { margin-left: auto; background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+
+    /* Stats strip */
+    .stats-strip { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+    .stat-pill { background: #fff; border-radius: 20px; padding: 6px 14px; font-size: 12px; font-weight: 700; box-shadow: var(--sombra); }
+    .stat-pill.rojo { color: var(--accent); }
+    .stat-pill.verde { color: #1a7a3f; }
+
+    /* Tabla */
+    .tabla { width: 100%; border-collapse: collapse; background: #fff; border-radius: var(--radius); overflow: hidden; box-shadow: var(--sombra); }
+    .tabla th { background: #f5f5f5; padding: 10px 12px; text-align: left; font-size: 12px; font-weight: 700; color: #555; }
+    .tabla td { padding: 11px 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px; vertical-align: middle; }
+    .tabla tr:last-child td { border-bottom: none; }
+    .tabla tr:hover td { background: #fafafa; }
+
+    /* Badges stock */
+    .badge-ok      { background: #d1fae5; color: #065f46; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+    .badge-critico { background: #fff3cd; color: #92400e; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+    .badge-sin     { background: #fce8e8; color: #c00;    padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+
+    /* Botones fila */
+    .btn-accion { padding: 5px 10px; border-radius: 6px; border: none; font-size: 11px; font-weight: 600; cursor: pointer; margin-right: 3px; }
+    .btn-editar  { background: #e8f0fe; color: #1a56c4; }
+    .btn-borrar  { background: #fce8e8; color: #c00; }
+    .btn-reponer { background: #e6f7ee; color: #1a7a3f; }
+
+    /* Drawer */
+    .drawer-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 100; }
+    .drawer-overlay.open { display: block; }
+    .drawer { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-radius: 18px 18px 0 0; padding: 24px 20px 32px; z-index: 101; max-height: 90vh; overflow-y: auto; transform: translateY(100%); transition: transform .28s cubic-bezier(.4,0,.2,1); }
+    .drawer.open { transform: translateY(0); }
+    .drawer-handle { width: 36px; height: 4px; background: #ddd; border-radius: 2px; margin: 0 auto 20px; }
+    .drawer-titulo { font-size: 17px; font-weight: 800; margin-bottom: 18px; }
+
+    /* Form */
+    .form-grupo { margin-bottom: 14px; }
+    .form-label { font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: .04em; display: block; margin-bottom: 5px; }
+    .form-input { width: 100%; border: 1.5px solid #ddd; border-radius: 8px; padding: 10px 12px; font-size: 14px; font-family: inherit; outline: none; transition: border-color .2s; }
+    .form-input:focus { border-color: var(--accent); }
+    .form-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-nav { display: flex; gap: 10px; margin-top: 18px; }
+    .btn-cancelar { flex: 1; padding: 12px; background: #f0f0f0; color: #444; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
+    .btn-guardar  { flex: 2; padding: 12px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; }
+    .form-msg { font-size: 13px; margin-top: 10px; min-height: 18px; }
+
+    /* SKU autocomplete */
+    .sku-res { position: absolute; left: 0; right: 0; background: #fff; border: 1.5px solid #ddd; border-top: none; border-radius: 0 0 8px 8px; max-height: 200px; overflow-y: auto; z-index: 10; box-shadow: var(--sombra); }
+    .sku-item { padding: 10px 12px; cursor: pointer; font-size: 13px; border-bottom: 1px solid #f0f0f0; }
+    .sku-item:hover { background: #fafafa; }
+    .sku-item:last-child { border-bottom: none; }
+    .sku-wrap { position: relative; }
+
+    /* Reponer modal */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 200; align-items: center; justify-content: center; }
+    .modal-overlay.open { display: flex; }
+    .modal-box { background: #fff; border-radius: 14px; padding: 24px; max-width: 420px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,.2); }
+    .modal-titulo { font-size: 17px; font-weight: 800; margin-bottom: 16px; }
+    .modal-txt { font-size: 13px; color: #555; line-height: 1.6; margin-bottom: 18px; }
+    .modal-nav { display: flex; gap: 10px; }
+  </style>
+</head>
+<body>
+<script>
+// Guard de sesión taller
+const _s = sessionStorage.getItem('pz_taller');
+if (!_s) window.location.replace('/taller/');
+</script>
+
+<div class="header">
+  <div class="header-logo">Piezauto</div>
+  <div class="header-title">· Stock interno</div>
+  <div class="header-sep"></div>
+  <a class="header-back" href="/taller/dashboard">← Dashboard</a>
+</div>
+
+<div class="wrap">
+
+  <!-- Filtros -->
+  <div class="filtros-bar">
+    <select class="filtro-sel" id="filtro-estado" onchange="renderTabla()">
+      <option value="">Todos</option>
+      <option value="ok">Stock OK</option>
+      <option value="critico">Crítico</option>
+      <option value="sin">Sin stock</option>
+    </select>
+    <input class="filtro-busq" id="filtro-q" type="text" placeholder="Buscar producto..." oninput="renderTabla()">
+    <button class="btn-nuevo" onclick="abrirDrawerNuevo()">+ Agregar producto</button>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-strip" id="stats-strip"></div>
+
+  <!-- Tabla -->
+  <div id="tabla-wrap"><p style="text-align:center;color:#aaa;padding:40px">Cargando stock...</p></div>
+</div>
+
+<!-- Drawer agregar/editar -->
+<div class="drawer-overlay" id="drawer-overlay" onclick="cerrarDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-handle"></div>
+  <div class="drawer-titulo" id="drawer-titulo">Agregar producto</div>
+
+  <input type="hidden" id="d-id">
+
+  <div class="form-grupo">
+    <label class="form-label">Buscar SKU de Piezauto (opcional)</label>
+    <div class="sku-wrap">
+      <input type="text" id="d-sku-busq" class="form-input" placeholder="Escribí marca, código OEM..." oninput="buscarSku()">
+      <div class="sku-res" id="sku-resultados" style="display:none"></div>
+    </div>
+    <input type="hidden" id="d-sku-id">
+  </div>
+
+  <div class="form-2col">
+    <div class="form-grupo">
+      <label class="form-label">Descripción <span style="color:var(--accent)">*</span></label>
+      <input type="text" id="d-desc" class="form-input" placeholder="Ej: Aceite 10W40 Motul 1L">
+    </div>
+    <div class="form-grupo">
+      <label class="form-label">Marca</label>
+      <input type="text" id="d-marca" class="form-input" placeholder="Ej: Motul">
+    </div>
+    <div class="form-grupo">
+      <label class="form-label">Código propio</label>
+      <input type="text" id="d-codigo" class="form-input" placeholder="Ej: ACE-10W40-1L">
+    </div>
+    <div class="form-grupo">
+      <label class="form-label">Unidad</label>
+      <select id="d-unidad" class="form-input">
+        <option>unidad</option>
+        <option>litro</option>
+        <option>kg</option>
+        <option>par</option>
+        <option>juego</option>
+      </select>
+    </div>
+    <div class="form-grupo">
+      <label class="form-label">Cantidad actual</label>
+      <input type="number" id="d-cantidad" class="form-input" min="0" value="0">
+    </div>
+    <div class="form-grupo">
+      <label class="form-label">Stock mínimo</label>
+      <input type="number" id="d-minimo" class="form-input" min="0" value="2">
+    </div>
+    <div class="form-grupo">
+      <label class="form-label">Precio costo</label>
+      <input type="number" id="d-costo" class="form-input" min="0" value="0">
+    </div>
+    <div class="form-grupo">
+      <label class="form-label">Precio venta</label>
+      <input type="number" id="d-venta" class="form-input" min="0" value="0">
+    </div>
+  </div>
+  <div class="form-grupo">
+    <label class="form-label">Proveedor</label>
+    <input type="text" id="d-proveedor" class="form-input" placeholder="Ej: Piezauto, Depósito Norte...">
+  </div>
+  <div class="form-grupo">
+    <label class="form-label">Notas</label>
+    <input type="text" id="d-notas" class="form-input" placeholder="Observaciones...">
+  </div>
+  <div class="form-msg" id="drawer-msg"></div>
+  <div class="form-nav">
+    <button class="btn-cancelar" onclick="cerrarDrawer()">Cancelar</button>
+    <button class="btn-guardar" onclick="guardarItem()">Guardar</button>
+  </div>
+</div>
+
+<!-- Modal reposición -->
+<div class="modal-overlay" id="modal-rep">
+  <div class="modal-box">
+    <div class="modal-titulo">📦 Pedir reposición</div>
+    <div class="modal-txt" id="modal-rep-txt"></div>
+    <div class="modal-nav">
+      <button class="btn-cancelar" onclick="document.getElementById('modal-rep').classList.remove('open')">Cancelar</button>
+      <button class="btn-guardar" onclick="confirmarReposicion()">Confirmar pedido</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase.js"></script>
+<script>
+const SUPABASE_URL = 'https://mqxowotdeibllkitkije.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xeG93b3RkZWlibGxraXRraWplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxMzgxNDYsImV4cCI6MjA5MTcxNDE0Nn0.V_Pr0elBurAK7OPKFL3OoZwBmb-bI-Mcz8N1U8yblG8';
+
+let _taller    = JSON.parse(sessionStorage.getItem('pz_taller') || '{}');
+let _stock     = [];
+let _repItemId = null;
+let _skuTimer  = null;
+
+// ─── INIT ───────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+  await cargarStock();
+});
+
+async function cargarStock() {
+  const { data, error } = await db
+    .from('cat_taller_stock')
+    .select('*')
+    .eq('taller_id', _taller.id)
+    .order('descripcion');
+
+  if (error) { document.getElementById('tabla-wrap').innerHTML = `<p style="color:#c00;text-align:center;padding:40px">Error: ${error.message}</p>`; return; }
+
+  _stock = data || [];
+  renderStats();
+  renderTabla();
+}
+
+function renderStats() {
+  const ok  = _stock.filter(x => x.cantidad_actual > x.cantidad_minima).length;
+  const crit = _stock.filter(x => x.cantidad_actual > 0 && x.cantidad_actual <= x.cantidad_minima).length;
+  const sin  = _stock.filter(x => x.cantidad_actual === 0).length;
+  document.getElementById('stats-strip').innerHTML = `
+    <div class="stat-pill verde">✓ ${ok} en stock</div>
+    <div class="stat-pill" style="color:#92400e">⚠ ${crit} críticos</div>
+    <div class="stat-pill rojo">✗ ${sin} sin stock</div>`;
+}
+
+function renderTabla() {
+  const q      = document.getElementById('filtro-q').value.toLowerCase();
+  const estado = document.getElementById('filtro-estado').value;
+
+  let items = _stock.filter(x => {
+    const matchQ = !q || (x.descripcion + ' ' + (x.marca || '') + ' ' + (x.codigo_propio || '')).toLowerCase().includes(q);
+    if (!matchQ) return false;
+    if (estado === 'ok')     return x.cantidad_actual > x.cantidad_minima;
+    if (estado === 'critico') return x.cantidad_actual > 0 && x.cantidad_actual <= x.cantidad_minima;
+    if (estado === 'sin')    return x.cantidad_actual === 0;
+    return true;
+  });
+
+  if (!items.length) {
+    document.getElementById('tabla-wrap').innerHTML = '<p style="text-align:center;color:#aaa;padding:40px">Sin resultados.</p>';
+    return;
+  }
+
+  document.getElementById('tabla-wrap').innerHTML = `
+    <table class="tabla">
+      <thead><tr>
+        <th>Producto</th><th>Marca</th><th>Stock</th><th>Mínimo</th>
+        <th>$ Costo</th><th>$ Venta</th><th>Estado</th><th>Acciones</th>
+      </tr></thead>
+      <tbody>
+        ${items.map(x => {
+          const badge = x.cantidad_actual === 0
+            ? `<span class="badge-sin">Sin stock</span>`
+            : x.cantidad_actual <= x.cantidad_minima
+              ? `<span class="badge-critico">⚠ Crítico</span>`
+              : `<span class="badge-ok">OK</span>`;
+          return `<tr>
+            <td>
+              <strong>${esc(x.descripcion)}</strong>
+              ${x.codigo_propio ? `<div style="font-size:11px;color:#888">${esc(x.codigo_propio)}</div>` : ''}
+            </td>
+            <td style="color:#666">${esc(x.marca || '—')}</td>
+            <td><strong>${x.cantidad_actual}</strong> ${esc(x.unidad || '')}</td>
+            <td style="color:#888">${x.cantidad_minima}</td>
+            <td>$${Number(x.precio_costo || 0).toLocaleString('es-AR',{maximumFractionDigits:0})}</td>
+            <td>$${Number(x.precio_venta || 0).toLocaleString('es-AR',{maximumFractionDigits:0})}</td>
+            <td>${badge}</td>
+            <td>
+              <button class="btn-accion btn-editar" onclick="abrirDrawerEditar('${x.id}')">Editar</button>
+              ${x.cantidad_actual <= x.cantidad_minima ? `<button class="btn-accion btn-reponer" onclick="abrirReposicion('${x.id}')">📦 Reponer</button>` : ''}
+              <button class="btn-accion btn-borrar" onclick="borrarItem('${x.id}')">✕</button>
+            </td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>`;
+}
+
+// ─── DRAWER ─────────────────────────────────────────────────
+function abrirDrawerNuevo() {
+  document.getElementById('d-id').value      = '';
+  document.getElementById('d-sku-id').value  = '';
+  document.getElementById('d-sku-busq').value = '';
+  document.getElementById('d-desc').value    = '';
+  document.getElementById('d-marca').value   = '';
+  document.getElementById('d-codigo').value  = '';
+  document.getElementById('d-unidad').value  = 'unidad';
+  document.getElementById('d-cantidad').value = '0';
+  document.getElementById('d-minimo').value  = '2';
+  document.getElementById('d-costo').value   = '0';
+  document.getElementById('d-venta').value   = '0';
+  document.getElementById('d-proveedor').value = '';
+  document.getElementById('d-notas').value   = '';
+  document.getElementById('drawer-msg').textContent = '';
+  document.getElementById('drawer-titulo').textContent = 'Agregar producto';
+  document.getElementById('drawer-overlay').classList.add('open');
+  document.getElementById('drawer').classList.add('open');
+}
+
+function abrirDrawerEditar(id) {
+  const x = _stock.find(s => s.id === id);
+  if (!x) return;
+  document.getElementById('d-id').value       = x.id;
+  document.getElementById('d-sku-id').value   = x.sku_id || '';
+  document.getElementById('d-sku-busq').value  = '';
+  document.getElementById('d-desc').value     = x.descripcion;
+  document.getElementById('d-marca').value    = x.marca || '';
+  document.getElementById('d-codigo').value   = x.codigo_propio || '';
+  document.getElementById('d-unidad').value   = x.unidad || 'unidad';
+  document.getElementById('d-cantidad').value  = x.cantidad_actual;
+  document.getElementById('d-minimo').value   = x.cantidad_minima;
+  document.getElementById('d-costo').value    = x.precio_costo || 0;
+  document.getElementById('d-venta').value    = x.precio_venta || 0;
+  document.getElementById('d-proveedor').value = x.proveedor || '';
+  document.getElementById('d-notas').value    = x.notas || '';
+  document.getElementById('drawer-msg').textContent = '';
+  document.getElementById('drawer-titulo').textContent = 'Editar producto';
+  document.getElementById('drawer-overlay').classList.add('open');
+  document.getElementById('drawer').classList.add('open');
+}
+
+function cerrarDrawer() {
+  document.getElementById('drawer-overlay').classList.remove('open');
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('sku-resultados').style.display = 'none';
+}
+
+async function guardarItem() {
+  const desc = document.getElementById('d-desc').value.trim();
+  const msg  = document.getElementById('drawer-msg');
+  if (!desc) { msg.style.color = '#c00'; msg.textContent = 'La descripción es obligatoria.'; return; }
+
+  const payload = {
+    taller_id:       _taller.id,
+    sku_id:          document.getElementById('d-sku-id').value || null,
+    descripcion:     desc,
+    marca:           document.getElementById('d-marca').value.trim()    || null,
+    codigo_propio:   document.getElementById('d-codigo').value.trim()   || null,
+    unidad:          document.getElementById('d-unidad').value,
+    cantidad_actual: parseInt(document.getElementById('d-cantidad').value) || 0,
+    cantidad_minima: parseInt(document.getElementById('d-minimo').value)   || 0,
+    precio_costo:    parseFloat(document.getElementById('d-costo').value)  || 0,
+    precio_venta:    parseFloat(document.getElementById('d-venta').value)  || 0,
+    proveedor:       document.getElementById('d-proveedor').value.trim() || null,
+    notas:           document.getElementById('d-notas').value.trim()    || null,
+    ultima_actualizacion: new Date().toISOString(),
+  };
+
+  const id = document.getElementById('d-id').value;
+  let error;
+  if (id) {
+    ({ error } = await db.from('cat_taller_stock').update(payload).eq('id', id));
+  } else {
+    ({ error } = await db.from('cat_taller_stock').insert(payload));
+  }
+
+  if (error) { msg.style.color = '#c00'; msg.textContent = 'Error: ' + error.message; return; }
+  cerrarDrawer();
+  await cargarStock();
+}
+
+async function borrarItem(id) {
+  if (!confirm('¿Eliminás este producto del stock?')) return;
+  await db.from('cat_taller_stock').delete().eq('id', id);
+  await cargarStock();
+}
+
+// ─── REPOSICIÓN ─────────────────────────────────────────────
+function abrirReposicion(id) {
+  const x = _stock.find(s => s.id === id);
+  if (!x) return;
+  _repItemId = id;
+  const cant = Math.max(x.cantidad_minima * 2 - x.cantidad_actual, x.cantidad_minima);
+  document.getElementById('modal-rep-txt').innerHTML = `
+    <strong>${esc(x.descripcion)}</strong><br>
+    Stock actual: <strong>${x.cantidad_actual}</strong> ${esc(x.unidad || '')}<br>
+    Stock mínimo: <strong>${x.cantidad_minima}</strong><br>
+    Cantidad sugerida a pedir: <strong>${cant}</strong><br><br>
+    ¿Confirmás el pedido de reposición a <strong>Piezauto distribuidora</strong>?
+  `;
+  document.getElementById('modal-rep').classList.add('open');
+}
+
+async function confirmarReposicion() {
+  const x = _stock.find(s => s.id === _repItemId);
+  if (!x) return;
+  // Por ahora, registrar la solicitud en notas como simulación
+  const nota = `[REPOSICIÓN SOLICITADA ${new Date().toLocaleDateString('es-AR')}]`;
+  await db.from('cat_taller_stock').update({ notas: (x.notas ? x.notas + ' ' : '') + nota }).eq('id', _repItemId);
+  document.getElementById('modal-rep').classList.remove('open');
+  alert('✅ Pedido de reposición registrado. El equipo de Piezauto se contactará a la brevedad.');
+  await cargarStock();
+}
+
+// ─── SKU AUTOCOMPLETE ────────────────────────────────────────
+async function buscarSku() {
+  clearTimeout(_skuTimer);
+  const q = document.getElementById('d-sku-busq').value.trim();
+  const res = document.getElementById('sku-resultados');
+  if (q.length < 2) { res.style.display = 'none'; return; }
+
+  _skuTimer = setTimeout(async () => {
+    const { data } = await db.from('cat_skus')
+      .select('id, descripcion, codigo_oem, precio_lista')
+      .or(`descripcion.ilike.%${q}%,codigo_oem.ilike.%${q}%`)
+      .limit(8);
+
+    if (!data?.length) { res.style.display = 'none'; return; }
+
+    res.innerHTML = data.map(s => `
+      <div class="sku-item" onclick="seleccionarSku('${s.id}', '${esc(s.descripcion)}', '${esc(s.codigo_oem || '')}')">
+        <strong>${esc(s.descripcion)}</strong>
+        <span style="color:#888;font-size:11px;margin-left:8px">${esc(s.codigo_oem || '')} · $${Number(s.precio_lista || 0).toLocaleString('es-AR',{maximumFractionDigits:0})}</span>
+      </div>`).join('');
+    res.style.display = 'block';
+  }, 300);
+}
+
+function seleccionarSku(id, desc, oem) {
+  document.getElementById('d-sku-id').value   = id;
+  document.getElementById('d-sku-busq').value  = desc + (oem ? ' · ' + oem : '');
+  document.getElementById('d-desc').value     = desc;
+  document.getElementById('sku-resultados').style.display = 'none';
+}
+
+// ─── UTILS ───────────────────────────────────────────────────
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>

@@ -599,6 +599,7 @@
     <button class="tab-btn" data-tab="tab-publico" onclick="switchTab(this)">Vista pública</button>
     <button class="tab-btn" data-tab="tab-turnos"    onclick="switchTab(this)">📅 Turnos</button>
     <button class="tab-btn" data-tab="tab-servicios" onclick="switchTab(this)">🔧 Servicios</button>
+    <button class="tab-btn" data-tab="tab-modalidad" onclick="switchTab(this)">🏪 Tipo y modalidad</button>
   </nav>
 
   <!-- ═══════════════════════════════ TAB: DATOS ══════════════════ -->
@@ -850,6 +851,61 @@
     <div class="bottom-spacer"></div>
   </div>
 
+  <!-- ═══════════════════════════════ TAB: TIPO Y MODALIDAD ══════════════════ -->
+  <div class="panel" id="tab-modalidad">
+
+    <p class="section-label">Tipo de establecimiento</p>
+    <div class="card" style="padding:16px">
+      <div class="field-row" style="flex-direction:column;gap:6px">
+        <div class="field-label" style="font-size:11px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em">Tipo</div>
+        <select id="tm-tipo" class="field-input" onchange="onTipoChange()" style="border:1.5px solid #ddd;border-radius:8px;padding:10px 12px;font-size:14px;background:#fff;outline:none">
+          <option value="taller_chapa_pintura">🎨 Taller chapa y pintura</option>
+          <option value="taller_mecanico">🔧 Taller mecánico</option>
+          <option value="lubricentro">🛢️ Lubricentro</option>
+          <option value="gomeria">🛞 Gomería</option>
+          <option value="electricidad_automotor">⚡ Electricidad automotor</option>
+          <option value="cerrajeria_automotor">🔑 Cerrajería automotor</option>
+          <option value="mixto">🏪 Mixto (varios servicios)</option>
+          <option value="otro">🔩 Otro</option>
+        </select>
+      </div>
+    </div>
+
+    <p class="section-label">Modalidad de atención</p>
+    <div class="card" style="padding:16px;display:flex;flex-direction:column;gap:14px">
+      <div class="field-row" style="flex-direction:column;gap:6px">
+        <div class="field-label" style="font-size:11px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em">Duración de turno default (minutos)</div>
+        <input type="number" id="tm-duracion" class="field-input" min="15" step="15" value="60" style="border:1.5px solid #ddd;border-radius:8px;padding:10px 12px;font-size:14px;outline:none">
+      </div>
+
+      <div id="tm-express-wrap">
+        <label style="display:flex;align-items:center;gap:12px;cursor:pointer;padding:12px;background:#f8f8f8;border-radius:10px">
+          <input type="checkbox" id="tm-sin-turno" style="width:20px;height:20px;accent-color:var(--accent);flex-shrink:0">
+          <div>
+            <div style="font-size:14px;font-weight:700">🚀 Atención express sin turno previo</div>
+            <div style="font-size:12px;color:var(--ink-3);margin-top:2px">Los clientes pueden venir sin reserva; coordinás el horario al confirmar.</div>
+          </div>
+        </label>
+      </div>
+
+      <div>
+        <label style="display:flex;align-items:center;gap:12px;cursor:pointer;padding:12px;background:#f8f8f8;border-radius:10px">
+          <input type="checkbox" id="tm-walk-in" style="width:20px;height:20px;accent-color:var(--accent);flex-shrink:0">
+          <div>
+            <div style="font-size:14px;font-weight:700">🚶 Acepto walk-ins (sin reserva)</div>
+            <div style="font-size:12px;color:var(--ink-3);margin-top:2px">Mostramos tu taller como opción para clientes sin turno.</div>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <div style="padding:16px">
+      <button onclick="guardarModalidad()" style="width:100%;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-lg);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">Guardar modalidad</button>
+    </div>
+
+    <div class="bottom-spacer"></div>
+  </div>
+
 </div><!-- /app-shell -->
 
 <!-- TOAST -->
@@ -968,7 +1024,8 @@ async function cargarPerfil() {
     const rows = await supabaseGet(
       'cat_recomendaciones_talleres',
       'select=id,nombre,cuit,telefono,email,whatsapp,direccion,localidad,logo_url,' +
-      'descuento_piezauto,valor_hora_mo,valor_pano,condiciones_presupuesto,horarios,especialidades'
+      'descuento_piezauto,valor_hora_mo,valor_pano,condiciones_presupuesto,horarios,especialidades,' +
+      'tipo_establecimiento,duracion_turno_default,atencion_express,sin_turno_previo'
     );
 
     if (!rows || rows.length === 0) {
@@ -1133,6 +1190,46 @@ function switchTab(btn) {
   if (btn.dataset.tab === 'tab-publico')   { actualizarPreview(); actualizarPreviewCompleto(); }
   if (btn.dataset.tab === 'tab-turnos')    { cargarDisponibilidadTab(); }
   if (btn.dataset.tab === 'tab-servicios') { cargarServicios(); }
+  if (btn.dataset.tab === 'tab-modalidad') { poblarModalidad(); }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TAB TIPO Y MODALIDAD
+// ═══════════════════════════════════════════════════════════════
+function poblarModalidad() {
+  if (!tallerData) return;
+  const tipo = tallerData.tipo_establecimiento || 'taller_chapa_pintura';
+  document.getElementById('tm-tipo').value    = tipo;
+  document.getElementById('tm-duracion').value = tallerData.duracion_turno_default || 60;
+  document.getElementById('tm-sin-turno').checked = !!tallerData.sin_turno_previo;
+  document.getElementById('tm-walk-in').checked   = !!tallerData.sin_turno_previo; // alias
+  onTipoChange();
+}
+
+function onTipoChange() {
+  const tipo = document.getElementById('tm-tipo').value;
+  const showExpress = tipo === 'lubricentro' || tipo === 'gomeria' || tipo === 'mixto';
+  document.getElementById('tm-express-wrap').style.display = showExpress ? 'block' : 'none';
+}
+
+async function guardarModalidad() {
+  if (!tallerData?.id || tallerData.id === 'demo') { showToast('No disponible en modo demo', 'error'); return; }
+  const tipo     = document.getElementById('tm-tipo').value;
+  const duracion = parseInt(document.getElementById('tm-duracion').value) || 60;
+  const express  = document.getElementById('tm-sin-turno').checked;
+  try {
+    await supabasePatch(
+      'cat_recomendaciones_talleres',
+      `id=eq.${tallerData.id}`,
+      { tipo_establecimiento: tipo, duracion_turno_default: duracion, sin_turno_previo: express, atencion_express: express }
+    );
+    tallerData.tipo_establecimiento  = tipo;
+    tallerData.duracion_turno_default = duracion;
+    tallerData.sin_turno_previo      = express;
+    showToast('Modalidad guardada ✓', 'ok');
+  } catch (e) {
+    showToast('Error: ' + e.message, 'error');
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════

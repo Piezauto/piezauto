@@ -233,12 +233,23 @@ function renderPaso1(cont) {
 function selTipo(tipo) { sel.tipo = tipo; renderPaso(); }
 
 // PASO 2 — Selección de taller
+const TIPO_BADGE = {
+  taller_chapa_pintura:    '🎨 Chapa',
+  taller_mecanico:         '🔧 Mecánico',
+  lubricentro:             '🛢️ Lubricentro',
+  gomeria:                 '🛞 Gomería',
+  electricidad_automotor:  '⚡ Electricidad',
+  cerrajeria_automotor:    '🔑 Cerrajería',
+  mixto:                   '🏪 Mixto',
+  otro:                    '🔩 Otro',
+};
+
 async function renderPaso2(cont) {
   cont.innerHTML = `<div class="card"><div class="card-titulo">Elegí un taller</div><div class="spinner-wrap"><div class="spinner"></div></div></div>`;
   if (!talleres.length) {
     try {
       const { data } = await dbB2C.from('cat_recomendaciones_talleres')
-        .select('id,nombre,direccion,localidad,whatsapp')
+        .select('id,nombre,direccion,localidad,whatsapp,tipo_establecimiento,sin_turno_previo,atencion_express')
         .eq('activo', true)
         .order('nombre');
       talleres = data || [];
@@ -248,23 +259,50 @@ async function renderPaso2(cont) {
     <div class="card">
       <div class="card-titulo">Elegí un taller</div>
       <div class="card-sub">Talleres socios de Piezauto en tu zona</div>
-      ${talleres.length ? talleres.map(t => `
-      <div class="taller-item ${sel.taller_id === t.id ? 'sel' : ''}" onclick="selTaller('${t.id}','${esc(t.nombre)}')">
-        <div class="taller-icon">🔧</div>
-        <div style="flex:1">
-          <div class="taller-nombre">${esc(t.nombre)} <a href="/taller-perfil.html?taller_id=${t.id}" target="_blank" onclick="event.stopPropagation()" style="font-size:11px;color:#2563eb;font-weight:600;text-decoration:none">Ver perfil →</a></div>
-          <div class="taller-dir">${esc(t.direccion || '')}${t.localidad ? ', ' + esc(t.localidad) : ''}</div>
-        </div>
-        <input type="radio" class="taller-radio" name="taller" ${sel.taller_id === t.id ? 'checked' : ''}>
-      </div>`).join('') : '<div class="empty">No hay talleres disponibles.</div>'}
+      ${talleres.length ? talleres.map(t => {
+        const tipoBadge = TIPO_BADGE[t.tipo_establecimiento] || '🔧 Taller';
+        const expressBadge = t.atencion_express ? `<span style="font-size:10px;background:#d1fae5;color:#065f46;border-radius:10px;padding:2px 7px;font-weight:700;margin-left:4px">🚀 Sin turno</span>` : '';
+        return `
+        <div class="taller-item ${sel.taller_id === t.id ? 'sel' : ''}" onclick="selTaller('${t.id}','${esc(t.nombre)}',${!!t.sin_turno_previo})">
+          <div class="taller-icon">${t.tipo_establecimiento === 'lubricentro' ? '🛢️' : t.tipo_establecimiento === 'gomeria' ? '🛞' : '🔧'}</div>
+          <div style="flex:1">
+            <div class="taller-nombre">
+              ${esc(t.nombre)}
+              <span style="font-size:10px;background:#f0f0f0;color:#555;border-radius:10px;padding:2px 7px;font-weight:700;margin-left:4px">${tipoBadge}</span>
+              ${expressBadge}
+              <a href="/taller-perfil?taller_id=${t.id}" target="_blank" onclick="event.stopPropagation()" style="font-size:11px;color:#2563eb;font-weight:600;text-decoration:none;margin-left:6px">Ver perfil →</a>
+            </div>
+            <div class="taller-dir">${esc(t.direccion || '')}${t.localidad ? ', ' + esc(t.localidad) : ''}</div>
+          </div>
+          <input type="radio" class="taller-radio" name="taller" ${sel.taller_id === t.id ? 'checked' : ''}>
+        </div>`;
+      }).join('') : '<div class="empty">No hay talleres disponibles.</div>'}
       <div class="nav-btns">
         <button class="btn btn-back" onclick="irPaso(1)">← Atrás</button>
-        <button class="btn btn-primary" onclick="irPaso(3)" ${!sel.taller_id ? 'disabled' : ''}>Siguiente →</button>
+        <button class="btn btn-primary" onclick="irPasoSiguienteTaller()" ${!sel.taller_id ? 'disabled' : ''}>Siguiente →</button>
       </div>
     </div>`;
 }
 
-function selTaller(id, nombre) { sel.taller_id = id; sel.taller_nombre = nombre; renderPaso(); }
+function selTaller(id, nombre, sinTurnoPrevio) {
+  sel.taller_id = id;
+  sel.taller_nombre = nombre;
+  sel.sin_turno_previo = sinTurnoPrevio;
+  renderPaso();
+}
+
+function irPasoSiguienteTaller() {
+  if (!sel.taller_id) return;
+  if (sel.sin_turno_previo) {
+    // Saltear paso 3 (fecha/horario), ir directo a paso 4 con mensaje express
+    irPaso(4);
+  } else {
+    irPaso(3);
+  }
+}
+
+// Gancho en renderPaso4 para mostrar aviso express si aplica
+const _renderPaso4Original = typeof renderPaso4 === 'function' ? renderPaso4 : null;
 
 // PASO 3 — Fecha y horario
 async function renderPaso3(cont) {
