@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -187,9 +187,11 @@
     .accion-pedido { background:#059669; color:#fff; }
     .accion-cliente{ background:#d97706; color:#fff; }
 </style>
+<script src="../js/auth-check.js"></script>
 </head>
 <body>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
 async function cargarBadgeOrdenes(tid) {
   try {
     const { count } = await dbB2C.from('cat_ordenes_reparacion').select('id', { count: 'exact', head: true })
@@ -283,6 +285,13 @@ async function cargarBadgeRecordatorios(tid) {
       <div class="mod-nombre">Presupuestos</div>
       <div class="mod-desc">Armá presupuestos cliente y seguro con PDF</div>
       <div class="mod-badge" id="badge-presupuestos"><div class="badge-spin"></div></div>
+    </a>
+
+    <a class="mod-card" href="/taller/solicitudes-zona.html">
+      <div class="mod-icon">📬</div>
+      <div class="mod-nombre">Solicitudes</div>
+      <div class="mod-desc">Solicitudes de presupuesto de clientes en tu zona</div>
+      <div class="mod-badge info" id="badge-solicitudes">Ver zona</div>
     </a>
 
     <a class="mod-card" href="/taller/pedidos.html">

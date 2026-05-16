@@ -113,7 +113,8 @@ async function iniciarSesion() {
   if (data.password_hash !== password) { msg.textContent = '❌ Email o contraseña incorrectos.'; msg.style.color = '#c00'; return; }
 
   usuarioActual = data;
-  localStorage.setItem('pz_usuario', JSON.stringify(data));
+  const { password_hash: _ph, ...dataSafe } = data;
+  localStorage.setItem('pz_usuario', JSON.stringify(dataSafe));
   msg.textContent = '✅ ¡Bienvenido!'; msg.style.color = '#1a7a3f';
   setTimeout(mostrarPantalla, 800);
 }
@@ -147,7 +148,8 @@ async function registrarse() {
   if (error) { msg.textContent = '❌ Error: ' + error.message; msg.style.color = '#c00'; return; }
 
   usuarioActual = data;
-  localStorage.setItem('pz_usuario', JSON.stringify(data));
+  const { password_hash: _rph, ...dataSafeR } = data;
+  localStorage.setItem('pz_usuario', JSON.stringify(dataSafeR));
   msg.textContent = '✅ Cuenta creada. ¡Bienvenido!'; msg.style.color = '#1a7a3f';
   setTimeout(mostrarPantalla, 800);
 }

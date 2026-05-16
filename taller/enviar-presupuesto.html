@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -63,14 +63,11 @@
     .spinner { width: 30px; height: 30px; border: 3px solid #eee; border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
   </style>
+<script src="../js/auth-check.js"></script>
 </head>
 <body>
 
-<div class="header">
-  <div class="header-logo">Piezauto</div>
-  <div class="header-title">Enviar presupuesto</div>
-  <a href="solicitudes-zona.html" class="header-back">← Volver</a>
-</div>
+<div id="taller-header"></div>
 
 <div class="wrap">
   <div id="loading-wrap" class="spinner-wrap"><div class="spinner"></div></div>
@@ -79,6 +76,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/supabase.js"></script>
+<script src="../js/auth-b2c.js"></script>
+<script src="auth-taller.js"></script>
 
 <script>
 const SVC_LABEL = {
@@ -88,25 +87,27 @@ const SVC_LABEL = {
 };
 const FDATE = ts => ts ? new Date(ts).toLocaleDateString('es-AR', { day:'2-digit', month:'short', year:'numeric' }) : '—';
 
-let _taller    = null;
+let _tallerId  = null;
 let _solicitud = null;
 let _items     = [];
 
 async function init() {
-  const sesion = sessionStorage.getItem('pz_taller');
-  if (!sesion) { window.location.href = '../point/index.html'; return; }
-  try { _taller = JSON.parse(sesion); } catch { window.location.href = '../point/index.html'; return; }
+  const auth = await requireTallerAuth();
+  if (!auth) return;
+  await initTallerHeader();
+  const { meta } = auth;
+  _tallerId = meta.taller_id;
 
   const params   = new URLSearchParams(window.location.search);
   const solId    = params.get('solicitud_id');
   if (!solId) { window.location.href = 'solicitudes-zona.html'; return; }
 
   // Verificar que el taller fue notificado
-  const { data: notif } = await db
+  const { data: notif } = await dbB2C
     .from('cat_solicitudes_talleres_notificados')
     .select('id, estado')
     .eq('solicitud_id', solId)
-    .eq('taller_id', _taller.id)
+    .eq('taller_id', _tallerId)
     .maybeSingle();
 
   if (!notif) { window.location.href = 'solicitudes-zona.html'; return; }
@@ -279,7 +280,7 @@ async function enviarPresupuesto() {
 
   const payload = {
     solicitud_id:         _solicitud.id,
-    taller_id:            _taller.id,
+    taller_id:            _tallerId,
     monto_estimado_min:   min,
     monto_estimado_max:   max,
     incluye_iva:          document.getElementById('inp-iva').checked,
@@ -291,7 +292,7 @@ async function enviarPresupuesto() {
     notas:                document.getElementById('inp-notas').value.trim() || null,
   };
 
-  const { error } = await db.from('cat_presupuestos_respuesta').insert(payload);
+  const { error } = await dbB2C.from('cat_presupuestos_respuesta').insert(payload);
 
   if (error) {
     if (error.code === '23505') {

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -74,15 +74,11 @@
     .spinner { width: 30px; height: 30px; border: 3px solid #eee; border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
   </style>
+<script src="../js/auth-check.js"></script>
 </head>
 <body>
 
-<div class="header">
-  <div class="header-logo">Piezauto</div>
-  <div class="header-title">Point</div>
-  <div class="header-sep"></div>
-  <a href="../point/dashboard.html" class="header-back">← Dashboard</a>
-</div>
+<div id="taller-header"></div>
 
 <div class="wrap">
   <div class="page-header">
@@ -109,6 +105,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/supabase.js"></script>
+<script src="../js/auth-b2c.js"></script>
+<script src="auth-taller.js"></script>
 
 <script>
 const SVC_LABEL = {
@@ -118,16 +116,17 @@ const SVC_LABEL = {
 };
 const FDATE = ts => new Date(ts).toLocaleDateString('es-AR', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
 
-let _taller     = null;
 let _notifs     = [];
 let _filtro     = 'todos';
 
 async function init() {
-  const sesion = sessionStorage.getItem('pz_taller');
-  if (!sesion) { window.location.href = '../point/index.html'; return; }
-  try { _taller = JSON.parse(sesion); } catch { window.location.href = '../point/index.html'; return; }
+  const auth = await requireTallerAuth();
+  if (!auth) return;
+  await initTallerHeader();
+  const { meta } = auth;
+  const tallerId = meta.taller_id;
 
-  const { data, error } = await db
+  const { data, error } = await dbB2C
     .from('cat_solicitudes_talleres_notificados')
     .select(`
       id, estado, distancia_km, notificado_at, respondio_at,
@@ -137,7 +136,7 @@ async function init() {
         cat_clientes_vehiculos!vehiculo_id(modelo, anio)
       )
     `)
-    .eq('taller_id', _taller.id)
+    .eq('taller_id', tallerId)
     .order('notificado_at', { ascending: false });
 
   _notifs = (data || []).filter(n => n.cat_solicitudes_presupuesto);
@@ -145,7 +144,7 @@ async function init() {
   // Marcar notificados como vistos
   const sinVer = _notifs.filter(n => n.estado === 'notificado').map(n => n.id);
   if (sinVer.length) {
-    await db.from('cat_solicitudes_talleres_notificados')
+    await dbB2C.from('cat_solicitudes_talleres_notificados')
       .update({ estado: 'visto', visto_at: new Date().toISOString() })
       .in('id', sinVer);
     _notifs.forEach(n => { if (sinVer.includes(n.id)) n.estado = 'visto'; });
