@@ -1,4 +1,4 @@
-// Header dinámico B2C — inyecta nav en páginas nuevas Fase 2
+﻿// Header dinámico B2C — inyecta nav en páginas nuevas Fase 2
 // Uso: incluir DESPUÉS de auth-b2c.js. Llama a initHeaderB2C() al final del script
 // o se auto-llama en DOMContentLoaded si la página no lo hace explícitamente.
 
@@ -18,9 +18,9 @@ async function initHeaderB2C() {
 
   const path = window.location.pathname;
   const navLinks = [
-    { href: '/index.html',   label: 'Inicio',    active: path === '/' || path.endsWith('/index.html') },
-    { href: '/buscar.html',  label: 'Catálogo',  active: path.includes('buscar') },
-    { href: '/talleres.html',label: 'Talleres',  active: path.includes('taller') },
+    { href: '/index',   label: 'Inicio',    active: path === '/' || path.includes('/index') },
+    { href: '/buscar',  label: 'Catálogo',  active: path.includes('buscar') },
+    { href: '/talleres',label: 'Talleres',  active: path.includes('taller') },
   ];
   const navHTML = navLinks.map(l =>
     `<a href="${l.href}" style="font-size:13px;font-weight:${l.active ? '800' : '600'};color:${l.active ? '#fff' : 'rgba(255,255,255,.7)'};text-decoration:none;padding:4px 2px;white-space:nowrap" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='${l.active ? '#fff' : 'rgba(255,255,255,.7)'}'">${l.label}</a>`
@@ -29,7 +29,7 @@ async function initHeaderB2C() {
   header.style.cssText = 'background:#1a1a1a;position:sticky;top:0;z-index:200;box-shadow:0 2px 8px rgba(0,0,0,.3)';
   header.innerHTML = `
     <div style="max-width:1200px;margin:0 auto;padding:0 16px;display:flex;align-items:center;gap:16px;height:54px">
-      <a href="/index.html" style="font-weight:900;font-size:16px;text-decoration:none;flex-shrink:0;white-space:nowrap">
+      <a href="/index" style="font-weight:900;font-size:16px;text-decoration:none;flex-shrink:0;white-space:nowrap">
         <span style="color:#E63946">Pieza</span><span style="color:#fff">auto</span>
       </a>
       <nav style="display:flex;gap:16px;align-items:center;flex-shrink:0">${navHTML}</nav>
@@ -44,7 +44,7 @@ async function initHeaderB2C() {
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:12px;flex-shrink:0">
-        <a href="/carrito.html" style="position:relative;color:rgba(255,255,255,.8);display:flex;align-items:center;text-decoration:none" aria-label="Carrito">
+        <a href="/carrito" style="position:relative;color:rgba(255,255,255,.8);display:flex;align-items:center;text-decoration:none" aria-label="Carrito">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
           ${cant > 0 ? `<span class="hb2c-badge" style="position:absolute;top:-6px;right:-8px;background:#E63946;color:#fff;font-size:9px;font-weight:700;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px">${cant > 99 ? '99+' : cant}</span>` : ''}
         </a>
@@ -56,16 +56,16 @@ async function initHeaderB2C() {
                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
                </button>
                <div id="hb2c-dd" style="display:none;position:absolute;right:0;top:calc(100% + 6px);background:#fff;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.14);min-width:180px;z-index:300;overflow:hidden">
-                 <a href="/perfil.html"          style="display:block;padding:11px 16px;font-size:13px;color:#333;text-decoration:none;border-bottom:1px solid #f5f5f5" onmouseover="this.style.background='#f8f8f8'" onmouseout="this.style.background=''">👤 Mi perfil</a>
-                 <a href="/operaciones.html"     style="display:block;padding:11px 16px;font-size:13px;color:#333;text-decoration:none;border-bottom:1px solid #f5f5f5" onmouseover="this.style.background='#f8f8f8'" onmouseout="this.style.background=''">📦 Mis operaciones</a>
-                 <a href="/mi-wallet.html"       style="display:block;padding:11px 16px;font-size:13px;color:#333;text-decoration:none;border-bottom:1px solid #f5f5f5" onmouseover="this.style.background='#f8f8f8'" onmouseout="this.style.background=''">💰 Mi wallet</a>
-                 <a href="/mis-presupuestos.html" style="display:block;padding:11px 16px;font-size:13px;color:#333;text-decoration:none;border-bottom:1px solid #f5f5f5" onmouseover="this.style.background='#f8f8f8'" onmouseout="this.style.background=''">📄 Mis presupuestos</a>
+                 <a href="/perfil"          style="display:block;padding:11px 16px;font-size:13px;color:#333;text-decoration:none;border-bottom:1px solid #f5f5f5" onmouseover="this.style.background='#f8f8f8'" onmouseout="this.style.background=''">👤 Mi perfil</a>
+                 <a href="/operaciones"     style="display:block;padding:11px 16px;font-size:13px;color:#333;text-decoration:none;border-bottom:1px solid #f5f5f5" onmouseover="this.style.background='#f8f8f8'" onmouseout="this.style.background=''">📦 Mis operaciones</a>
+                 <a href="/mi-wallet"       style="display:block;padding:11px 16px;font-size:13px;color:#333;text-decoration:none;border-bottom:1px solid #f5f5f5" onmouseover="this.style.background='#f8f8f8'" onmouseout="this.style.background=''">💰 Mi wallet</a>
+                 <a href="/mis-presupuestos" style="display:block;padding:11px 16px;font-size:13px;color:#333;text-decoration:none;border-bottom:1px solid #f5f5f5" onmouseover="this.style.background='#f8f8f8'" onmouseout="this.style.background=''">📄 Mis presupuestos</a>
                  <a href="#" onclick="hb2cLogout(event)" style="display:block;padding:11px 16px;font-size:13px;color:#c00;text-decoration:none" onmouseover="this.style.background='#f8f8f8'" onmouseout="this.style.background=''">Cerrar sesión</a>
                </div>
              </div>`
           : `<div style="display:flex;gap:8px">
-               <a href="/login.html" style="background:rgba(255,255,255,.12);color:#fff;text-decoration:none;border-radius:7px;padding:7px 14px;font-size:13px;font-weight:600">Ingresar</a>
-               <a href="/registro.html" style="background:#E63946;color:#fff;text-decoration:none;border-radius:7px;padding:7px 14px;font-size:13px;font-weight:700">Registrarse</a>
+               <a href="/login" style="background:rgba(255,255,255,.12);color:#fff;text-decoration:none;border-radius:7px;padding:7px 14px;font-size:13px;font-weight:600">Ingresar</a>
+               <a href="/registro" style="background:#E63946;color:#fff;text-decoration:none;border-radius:7px;padding:7px 14px;font-size:13px;font-weight:700">Registrarse</a>
              </div>`
         }
       </div>
@@ -98,14 +98,14 @@ async function hb2cLogout(e) {
   if (typeof window.logoutLimpio === 'function') {
     window.logoutLimpio();
   } else {
-    window.location.href = '/login.html';
+    window.location.href = '/login';
   }
 }
 
 function hb2cBuscar() {
   const q = (document.getElementById('hb2c-q')?.value || '').trim();
   if (!q) return;
-  window.location.href = `/buscar.html?q=${encodeURIComponent(q)}`;
+  window.location.href = `/buscar?q=${encodeURIComponent(q)}`;
 }
 
 function cargarCarritoLocal() {
@@ -116,7 +116,7 @@ function cargarCarritoLocal() {
 function actualizarBadgeCarrito() {
   const cant = cargarCarritoLocal().reduce((s, i) => s + i.cantidad, 0);
   const badge = document.querySelector('.hb2c-badge');
-  const carrito = document.querySelector('[href="/carrito.html"]');
+  const carrito = document.querySelector('[href="/carrito"]');
   if (!carrito) return;
   if (cant > 0) {
     if (badge) { badge.textContent = cant > 99 ? '99+' : cant; }

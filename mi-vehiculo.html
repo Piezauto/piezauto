@@ -851,15 +851,15 @@ async function cargarComprasProgramadas() {
         ${descCombo > 0 ? `<span class="cp-desc-chip cp-desc-combo">⭐ ${descCombo}% combo completo</span>` : ''}
       </div>
       <div class="cp-acciones">
-        <a href="/catalogo.html?q=${encodeURIComponent(nm)}" class="cp-btn cp-btn-prod"
+        <a href="/catalogo?q=${encodeURIComponent(nm)}" class="cp-btn cp-btn-prod"
           onclick="registrarAccion('${o.id}','comprada_productos')">
           🛒 Solo productos
         </a>
-        <a href="/solicitar-turno.html?servicio=${o.servicio_codigo}&oportunidad_id=${o.id}" class="cp-btn cp-btn-serv"
+        <a href="/solicitar-turno?servicio=${o.servicio_codigo}&oportunidad_id=${o.id}" class="cp-btn cp-btn-serv"
           onclick="registrarAccion('${o.id}','agendado_servicio')">
           🔧 Solo servicio
         </a>
-        <a href="/solicitar-turno.html?servicio=${o.servicio_codigo}&oportunidad_id=${o.id}&combo=1&vehiculo_id=${_vehiculoId}" class="cp-btn cp-btn-combo"
+        <a href="/solicitar-turno?servicio=${o.servicio_codigo}&oportunidad_id=${o.id}&combo=1&vehiculo_id=${_vehiculoId}" class="cp-btn cp-btn-combo"
           onclick="registrarAccion('${o.id}','combo_comprado')">
           ⭐ Combo completo
         </a>

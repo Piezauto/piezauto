@@ -1,4 +1,4 @@
-// Ficha de producto — Fase 2 Piezauto
+﻿// Ficha de producto — Fase 2 Piezauto
 // Depende de: dbB2C, getClienteActual, cargarCarritoLocal, agregarAlCarrito
 
 async function initProducto() {
@@ -60,9 +60,9 @@ function renderFicha(sku) {
   // Migas de pan
   const familia = sku.cat_familias?.nombre || '';
   document.getElementById('breadcrumb').innerHTML = `
-    <a href="/buscar.html">Inicio</a>
+    <a href="/buscar">Inicio</a>
     <span>›</span>
-    ${familia ? `<a href="/buscar.html?familia=${sku.familia_id}">${familia}</a><span>›</span>` : ''}
+    ${familia ? `<a href="/buscar?familia=${sku.familia_id}">${familia}</a><span>›</span>` : ''}
     <span>${sku.descripcion_corta || sku.descripcion}</span>
   `;
 
@@ -240,7 +240,7 @@ function renderAlternativas(skus, motivo) {
     const lado = s.lado && s.lado !== 'N/A' ? ` · ${s.lado}` : '';
 
     lista.insertAdjacentHTML('beforeend', `
-      <a href="/producto.html?id=${s.id}" class="alt-tarjeta">
+      <a href="/producto?id=${s.id}" class="alt-tarjeta">
         <div class="alt-desc">${s.descripcion_corta || s.descripcion}</div>
         <div class="alt-meta">${prov || fab}${lado}</div>
         <div class="alt-precio">${precio}</div>

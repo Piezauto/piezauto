@@ -101,7 +101,7 @@
 <!-- Header simple -->
 <div style="background:#1A1A2E;padding:0 16px;height:48px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(0,0,0,.25)">
   <a href="/" style="font-weight:900;font-size:15px;color:var(--rojo);text-decoration:none">Piezauto</a>
-  <a href="/solicitar-turno.html" style="font-size:12px;color:#aaa;text-decoration:none">Solicitar turno â†’</a>
+  <a href="/solicitar-turno" style="font-size:12px;color:#aaa;text-decoration:none">Solicitar turno â†’</a>
 </div>
 
 <!-- HERO (se rellena por JS) -->
@@ -239,7 +239,7 @@ const _timeoutId = setTimeout(() => {
           ${chips ? `<div class="hero-chips">${chips}</div>` : ''}
           ${califHtml}
           <div class="hero-btns">
-            <a href="/solicitar-turno.html?taller_id=${tallerId}" class="btn-turno">ðŸ“… Solicitar turno</a>
+            <a href="/solicitar-turno?taller_id=${tallerId}" class="btn-turno">ðŸ“… Solicitar turno</a>
             ${waLink}
           </div>
         </div>
@@ -358,7 +358,7 @@ const _timeoutId = setTimeout(() => {
   // CTA final
   html += `
     <div style="text-align:center;padding:12px 0">
-      <a href="/solicitar-turno.html?taller_id=${tallerId}" class="btn-turno" style="font-size:15px;padding:14px 28px">
+      <a href="/solicitar-turno?taller_id=${tallerId}" class="btn-turno" style="font-size:15px;padding:14px 28px">
         ðŸ“… Solicitar turno en ${esc(taller.nombre)}
       </a>
     </div>`;

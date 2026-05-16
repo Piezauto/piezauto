@@ -31,85 +31,38 @@
     @media (max-width: 800px) { .grid { grid-template-columns: repeat(2, 1fr); gap: 12px; } }
     @media (max-width: 420px) { .grid { grid-template-columns: 1fr 1fr; gap: 10px; } }
 
-    /* ── Card de módulo ── */
-    .mod-card {
+    /* ── Dashboard card (patrón unificado) ── */
+    .dashboard-card {
       background: #fff;
-      border-radius: 14px;
-      padding: 20px 18px 18px;
-      box-shadow: var(--sombra);
+      border: 1px solid #eee;
+      border-radius: 12px;
+      padding: 20px 14px 16px;
       cursor: pointer;
-      transition: transform .15s, box-shadow .15s;
+      transition: transform .18s, box-shadow .18s, border-color .18s;
       text-decoration: none;
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      position: relative;
-      overflow: hidden;
-      border: 1.5px solid transparent;
+      align-items: center;
+      text-align: center;
+      min-height: 160px;
+      justify-content: space-between;
     }
-    .mod-card:hover {
+    .dashboard-card:hover {
       transform: translateY(-3px);
-      box-shadow: 0 8px 28px rgba(0,0,0,.12);
+      box-shadow: 0 6px 20px rgba(0,0,0,.10);
       border-color: var(--rojo);
     }
-    .mod-card:active { transform: scale(.98); }
-
-    /* Franja de color superior */
-    .mod-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 3px;
-      background: var(--rojo);
-      transform: scaleX(0);
-      transition: transform .15s;
-    }
-    .mod-card:hover::before { transform: scaleX(1); }
-
-    .mod-icon {
-      font-size: 28px;
-      line-height: 1;
-    }
-    .mod-nombre {
-      font-size: 13px;
-      font-weight: 800;
-      color: var(--negro);
-      line-height: 1.2;
-    }
-    .mod-desc {
-      font-size: 11px;
-      color: #999;
-      line-height: 1.4;
-      flex: 1;
-    }
-    .mod-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 11px;
-      font-weight: 700;
-      background: var(--gris-claro);
-      color: #666;
-      align-self: flex-start;
-      transition: background .15s;
-    }
-    .mod-badge.alerta { background: #fff3cd; color: #856404; }
-    .mod-badge.ok     { background: #d1fae5; color: #065f46; }
-    .mod-badge.info   { background: #dbeafe; color: #1d4ed8; }
-
-    /* ── Saldo CC destacado ── */
-    .mod-card.finanzas .mod-badge {
-      font-size: 13px;
-      padding: 5px 12px;
-    }
+    .dashboard-card:active { transform: scale(.97); }
+    .card-icon     { font-size: 34px; line-height: 1; }
+    .card-title    { font-size: 12px; font-weight: 700; color: var(--negro); line-height: 1.3; }
+    .card-badge    { font-size: 30px; font-weight: 800; color: var(--rojo); line-height: 1; margin: 4px 0; min-height: 36px; display: flex; align-items: center; }
+    .card-subtitle { font-size: 10px; color: #999; text-transform: uppercase; letter-spacing: .04em; }
 
     /* ── Spinner badge ── */
     .badge-spin {
-      width: 12px; height: 12px;
-      border: 2px solid #ddd;
-      border-top-color: #999;
+      width: 14px; height: 14px;
+      border: 2px solid #eee;
+      border-top-color: var(--rojo);
       border-radius: 50%;
       animation: spin .7s linear infinite;
       display: inline-block;
@@ -192,36 +145,12 @@
 <body>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-async function cargarBadgeOrdenes(tid) {
-  try {
-    const { count } = await dbB2C.from('cat_ordenes_reparacion').select('id', { count: 'exact', head: true })
-      .eq('taller_id', tid).not('estado', 'in', '("entregado","cancelado")');
-    const el = document.getElementById('badge-ordenes');
-    if (count > 0) { el.className = 'mod-badge alerta'; el.textContent = `${count} activa${count !== 1 ? 's' : ''}`; }
-    else { el.className = 'mod-badge ok'; el.textContent = 'Sin activas'; }
-  } catch { setBadgeError('badge-ordenes'); }
-}
-
-async function cargarBadgePersonal(tid) {
-  try {
-    const { count } = await dbB2C.from('cat_taller_personal').select('id', { count: 'exact', head: true })
-      .eq('taller_id', tid).eq('activo', true);
-    const el = document.getElementById('badge-personal');
-    el.className = 'mod-badge ok';
-    el.textContent = `${count || 0} activo${count !== 1 ? 's' : ''}`;
-  } catch { setBadgeError('badge-personal'); }
-}
-
-async function cargarBadgeRecordatorios(tid) {
-  try {
-    const hoy = new Date().toISOString();
-    const { count } = await dbB2C.from('cat_taller_recordatorios').select('id', { count: 'exact', head: true })
-      .eq('taller_id', tid).eq('enviado', false).lte('fecha_envio', hoy);
-    const el = document.getElementById('badge-recordatorios');
-    if (count > 0) { el.className = 'mod-badge alerta'; el.textContent = `${count} pendiente${count !== 1 ? 's' : ''}`; }
-    else { el.className = 'mod-badge ok'; el.textContent = 'Al día'; }
-  } catch { setBadgeError('badge-recordatorios'); }
-}
+// Declaraciones anticipadas para que estén disponibles antes de supabase.js
+// Las definiciones completas están en el script principal al final del body.
+// Estos stubs se sobreescriben en cuanto el parser llega al script principal.
+function cargarBadgeOrdenes()      {}
+function cargarBadgePersonal()     {}
+function cargarBadgeRecordatorios(){}
 </script>
 <script src="../js/supabase.js"></script>
 <script src="../js/auth-b2c.js"></script>
@@ -238,19 +167,19 @@ async function cargarBadgeRecordatorios(tid) {
   </div>
 
   <div class="acciones-rapidas">
-    <a class="accion-btn accion-turno"   href="/taller/agenda.html?nuevo=1">
+    <a class="accion-btn accion-turno"   href="/taller/agenda?nuevo=1">
       <div class="accion-icon">➕</div><div class="accion-label">Nuevo turno</div>
     </a>
-    <a class="accion-btn accion-ingreso" href="/taller/turno-detalle.html?tipo=ingreso_directo">
+    <a class="accion-btn accion-ingreso" href="/taller/turno-detalle?tipo=ingreso_directo">
       <div class="accion-icon">🚗</div><div class="accion-label">Ingreso de auto</div>
     </a>
-    <a class="accion-btn accion-presup"  href="/taller/presupuestos.html?nuevo=1">
+    <a class="accion-btn accion-presup"  href="/taller/presupuestos?nuevo=1">
       <div class="accion-icon">📄</div><div class="accion-label">Nuevo presupuesto</div>
     </a>
-    <a class="accion-btn accion-pedido"  href="/taller/pedidos.html?nuevo=1">
+    <a class="accion-btn accion-pedido"  href="/taller/pedidos?nuevo=1">
       <div class="accion-icon">📦</div><div class="accion-label">Nuevo pedido</div>
     </a>
-    <a class="accion-btn accion-cliente" href="/taller/clientes.html?nuevo=1">
+    <a class="accion-btn accion-cliente" href="/taller/clientes?nuevo=1">
       <div class="accion-icon">👤</div><div class="accion-label">Nuevo cliente</div>
     </a>
   </div>
@@ -259,102 +188,102 @@ async function cargarBadgeRecordatorios(tid) {
 
   <div class="grid" id="modulosGrid">
 
-    <a class="mod-card" href="/taller/operaciones.html">
-      <div class="mod-icon">📋</div>
-      <div class="mod-nombre">Operaciones</div>
-      <div class="mod-desc">Pedidos de clientes y aprobaciones pendientes</div>
-      <div class="mod-badge alerta" id="badge-operaciones"><div class="badge-spin"></div></div>
+    <a class="dashboard-card" href="/taller/operaciones">
+      <div class="card-icon">📋</div>
+      <div class="card-title">Operaciones</div>
+      <div class="card-badge" id="badge-operaciones"><div class="badge-spin"></div></div>
+      <div class="card-subtitle">pendientes</div>
     </a>
 
-    <a class="mod-card" href="/taller/agenda.html">
-      <div class="mod-icon">📅</div>
-      <div class="mod-nombre">Agenda</div>
-      <div class="mod-desc">Calendario de turnos, disponibilidad y bloqueos</div>
-      <div class="mod-badge info" id="badge-agenda"><div class="badge-spin"></div></div>
+    <a class="dashboard-card" href="/taller/agenda">
+      <div class="card-icon">📅</div>
+      <div class="card-title">Agenda</div>
+      <div class="card-badge" id="badge-agenda"><div class="badge-spin"></div></div>
+      <div class="card-subtitle">hoy</div>
     </a>
 
-    <a class="mod-card" href="/taller/catalogo.html">
-      <div class="mod-icon">🔍</div>
-      <div class="mod-nombre">Catálogo Piezauto</div>
-      <div class="mod-desc">Buscá piezas con tu precio bonificado</div>
-      <div class="mod-badge info" id="badge-catalogo">393k+ SKUs</div>
+    <a class="dashboard-card" href="/taller/catalogo">
+      <div class="card-icon">🔍</div>
+      <div class="card-title">Catálogo</div>
+      <div class="card-badge" id="badge-catalogo">393k+</div>
+      <div class="card-subtitle">SKUs</div>
     </a>
 
-    <a class="mod-card" href="/taller/presupuestos.html">
-      <div class="mod-icon">📄</div>
-      <div class="mod-nombre">Presupuestos</div>
-      <div class="mod-desc">Armá presupuestos cliente y seguro con PDF</div>
-      <div class="mod-badge" id="badge-presupuestos"><div class="badge-spin"></div></div>
+    <a class="dashboard-card" href="/taller/presupuestos">
+      <div class="card-icon">📄</div>
+      <div class="card-title">Presupuestos</div>
+      <div class="card-badge" id="badge-presupuestos"><div class="badge-spin"></div></div>
+      <div class="card-subtitle">borradores</div>
     </a>
 
-    <a class="mod-card" href="/taller/solicitudes-zona.html">
-      <div class="mod-icon">📬</div>
-      <div class="mod-nombre">Solicitudes</div>
-      <div class="mod-desc">Solicitudes de presupuesto de clientes en tu zona</div>
-      <div class="mod-badge info" id="badge-solicitudes">Ver zona</div>
+    <a class="dashboard-card" href="/taller/solicitudes-zona">
+      <div class="card-icon">📬</div>
+      <div class="card-title">Solicitudes</div>
+      <div class="card-badge" id="badge-solicitudes"><div class="badge-spin"></div></div>
+      <div class="card-subtitle">sin ver</div>
     </a>
 
-    <a class="mod-card" href="/taller/pedidos.html">
-      <div class="mod-icon">📦</div>
-      <div class="mod-nombre">Pedidos</div>
-      <div class="mod-desc">Carrito y seguimiento de pedidos a Piezauto</div>
-      <div class="mod-badge" id="badge-pedidos"><div class="badge-spin"></div></div>
+    <a class="dashboard-card" href="/taller/pedidos">
+      <div class="card-icon">📦</div>
+      <div class="card-title">Pedidos</div>
+      <div class="card-badge" id="badge-pedidos"><div class="badge-spin"></div></div>
+      <div class="card-subtitle">en curso</div>
     </a>
 
-    <a class="mod-card" href="/taller/clientes.html">
-      <div class="mod-icon">👥</div>
-      <div class="mod-nombre">Clientes</div>
-      <div class="mod-desc">Registro de clientes del taller y sus vehículos</div>
-      <div class="mod-badge ok" id="badge-clientes"><div class="badge-spin"></div></div>
+    <a class="dashboard-card" href="/taller/clientes">
+      <div class="card-icon">👥</div>
+      <div class="card-title">Clientes</div>
+      <div class="card-badge" id="badge-clientes"><div class="badge-spin"></div></div>
+      <div class="card-subtitle">clientes</div>
     </a>
 
-    <a class="mod-card" href="/taller/inventario.html">
-      <div class="mod-icon">🏪</div>
-      <div class="mod-nombre">Inventario</div>
-      <div class="mod-desc">Stock propio del taller, precios y ubicación</div>
-      <div class="mod-badge" id="badge-inventario"><div class="badge-spin"></div></div>
+    <a class="dashboard-card" href="/taller/inventario">
+      <div class="card-icon">🏪</div>
+      <div class="card-title">Inventario</div>
+      <div class="card-badge" id="badge-inventario"><div class="badge-spin"></div></div>
+      <div class="card-subtitle">stock crítico</div>
     </a>
 
-    <a class="mod-card finanzas" href="/taller/finanzas.html">
-      <div class="mod-icon">💰</div>
-      <div class="mod-nombre">Finanzas</div>
-      <div class="mod-desc">Cuenta corriente Piezauto, gastos y proveedores</div>
-      <div class="mod-badge" id="badge-finanzas"><div class="badge-spin"></div></div>
+    <a class="dashboard-card" href="/taller/finanzas">
+      <div class="card-icon">💰</div>
+      <div class="card-title">Finanzas</div>
+      <div class="card-badge" id="badge-finanzas"><div class="badge-spin"></div></div>
+      <div class="card-subtitle">este mes</div>
     </a>
 
-    <a class="mod-card" href="/taller/ordenes.html">
-      <div class="mod-icon">📋</div>
-      <div class="mod-nombre">Órdenes de Rep.</div>
-      <div class="mod-desc">ORs activas, estados y pipeline de trabajo</div>
-      <div class="mod-badge alerta" id="badge-ordenes"><div class="badge-spin"></div></div>
+    <a class="dashboard-card" href="/taller/ordenes">
+      <div class="card-icon">🔧</div>
+      <div class="card-title">Órdenes Rep.</div>
+      <div class="card-badge" id="badge-ordenes"><div class="badge-spin"></div></div>
+      <div class="card-subtitle">activas</div>
     </a>
 
-    <a class="mod-card" href="/taller/personal.html">
-      <div class="mod-icon">👷</div>
-      <div class="mod-nombre">Personal</div>
-      <div class="mod-desc">Operarios, roles y costo por hora</div>
-      <div class="mod-badge ok" id="badge-personal"><div class="badge-spin"></div></div>
+    <a class="dashboard-card" href="/taller/personal">
+      <div class="card-icon">👷</div>
+      <div class="card-title">Personal</div>
+      <div class="card-badge" id="badge-personal"><div class="badge-spin"></div></div>
+      <div class="card-subtitle">activos</div>
     </a>
 
-    <a class="mod-card" href="/taller/aseguradoras.html">
-      <div class="mod-icon">🏢</div>
-      <div class="mod-nombre">Aseguradoras</div>
-      <div class="mod-desc">Compañías con las que trabajás</div>
-      <div class="mod-badge info">Gestionar</div>
+    <a class="dashboard-card" href="/taller/aseguradoras">
+      <div class="card-icon">🏢</div>
+      <div class="card-title">Aseguradoras</div>
+      <div class="card-badge" id="badge-aseguradoras"><div class="badge-spin"></div></div>
+      <div class="card-subtitle">cargadas</div>
     </a>
 
-    <a class="mod-card" href="/taller/recordatorios.html">
-      <div class="mod-icon">🔔</div>
-      <div class="mod-nombre">Recordatorios</div>
-      <div class="mod-desc">Alertas automáticas a clientes</div>
-      <div class="mod-badge" id="badge-recordatorios"><div class="badge-spin"></div></div>
+    <a class="dashboard-card" href="/taller/recordatorios">
+      <div class="card-icon">🔔</div>
+      <div class="card-title">Recordatorios</div>
+      <div class="card-badge" id="badge-recordatorios"><div class="badge-spin"></div></div>
+      <div class="card-subtitle">activos</div>
     </a>
 
-    <a class="mod-card" href="/taller/perfil.html">
-      <div class="mod-icon">⚙️</div>
-      <div class="mod-nombre">Perfil</div>
-      <div class="mod-desc">Datos del taller, horarios y configuración</div>
-      <div class="mod-badge info">Configuración</div>
+    <a class="dashboard-card" href="/taller/perfil">
+      <div class="card-icon">⚙️</div>
+      <div class="card-title">Perfil</div>
+      <div class="card-badge" id="badge-perfil"><div class="badge-spin"></div></div>
+      <div class="card-subtitle">completo</div>
     </a>
 
   </div>
@@ -363,7 +292,7 @@ async function cargarBadgeRecordatorios(tid) {
   <div class="ultimas-ops">
     <div class="ops-header">
       <h3>📋 Últimas operaciones</h3>
-      <a href="/taller/operaciones.html">Ver todas →</a>
+      <a href="/taller/operaciones">Ver todas →</a>
     </div>
     <div id="ultimasOps">
       <div class="ops-loading"><div class="spinner"></div></div>
@@ -385,21 +314,22 @@ async function cargarBadgeRecordatorios(tid) {
   const tallerId  = meta.taller_id;
   const nombre    = meta.taller_nombre || 'Taller';
 
-  // Saludo
   setSaludo(nombre);
 
-  // Cargar todos los badges en paralelo — si uno falla no rompe los demás
   await Promise.allSettled([
     cargarBadgeOperaciones(tallerId),
     cargarBadgeAgenda(tallerId),
-    cargarBadgeOrdenes(tallerId),
-    cargarBadgePersonal(tallerId),
-    cargarBadgeRecordatorios(tallerId),
     cargarBadgePresupuestos(tallerId),
+    cargarBadgeSolicitudes(tallerId),
     cargarBadgePedidos(tallerId),
     cargarBadgeClientes(tallerId),
     cargarBadgeInventario(tallerId),
     cargarBadgeFinanzas(tallerId),
+    cargarBadgeOrdenes(tallerId),
+    cargarBadgePersonal(tallerId),
+    cargarBadgeAseguradoras(tallerId),
+    cargarBadgeRecordatorios(tallerId),
+    cargarBadgePerfil(tallerId),
     cargarUltimasOps(tallerId),
   ]);
 })();
@@ -418,122 +348,198 @@ function setSaludo(nombre) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// BADGES — cada uno independiente
+// BADGES — patrón unificado P1-R3: try/catch, count ?? 0, '—' en error
 // ─────────────────────────────────────────────────────────────
+function setBadge(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+
 async function cargarBadgeOperaciones(tid) {
+  const el = document.getElementById('badge-operaciones');
+  if (!el) return;
   try {
-    const { count } = await dbB2C
+    const { count, error } = await dbB2C
       .from('cat_operaciones_b2c')
       .select('id', { count: 'exact', head: true })
       .eq('taller_id', tid)
       .eq('pendiente_aprobacion_taller', true);
-    const el = document.getElementById('badge-operaciones');
-    if (count > 0) {
-      el.className = 'mod-badge alerta';
-      el.textContent = `${count} pendiente${count !== 1 ? 's' : ''}`;
-    } else {
-      el.className = 'mod-badge ok';
-      el.textContent = 'Al día';
-    }
-  } catch { setBadgeError('badge-operaciones'); }
+    if (error) throw error;
+    el.textContent = count ?? 0;
+  } catch(e) { console.warn('[badge-operaciones]', e?.message||e); el.textContent = '—'; }
 }
 
 async function cargarBadgeAgenda(tid) {
+  const el = document.getElementById('badge-agenda');
+  if (!el) return;
   try {
     const hoy = new Date().toISOString().split('T')[0];
-    const { count } = await dbB2C.from('cat_turnos').select('id', { count: 'exact', head: true })
+    const { count, error } = await dbB2C.from('cat_turnos')
+      .select('id', { count: 'exact', head: true })
       .eq('taller_id', tid).eq('fecha', hoy).in('estado', ['confirmado','en_proceso']);
-    const el = document.getElementById('badge-agenda');
-    if (count > 0) { el.className = 'mod-badge alerta'; el.textContent = `${count} turno${count !== 1 ? 's' : ''} hoy`; }
-    else { el.className = 'mod-badge'; el.textContent = 'Sin turnos hoy'; }
-  } catch { setBadgeError('badge-agenda'); }
+    if (error) throw error;
+    el.textContent = count ?? 0;
+  } catch(e) { console.warn('[badge-agenda]', e?.message||e); el.textContent = '—'; }
 }
 
 async function cargarBadgePresupuestos(tid) {
+  const el = document.getElementById('badge-presupuestos');
+  if (!el) return;
   try {
-    const { count } = await dbB2C
+    const { count, error } = await dbB2C
       .from('cat_taller_presupuestos')
       .select('id', { count: 'exact', head: true })
-      .eq('taller_id', tid)
-      .eq('estado', 'borrador');
-    const el = document.getElementById('badge-presupuestos');
-    el.className = count > 0 ? 'mod-badge alerta' : 'mod-badge';
-    el.textContent = count > 0 ? `${count} borrador${count !== 1 ? 'es' : ''}` : 'Sin borradores';
-  } catch { setBadgeError('badge-presupuestos'); }
+      .eq('taller_id', tid).eq('estado', 'borrador');
+    if (error) throw error;
+    el.textContent = count ?? 0;
+  } catch(e) { console.warn('[badge-presupuestos]', e?.message||e); el.textContent = '—'; }
+}
+
+async function cargarBadgeSolicitudes(tid) {
+  const el = document.getElementById('badge-solicitudes');
+  if (!el) return;
+  try {
+    const { count, error } = await dbB2C
+      .from('cat_solicitudes_talleres_notificados')
+      .select('id', { count: 'exact', head: true })
+      .eq('taller_id', tid).eq('estado', 'notificado');
+    if (error) throw error;
+    el.textContent = count ?? 0;
+  } catch(e) { console.warn('[badge-solicitudes]', e?.message||e); el.textContent = '—'; }
 }
 
 async function cargarBadgePedidos(tid) {
+  const el = document.getElementById('badge-pedidos');
+  if (!el) return;
   try {
-    const { count } = await dbB2C
+    const { count, error } = await dbB2C
       .from('cat_operaciones_b2c')
       .select('id', { count: 'exact', head: true })
-      .eq('taller_id', tid)
-      .in('estado', ['pendiente', 'preparando', 'enviado']);
-    const el = document.getElementById('badge-pedidos');
-    el.className = count > 0 ? 'mod-badge info' : 'mod-badge';
-    el.textContent = count > 0 ? `${count} en curso` : 'Sin activos';
-  } catch { setBadgeError('badge-pedidos'); }
+      .eq('taller_id', tid).in('estado', ['pendiente','preparando','enviado']);
+    if (error) throw error;
+    el.textContent = count ?? 0;
+  } catch(e) { console.warn('[badge-pedidos]', e?.message||e); el.textContent = '—'; }
 }
 
 async function cargarBadgeClientes(tid) {
+  const el = document.getElementById('badge-clientes');
+  if (!el) return;
   try {
-    const { count } = await dbB2C
+    const { count, error } = await dbB2C
       .from('cat_taller_clientes')
       .select('id', { count: 'exact', head: true })
       .eq('taller_id', tid);
-    const el = document.getElementById('badge-clientes');
-    el.className = 'mod-badge ok';
-    el.textContent = `${count || 0} cliente${count !== 1 ? 's' : ''}`;
-  } catch { setBadgeError('badge-clientes'); }
+    if (error) throw error;
+    el.textContent = count ?? 0;
+  } catch(e) { console.warn('[badge-clientes]', e?.message||e); el.textContent = '—'; }
 }
 
 async function cargarBadgeInventario(tid) {
+  const el = document.getElementById('badge-inventario');
+  if (!el) return;
   try {
-    const { count } = await dbB2C
+    const { count, error } = await dbB2C
       .from('cat_taller_inventario')
       .select('id', { count: 'exact', head: true })
-      .eq('taller_id', tid)
-      .lte('cantidad', 3)
-      .gt('cantidad', 0);  // stock bajo (1-3 unidades)
-    const { count: ceroCount } = await dbB2C
-      .from('cat_taller_inventario')
-      .select('id', { count: 'exact', head: true })
-      .eq('taller_id', tid)
-      .eq('cantidad', 0);
-    const el = document.getElementById('badge-inventario');
-    const bajo  = (count || 0);
-    const agotado = (ceroCount || 0);
-    if (agotado > 0) {
-      el.className = 'mod-badge alerta';
-      el.textContent = `${agotado} sin stock`;
-    } else if (bajo > 0) {
-      el.className = 'mod-badge alerta';
-      el.textContent = `${bajo} stock bajo`;
-    } else {
-      el.className = 'mod-badge ok';
-      el.textContent = 'Stock OK';
-    }
-  } catch { setBadgeError('badge-inventario'); }
+      .eq('taller_id', tid).lte('cantidad', 3);
+    if (error) throw error;
+    el.textContent = count ?? 0;
+  } catch(e) { console.warn('[badge-inventario]', e?.message||e); el.textContent = '—'; }
 }
 
 async function cargarBadgeFinanzas(tid) {
+  const el = document.getElementById('badge-finanzas');
+  if (!el) return;
   try {
-    const { data } = await dbB2C
+    const ahora = new Date();
+    const primerDiaMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1).toISOString();
+    const { data, error } = await dbB2C
       .from('cat_taller_cuenta_corriente')
-      .select('saldo_resultante')
+      .select('monto')
       .eq('taller_id', tid)
-      .order('created_at', { ascending: false })
-      .limit(1);
-    const saldo = data?.[0]?.saldo_resultante;
-    const el = document.getElementById('badge-finanzas');
-    if (saldo != null) {
-      el.className = saldo >= 0 ? 'mod-badge ok' : 'mod-badge alerta';
-      el.textContent = `CC: ${fmtPeso(saldo)}`;
-    } else {
-      el.className = 'mod-badge';
-      el.textContent = 'Sin movimientos';
-    }
-  } catch { setBadgeError('badge-finanzas'); }
+      .gte('created_at', primerDiaMes);
+    if (error) throw error;
+    const total = (data || []).reduce((s, r) => s + (parseFloat(r.monto) || 0), 0);
+    el.textContent = fmtMonto(total);
+  } catch(e) { console.warn('[badge-finanzas]', e?.message||e); el.textContent = '—'; }
+}
+
+async function cargarBadgeOrdenes(tid) {
+  const el = document.getElementById('badge-ordenes');
+  if (!el) return;
+  try {
+    const { count, error } = await dbB2C.from('cat_ordenes_reparacion')
+      .select('id', { count: 'exact', head: true })
+      .eq('taller_id', tid).not('estado', 'in', '("entregado","cancelado")');
+    if (error) throw error;
+    el.textContent = count ?? 0;
+  } catch(e) { console.warn('[badge-ordenes]', e?.message||e); el.textContent = '—'; }
+}
+
+async function cargarBadgePersonal(tid) {
+  const el = document.getElementById('badge-personal');
+  if (!el) return;
+  try {
+    const { count, error } = await dbB2C
+      .from('cat_taller_personal')
+      .select('id', { count: 'exact', head: true })
+      .eq('taller_id', tid).eq('activo', true);
+    if (error) throw error;
+    el.textContent = count ?? 0;
+  } catch(e) { console.warn('[badge-personal]', e?.message||e); el.textContent = '—'; }
+}
+
+async function cargarBadgeAseguradoras(tid) {
+  const el = document.getElementById('badge-aseguradoras');
+  if (!el) return;
+  try {
+    const { count, error } = await dbB2C
+      .from('cat_taller_aseguradoras')
+      .select('id', { count: 'exact', head: true })
+      .eq('taller_id', tid);
+    if (error) throw error;
+    el.textContent = count ?? 0;
+  } catch(e) { console.warn('[badge-aseguradoras]', e?.message||e); el.textContent = '—'; }
+}
+
+async function cargarBadgeRecordatorios(tid) {
+  const el = document.getElementById('badge-recordatorios');
+  if (!el) return;
+  try {
+    const hoy = new Date().toISOString();
+    const { count, error } = await dbB2C
+      .from('cat_taller_recordatorios')
+      .select('id', { count: 'exact', head: true })
+      .eq('taller_id', tid).eq('enviado', false).lte('fecha_envio', hoy);
+    if (error) throw error;
+    el.textContent = count ?? 0;
+  } catch(e) { console.warn('[badge-recordatorios]', e?.message||e); el.textContent = '—'; }
+}
+
+async function cargarBadgePerfil(tid) {
+  const el = document.getElementById('badge-perfil');
+  if (!el) return;
+  try {
+    // 7 criterios de completitud
+    const [dataTaller, countDisp, countSvc, countPers, countAseg] = await Promise.all([
+      dbB2C.from('cat_recomendaciones_talleres').select('direccion,telefono,logo_url').eq('id', tid).single(),
+      dbB2C.from('cat_taller_disponibilidad').select('id', { count: 'exact', head: true }).eq('taller_id', tid),
+      dbB2C.from('cat_taller_servicios').select('id', { count: 'exact', head: true }).eq('taller_id', tid),
+      dbB2C.from('cat_taller_personal').select('id', { count: 'exact', head: true }).eq('taller_id', tid),
+      dbB2C.from('cat_taller_aseguradoras').select('id', { count: 'exact', head: true }).eq('taller_id', tid),
+    ]);
+    const t = dataTaller.data || {};
+    const pts = [
+      !!t.direccion,
+      !!t.telefono,
+      (countDisp.count ?? 0) > 0,
+      (countSvc.count ?? 0) > 0,
+      (countPers.count ?? 0) > 0,
+      (countAseg.count ?? 0) > 0,
+      !!t.logo_url,
+    ].filter(Boolean).length;
+    el.textContent = Math.round(pts / 7 * 100) + '%';
+  } catch(e) { console.warn('[badge-perfil]', e?.message||e); el.textContent = '—'; }
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -560,7 +566,7 @@ async function cargarUltimasOps(tid) {
     };
 
     cont.innerHTML = data.map(op => `
-      <div class="op-row" onclick="window.location='/taller/operaciones.html'" style="cursor:pointer">
+      <div class="op-row" onclick="window.location='/taller/operaciones'" style="cursor:pointer">
         <div class="op-info">
           <div class="op-num">${op.id.slice(0,8).toUpperCase()}…</div>
           <div class="op-fecha">${fmtFecha(op.created_at)}</div>
@@ -576,6 +582,15 @@ async function cargarUltimasOps(tid) {
 // ─────────────────────────────────────────────────────────────
 // UTILS
 // ─────────────────────────────────────────────────────────────
+function fmtPeso(n) {
+  if (n == null) return '—';
+  return '$ ' + Math.round(n).toLocaleString('es-AR');
+}
+
+function fmtMonto(n) {
+  if (!n) return '// ─────────────────────────────────────────────────────────────
+// UTILS
+// ─────────────────────────────────────────────────────────────
 function setBadgeError(id) {
   const el = document.getElementById(id);
   if (el) { el.className = 'mod-badge'; el.textContent = '—'; }
@@ -584,6 +599,44 @@ function setBadgeError(id) {
 function fmtPeso(n) {
   if (n == null) return '—';
   return '$\u202F' + Math.round(n).toLocaleString('es-AR');
+}';
+  const abs = Math.abs(n);
+  if (abs >= 1000000) return '
+
+function fmtFecha(s) {
+  if (!s) return '—';
+  return new Date(s).toLocaleDateString('es-AR', {
+    day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit'
+  });
+}
+</script>
+</body>
+</html>
+ + (n / 1000000).toFixed(1).replace('.0','') + 'M';
+  if (abs >= 1000)    return '
+
+function fmtFecha(s) {
+  if (!s) return '—';
+  return new Date(s).toLocaleDateString('es-AR', {
+    day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit'
+  });
+}
+</script>
+</body>
+</html>
+ + Math.round(n / 1000) + 'k';
+  return '
+
+function fmtFecha(s) {
+  if (!s) return '—';
+  return new Date(s).toLocaleDateString('es-AR', {
+    day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit'
+  });
+}
+</script>
+</body>
+</html>
+ + Math.round(n);
 }
 
 function fmtFecha(s) {

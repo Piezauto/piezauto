@@ -280,7 +280,7 @@
     <div class="vacio-icono">ðŸ›’</div>
     <div class="vacio-titulo">Tu carrito estÃ¡ vacÃ­o</div>
     <div class="vacio-sub">BuscÃ¡ la pieza que necesitÃ¡s y agregala acÃ¡.</div>
-    <a href="/buscar.html" class="btn-buscar-vacio">Ir a buscar piezas</a>
+    <a href="/buscar" class="btn-buscar-vacio">Ir a buscar piezas</a>
   </div>
 
   <!-- Con items -->
@@ -301,7 +301,7 @@
           <div class="resumen-titulo">Resumen del pedido</div>
 
           <div id="login-cta">
-            <a href="/login.html">IngresÃ¡</a> para guardar tu carrito y finalizar la compra.
+            <a href="/login">IngresÃ¡</a> para guardar tu carrito y finalizar la compra.
           </div>
 
           <div id="resumen-filas"></div>
@@ -315,7 +315,7 @@
           </p>
 
           <button id="btn-checkout" onclick="irACheckout()">Continuar compra</button>
-          <a href="/buscar.html" class="btn-seguir-comprando">â† Seguir comprando</a>
+          <a href="/buscar" class="btn-seguir-comprando">â† Seguir comprando</a>
 
           <div class="sync-badge" id="sync-badge"></div>
         </div>
@@ -380,7 +380,7 @@ function renderCarrito() {
       <div class="carrito-item" data-id="${item.id}">
         <div class="item-info">
           <div class="item-desc">
-            <a href="/producto.html?id=${item.id}">${item.descripcion}</a>
+            <a href="/producto?id=${item.id}">${item.descripcion}</a>
           </div>
           ${item.codigo_piezauto ? `<div class="item-codigo">${item.codigo_piezauto}</div>` : ''}
           ${precioUnit ? `<div class="item-precio-unit">${precioUnit}</div>` : ''}

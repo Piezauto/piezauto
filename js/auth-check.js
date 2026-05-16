@@ -1,4 +1,4 @@
-function logoutLimpio() {
+﻿function logoutLimpio() {
   localStorage.removeItem('pz_usuario');
   localStorage.removeItem('pz_b2c_session');
   localStorage.removeItem('pz_admin_intentos');
@@ -8,7 +8,7 @@ function logoutLimpio() {
   if (carrito) {
     setTimeout(() => localStorage.setItem('piezauto_carrito_b2c', carrito), 0);
   }
-  window.location.href = '/login.html';
+  window.location.href = '/login';
 }
 
 function validarConsistenciaSesion() {

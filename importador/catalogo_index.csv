@@ -1,0 +1,15 @@
+proveedor,archivo,sku_count,descuento_default,fabricante_default,observaciones
+Cromosol,Cromosol.xlsx,24045,0.0,,Stock central + sucursales (campo aparte para v6 cat_stock_proveedor)
+BBA,BBA.xlsx,10765,0.0,,Mecánica pura - sin lados D/I
+Otero,Otero.xlsx,14171,0.0,,"Precios formato argentino (44.000,00)"
+DM,DM.xlsx,28889,0.0,,Marca vehículo inferida desde descripción. 398 SKUs en REVISAR para CPO
+Farosdam,Farosdam.xlsx,8153,0.0,,Trae código OEM en columna separada
+Vaer,Vaer.xlsx,5654,0.43,Autoclip,Fabricante real a investigar con CPO. Descuento 43%
+Delviso,Delviso.xlsx,11848,0.0,,Recargo Cordobés en cat_recargos_proveedor (modelo SQL aparte)
+Expoyer,Expoyer.xlsx,101306,0.0,,Formato sync nativo - modelo ideal para sincronización recurrente
+SG,SG.xlsx,5689,0.0,SG,19 hojas por marca de vehículo
+Surpiezas,Surpiezas.xlsx,53709,0.0,,Distribuidor oficial GM/ACDelco. 420 SKUs con precio pendiente
+Bark1,Bark1.xlsx,1289,0.0,,24 hojas heterogéneas - fabricante por hoja
+Francar,Francar.xlsx,648,0.0,Francar,42 hijos pre-armados modelo extendido (hijo_de_padre_multiple)
+Fragata,Fragata.xlsx,8262,0.554,Fragata,Software DSLISTA (DBF). Trae stock por SKU - va a v6 cat_stock_proveedor. REMPL = fabricante real (5221 SKUs)
+LAM,LAM.xlsx,1578,0.5725,LAM,Software DSLISTA FoxPro. Descuento cascada 50% + 14.5% = 57.25% efectivo. 463 SKUs con aplicaciones cruzadas

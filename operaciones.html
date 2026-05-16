@@ -125,7 +125,7 @@
   <div id="seccion-turnos" style="display:none">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
       <div style="font-size:13px;color:#888">Tus solicitudes de turno en talleres Piezauto</div>
-      <a href="/solicitar-turno.html" style="display:inline-flex;align-items:center;gap:6px;background:var(--rojo);color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:13px;font-weight:700;text-decoration:none;transition:opacity .15s" onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">+ Solicitar turno</a>
+      <a href="/solicitar-turno" style="display:inline-flex;align-items:center;gap:6px;background:var(--rojo);color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:13px;font-weight:700;text-decoration:none;transition:opacity .15s" onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">+ Solicitar turno</a>
     </div>
     <div id="lista-turnos"><div style="text-align:center;padding:30px;color:#bbb">Cargando turnosâ€¦</div></div>
   </div>
@@ -372,7 +372,7 @@ async function cargarTurnos() {
 
     turnosData = turnos || [];
     if (!turnosData.length) {
-      cont.innerHTML = '<div style="text-align:center;padding:30px;color:#bbb;font-size:13px">No tenÃ©s turnos registrados. <a href="/solicitar-turno.html" style="color:var(--rojo)">PedÃ­ uno â†’</a></div>';
+      cont.innerHTML = '<div style="text-align:center;padding:30px;color:#bbb;font-size:13px">No tenÃ©s turnos registrados. <a href="/solicitar-turno" style="color:var(--rojo)">PedÃ­ uno â†’</a></div>';
       return;
     }
 

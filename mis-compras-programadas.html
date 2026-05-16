@@ -84,7 +84,7 @@
 <script src="js/header-b2c.js"></script>
 
 <div class="page-hero">
-  <a href="/perfil.html" class="hero-back">← Perfil</a>
+  <a href="/perfil" class="hero-back">← Perfil</a>
   <div class="hero-titulo">🛒 Compras programadas</div>
   <div class="hero-sub">Descuentos preparados para vos, basados en el estado de tus vehículos.</div>
 </div>
@@ -247,17 +247,17 @@ function renderCard(o, vId) {
       ${descCombo > 0 ? `<span class="cp-desc-chip cp-desc-combo">⭐ ${descCombo}% combo</span>` : ''}
     </div>
     <div class="cp-acciones">
-      <a href="/catalogo.html?q=${encodeURIComponent(nm)}"
+      <a href="/catalogo?q=${encodeURIComponent(nm)}"
         class="cp-btn cp-btn-prod"
         onclick="registrarAccion('${o.id}','comprada_productos')">
         🛒 Solo productos
       </a>
-      <a href="/solicitar-turno.html?servicio=${o.servicio_codigo}&oportunidad_id=${o.id}"
+      <a href="/solicitar-turno?servicio=${o.servicio_codigo}&oportunidad_id=${o.id}"
         class="cp-btn cp-btn-serv"
         onclick="registrarAccion('${o.id}','agendado_servicio')">
         🔧 Solo servicio
       </a>
-      <a href="/solicitar-turno.html?servicio=${o.servicio_codigo}&oportunidad_id=${o.id}&combo=1&vehiculo_id=${vId}"
+      <a href="/solicitar-turno?servicio=${o.servicio_codigo}&oportunidad_id=${o.id}&combo=1&vehiculo_id=${vId}"
         class="cp-btn cp-btn-combo"
         onclick="registrarAccion('${o.id}','combo_comprado')">
         ⭐ Combo completo

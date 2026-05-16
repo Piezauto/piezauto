@@ -1,4 +1,4 @@
-// auth-taller.js — Middleware de autenticación para panel de talleres
+﻿// auth-taller.js — Middleware de autenticación para panel de talleres
 // Incluir en TODAS las páginas /taller/* (excepto login.html)
 // Depende de: js/auth-b2c.js (dbB2C ya inicializado globalmente)
 
@@ -90,7 +90,7 @@ async function initTallerHeader() {
 
   wrap.innerHTML =
     '<div style="background:var(--negro);color:#fff;padding:0 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:52px;position:sticky;top:0;z-index:200;box-shadow:0 2px 12px rgba(0,0,0,.3)">' +
-      '<a href="/taller/index.html" style="font-weight:900;font-size:14px;color:#fff;text-decoration:none;white-space:nowrap;flex-shrink:0">🔧 ' + escTH(meta.taller_nombre || 'Taller') + '</a>' +
+      '<a href="/taller/index" style="font-weight:900;font-size:14px;color:#fff;text-decoration:none;white-space:nowrap;flex-shrink:0">🔧 ' + escTH(meta.taller_nombre || 'Taller') + '</a>' +
       '<nav id="taller-nav" style="display:flex;gap:2px;align-items:center;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding:8px 0;flex:1;justify-content:center">' + navHTML + '</nav>' +
       '<button onclick="tallerLogout()" style="background:rgba(255,255,255,.12);color:#fff;border:none;border-radius:6px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0" onmouseover="this.style.background=\'rgba(255,255,255,.22)\'" onmouseout="this.style.background=\'rgba(255,255,255,.12)\'">Salir</button>' +
     '</div>';

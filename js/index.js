@@ -1,4 +1,4 @@
-
+﻿
 function esNuevo(fechaISO) {
   if (!fechaISO) return false;
   return (Date.now() - new Date(fechaISO).getTime()) < 30 * 24 * 60 * 60 * 1000;
@@ -230,7 +230,7 @@ async function cargarTalleres() {
           <button class="taller-card-btn" onclick="window.location='talleres.html?id=${t.id}'">
             Ver taller
           </button>
-          <a href="/taller-perfil.html?taller_id=${t.id}" style="display:inline-flex;align-items:center;padding:0 14px;height:36px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:13px;font-weight:600;color:#2563eb;text-decoration:none;transition:border-color .15s" onmouseover="this.style.borderColor='#2563eb'" onmouseout="this.style.borderColor='#e0e0e0'">Ver perfil →</a>
+          <a href="/taller-perfil?taller_id=${t.id}" style="display:inline-flex;align-items:center;padding:0 14px;height:36px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:13px;font-weight:600;color:#2563eb;text-decoration:none;transition:border-color .15s" onmouseover="this.style.borderColor='#2563eb'" onmouseout="this.style.borderColor='#e0e0e0'">Ver perfil →</a>
         </div>
       </div>
     `;
@@ -525,7 +525,7 @@ function _renderSkuCard(p) {
       <div class="prod-card-nombre">${p.descripcion || ''}</div>
       <div class="prod-card-codigo">${p.codigo_piezauto ? 'Cód: ' + p.codigo_piezauto : ''}</div>
       <div class="prod-card-precio">${precio}</div>
-      <a href="/producto.html?id=${p.id}" class="prod-card-btn" onclick="event.stopPropagation()">Ver producto</a>
+      <a href="/producto?id=${p.id}" class="prod-card-btn" onclick="event.stopPropagation()">Ver producto</a>
     </div>
   </div>`;
 }

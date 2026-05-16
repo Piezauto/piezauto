@@ -1,4 +1,4 @@
-// Checkout B2C — Fase 3 Piezauto
+﻿// Checkout B2C — Fase 3 Piezauto
 // Depende de: js/auth-b2c.js (dbB2C, getClienteActual), js/carrito.js (cargarCarritoLocal, calcularTotales)
 
 const PAGO_INFO = {
@@ -103,7 +103,7 @@ function renderTallerList(talleres) {
   talleres.forEach((t, i) => {
     const dist = t._dist && t._dist < 9999 ? `<span style="font-size:11px;color:#888;margin-left:6px">${t._dist.toFixed(1)} km</span>` : '';
     const wa      = t.whatsapp ? `<a class="taller-wa" href="https://wa.me/54${t.whatsapp.replace(/\D/g,'')}" target="_blank">WhatsApp</a>` : '';
-    const perfilLink = `<a href="/taller-perfil.html?taller_id=${t.id}" target="_blank" onclick="event.stopPropagation()" style="font-size:11px;color:#2563eb;font-weight:600;text-decoration:none;margin-left:8px">Ver perfil →</a>`;
+    const perfilLink = `<a href="/taller-perfil?taller_id=${t.id}" target="_blank" onclick="event.stopPropagation()" style="font-size:11px;color:#2563eb;font-weight:600;text-decoration:none;margin-left:8px">Ver perfil →</a>`;
     html += `<div class="taller-card" id="taller-card-${i}" onclick="seleccionarTaller(${i})">
       <input type="radio" name="taller" id="taller-radio-${i}">
       <div class="taller-info">

@@ -268,7 +268,7 @@
   // Redirigir si ya estÃ¡ logueado
   (async () => {
     const cliente = await getClienteActual();
-    if (cliente) window.location.href = '/perfil.html';
+    if (cliente) window.location.href = '/perfil';
   })();
 
   const form = document.getElementById('form-registro');
@@ -328,7 +328,7 @@
     }
 
     mostrarOk('Â¡Cuenta creada! Redirigiendo a tu perfil...');
-    setTimeout(() => { window.location.href = '/perfil.html'; }, 1500);
+    setTimeout(() => { window.location.href = '/perfil'; }, 1500);
   });
 
   // Uppercase automÃ¡tico en campo cÃ³digo

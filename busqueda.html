@@ -12,7 +12,7 @@
     // /busqueda.html → ruta legada. La ruta canónica es /buscar.html
     const _p = new URLSearchParams(window.location.search);
     const _q = _p.get('q') || '';
-    window.location.replace('/buscar.html' + (_q ? '?q=' + encodeURIComponent(_q) : ''));
+    window.location.replace('/buscar' + (_q ? '?q=' + encodeURIComponent(_q) : ''));
   </script>
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Piezauto">

@@ -1,4 +1,4 @@
-;(function () {
+﻿;(function () {
   'use strict';
 
   // No aplicar en admin, point ni en la misma página de mantenimiento
@@ -15,7 +15,7 @@
         .single();
 
       if (data?.valor === 'true') {
-        window.location.replace('/mantenimiento.html');
+        window.location.replace('/mantenimiento');
       }
     } catch (_) {}
   }

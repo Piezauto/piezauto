@@ -222,7 +222,7 @@ function renderTurno() {
   const puedeAvanzar = t.estado === 'en_proceso' && siguientePaso;
 
   document.getElementById('mainWrap').innerHTML = `
-    <div class="page-back" onclick="window.location='/taller/agenda.html'">
+    <div class="page-back" onclick="window.location='/taller/agenda'">
       ← Volver a Agenda
     </div>
 
@@ -461,7 +461,7 @@ function render404() {
     <div style="text-align:center;padding:60px 20px;color:#aaa">
       <div style="font-size:40px;margin-bottom:12px">🔍</div>
       <div style="font-size:16px;font-weight:700;color:#555">Turno no encontrado</div>
-      <a href="/taller/agenda.html" style="color:var(--rojo);font-size:13px;margin-top:12px;display:block">← Volver a Agenda</a>
+      <a href="/taller/agenda" style="color:var(--rojo);font-size:13px;margin-top:12px;display:block">← Volver a Agenda</a>
     </div>`;
 }
 

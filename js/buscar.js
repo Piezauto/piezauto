@@ -1,4 +1,4 @@
-// Búsqueda de SKUs — Fase 2 Piezauto
+﻿// Búsqueda de SKUs — Fase 2 Piezauto
 // Depende de: dbB2C (auth-b2c.js), getClienteActual (auth-b2c.js)
 
 const PAGE_SIZE = 20;
@@ -243,7 +243,7 @@ function renderTarjeta(sku) {
   const lado = sku.lado && sku.lado !== 'N/A' ? `<span class="tag-lado">${sku.lado}</span>` : '';
 
   return `
-    <a href="/producto.html?id=${sku.id}" class="tarjeta-sku">
+    <a href="/producto?id=${sku.id}" class="tarjeta-sku">
       <div class="tarjeta-sku-body">
         <div class="tarjeta-sku-familia">${familia}</div>
         <div class="tarjeta-sku-desc">${sku.descripcion_corta || sku.descripcion}</div>
