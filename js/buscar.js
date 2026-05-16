@@ -34,7 +34,7 @@ async function initBuscar() {
   if (q || familia || marca) {
     await ejecutarBusqueda();
   } else {
-    mostrarEstadoVacio();
+    await mostrarEstadoVacio();
   }
 
   document.getElementById('sel-familia').addEventListener('change', e => {
@@ -279,7 +279,32 @@ function irPagina(n) {
   ejecutarBusqueda();
 }
 
-function mostrarEstadoVacio() {
+async function mostrarEstadoVacio() {
   document.getElementById('loader-busqueda').style.display = 'none';
   document.getElementById('stats-busqueda').textContent = '';
+
+  const contenedor = document.getElementById('resultados');
+  contenedor.innerHTML = '';
+
+  // Mostrar productos destacados cuando no hay búsqueda activa
+  let { data } = await dbB2C
+    .from('cat_skus_productos')
+    .select('id, codigo_sku, nombre, precio_lista, precio_oferta, imagen_url, marca_producto, familia_id')
+    .not('precio_lista', 'is', null)
+    .order('created_at', { ascending: false })
+    .limit(24);
+
+  if (!data || !data.length) {
+    // Fallback aleatorio
+    ({ data } = await dbB2C
+      .from('cat_skus_productos')
+      .select('id, codigo_sku, nombre, precio_lista, precio_oferta, imagen_url, marca_producto, familia_id')
+      .not('precio_lista', 'is', null)
+      .limit(24));
+  }
+
+  if (data && data.length) {
+    document.getElementById('stats-busqueda').textContent = '🔥 Más recientes en Piezauto';
+    data.forEach(sku => contenedor.insertAdjacentHTML('beforeend', renderTarjeta(sku)));
+  }
 }

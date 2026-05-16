@@ -1720,6 +1720,15 @@ function renderServiciosGrid() {
 }
 
 function toggleServicio(id, checked) {
+  const dbRow = serviciosEnBD[id];
+  const estado = dbRow?.estado_validacion;
+  if (!checked && (estado === 'aprobado' || estado === 'suspendido')) {
+    // Gestionado por Piezauto — revertir el checkbox
+    document.getElementById(`srv-${id}`).checked = true;
+    serviciosSeleccionados.add(id);
+    alert('Este servicio es gestionado por Piezauto y no puede ser modificado desde el panel del taller.');
+    return;
+  }
   if (checked) serviciosSeleccionados.add(id);
   else serviciosSeleccionados.delete(id);
 }

@@ -34,3 +34,20 @@ function validarConsistenciaSesion() {
 
 window.logoutLimpio = logoutLimpio;
 window.validarConsistenciaSesion = validarConsistenciaSesion;
+
+(function autoLimpiezaLegacy() {
+  try {
+    const usuarioRaw = localStorage.getItem('pz_usuario');
+    if (usuarioRaw) {
+      const usuario = JSON.parse(usuarioRaw);
+      if (usuario && (usuario.password_hash || usuario.password)) {
+        console.warn('[auth] Detectada sesión legacy con campo password, limpiando');
+        delete usuario.password_hash;
+        delete usuario.password;
+        localStorage.setItem('pz_usuario', JSON.stringify(usuario));
+      }
+    }
+  } catch(e) {
+    console.warn('[auth] Error en auto-limpieza legacy:', e);
+  }
+})();

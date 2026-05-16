@@ -279,20 +279,35 @@ const _timeoutId = setTimeout(() => {
       </div>
     </div>`;
 
-  // Horarios de atenciÃ³n
+  // Horarios de atención — prioridad: JSON field, fallback: cat_taller_disponibilidad
   const horaKeys = ['lun','mar','mie','jue','vie','sab','dom'];
-  const hLabelMap = { lun:'Lun', mar:'Mar', mie:'MiÃ©', jue:'Jue', vie:'Vie', sab:'SÃ¡b', dom:'Dom' };
-  const horariosRows = horaKeys.map(k => {
+  const hLabelMap = { lun:'Lun', mar:'Mar', mie:'Mié', jue:'Jue', vie:'Vie', sab:'Sáb', dom:'Dom' };
+  // dia_semana: 0=Dom,1=Lun,2=Mar,3=Mié,4=Jue,5=Vie,6=Sáb
+  const diaSemanaIdxMap = { lun:1, mar:2, mie:3, jue:4, vie:5, sab:6, dom:0 };
+
+  let horariosRows = horaKeys.map(k => {
     const h2 = horariosData[k];
     if (!h2) return '';
     return `<div class="horario-row">
       <div class="horario-dia">${hLabelMap[k]}</div>
-      ${h2.abierto ? `<div class="horario-hrs">${(h2.desde||'').slice(0,5)} â€“ ${(h2.hasta||'').slice(0,5)}</div>` : '<div class="horario-cerr">Cerrado</div>'}
+      ${h2.abierto ? `<div class="horario-hrs">${(h2.desde||'').slice(0,5)} – ${(h2.hasta||'').slice(0,5)}</div>` : '<div class="horario-cerr">Cerrado</div>'}
     </div>`;
   }).filter(Boolean).join('');
 
-  html += `<div class="card"><div class="card-head"><h3>ðŸ• Horarios de atenciÃ³n</h3></div><div class="card-body">${
-    horariosRows || '<div style="padding:6px 0;font-size:13px;color:#888;font-style:italic">Consultar horarios con el taller.</div>'
+  // Fallback: construir horarios desde cat_taller_disponibilidad si JSON vacío
+  if (!horariosRows && disponib.length) {
+    const porDia = {};
+    disponib.forEach(d => { if (!porDia[d.dia_semana]) porDia[d.dia_semana] = d; });
+    horariosRows = horaKeys.map(k => {
+      const idx = diaSemanaIdxMap[k];
+      const d = porDia[idx];
+      if (!d) return `<div class="horario-row"><div class="horario-dia">${hLabelMap[k]}</div><div class="horario-cerr">Cerrado</div></div>`;
+      return `<div class="horario-row"><div class="horario-dia">${hLabelMap[k]}</div><div class="horario-hrs">${(d.hora_inicio||'').slice(0,5)} – ${(d.hora_fin||'').slice(0,5)}</div></div>`;
+    }).join('');
+  }
+
+  html += `<div class="card"><div class="card-head"><h3>🕐 Horarios de atención</h3></div><div class="card-body">${
+    horariosRows || '<div style="padding:6px 0;font-size:13px;color:#888;font-style:italic">El taller aún no configuró sus horarios. Contactá directamente.</div>'
   }</div></div>`;
 
   // Disponibilidad de turnos

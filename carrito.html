@@ -43,11 +43,14 @@
     }
     .carrito-grid {
       display: grid;
-      grid-template-columns: 1fr 300px;
+      grid-template-columns: minmax(0, 1fr) minmax(280px, 320px);
       gap: 20px;
       align-items: start;
     }
-    @media (max-width: 680px) {
+    @media (max-width: 1100px) {
+      .carrito-grid { grid-template-columns: minmax(0, 1fr) 280px; }
+    }
+    @media (max-width: 760px) {
       .carrito-grid { grid-template-columns: 1fr; }
     }
 
