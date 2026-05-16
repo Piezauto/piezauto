@@ -1,6 +1,7 @@
 // piezauto-mp-proxy — Cloudflare Worker
 // Deploy: cd worker-mp && npx wrangler deploy --name piezauto
 import { ejecutarRecordatorios } from './recordatorios.js';
+import { ejecutarVencimientosWallet } from './wallet-vencimientos.js';
 
 const ALLOWED_ORIGINS = [
   'https://piezauto.piezauto1.workers.dev',
@@ -87,6 +88,10 @@ export default {
 
   // Cron: cada 6 horas — procesar recordatorios pendientes
   async scheduled(event, env, ctx) {
-    ctx.waitUntil(ejecutarRecordatorios(env));
+    if (event.cron === '0 3 * * *') {
+      ctx.waitUntil(ejecutarVencimientosWallet(env));
+    } else {
+      ctx.waitUntil(ejecutarRecordatorios(env));
+    }
   },
 };

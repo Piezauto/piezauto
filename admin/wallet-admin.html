@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wallet Admin — Piezauto</title>
+  <link rel="stylesheet" href="../css/estilos.css">
+  <style>
+    body { background: #f0f0f0; }
+    .page-wrap { max-width: 1100px; margin: 0 auto; padding: 28px 20px 72px; }
+    .page-header { display: flex; align-items: center; gap: 16px; margin-bottom: 28px; }
+    .page-titulo { font-size: 22px; font-weight: 800; flex: 1; }
+    .back-link { font-size: 13px; color: #888; text-decoration: none; font-weight: 600; }
+    .back-link:hover { color: #333; }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 28px; }
+    .stat-card { background: #fff; border-radius: 12px; padding: 18px 20px; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+    .stat-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 5px; }
+    .stat-val { font-size: 26px; font-weight: 800; color: #1a1a1a; }
+    .stat-sub { font-size: 11px; color: #aaa; margin-top: 2px; }
+
+    .filtros { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+    .filtros input, .filtros select { padding: 8px 12px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 13px; outline: none; background: #fff; }
+    .filtros input:focus, .filtros select:focus { border-color: #E63946; }
+    .filtros input { flex: 1; min-width: 200px; }
+
+    .tabla-wrap { background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.06); overflow: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { background: #f8f8f8; color: #555; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; padding: 12px 16px; text-align: left; white-space: nowrap; }
+    td { padding: 12px 16px; border-bottom: 1px solid #f5f5f5; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fafafa; }
+    .saldo-cel { font-weight: 800; color: #1a1a1a; }
+    .saldo-zero { color: #aaa; }
+
+    /* Modal */
+    .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 200; align-items: center; justify-content: center; }
+    .modal-bg.abierto { display: flex; }
+    .modal { background: #fff; border-radius: 16px; padding: 28px; width: 100%; max-width: 420px; }
+    .modal-titulo { font-size: 17px; font-weight: 800; margin-bottom: 20px; }
+    .form-row { margin-bottom: 14px; }
+    .form-row label { display: block; font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 5px; }
+    .form-row input, .form-row select, .form-row textarea { width: 100%; padding: 10px 12px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 14px; outline: none; box-sizing: border-box; font-family: inherit; }
+    .form-row input:focus, .form-row select:focus, .form-row textarea:focus { border-color: #E63946; }
+    .modal-acciones { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+    .btn-cancel { background: #f0f0f0; color: #333; border: none; border-radius: 8px; padding: 10px 18px; font-size: 13px; font-weight: 700; cursor: pointer; }
+    .btn-guardar { background: #E63946; color: #fff; border: none; border-radius: 8px; padding: 10px 20px; font-size: 13px; font-weight: 700; cursor: pointer; }
+    .btn-guardar:hover { background: #c1121f; }
+    .btn-ajuste { font-size: 11px; padding: 4px 10px; border-radius: 6px; background: #e3f2fd; color: #1565c0; border: none; font-weight: 700; cursor: pointer; }
+    .btn-ajuste:hover { background: #bbdefb; }
+
+    .modal-msg { font-size: 12px; text-align: center; margin-top: 10px; min-height: 16px; }
+    .modal-msg.ok  { color: #2e7d32; }
+    .modal-msg.err { color: #c00; }
+
+    .spinner-wrap { display: flex; justify-content: center; padding: 40px; }
+    .spinner { width: 30px; height: 30px; border: 3px solid #eee; border-top-color: #E63946; border-radius: 50%; animation: spin .8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .empty { text-align: center; padding: 40px; color: #aaa; font-size: 14px; }
+  </style>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase.js"></script>
+
+<div class="page-wrap">
+  <div class="page-header">
+    <a href="index.html" class="back-link">← Panel admin</a>
+    <div class="page-titulo">💰 Wallet — Administración</div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Wallets activas</div>
+      <div class="stat-val" id="stat-wallets">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Saldo total en circulación</div>
+      <div class="stat-val" id="stat-saldo-total">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Total ganado (acumulado)</div>
+      <div class="stat-val" id="stat-total-ganado">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Total usado</div>
+      <div class="stat-val" id="stat-total-usado">—</div>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="filtros">
+    <input id="filtro-buscar" type="text" placeholder="Buscar cliente por nombre o email..." oninput="filtrarTabla()">
+    <select id="filtro-saldo" onchange="filtrarTabla()">
+      <option value="">Todos los saldos</option>
+      <option value="con_saldo">Con saldo > $0</option>
+      <option value="sin_saldo">Sin saldo</option>
+    </select>
+  </div>
+
+  <div id="tabla-contenido">
+    <div class="spinner-wrap"><div class="spinner"></div></div>
+  </div>
+</div>
+
+<!-- Modal ajuste -->
+<div class="modal-bg" id="modal-ajuste">
+  <div class="modal">
+    <div class="modal-titulo">Ajuste de wallet</div>
+    <div class="form-row">
+      <label>Cliente</label>
+      <input type="text" id="ajuste-cliente-nombre" readonly style="background:#f8f8f8">
+    </div>
+    <div class="form-row">
+      <label>Saldo actual</label>
+      <input type="text" id="ajuste-saldo-actual" readonly style="background:#f8f8f8">
+    </div>
+    <div class="form-row">
+      <label>Tipo de ajuste</label>
+      <select id="ajuste-tipo">
+        <option value="credito">Acreditar (sumar)</option>
+        <option value="debito">Debitar (restar)</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Monto *</label>
+      <input type="number" id="ajuste-monto" min="0.01" step="0.01" placeholder="0.00">
+    </div>
+    <div class="form-row">
+      <label>Concepto *</label>
+      <input type="text" id="ajuste-concepto" placeholder="Motivo del ajuste manual">
+    </div>
+    <div class="modal-acciones">
+      <button class="btn-cancel" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn-guardar" id="btn-guardar-ajuste" onclick="guardarAjuste()">Aplicar ajuste</button>
+    </div>
+    <div class="modal-msg" id="ajuste-msg"></div>
+  </div>
+</div>
+
+<script>
+const FMT = v => '$' + Number(v || 0).toLocaleString('es-AR', { minimumFractionDigits: 2 });
+const FDATE = ts => new Date(ts).toLocaleDateString('es-AR', { day:'2-digit', month:'short', year:'numeric' });
+
+let _wallets = [];
+let _ajusteClienteId = null;
+
+async function verificarAcceso() {
+  const session = sessionStorage.getItem('pz_admin');
+  if (!session) { window.location.href = 'index.html'; return false; }
+  return true;
+}
+
+async function init() {
+  if (!await verificarAcceso()) return;
+  await cargarStats();
+  await cargarWallets();
+}
+
+async function cargarStats() {
+  const { data } = await db
+    .from('v_wallet_resumen')
+    .select('saldo, total_ganado, total_usado');
+
+  if (!data?.length) return;
+  const wallets    = data.length;
+  const saldoTotal = data.reduce((s, r) => s + Number(r.saldo || 0), 0);
+  const ganado     = data.reduce((s, r) => s + Number(r.total_ganado || 0), 0);
+  const usado      = data.reduce((s, r) => s + Number(r.total_usado  || 0), 0);
+
+  document.getElementById('stat-wallets').textContent    = wallets;
+  document.getElementById('stat-saldo-total').textContent = FMT(saldoTotal);
+  document.getElementById('stat-total-ganado').textContent = FMT(ganado);
+  document.getElementById('stat-total-usado').textContent  = FMT(usado);
+}
+
+async function cargarWallets() {
+  const cont = document.getElementById('tabla-contenido');
+  const { data, error } = await db
+    .from('v_wallet_resumen')
+    .select('*')
+    .order('saldo', { ascending: false });
+
+  if (error) { cont.innerHTML = '<div class="empty">Error cargando wallets.</div>'; return; }
+  _wallets = data || [];
+  renderTabla(_wallets);
+}
+
+function renderTabla(lista) {
+  const cont = document.getElementById('tabla-contenido');
+  if (!lista.length) {
+    cont.innerHTML = '<div class="empty">No hay wallets registradas todavía.</div>';
+    return;
+  }
+
+  const rows = lista.map(w => `
+    <tr>
+      <td>${w.cliente_nombre || '—'}</td>
+      <td style="color:#888">${w.email || '—'}</td>
+      <td class="saldo-cel ${w.saldo > 0 ? '' : 'saldo-zero'}">${FMT(w.saldo)}</td>
+      <td style="color:#2e7d32">${FMT(w.total_ganado)}</td>
+      <td style="color:#E63946">${FMT(w.total_usado)}</td>
+      <td>${w.cant_creditos || 0} / ${w.cant_usos || 0}</td>
+      <td style="color:#aaa">${w.updated_at ? FDATE(w.updated_at) : '—'}</td>
+      <td><button class="btn-ajuste" onclick="abrirAjuste('${w.cliente_id}', '${(w.cliente_nombre || '').replace(/'/g,"\\'")}', ${w.saldo})">Ajustar</button></td>
+    </tr>`).join('');
+
+  cont.innerHTML = `
+    <div class="tabla-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Cliente</th><th>Email</th><th>Saldo</th>
+            <th>Total ganado</th><th>Total usado</th>
+            <th>Créditos / Usos</th><th>Actualizado</th><th></th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+}
+
+function filtrarTabla() {
+  const buscar = document.getElementById('filtro-buscar').value.toLowerCase();
+  const saldo  = document.getElementById('filtro-saldo').value;
+  let lista = _wallets;
+  if (buscar) lista = lista.filter(w =>
+    (w.cliente_nombre || '').toLowerCase().includes(buscar) ||
+    (w.email || '').toLowerCase().includes(buscar)
+  );
+  if (saldo === 'con_saldo') lista = lista.filter(w => Number(w.saldo) > 0);
+  if (saldo === 'sin_saldo') lista = lista.filter(w => Number(w.saldo) <= 0);
+  renderTabla(lista);
+}
+
+function abrirAjuste(clienteId, nombre, saldo) {
+  _ajusteClienteId = clienteId;
+  document.getElementById('ajuste-cliente-nombre').value = nombre;
+  document.getElementById('ajuste-saldo-actual').value   = FMT(saldo);
+  document.getElementById('ajuste-monto').value    = '';
+  document.getElementById('ajuste-concepto').value = '';
+  document.getElementById('ajuste-msg').textContent = '';
+  document.getElementById('ajuste-msg').className   = 'modal-msg';
+  document.getElementById('modal-ajuste').classList.add('abierto');
+}
+
+function cerrarModal() {
+  document.getElementById('modal-ajuste').classList.remove('abierto');
+  _ajusteClienteId = null;
+}
+
+async function guardarAjuste() {
+  const tipo     = document.getElementById('ajuste-tipo').value;
+  const monto    = parseFloat(document.getElementById('ajuste-monto').value);
+  const concepto = document.getElementById('ajuste-concepto').value.trim();
+  const msg      = document.getElementById('ajuste-msg');
+
+  if (!monto || monto <= 0) { msg.textContent = 'Ingresá un monto válido.'; msg.className = 'modal-msg err'; return; }
+  if (!concepto)            { msg.textContent = 'El concepto es obligatorio.'; msg.className = 'modal-msg err'; return; }
+
+  document.getElementById('btn-guardar-ajuste').disabled = true;
+  msg.textContent = '';
+
+  const { error } = await db.rpc('fn_aplicar_movimiento_wallet', {
+    p_cliente_id:  _ajusteClienteId,
+    p_tipo:        tipo === 'credito' ? 'ajuste' : 'debito',
+    p_concepto:    concepto,
+    p_monto:       monto,
+    p_operacion_id: null,
+    p_vence_at:    null,
+  });
+
+  if (error) {
+    msg.textContent = 'Error: ' + error.message;
+    msg.className = 'modal-msg err';
+  } else {
+    msg.textContent = 'Ajuste aplicado correctamente.';
+    msg.className = 'modal-msg ok';
+    setTimeout(() => {
+      cerrarModal();
+      cargarStats();
+      cargarWallets();
+    }, 1200);
+  }
+
+  document.getElementById('btn-guardar-ajuste').disabled = false;
+}
+
+document.getElementById('modal-ajuste').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal-ajuste')) cerrarModal();
+});
+
+init();
+</script>
+</body>
+</html>

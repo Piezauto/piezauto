@@ -107,6 +107,26 @@
     #btn-confirmar:disabled { opacity: 0.6; cursor: default; }
     #checkout-msg { font-size: 13px; margin-top: 10px; text-align: center; min-height: 18px; }
 
+    /* Wallet en checkout */
+    .wallet-checkout-box {
+      border: 1.5px solid #e8e8e8;
+      border-radius: 10px;
+      padding: 14px;
+      margin: 12px 0;
+      background: #fafafa;
+      display: none;
+    }
+    .wallet-checkout-box.visible { display: block; }
+    .wallet-checkout-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .wallet-checkout-title { font-size: 13px; font-weight: 700; }
+    .wallet-saldo-disp { font-size: 12px; color: #555; }
+    .wallet-usar-row { display: flex; align-items: center; gap: 10px; }
+    .wallet-usar-input { width: 100px; padding: 7px 10px; border: 1.5px solid #ddd; border-radius: 7px; font-size: 14px; font-weight: 700; outline: none; }
+    .wallet-usar-input:focus { border-color: var(--rojo); }
+    .wallet-aplicar-btn { background: var(--negro); color: #fff; border: none; border-radius: 7px; padding: 8px 14px; font-size: 12px; font-weight: 700; cursor: pointer; transition: opacity .2s; }
+    .wallet-aplicar-btn:hover { opacity: .8; }
+    .wallet-descuento-row { display: flex; justify-content: space-between; font-size: 13px; padding: 5px 0; color: #2e7d32; font-weight: 600; }
+
     /* Loading */
     .spinner-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 0; gap: 14px; }
     .spinner { width: 36px; height: 36px; border: 3px solid #eee; border-top-color: var(--rojo); border-radius: 50%; animation: spin .8s linear infinite; }
@@ -249,6 +269,23 @@
           <span id="res-total">$0</span>
         </div>
       </div>
+
+      <!-- Wallet -->
+      <div class="wallet-checkout-box" id="wallet-checkout-box">
+        <div class="wallet-checkout-header">
+          <span class="wallet-checkout-title">💳 Usar saldo de Wallet</span>
+          <span class="wallet-saldo-disp">Disponible: <strong id="wallet-disp-txt">$0</strong></span>
+        </div>
+        <div class="wallet-usar-row">
+          <input type="number" id="wallet-usar-monto" class="wallet-usar-input" placeholder="$0" min="0" step="1" oninput="actualizarWalletDescuento()">
+          <button class="wallet-aplicar-btn" onclick="aplicarMaxWallet()">Máximo</button>
+        </div>
+        <div id="wallet-descuento-row" class="wallet-descuento-row" style="display:none">
+          <span>Descuento Wallet</span>
+          <span id="wallet-descuento-txt">-$0</span>
+        </div>
+      </div>
+
       <button id="btn-confirmar" onclick="confirmarPedido()">
         Confirmar pedido →
       </button>

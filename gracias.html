@@ -58,6 +58,22 @@
 
     .pago-notice { background: #fff8e1; border: 1px solid #ffe082; border-radius: 10px; padding: 16px; font-size: 13px; color: #795548; line-height: 1.6; }
 
+    .cashback-notice {
+      background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
+      border-radius: 12px;
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      color: #fff;
+      margin-top: 16px;
+    }
+    .cashback-icon { font-size: 32px; flex-shrink: 0; }
+    .cashback-info { flex: 1; }
+    .cashback-title { font-size: 14px; font-weight: 700; margin-bottom: 3px; }
+    .cashback-sub { font-size: 12px; color: #aaa; }
+    .cashback-monto { font-size: 22px; font-weight: 800; color: #4ade80; }
+
     .acciones { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
     .btn-primary { display: block; text-align: center; background: var(--rojo); color: #fff; padding: 14px; border-radius: 10px; font-weight: 700; font-size: 15px; text-decoration: none; transition: background .2s; }
     .btn-primary:hover { background: var(--rojo-dark); }
@@ -125,9 +141,22 @@
       <div class="pago-notice" id="pago-notice"></div>
     </div>
 
+    <!-- Cashback generado -->
+    <div id="cashback-section" style="display:none">
+      <div class="cashback-notice">
+        <div class="cashback-icon">💳</div>
+        <div class="cashback-info">
+          <div class="cashback-title">¡Ganaste cashback!</div>
+          <div class="cashback-sub">Se acreditó en tu wallet · válido 12 meses</div>
+        </div>
+        <div class="cashback-monto" id="cashback-monto">$0</div>
+      </div>
+    </div>
+
     <!-- Acciones -->
     <div class="acciones">
       <a href="operaciones.html" class="btn-primary">Ver mis operaciones</a>
+      <a href="mi-wallet.html" id="btn-wallet-gracias" class="btn-secondary" style="display:none">Ver mi wallet →</a>
       <a href="buscar.html" class="btn-secondary">Seguir comprando</a>
     </div>
 

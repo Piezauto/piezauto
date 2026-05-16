@@ -9,6 +9,7 @@ async function iniciarPerfil() {
   renderPerfil(cliente);
   await cargarVehiculos(cliente.id);
   renderPreferencias(cliente);
+  cargarWalletWidget(cliente.id);
 }
 
 function renderPerfil(cliente) {
@@ -198,6 +199,24 @@ async function guardarPreferencias() {
 
   btn.disabled = false;
   btn.textContent = 'Guardar preferencias';
+}
+
+async function cargarWalletWidget(clienteId) {
+  const card = document.getElementById('wallet-card');
+  if (!card) return;
+  const { data } = await dbB2C
+    .from('cat_wallet_b2c')
+    .select('saldo')
+    .eq('cliente_id', clienteId)
+    .maybeSingle();
+  if (!data) return;
+  const saldo = parseFloat(data.saldo || 0);
+  card.style.display = 'block';
+  document.getElementById('wallet-saldo-perfil').textContent =
+    '$' + saldo.toLocaleString('es-AR', { minimumFractionDigits: 2 });
+  if (saldo === 0) {
+    document.getElementById('wallet-sub-perfil').textContent = 'Comprá para ganar cashback';
+  }
 }
 
 async function cerrarSesion() {

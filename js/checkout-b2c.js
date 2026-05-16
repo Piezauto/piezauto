@@ -10,9 +10,11 @@ const PAGO_INFO = {
 
 let _cliente      = null;
 let _talleres     = [];
-let _tallerSel    = null; // { id, nombre, direccion, localidad, whatsapp }
+let _tallerSel    = null;
 let _metodoPago   = 'manual';
 let _operacionId  = null;
+let _walletSaldo  = 0;
+let _walletUsar   = 0;
 
 // ── Init ────────────────────────────────────────────────────────────
 
@@ -40,6 +42,7 @@ async function initCheckout() {
   await Promise.all([
     cargarDatosCliente(),
     cargarTalleres(),
+    cargarWalletDisponible(),
   ]);
 
   renderResumen();
@@ -141,6 +144,52 @@ function seleccionarPago(tipo) {
   document.getElementById('pago-info').innerHTML = PAGO_INFO[tipo] || '';
 }
 
+// ── Wallet en checkout ────────────────────────────────────────────────
+
+async function cargarWalletDisponible() {
+  if (!_cliente?.id) return;
+  const { data } = await dbB2C
+    .from('cat_wallet_b2c')
+    .select('saldo')
+    .eq('cliente_id', _cliente.id)
+    .maybeSingle();
+  _walletSaldo = parseFloat(data?.saldo || 0);
+  if (_walletSaldo < 0.01) return;
+  const box = document.getElementById('wallet-checkout-box');
+  if (box) box.classList.add('visible');
+  const txt = document.getElementById('wallet-disp-txt');
+  if (txt) txt.textContent = '$' + _walletSaldo.toLocaleString('es-AR', { minimumFractionDigits: 2 });
+}
+
+function actualizarWalletDescuento() {
+  const input = document.getElementById('wallet-usar-monto');
+  const row   = document.getElementById('wallet-descuento-row');
+  const txt   = document.getElementById('wallet-descuento-txt');
+  const { total } = calcularTotales();
+
+  let val = parseFloat(input.value) || 0;
+  val = Math.min(val, _walletSaldo, total);
+  val = Math.max(val, 0);
+  _walletUsar = val;
+
+  if (val > 0) {
+    row.style.display = 'flex';
+    txt.textContent = '-$' + val.toLocaleString('es-AR', { minimumFractionDigits: 2 });
+    const totalFinal = total - val;
+    document.getElementById('res-total').textContent = '$' + totalFinal.toLocaleString('es-AR');
+  } else {
+    row.style.display = 'none';
+    renderResumen();
+  }
+}
+
+function aplicarMaxWallet() {
+  const { total } = calcularTotales();
+  const max = Math.min(_walletSaldo, total);
+  const input = document.getElementById('wallet-usar-monto');
+  if (input) { input.value = max.toFixed(2); actualizarWalletDescuento(); }
+}
+
 // ── Resumen ───────────────────────────────────────────────────────────
 
 function renderResumen() {
@@ -206,6 +255,8 @@ async function confirmarPedido() {
 
     // 7. Calcular totales
     const { subtotal, total } = calcularTotales();
+    const walletAplicado = Math.min(_walletUsar, _walletSaldo, total);
+    const totalFinal = total - walletAplicado;
 
     const opPayload = {
       cliente_id:                  _cliente.id,
@@ -213,8 +264,9 @@ async function confirmarPedido() {
       metodo_pago:                 _metodoPago,
       estado:                      'pendiente',
       subtotal,
-      total,
-      descuento:                   0,
+      total:                       totalFinal,
+      descuento:                   walletAplicado,
+      wallet_usado:                walletAplicado,
       direccion_entrega:           direccion,
       pendiente_aprobacion_taller: !!_tallerSel,
       notas: JSON.stringify({
@@ -263,6 +315,18 @@ async function confirmarPedido() {
     if (lineas.length) await dbB2C.from('cat_operaciones_b2c_items').insert(lineas);
 
     _operacionId = opId;
+
+    // 8b. Debitar wallet si corresponde
+    if (walletAplicado > 0) {
+      await dbB2C.rpc('fn_aplicar_movimiento_wallet', {
+        p_cliente_id:   _cliente.id,
+        p_tipo:         'debito',
+        p_concepto:     'Pago operación #' + opId.slice(0, 8),
+        p_monto:        walletAplicado,
+        p_operacion_id: opId,
+        p_vence_at:     null,
+      }).catch(() => {});
+    }
 
     // 9. Notificar al taller
     if (_tallerSel?.id) {

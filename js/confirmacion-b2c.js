@@ -47,6 +47,7 @@ async function initConfirmacion() {
     .eq('operacion_id', opId);
 
   renderConfirmacion(op, lineas || []);
+  mostrarCashbackSiExiste(op);
 }
 
 function renderConfirmacion(op, lineas) {
@@ -100,6 +101,19 @@ function renderConfirmacion(op, lineas) {
   // Mostrar
   document.getElementById('loading-wrap').style.display    = 'none';
   document.getElementById('gracias-contenido').style.display = 'block';
+}
+
+async function mostrarCashbackSiExiste(op) {
+  if (!op?.cliente_id) return;
+  const cashback = Math.round(Number(op.total || 0) * 0.01 * 100) / 100;
+  if (cashback < 0.01) return;
+  const section = document.getElementById('cashback-section');
+  const monto   = document.getElementById('cashback-monto');
+  const btnWallet = document.getElementById('btn-wallet-gracias');
+  if (!section) return;
+  section.style.display = 'block';
+  if (monto) monto.textContent = '$' + cashback.toLocaleString('es-AR', { minimumFractionDigits: 2 });
+  if (btnWallet) btnWallet.style.display = 'block';
 }
 
 function parseNotas(notas) {

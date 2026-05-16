@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mi Wallet — Piezauto</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="stylesheet" href="css/estilos.css">
+  <style>
+    body { background: var(--gris-claro); }
+    .wallet-page { max-width: 720px; margin: 0 auto; padding: 28px 16px 72px; }
+
+    .wallet-hero {
+      background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+      border-radius: 16px;
+      padding: 28px 24px;
+      color: #fff;
+      margin-bottom: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    .wallet-hero::after {
+      content: '💳';
+      position: absolute;
+      right: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 72px;
+      opacity: 0.08;
+    }
+    .wallet-hero-label { font-size: 12px; color: #aaa; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 6px; }
+    .wallet-hero-saldo { font-size: 40px; font-weight: 800; color: #fff; margin-bottom: 4px; }
+    .wallet-hero-sub { font-size: 13px; color: #888; margin-bottom: 20px; }
+    .wallet-hero-stats { display: flex; gap: 24px; }
+    .wh-stat { }
+    .wh-stat-label { font-size: 11px; color: #777; }
+    .wh-stat-val { font-size: 16px; font-weight: 700; color: #ddd; }
+
+    /* Tabs */
+    .wallet-tabs { display: flex; gap: 4px; background: #fff; border-radius: 10px; padding: 4px; box-shadow: var(--sombra); margin-bottom: 16px; }
+    .wallet-tab { flex: 1; padding: 10px 4px; text-align: center; font-size: 13px; font-weight: 600; color: #888; border-radius: 7px; cursor: pointer; transition: all .2s; white-space: nowrap; }
+    .wallet-tab.activo { background: var(--rojo); color: #fff; }
+
+    .wallet-panel { display: none; }
+    .wallet-panel.activo { display: block; }
+
+    /* Movimientos */
+    .mov-card { background: #fff; border-radius: 12px; box-shadow: var(--sombra); overflow: hidden; }
+    .mov-empty { text-align: center; padding: 40px 20px; color: #aaa; font-size: 14px; }
+    .mov-item { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-bottom: 1px solid #f5f5f5; }
+    .mov-item:last-child { border-bottom: none; }
+    .mov-icon { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+    .mov-icon.credito   { background: #e8f5e9; }
+    .mov-icon.debito    { background: #fce8e8; }
+    .mov-icon.vencimiento { background: #fff3e0; }
+    .mov-icon.ajuste    { background: #e3f2fd; }
+    .mov-info { flex: 1; min-width: 0; }
+    .mov-concepto { font-size: 13px; font-weight: 600; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .mov-fecha { font-size: 11px; color: #aaa; margin-top: 2px; }
+    .mov-monto { font-size: 15px; font-weight: 800; flex-shrink: 0; }
+    .mov-monto.credito   { color: #2e7d32; }
+    .mov-monto.debito    { color: var(--rojo); }
+    .mov-monto.vencimiento { color: #e65100; }
+    .mov-monto.ajuste    { color: #1565c0; }
+    .mov-vence { font-size: 10px; color: #bbb; display: block; }
+
+    /* Referidos */
+    .ref-info-card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: var(--sombra); margin-bottom: 16px; }
+    .ref-info-title { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+    .ref-info-text { font-size: 13px; color: #555; line-height: 1.7; }
+    .ref-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #fff; border-radius: 10px; box-shadow: var(--sombra); margin-bottom: 10px; }
+    .ref-num { width: 32px; height: 32px; background: var(--gris-claro); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; color: #555; flex-shrink: 0; }
+    .ref-nombre { font-size: 13px; font-weight: 600; flex: 1; }
+    .ref-estado { font-size: 11px; padding: 3px 9px; border-radius: 20px; font-weight: 600; }
+    .ref-estado.nuevo       { background: #e3f2fd; color: #1565c0; }
+    .ref-estado.contactado  { background: #fff3e0; color: #e65100; }
+    .ref-estado.primera_compra { background: #e8f5e9; color: #2e7d32; }
+    .ref-estado.activo      { background: #e8f5e9; color: #2e7d32; }
+
+    /* Referir un taller */
+    .referir-card { background: #fff; border-radius: 12px; padding: 24px; box-shadow: var(--sombra); }
+    .referir-title { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+    .referir-sub { font-size: 13px; color: #666; margin-bottom: 20px; line-height: 1.6; }
+    .referir-form-row { margin-bottom: 14px; }
+    .referir-form-row label { display: block; font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 5px; }
+    .referir-form-row input { width: 100%; padding: 10px 12px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 14px; outline: none; box-sizing: border-box; transition: border-color .2s; }
+    .referir-form-row input:focus { border-color: var(--rojo); }
+    .btn-referir { background: var(--rojo); color: #fff; border: none; border-radius: 8px; padding: 12px 24px; font-size: 14px; font-weight: 700; cursor: pointer; width: 100%; transition: opacity .2s; }
+    .btn-referir:hover { opacity: .88; }
+    .btn-referir:disabled { opacity: .5; cursor: not-allowed; }
+    .referir-msg { text-align: center; font-size: 13px; min-height: 18px; margin-top: 10px; }
+    .referir-msg.ok  { color: #2e7d32; }
+    .referir-msg.err { color: var(--rojo); }
+
+    .spinner-wrap { display: flex; justify-content: center; padding: 40px 0; }
+    .spinner { width: 30px; height: 30px; border: 3px solid #eee; border-top-color: var(--rojo); border-radius: 50%; animation: spin .8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .badge-vence { font-size: 10px; padding: 2px 6px; border-radius: 10px; background: #fff3e0; color: #e65100; margin-left: 6px; }
+  </style>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script src="js/auth-b2c.js"></script>
+
+<div id="header-b2c-root"></div>
+<script src="js/header-b2c.js"></script>
+
+<div class="wallet-page">
+
+  <div id="loading-wrap" class="spinner-wrap"><div class="spinner"></div></div>
+
+  <div id="wallet-contenido" style="display:none">
+
+    <!-- Hero saldo -->
+    <div class="wallet-hero">
+      <div class="wallet-hero-label">Saldo disponible</div>
+      <div class="wallet-hero-saldo" id="hero-saldo">$0</div>
+      <div class="wallet-hero-sub">Usalo en tu próxima compra</div>
+      <div class="wallet-hero-stats">
+        <div class="wh-stat">
+          <div class="wh-stat-label">Total ganado</div>
+          <div class="wh-stat-val" id="stat-ganado">$0</div>
+        </div>
+        <div class="wh-stat">
+          <div class="wh-stat-label">Total usado</div>
+          <div class="wh-stat-val" id="stat-usado">$0</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="wallet-tabs">
+      <div class="wallet-tab activo" onclick="switchTab('movimientos')">Movimientos</div>
+      <div class="wallet-tab" onclick="switchTab('referidos')">Referidos</div>
+      <div class="wallet-tab" onclick="switchTab('referir')">Referir taller</div>
+    </div>
+
+    <!-- Panel: Movimientos -->
+    <div class="wallet-panel activo" id="panel-movimientos">
+      <div class="mov-card" id="lista-movimientos">
+        <div class="spinner-wrap"><div class="spinner"></div></div>
+      </div>
+    </div>
+
+    <!-- Panel: Referidos -->
+    <div class="wallet-panel" id="panel-referidos">
+      <div class="ref-info-card">
+        <div class="ref-info-title">¿Cómo funciona?</div>
+        <div class="ref-info-text">
+          Cuando referís un taller nuevo a Piezauto y ese taller hace su primera compra,
+          recibís un <strong>crédito del 10%</strong> del valor de esa compra en tu wallet.
+          Los créditos son válidos por <strong>12 meses</strong>.
+        </div>
+      </div>
+      <div id="lista-referidos"></div>
+    </div>
+
+    <!-- Panel: Referir taller -->
+    <div class="wallet-panel" id="panel-referir">
+      <div class="referir-card">
+        <div class="referir-title">Referir un taller</div>
+        <div class="referir-sub">
+          Completá los datos del taller que querés recomendarnos. Cuando el taller se una
+          a la red Piezauto y haga su primera compra, recibís crédito en tu wallet.
+        </div>
+        <div class="referir-form-row">
+          <label>Nombre del taller *</label>
+          <input id="ref-nombre" type="text" placeholder="Ej: Taller Don Pedro">
+        </div>
+        <div class="referir-form-row">
+          <label>Teléfono / WhatsApp</label>
+          <input id="ref-telefono" type="tel" placeholder="+54 9 11 ...">
+        </div>
+        <div class="referir-form-row">
+          <label>Localidad</label>
+          <input id="ref-localidad" type="text" placeholder="Ej: San Justo">
+        </div>
+        <div class="referir-form-row">
+          <label>Contacto en el taller</label>
+          <input id="ref-contacto" type="text" placeholder="Nombre de quien lo conocés">
+        </div>
+        <button class="btn-referir" id="btn-referir" onclick="enviarReferido()">Enviar referido →</button>
+        <div class="referir-msg" id="referir-msg"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const FMT = v => '$' + Number(v || 0).toLocaleString('es-AR', { minimumFractionDigits: 2 });
+const FDATE = ts => new Date(ts).toLocaleDateString('es-AR', { day:'2-digit', month:'short', year:'numeric' });
+
+const MOV_ICON = { credito:'💚', debito:'🔴', vencimiento:'⚠️', ajuste:'🔵' };
+const MOV_LABEL = { credito:'Crédito', debito:'Usado', vencimiento:'Vencido', ajuste:'Ajuste' };
+
+let _clienteId = null;
+
+async function init() {
+  const { data } = await dbB2C.auth.getSession();
+  if (!data?.session) { window.location.href = '/login?redirect=/mi-wallet'; return; }
+
+  const cliente = await getClienteActual();
+  if (!cliente) { window.location.href = '/login'; return; }
+  _clienteId = cliente.id;
+
+  await cargarWallet();
+  document.getElementById('loading-wrap').style.display = 'none';
+  document.getElementById('wallet-contenido').style.display = 'block';
+
+  cargarMovimientos();
+}
+
+async function cargarWallet() {
+  const { data } = await dbB2C
+    .from('cat_wallet_b2c')
+    .select('saldo, total_ganado, total_usado')
+    .eq('cliente_id', _clienteId)
+    .maybeSingle();
+
+  document.getElementById('hero-saldo').textContent  = FMT(data?.saldo || 0);
+  document.getElementById('stat-ganado').textContent = FMT(data?.total_ganado || 0);
+  document.getElementById('stat-usado').textContent  = FMT(data?.total_usado || 0);
+}
+
+async function cargarMovimientos() {
+  const cont = document.getElementById('lista-movimientos');
+  const { data, error } = await dbB2C
+    .from('cat_wallet_movimientos')
+    .select('*')
+    .eq('cliente_id', _clienteId)
+    .order('created_at', { ascending: false })
+    .limit(60);
+
+  if (error || !data?.length) {
+    cont.innerHTML = '<div class="mov-empty">No tenés movimientos todavía.<br>Completá una compra para ganar tu primer cashback.</div>';
+    return;
+  }
+
+  cont.innerHTML = data.map(m => {
+    const venceTxt = m.vence_at && m.tipo === 'credito'
+      ? `<span class="badge-vence">Vence ${FDATE(m.vence_at)}</span>`
+      : '';
+    return `
+      <div class="mov-item">
+        <div class="mov-icon ${m.tipo}">${MOV_ICON[m.tipo] || '💳'}</div>
+        <div class="mov-info">
+          <div class="mov-concepto">${m.concepto}</div>
+          <div class="mov-fecha">${FDATE(m.created_at)}${venceTxt}</div>
+        </div>
+        <div class="mov-monto ${m.tipo}">${m.tipo === 'debito' ? '-' : '+'}${FMT(m.monto)}</div>
+      </div>`;
+  }).join('');
+}
+
+async function cargarReferidos() {
+  const cont = document.getElementById('lista-referidos');
+  const { data } = await dbB2C
+    .from('cat_referidos_talleres')
+    .select('id, estado, created_at, credito_generado, cat_recomendaciones_talleres(nombre)')
+    .eq('cliente_referente_id', _clienteId)
+    .order('created_at', { ascending: false });
+
+  if (!data?.length) {
+    cont.innerHTML = '<div style="text-align:center;padding:30px;color:#aaa;font-size:13px">Todavía no referiste ningún taller.</div>';
+    return;
+  }
+
+  const ESTADO_LABEL = { nuevo:'Nuevo', contactado:'Contactado', primera_compra:'1ª compra', activo:'Activo', inactivo:'Inactivo' };
+  cont.innerHTML = data.map((r, i) => `
+    <div class="ref-item">
+      <div class="ref-num">${i + 1}</div>
+      <div class="ref-nombre">${r.cat_recomendaciones_talleres?.nombre || 'Taller referido'}</div>
+      ${r.credito_generado ? `<div style="font-size:12px;font-weight:700;color:#2e7d32">${FMT(r.credito_generado)}</div>` : ''}
+      <div class="ref-estado ${r.estado}">${ESTADO_LABEL[r.estado] || r.estado}</div>
+    </div>`
+  ).join('');
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.wallet-tab').forEach((t, i) => {
+    const tabs = ['movimientos', 'referidos', 'referir'];
+    t.classList.toggle('activo', tabs[i] === tab);
+  });
+  document.querySelectorAll('.wallet-panel').forEach(p => p.classList.remove('activo'));
+  document.getElementById('panel-' + tab).classList.add('activo');
+
+  if (tab === 'referidos') cargarReferidos();
+}
+
+async function enviarReferido() {
+  const nombre   = document.getElementById('ref-nombre').value.trim();
+  const telefono = document.getElementById('ref-telefono').value.trim();
+  const localidad = document.getElementById('ref-localidad').value.trim();
+  const contacto = document.getElementById('ref-contacto').value.trim();
+  const msg = document.getElementById('referir-msg');
+
+  if (!nombre) { msg.textContent = 'El nombre del taller es obligatorio.'; msg.className = 'referir-msg err'; return; }
+
+  document.getElementById('btn-referir').disabled = true;
+  msg.textContent = '';
+
+  // Primero crear el taller en cat_recomendaciones_talleres (estado pendiente)
+  const { data: taller, error: errT } = await dbB2C
+    .from('cat_recomendaciones_talleres')
+    .insert({
+      nombre,
+      telefono: telefono || null,
+      localidad: localidad || null,
+      estado: 'pendiente',
+    })
+    .select('id')
+    .single();
+
+  if (errT) {
+    msg.textContent = 'No se pudo guardar el taller. Intentá de nuevo.';
+    msg.className = 'referir-msg err';
+    document.getElementById('btn-referir').disabled = false;
+    return;
+  }
+
+  // Luego crear el referido
+  const { error: errR } = await dbB2C
+    .from('cat_referidos_talleres')
+    .insert({
+      taller_id: taller.id,
+      cliente_referente_id: _clienteId,
+      notas: contacto ? `Contacto: ${contacto}` : null,
+    });
+
+  if (errR) {
+    msg.textContent = 'Referido guardado parcialmente. Contactate con soporte.';
+    msg.className = 'referir-msg err';
+  } else {
+    msg.textContent = '¡Referido enviado! Te avisamos cuando el taller se una.';
+    msg.className = 'referir-msg ok';
+    ['ref-nombre','ref-telefono','ref-localidad','ref-contacto'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+  }
+
+  document.getElementById('btn-referir').disabled = false;
+}
+
+init();
+</script>
+</body>
+</html>
