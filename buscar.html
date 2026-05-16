@@ -1,15 +1,15 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Buscar piezas — Piezauto</title>
+  <title>Buscar piezas â€” Piezauto</title>
   <link rel="stylesheet" href="css/estilos.css">
   <style>
     body { background: var(--gris-claro); }
 
-    /* ── Header B2C ── */
+    /* â”€â”€ Header B2C â”€â”€ */
     #header-b2c {
       background: var(--negro);
       position: sticky;
@@ -111,7 +111,7 @@
       .hb2c-logo { font-size: 17px; }
     }
 
-    /* ── Layout ── */
+    /* â”€â”€ Layout â”€â”€ */
     .buscar-layout {
       max-width: 1100px;
       margin: 0 auto;
@@ -126,7 +126,7 @@
       }
     }
 
-    /* ── Sidebar filtros ── */
+    /* â”€â”€ Sidebar filtros â”€â”€ */
     .filtros-panel {
       background: var(--blanco);
       border-radius: 12px;
@@ -176,7 +176,7 @@
     }
     .btn-limpiar-filtros:hover { background: var(--gris-claro); }
 
-    /* ── Banner vehículo ── */
+    /* â”€â”€ Banner vehÃ­culo â”€â”€ */
     #banner-vehiculo {
       display: none;
       align-items: center;
@@ -200,7 +200,7 @@
       padding: 0;
     }
 
-    /* ── Resultados ── */
+    /* â”€â”€ Resultados â”€â”€ */
     .resultados-header {
       display: flex;
       align-items: center;
@@ -238,7 +238,7 @@
     #sin-resultados h3 { font-size: 17px; font-weight: 700; margin-bottom: 6px; color: var(--negro); }
     .error-msg { color: var(--rojo); padding: 16px; font-size: 14px; }
 
-    /* ── Tarjetas SKU ── */
+    /* â”€â”€ Tarjetas SKU â”€â”€ */
     #resultados { display: flex; flex-direction: column; gap: 10px; }
     .tarjeta-sku {
       background: var(--blanco);
@@ -312,7 +312,7 @@
       .tarjeta-sku-precio { font-size: 20px; }
     }
 
-    /* ── Paginación ── */
+    /* â”€â”€ PaginaciÃ³n â”€â”€ */
     #paginacion {
       display: none;
       justify-content: center;
@@ -335,7 +335,7 @@
     .btn-pag:disabled { opacity: 0.4; cursor: default; }
     .pag-info { font-size: 13px; color: var(--gris-text); }
 
-    /* ── Vacío inicial ── */
+    /* â”€â”€ VacÃ­o inicial â”€â”€ */
     .buscar-hero {
       text-align: center;
       padding: 48px 16px;
@@ -373,7 +373,7 @@
     <button id="btn-limpiar-filtros" class="btn-limpiar-filtros">Limpiar filtros</button>
   </aside>
 
-  <!-- Área de resultados -->
+  <!-- Ãrea de resultados -->
   <section>
     <div class="resultados-header">
       <span id="stats-busqueda"></span>
@@ -381,13 +381,13 @@
 
     <div id="loader-busqueda">
       <div class="spinner"></div>
-      Buscando…
+      Buscandoâ€¦
     </div>
 
     <div id="sin-resultados">
-      <div class="sin-icono">🔍</div>
+      <div class="sin-icono">ðŸ”</div>
       <h3>Sin resultados</h3>
-      <p>Probá con otras palabras o eliminá los filtros.</p>
+      <p>ProbÃ¡ con otras palabras o eliminÃ¡ los filtros.</p>
     </div>
 
     <div id="resultados"></div>
@@ -398,6 +398,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase.js"></script>
+<script src="js/auth-check.js"></script>
 <script src="js/auth-b2c.js"></script>
 <script src="js/header-b2c.js"></script>
 <script src="js/buscar.js"></script>

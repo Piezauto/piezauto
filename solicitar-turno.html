@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Solicitar turno — Piezauto</title>
+  <title>Solicitar turno â€” Piezauto</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="stylesheet" href="/css/estilos.css">
   <style>
@@ -96,7 +96,7 @@
     .btn-back { background:var(--gris-claro); color:var(--negro); padding:12px 16px; }
     .btn-back:hover { background:#e8e8e8; }
 
-    /* Confirmación */
+    /* ConfirmaciÃ³n */
     .confirmacion { text-align:center; padding:20px 0; }
     .conf-icon  { font-size:56px; margin-bottom:16px; }
     .conf-titulo { font-size:20px; font-weight:800; margin-bottom:8px; }
@@ -120,7 +120,7 @@
 
 <div style="background:var(--negro);padding:0 16px;height:52px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(0,0,0,.25)">
   <a href="/" style="font-weight:900;font-size:16px;color:var(--rojo);text-decoration:none">Piezauto</a>
-  <a href="/operaciones.html" style="font-size:12px;color:#aaa;text-decoration:none">Mis turnos →</a>
+  <a href="/operaciones.html" style="font-size:12px;color:#aaa;text-decoration:none">Mis turnos â†’</a>
 </div>
 
 <div class="wrap">
@@ -143,7 +143,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-// ─── ESTADO ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ ESTADO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 let paso = 1;
 let sel = {
   tipo: null,
@@ -163,15 +163,15 @@ let turnosOcup = [];
 let mesSelec   = new Date();
 
 const TIPOS = [
-  { val:'inspeccion_presupuesto', icon:'🔍', label:'Inspección / Presupuesto', desc:'Evaluamos el vehículo y te damos un presupuesto detallado.' },
-  { val:'inicio_trabajo',         icon:'🔧', label:'Inicio de trabajo',         desc:'Ya tenés el presupuesto aprobado y querés iniciar la reparación.' },
-  { val:'consulta',               icon:'💬', label:'Consulta',                  desc:'Tenés dudas o querés hablar con el taller antes de decidir.' },
-  { val:'reclamo',                icon:'📢', label:'Reclamo',                   desc:'Seguimiento de un trabajo realizado o inconveniente.' },
+  { val:'inspeccion_presupuesto', icon:'ðŸ”', label:'InspecciÃ³n / Presupuesto', desc:'Evaluamos el vehÃ­culo y te damos un presupuesto detallado.' },
+  { val:'inicio_trabajo',         icon:'ðŸ”§', label:'Inicio de trabajo',         desc:'Ya tenÃ©s el presupuesto aprobado y querÃ©s iniciar la reparaciÃ³n.' },
+  { val:'consulta',               icon:'ðŸ’¬', label:'Consulta',                  desc:'TenÃ©s dudas o querÃ©s hablar con el taller antes de decidir.' },
+  { val:'reclamo',                icon:'ðŸ“¢', label:'Reclamo',                   desc:'Seguimiento de un trabajo realizado o inconveniente.' },
 ];
 
-// ─── INIT ─────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ INIT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 (async () => {
-  // Pre-cargar sesión del cliente si está logueado
+  // Pre-cargar sesiÃ³n del cliente si estÃ¡ logueado
   try {
     const { data } = await dbB2C.auth.getSession();
     if (data?.session) {
@@ -182,7 +182,7 @@ const TIPOS = [
         sel.nombre     = [cli.nombre, cli.apellido].filter(Boolean).join(' ');
         sel.telefono   = cli.telefono || '';
       }
-      // Intentar precargar vehículo principal
+      // Intentar precargar vehÃ­culo principal
       let veh = null;
       try {
         const { data: vehData } = await dbB2C.from('cat_clientes_vehiculos').select('*').eq('cliente_id', sel.cliente_id).order('created_at', { ascending: false }).limit(1).single();
@@ -199,7 +199,7 @@ const TIPOS = [
   renderPaso();
 })();
 
-// ─── RENDER PASOS ─────────────────────────────────────────────────────────────
+// â”€â”€â”€ RENDER PASOS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function renderPaso() {
   actualizarStepper();
   const cont = document.getElementById('contenido');
@@ -210,12 +210,12 @@ function renderPaso() {
   else if (paso === 5) renderConfirmacion(cont);
 }
 
-// PASO 1 — Tipo de turno
+// PASO 1 â€” Tipo de turno
 function renderPaso1(cont) {
   cont.innerHTML = `
     <div class="card">
-      <div class="card-titulo">¿Qué tipo de turno necesitás?</div>
-      <div class="card-sub">Seleccioná el tipo de atención que buscás</div>
+      <div class="card-titulo">Â¿QuÃ© tipo de turno necesitÃ¡s?</div>
+      <div class="card-sub">SeleccionÃ¡ el tipo de atenciÃ³n que buscÃ¡s</div>
       <div class="tipo-grid">
         ${TIPOS.map(t => `
         <div class="tipo-card ${sel.tipo === t.val ? 'sel' : ''}" onclick="selTipo('${t.val}')">
@@ -225,27 +225,27 @@ function renderPaso1(cont) {
         </div>`).join('')}
       </div>
       <div class="nav-btns">
-        <button class="btn btn-primary" onclick="irPaso(2)" ${!sel.tipo ? 'disabled' : ''}>Siguiente →</button>
+        <button class="btn btn-primary" onclick="irPaso(2)" ${!sel.tipo ? 'disabled' : ''}>Siguiente â†’</button>
       </div>
     </div>`;
 }
 
 function selTipo(tipo) { sel.tipo = tipo; renderPaso(); }
 
-// PASO 2 — Selección de taller
+// PASO 2 â€” SelecciÃ³n de taller
 const TIPO_BADGE = {
-  taller_chapa_pintura:    '🎨 Chapa',
-  taller_mecanico:         '🔧 Mecánico',
-  lubricentro:             '🛢️ Lubricentro',
-  gomeria:                 '🛞 Gomería',
-  electricidad_automotor:  '⚡ Electricidad',
-  cerrajeria_automotor:    '🔑 Cerrajería',
-  mixto:                   '🏪 Mixto',
-  otro:                    '🔩 Otro',
+  taller_chapa_pintura:    'ðŸŽ¨ Chapa',
+  taller_mecanico:         'ðŸ”§ MecÃ¡nico',
+  lubricentro:             'ðŸ›¢ï¸ Lubricentro',
+  gomeria:                 'ðŸ›ž GomerÃ­a',
+  electricidad_automotor:  'âš¡ Electricidad',
+  cerrajeria_automotor:    'ðŸ”‘ CerrajerÃ­a',
+  mixto:                   'ðŸª Mixto',
+  otro:                    'ðŸ”© Otro',
 };
 
 async function renderPaso2(cont) {
-  cont.innerHTML = `<div class="card"><div class="card-titulo">Elegí un taller</div><div class="spinner-wrap"><div class="spinner"></div></div></div>`;
+  cont.innerHTML = `<div class="card"><div class="card-titulo">ElegÃ­ un taller</div><div class="spinner-wrap"><div class="spinner"></div></div></div>`;
   if (!talleres.length) {
     try {
       const { data } = await dbB2C.from('cat_recomendaciones_talleres')
@@ -257,20 +257,20 @@ async function renderPaso2(cont) {
   }
   cont.innerHTML = `
     <div class="card">
-      <div class="card-titulo">Elegí un taller</div>
+      <div class="card-titulo">ElegÃ­ un taller</div>
       <div class="card-sub">Talleres socios de Piezauto en tu zona</div>
       ${talleres.length ? talleres.map(t => {
-        const tipoBadge = TIPO_BADGE[t.tipo_establecimiento] || '🔧 Taller';
-        const expressBadge = t.atencion_express ? `<span style="font-size:10px;background:#d1fae5;color:#065f46;border-radius:10px;padding:2px 7px;font-weight:700;margin-left:4px">🚀 Sin turno</span>` : '';
+        const tipoBadge = TIPO_BADGE[t.tipo_establecimiento] || 'ðŸ”§ Taller';
+        const expressBadge = t.atencion_express ? `<span style="font-size:10px;background:#d1fae5;color:#065f46;border-radius:10px;padding:2px 7px;font-weight:700;margin-left:4px">ðŸš€ Sin turno</span>` : '';
         return `
         <div class="taller-item ${sel.taller_id === t.id ? 'sel' : ''}" onclick="selTaller('${t.id}','${esc(t.nombre)}',${!!t.sin_turno_previo})">
-          <div class="taller-icon">${t.tipo_establecimiento === 'lubricentro' ? '🛢️' : t.tipo_establecimiento === 'gomeria' ? '🛞' : '🔧'}</div>
+          <div class="taller-icon">${t.tipo_establecimiento === 'lubricentro' ? 'ðŸ›¢ï¸' : t.tipo_establecimiento === 'gomeria' ? 'ðŸ›ž' : 'ðŸ”§'}</div>
           <div style="flex:1">
             <div class="taller-nombre">
               ${esc(t.nombre)}
               <span style="font-size:10px;background:#f0f0f0;color:#555;border-radius:10px;padding:2px 7px;font-weight:700;margin-left:4px">${tipoBadge}</span>
               ${expressBadge}
-              <a href="/taller-perfil?taller_id=${t.id}" target="_blank" onclick="event.stopPropagation()" style="font-size:11px;color:#2563eb;font-weight:600;text-decoration:none;margin-left:6px">Ver perfil →</a>
+              <a href="/taller-perfil?taller_id=${t.id}" target="_blank" onclick="event.stopPropagation()" style="font-size:11px;color:#2563eb;font-weight:600;text-decoration:none;margin-left:6px">Ver perfil â†’</a>
             </div>
             <div class="taller-dir">${esc(t.direccion || '')}${t.localidad ? ', ' + esc(t.localidad) : ''}</div>
           </div>
@@ -278,8 +278,8 @@ async function renderPaso2(cont) {
         </div>`;
       }).join('') : '<div class="empty">No hay talleres disponibles.</div>'}
       <div class="nav-btns">
-        <button class="btn btn-back" onclick="irPaso(1)">← Atrás</button>
-        <button class="btn btn-primary" onclick="irPasoSiguienteTaller()" ${!sel.taller_id ? 'disabled' : ''}>Siguiente →</button>
+        <button class="btn btn-back" onclick="irPaso(1)">â† AtrÃ¡s</button>
+        <button class="btn btn-primary" onclick="irPasoSiguienteTaller()" ${!sel.taller_id ? 'disabled' : ''}>Siguiente â†’</button>
       </div>
     </div>`;
 }
@@ -304,9 +304,9 @@ function irPasoSiguienteTaller() {
 // Gancho en renderPaso4 para mostrar aviso express si aplica
 const _renderPaso4Original = typeof renderPaso4 === 'function' ? renderPaso4 : null;
 
-// PASO 3 — Fecha y horario
+// PASO 3 â€” Fecha y horario
 async function renderPaso3(cont) {
-  cont.innerHTML = `<div class="card"><div class="card-titulo">Elegí fecha y horario</div><div class="spinner-wrap"><div class="spinner"></div></div></div>`;
+  cont.innerHTML = `<div class="card"><div class="card-titulo">ElegÃ­ fecha y horario</div><div class="spinner-wrap"><div class="spinner"></div></div></div>`;
 
   // Cargar disponibilidad, bloqueos y turnos ya ocupados del mes
   await cargarDisponibMes();
@@ -371,7 +371,7 @@ function renderPaso3UI(cont) {
 
   const mesStr = mesSelec.toLocaleDateString('es-AR', { month:'long', year:'numeric' });
 
-  // Horarios del día seleccionado
+  // Horarios del dÃ­a seleccionado
   let horariosHTML = '';
   if (sel.fecha) {
     const dowSel = new Date(sel.fecha + 'T00:00:00').getDay();
@@ -394,18 +394,18 @@ function renderPaso3UI(cont) {
 
   cont.innerHTML = `
     <div class="card">
-      <div class="card-titulo">Elegí fecha y horario</div>
+      <div class="card-titulo">ElegÃ­ fecha y horario</div>
       <div class="card-sub">${esc(sel.taller_nombre)}</div>
       <div class="cal-mini-nav">
-        <button class="cal-mini-btn" onclick="navMesSol(-1)">‹</button>
+        <button class="cal-mini-btn" onclick="navMesSol(-1)">â€¹</button>
         <div class="cal-mini-titulo">${mesStr}</div>
-        <button class="cal-mini-btn" onclick="navMesSol(1)">›</button>
+        <button class="cal-mini-btn" onclick="navMesSol(1)">â€º</button>
       </div>
       <div class="cal-wrap">${calHTML}</div>
       ${horariosHTML}
       <div class="nav-btns">
-        <button class="btn btn-back" onclick="irPaso(2)">← Atrás</button>
-        <button class="btn btn-primary" onclick="irPaso(4)" ${!sel.fecha || !sel.hora_inicio ? 'disabled' : ''}>Siguiente →</button>
+        <button class="btn btn-back" onclick="irPaso(2)">â† AtrÃ¡s</button>
+        <button class="btn btn-primary" onclick="irPaso(4)" ${!sel.fecha || !sel.hora_inicio ? 'disabled' : ''}>Siguiente â†’</button>
       </div>
     </div>`;
 }
@@ -433,25 +433,25 @@ function generarSlots(desde, hasta, durMin) {
   return slots;
 }
 
-// PASO 4 — Datos del cliente y vehículo
+// PASO 4 â€” Datos del cliente y vehÃ­culo
 function renderPaso4(cont) {
   cont.innerHTML = `
     <div class="card">
       <div class="card-titulo">Tus datos</div>
-      <div class="card-sub">Completá la información para confirmar el turno</div>
+      <div class="card-sub">CompletÃ¡ la informaciÃ³n para confirmar el turno</div>
 
       <div class="fr2">
         <div class="fg">
           <label class="fl">Nombre <span class="req">*</span></label>
-          <input class="fi" id="f-nombre" type="text" placeholder="Juan García" value="${esc(sel.nombre)}">
+          <input class="fi" id="f-nombre" type="text" placeholder="Juan GarcÃ­a" value="${esc(sel.nombre)}">
         </div>
         <div class="fg">
-          <label class="fl">Teléfono <span class="req">*</span></label>
+          <label class="fl">TelÃ©fono <span class="req">*</span></label>
           <input class="fi" id="f-telefono" type="tel" placeholder="11 5555-1234" value="${esc(sel.telefono)}">
         </div>
       </div>
 
-      <div style="font-size:11px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.04em;margin:16px 0 10px">Vehículo</div>
+      <div style="font-size:11px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.04em;margin:16px 0 10px">VehÃ­culo</div>
       <div class="fr2">
         <div class="fg">
           <label class="fl">Marca</label>
@@ -464,7 +464,7 @@ function renderPaso4(cont) {
       </div>
       <div class="fr2">
         <div class="fg">
-          <label class="fl">Año</label>
+          <label class="fl">AÃ±o</label>
           <input class="fi" id="f-anio" type="number" placeholder="2019" value="${esc(sel.veh_anio)}">
         </div>
         <div class="fg">
@@ -474,8 +474,8 @@ function renderPaso4(cont) {
       </div>
 
       <div class="fg">
-        <label class="fl">Descripción / Motivo <span class="req">*</span></label>
-        <textarea class="fta" id="f-motivo" placeholder="Describí brevemente qué necesitás o qué le pasa al vehículo…">${esc(sel.motivo)}</textarea>
+        <label class="fl">DescripciÃ³n / Motivo <span class="req">*</span></label>
+        <textarea class="fta" id="f-motivo" placeholder="DescribÃ­ brevemente quÃ© necesitÃ¡s o quÃ© le pasa al vehÃ­culoâ€¦">${esc(sel.motivo)}</textarea>
       </div>
       <div class="fg">
         <label class="fl">Notas adicionales</label>
@@ -485,27 +485,27 @@ function renderPaso4(cont) {
       <label style="display:flex;align-items:flex-start;gap:10px;padding:12px 0;cursor:pointer">
         <input type="checkbox" id="f-autoaprobar" style="margin-top:2px;accent-color:var(--rojo);width:16px;height:16px;flex-shrink:0" ${sel.autoaprobar ? 'checked' : ''}>
         <span>
-          <strong style="font-size:13px">Aprobar trabajos automáticamente</strong><br>
-          <span style="font-size:11px;color:#888;line-height:1.5">Si el taller registra trabajos en tu carnet a partir de este turno, se agregarán sin requerir tu aprobación.</span>
+          <strong style="font-size:13px">Aprobar trabajos automÃ¡ticamente</strong><br>
+          <span style="font-size:11px;color:#888;line-height:1.5">Si el taller registra trabajos en tu carnet a partir de este turno, se agregarÃ¡n sin requerir tu aprobaciÃ³n.</span>
         </span>
       </label>
 
       <div class="nav-btns">
-        <button class="btn btn-back" onclick="irPaso(3)">← Atrás</button>
+        <button class="btn btn-back" onclick="irPaso(3)">â† AtrÃ¡s</button>
         <button class="btn btn-primary" onclick="confirmarTurno()">Confirmar turno</button>
       </div>
     </div>`;
 }
 
-// PASO 5 — Confirmación
+// PASO 5 â€” ConfirmaciÃ³n
 function renderConfirmacion(cont) {
   cont.innerHTML = `
     <div class="card">
       <div class="confirmacion">
-        <div class="conf-icon">✅</div>
-        <div class="conf-titulo">¡Turno solicitado!</div>
-        <div class="conf-sub">Tu solicitud fue enviada al taller. Te van a confirmar por WhatsApp o email en las próximas horas.</div>
-        <div class="conf-num" id="confNum">—</div>
+        <div class="conf-icon">âœ…</div>
+        <div class="conf-titulo">Â¡Turno solicitado!</div>
+        <div class="conf-sub">Tu solicitud fue enviada al taller. Te van a confirmar por WhatsApp o email en las prÃ³ximas horas.</div>
+        <div class="conf-num" id="confNum">â€”</div>
         <div style="display:flex;flex-direction:column;gap:10px">
           <a href="/operaciones.html" class="btn btn-primary" style="text-decoration:none;text-align:center;display:block">Ver mis turnos</a>
           <a href="/" class="btn btn-back" style="text-decoration:none;text-align:center;display:block">Volver al inicio</div>
@@ -514,7 +514,7 @@ function renderConfirmacion(cont) {
     </div>`;
 }
 
-// ─── SUBMIT ───────────────────────────────────────────────────────────────────
+// â”€â”€â”€ SUBMIT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function confirmarTurno() {
   sel.nombre     = document.getElementById('f-nombre').value.trim();
   sel.telefono   = document.getElementById('f-telefono').value.trim();
@@ -527,8 +527,8 @@ async function confirmarTurno() {
   sel.autoaprobar  = document.getElementById('f-autoaprobar')?.checked || false;
 
   if (!sel.nombre)   { document.getElementById('f-nombre').classList.add('error'); showToast('El nombre es obligatorio','error'); return; }
-  if (!sel.telefono) { document.getElementById('f-telefono').classList.add('error'); showToast('El teléfono es obligatorio','error'); return; }
-  if (!sel.motivo)   { document.getElementById('f-motivo').classList.add('error'); showToast('Describí el motivo del turno','error'); return; }
+  if (!sel.telefono) { document.getElementById('f-telefono').classList.add('error'); showToast('El telÃ©fono es obligatorio','error'); return; }
+  if (!sel.motivo)   { document.getElementById('f-motivo').classList.add('error'); showToast('DescribÃ­ el motivo del turno','error'); return; }
 
   const payload = {
     taller_id:       sel.taller_id,
@@ -551,7 +551,7 @@ async function confirmarTurno() {
   try {
     const { data, error } = await dbB2C.from('cat_turnos').insert(payload).select().single();
     if (error) throw error;
-    // Guardar preferencia autoaprobar si el cliente está logueado
+    // Guardar preferencia autoaprobar si el cliente estÃ¡ logueado
     if (sel.cliente_id && sel.autoaprobar) {
       await dbB2C.from('cat_clientes_finales').update({ autoaprobar_trabajos: true }).eq('id', sel.cliente_id).catch(() => {});
     }
@@ -561,7 +561,7 @@ async function confirmarTurno() {
         taller_id: sel.taller_id,
         turno_id:  data.id,
         tipo: 'nueva_operacion',
-        mensaje: `Nuevo turno solicitado: ${sel.nombre} — ${sel.tipo.replace(/_/g,' ')} — ${sel.fecha} ${sel.hora_inicio}`,
+        mensaje: `Nuevo turno solicitado: ${sel.nombre} â€” ${sel.tipo.replace(/_/g,' ')} â€” ${sel.fecha} ${sel.hora_inicio}`,
       });
     } catch (_) {}
     paso = 5;
@@ -570,7 +570,7 @@ async function confirmarTurno() {
   } catch (e) { showToast('Error: ' + e.message, 'error'); }
 }
 
-// ─── NAV ─────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ NAV â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function irPaso(n) {
   paso = n;
   const cont = document.getElementById('contenido');
@@ -593,7 +593,7 @@ function actualizarStepper() {
   });
 }
 
-// ─── UTILS ────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ UTILS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 let toastTimer;

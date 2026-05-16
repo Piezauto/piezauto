@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Registrar trabajo — Piezauto</title>
+  <title>Registrar trabajo â€” Piezauto</title>
   <meta name="robots" content="noindex, nofollow">
   <link rel="stylesheet" href="css/estilos.css">
   <style>
@@ -50,7 +50,7 @@
     .form-grupo { margin-bottom: 14px; }
     .form-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
-    /* Selector de vehículo */
+    /* Selector de vehÃ­culo */
     .vh-sel-card {
       border: 2px solid #e8e8e8; border-radius: 10px; padding: 14px;
       cursor: pointer; transition: border-color .2s, background .2s;
@@ -102,6 +102,7 @@
 <body>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase.js"></script>
+<script src="js/auth-check.js"></script>
 <script src="js/auth-b2c.js"></script>
 <script src="js/utils-b2c.js"></script>
 
@@ -109,8 +110,8 @@
 <script src="js/header-b2c.js"></script>
 
 <div class="breadcrumb" id="breadcrumb-wrap">
-  <a href="/perfil" id="back-link">← Volver</a>
-  <span>›</span>
+  <a href="/perfil" id="back-link">â† Volver</a>
+  <span>â€º</span>
   <strong>Registrar trabajo</strong>
 </div>
 
@@ -118,7 +119,7 @@
 
   <!-- Stepper -->
   <div class="wiz-steps" id="wiz-stepper">
-    <div class="wiz-step active" id="stp-0"><div class="wiz-step-num">1</div><span>Vehículo</span></div>
+    <div class="wiz-step active" id="stp-0"><div class="wiz-step-num">1</div><span>VehÃ­culo</span></div>
     <div class="wiz-sep" id="sep-0"></div>
     <div class="wiz-step" id="stp-1"><div class="wiz-step-num">2</div><span>Servicio</span></div>
     <div class="wiz-sep" id="sep-1"></div>
@@ -127,81 +128,81 @@
     <div class="wiz-step" id="stp-3"><div class="wiz-step-num">4</div><span>Detalles</span></div>
   </div>
 
-  <!-- Paso 1: Vehículo -->
+  <!-- Paso 1: VehÃ­culo -->
   <div class="wiz-panel active" id="paso-0">
     <div class="card">
-      <div class="card-title">🚗 ¿A qué vehículo corresponde?</div>
-      <div id="vh-list"><p style="color:#aaa;font-size:13px">Cargando vehículos...</p></div>
+      <div class="card-title">ðŸš— Â¿A quÃ© vehÃ­culo corresponde?</div>
+      <div id="vh-list"><p style="color:#aaa;font-size:13px">Cargando vehÃ­culos...</p></div>
     </div>
     <div class="wiz-nav">
-      <button class="btn-next" id="btn-0" onclick="irPaso(1)" disabled>Siguiente →</button>
+      <button class="btn-next" id="btn-0" onclick="irPaso(1)" disabled>Siguiente â†’</button>
     </div>
   </div>
 
   <!-- Paso 2: Servicio -->
   <div class="wiz-panel" id="paso-1">
     <div class="card">
-      <div class="card-title">🔧 ¿Qué servicio fue?</div>
+      <div class="card-title">ðŸ”§ Â¿QuÃ© servicio fue?</div>
       <div class="svc-grid" id="svc-grid"></div>
     </div>
     <div class="wiz-nav">
-      <button class="btn-back" onclick="irPaso(0)">← Atrás</button>
-      <button class="btn-next" id="btn-1" onclick="irPaso(2)" disabled>Siguiente →</button>
+      <button class="btn-back" onclick="irPaso(0)">â† AtrÃ¡s</button>
+      <button class="btn-next" id="btn-1" onclick="irPaso(2)" disabled>Siguiente â†’</button>
     </div>
   </div>
 
   <!-- Paso 3: Origen -->
   <div class="wiz-panel" id="paso-2">
     <div class="card">
-      <div class="card-title">📍 ¿Dónde fue el trabajo?</div>
+      <div class="card-title">ðŸ“ Â¿DÃ³nde fue el trabajo?</div>
       <div class="origen-grid">
         <div class="origen-btn" id="origen-manual" onclick="selOrigen('manual')">
-          <div class="origen-icono">✍️</div>
+          <div class="origen-icono">âœï¸</div>
           <div class="origen-label">Carga manual</div>
-          <div class="origen-sub">Lo cargás vos mismo</div>
+          <div class="origen-sub">Lo cargÃ¡s vos mismo</div>
         </div>
         <div class="origen-btn" id="origen-taller_externo" onclick="selOrigen('taller_externo')">
-          <div class="origen-icono">🔧</div>
+          <div class="origen-icono">ðŸ”§</div>
           <div class="origen-label">Taller no registrado</div>
           <div class="origen-sub">Fuera de la red Piezauto</div>
         </div>
       </div>
       <div id="taller-ext-wrap" style="display:none;margin-top:16px">
         <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 12px;font-size:12px;color:#92400e;margin-bottom:14px">
-          💡 Estos datos nos ayudan a sumar nuevos talleres a la Red Piezauto
+          ðŸ’¡ Estos datos nos ayudan a sumar nuevos talleres a la Red Piezauto
         </div>
         <div class="form-grupo">
           <label class="form-label">Nombre del taller (opcional)</label>
-          <input type="text" id="te-nombre" class="form-input" placeholder="Ej: Taller Rodríguez">
+          <input type="text" id="te-nombre" class="form-input" placeholder="Ej: Taller RodrÃ­guez">
         </div>
         <div class="form-grupo">
-          <label class="form-label">Teléfono <span style="color:var(--rojo)">*</span></label>
+          <label class="form-label">TelÃ©fono <span style="color:var(--rojo)">*</span></label>
           <input type="tel" id="te-telefono" class="form-input" placeholder="Ej: 1135678900" oninput="validarTallerExt()">
         </div>
         <div class="form-2col">
           <div class="form-grupo">
-            <label class="form-label">Dirección (opcional)</label>
-            <input type="text" id="te-direccion" class="form-input" placeholder="Ej: Av. San Martín 1234">
+            <label class="form-label">DirecciÃ³n (opcional)</label>
+            <input type="text" id="te-direccion" class="form-input" placeholder="Ej: Av. San MartÃ­n 1234">
           </div>
           <div class="form-grupo">
             <label class="form-label">Localidad (opcional)</label>
-            <input type="text" id="te-localidad" class="form-input" placeholder="Ej: Ramos Mejía">
+            <input type="text" id="te-localidad" class="form-input" placeholder="Ej: Ramos MejÃ­a">
           </div>
         </div>
       </div>
     </div>
     <div class="wiz-nav">
-      <button class="btn-back" onclick="irPaso(1)">← Atrás</button>
-      <button class="btn-next" id="btn-2" onclick="irPaso(3)" disabled>Siguiente →</button>
+      <button class="btn-back" onclick="irPaso(1)">â† AtrÃ¡s</button>
+      <button class="btn-next" id="btn-2" onclick="irPaso(3)" disabled>Siguiente â†’</button>
     </div>
   </div>
 
   <!-- Paso 4: Detalles -->
   <div class="wiz-panel" id="paso-3">
     <div class="card">
-      <div class="card-title">📝 Detalles del trabajo</div>
+      <div class="card-title">ðŸ“ Detalles del trabajo</div>
       <div class="form-grupo">
-        <label class="form-label">Descripción <span style="color:var(--rojo)">*</span></label>
+        <label class="form-label">DescripciÃ³n <span style="color:var(--rojo)">*</span></label>
         <input type="text" id="det-desc" class="form-input" placeholder="Ej: Cambio de aceite 10W40 + filtro">
       </div>
       <div class="form-2col">
@@ -220,26 +221,26 @@
       </div>
     </div>
     <div class="wiz-nav">
-      <button class="btn-back" onclick="irPaso(2)">← Atrás</button>
-      <button class="btn-next" id="btn-confirmar" onclick="confirmarTrabajo()">✓ Registrar trabajo</button>
+      <button class="btn-back" onclick="irPaso(2)">â† AtrÃ¡s</button>
+      <button class="btn-next" id="btn-confirmar" onclick="confirmarTrabajo()">âœ“ Registrar trabajo</button>
     </div>
     <div id="wiz-msg"></div>
   </div>
 
-  <!-- Confirmación -->
+  <!-- ConfirmaciÃ³n -->
   <div class="wiz-panel" id="paso-ok" style="text-align:center;padding:24px 0">
-    <div style="font-size:56px;margin-bottom:16px">✅</div>
-    <div style="font-size:22px;font-weight:800;color:#1a1a1a;margin-bottom:8px">¡Trabajo registrado!</div>
-    <div style="font-size:14px;color:#666;margin-bottom:28px;line-height:1.6">El trabajo fue guardado en el historial de tu vehículo.</div>
-    <a id="link-carnet" href="/mi-vehiculo" class="btn-next" style="display:inline-block;padding:14px 28px;border-radius:10px;text-decoration:none;font-size:15px">Ver carnet del vehículo</a>
+    <div style="font-size:56px;margin-bottom:16px">âœ…</div>
+    <div style="font-size:22px;font-weight:800;color:#1a1a1a;margin-bottom:8px">Â¡Trabajo registrado!</div>
+    <div style="font-size:14px;color:#666;margin-bottom:28px;line-height:1.6">El trabajo fue guardado en el historial de tu vehÃ­culo.</div>
+    <a id="link-carnet" href="/mi-vehiculo" class="btn-next" style="display:inline-block;padding:14px 28px;border-radius:10px;text-decoration:none;font-size:15px">Ver carnet del vehÃ­culo</a>
   </div>
 
 </div>
 
 <script>
-// ─────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // ESTADO
-// ─────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 let _paso       = 0;
 let _cliente    = null;
 let _vehiculos  = [];
@@ -249,45 +250,45 @@ let _origenSel  = null;
 
 // Tipo de taller sugerido por servicio (para el hint del paso 2)
 const SVC_TIPO_SUGERIDO = {
-  aceite:         { tipo: 'lubricentro',         label: '🛢️ Lubricentro' },
-  filtros:        { tipo: 'lubricentro',         label: '🛢️ Lubricentro' },
-  neumaticos:     { tipo: 'gomeria',             label: '🛞 Gomería' },
-  electrico:      { tipo: 'electricidad_automotor', label: '⚡ Electricidad automotor' },
-  frenos:         { tipo: 'taller_mecanico',     label: '🔧 Taller mecánico' },
-  amortiguadores: { tipo: 'taller_mecanico',     label: '🔧 Taller mecánico' },
-  suspension:     { tipo: 'taller_mecanico',     label: '🔧 Taller mecánico' },
-  correa:         { tipo: 'taller_mecanico',     label: '🔧 Taller mecánico' },
-  embrague:       { tipo: 'taller_mecanico',     label: '🔧 Taller mecánico' },
-  escape:         { tipo: 'taller_mecanico',     label: '🔧 Taller mecánico' },
-  bateria:        { tipo: 'electricidad_automotor', label: '⚡ Electricidad automotor' },
+  aceite:         { tipo: 'lubricentro',         label: 'ðŸ›¢ï¸ Lubricentro' },
+  filtros:        { tipo: 'lubricentro',         label: 'ðŸ›¢ï¸ Lubricentro' },
+  neumaticos:     { tipo: 'gomeria',             label: 'ðŸ›ž GomerÃ­a' },
+  electrico:      { tipo: 'electricidad_automotor', label: 'âš¡ Electricidad automotor' },
+  frenos:         { tipo: 'taller_mecanico',     label: 'ðŸ”§ Taller mecÃ¡nico' },
+  amortiguadores: { tipo: 'taller_mecanico',     label: 'ðŸ”§ Taller mecÃ¡nico' },
+  suspension:     { tipo: 'taller_mecanico',     label: 'ðŸ”§ Taller mecÃ¡nico' },
+  correa:         { tipo: 'taller_mecanico',     label: 'ðŸ”§ Taller mecÃ¡nico' },
+  embrague:       { tipo: 'taller_mecanico',     label: 'ðŸ”§ Taller mecÃ¡nico' },
+  escape:         { tipo: 'taller_mecanico',     label: 'ðŸ”§ Taller mecÃ¡nico' },
+  bateria:        { tipo: 'electricidad_automotor', label: 'âš¡ Electricidad automotor' },
 };
 
 const SERVICIOS = [
-  { id: 'aceite',         nombre: 'Cambio de aceite',    icono: '🛢️' },
-  { id: 'frenos',         nombre: 'Frenos',              icono: '🔴' },
-  { id: 'amortiguadores', nombre: 'Amortiguadores',       icono: '🔧' },
-  { id: 'neumaticos',     nombre: 'Neumáticos',           icono: '🛞' },
-  { id: 'bateria',        nombre: 'Batería',              icono: '🔋' },
-  { id: 'filtros',        nombre: 'Filtros',              icono: '🌬️' },
-  { id: 'correa',         nombre: 'Correa',               icono: '⚙️' },
-  { id: 'embrague',       nombre: 'Embrague',             icono: '🚗' },
-  { id: 'electrico',      nombre: 'Eléctrico',            icono: '⚡' },
-  { id: 'suspension',     nombre: 'Suspensión',           icono: '🏎️' },
-  { id: 'escape',         nombre: 'Escape',               icono: '💨' },
-  { id: 'vtv',            nombre: 'VTV',                  icono: '📋' },
-  { id: 'general',        nombre: 'Servicio general',     icono: '🔩' },
+  { id: 'aceite',         nombre: 'Cambio de aceite',    icono: 'ðŸ›¢ï¸' },
+  { id: 'frenos',         nombre: 'Frenos',              icono: 'ðŸ”´' },
+  { id: 'amortiguadores', nombre: 'Amortiguadores',       icono: 'ðŸ”§' },
+  { id: 'neumaticos',     nombre: 'NeumÃ¡ticos',           icono: 'ðŸ›ž' },
+  { id: 'bateria',        nombre: 'BaterÃ­a',              icono: 'ðŸ”‹' },
+  { id: 'filtros',        nombre: 'Filtros',              icono: 'ðŸŒ¬ï¸' },
+  { id: 'correa',         nombre: 'Correa',               icono: 'âš™ï¸' },
+  { id: 'embrague',       nombre: 'Embrague',             icono: 'ðŸš—' },
+  { id: 'electrico',      nombre: 'ElÃ©ctrico',            icono: 'âš¡' },
+  { id: 'suspension',     nombre: 'SuspensiÃ³n',           icono: 'ðŸŽï¸' },
+  { id: 'escape',         nombre: 'Escape',               icono: 'ðŸ’¨' },
+  { id: 'vtv',            nombre: 'VTV',                  icono: 'ðŸ“‹' },
+  { id: 'general',        nombre: 'Servicio general',     icono: 'ðŸ”©' },
 ];
 
-// ─────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // INIT
-// ─────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 document.addEventListener('DOMContentLoaded', async () => {
   if (typeof initHeaderB2C === 'function') initHeaderB2C();
 
   _cliente = await getClienteActual();
   if (!_cliente) { window.location.href = '/login?redirect=/registrar-trabajo'; return; }
 
-  // Si viene con ?v=ID pre-seleccionar ese vehículo
+  // Si viene con ?v=ID pre-seleccionar ese vehÃ­culo
   const params = new URLSearchParams(window.location.search);
   const vId = params.get('v');
 
@@ -301,9 +302,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderSvcGrid();
 });
 
-// ─────────────────────────────────────────────────────────────
-// PASO 1: VEHÍCULO
-// ─────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// PASO 1: VEHÃCULO
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function cargarVehiculos(preselId) {
   const wrap = document.getElementById('vh-list');
   const { data, error } = await dbB2C
@@ -314,9 +315,9 @@ async function cargarVehiculos(preselId) {
 
   if (error || !data?.length) {
     wrap.innerHTML = `<div style="text-align:center;padding:20px 0;color:#aaa">
-      <div style="font-size:32px;margin-bottom:8px">🚗</div>
-      <p style="font-size:14px;color:#666">Todavía no tenés vehículos registrados.</p>
-      <a href="/vehiculos" style="color:var(--rojo);font-weight:700;font-size:13px">+ Agregar vehículo</a>
+      <div style="font-size:32px;margin-bottom:8px">ðŸš—</div>
+      <p style="font-size:14px;color:#666">TodavÃ­a no tenÃ©s vehÃ­culos registrados.</p>
+      <a href="/vehiculos" style="color:var(--rojo);font-weight:700;font-size:13px">+ Agregar vehÃ­culo</a>
     </div>`;
     return;
   }
@@ -328,7 +329,7 @@ async function cargarVehiculos(preselId) {
       <input type="radio" name="vh" id="vh-radio-${i}">
       <div>
         <div class="vh-sel-nombre">${esc(label)}</div>
-        ${v.patente ? `<div class="vh-sel-sub">🔢 ${esc(v.patente)}</div>` : ''}
+        ${v.patente ? `<div class="vh-sel-sub">ðŸ”¢ ${esc(v.patente)}</div>` : ''}
       </div>
     </div>`;
   }).join('');
@@ -348,9 +349,9 @@ function selVehiculo(idx) {
   document.getElementById('btn-0').disabled = false;
 }
 
-// ─────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // PASO 2: SERVICIO
-// ─────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function renderSvcGrid() {
   document.getElementById('svc-grid').innerHTML = SERVICIOS.map(s =>
     `<div class="svc-btn" id="svc-${s.id}" onclick="selSvc('${s.id}')">
@@ -366,7 +367,7 @@ function selSvc(id) {
   _svcSel = id;
   document.getElementById('btn-1').disabled = false;
 
-  // Pre-llenar descripción
+  // Pre-llenar descripciÃ³n
   const svc = SERVICIOS.find(s => s.id === id);
   if (svc && !document.getElementById('det-desc').value) {
     document.getElementById('det-desc').value = svc.nombre;
@@ -382,12 +383,12 @@ function selSvc(id) {
   }
   const sugerido = SVC_TIPO_SUGERIDO[id];
   hint.style.display = sugerido ? 'block' : 'none';
-  if (sugerido) hint.innerHTML = `💡 Este servicio suele hacerse en un <strong>${sugerido.label}</strong>`;
+  if (sugerido) hint.innerHTML = `ðŸ’¡ Este servicio suele hacerse en un <strong>${sugerido.label}</strong>`;
 }
 
-// ─────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // PASO 3: ORIGEN
-// ─────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function selOrigen(origen) {
   document.querySelectorAll('.origen-btn').forEach(b => b.classList.remove('selected'));
   document.getElementById('origen-' + origen).classList.add('selected');
@@ -403,9 +404,9 @@ function validarTallerExt() {
   document.getElementById('btn-2').disabled = !tel;
 }
 
-// ─────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // NAV
-// ─────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function irPaso(n) {
   document.getElementById('paso-' + _paso).classList.remove('active');
   document.getElementById('stp-' + _paso).classList.remove('active');
@@ -419,17 +420,17 @@ function irPaso(n) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// ─────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // CONFIRMAR
-// ─────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function confirmarTrabajo() {
   const desc = document.getElementById('det-desc').value.trim();
-  if (!desc) { showMsg('Completá la descripción del trabajo.', 'error'); return; }
+  if (!desc) { showMsg('CompletÃ¡ la descripciÃ³n del trabajo.', 'error'); return; }
 
   const esTallerExt = _origenSel === 'taller_externo';
   if (esTallerExt) {
     const tel = document.getElementById('te-telefono').value.trim();
-    if (!tel) { showMsg('El teléfono del taller es obligatorio.', 'error'); return; }
+    if (!tel) { showMsg('El telÃ©fono del taller es obligatorio.', 'error'); return; }
   }
 
   const btn = document.getElementById('btn-confirmar');
@@ -461,26 +462,26 @@ async function confirmarTrabajo() {
   if (error) {
     showMsg('Error al guardar: ' + error.message, 'error');
     btn.disabled = false;
-    btn.textContent = '✓ Registrar trabajo';
+    btn.textContent = 'âœ“ Registrar trabajo';
     return;
   }
 
-  // Actualizar km si se ingresó
+  // Actualizar km si se ingresÃ³
   const km = parseInt(document.getElementById('det-km').value);
   if (km && km > (_vhSel.km_actual || 0)) {
     await dbB2C.from('cat_clientes_vehiculos').update({ km_actual: km }).eq('id', _vhSel.id);
   }
 
-  // Ir a confirmación
+  // Ir a confirmaciÃ³n
   document.getElementById('paso-3').classList.remove('active');
   document.getElementById('paso-ok').classList.add('active');
   document.getElementById('link-carnet').href = `/mi-vehiculo?v=${_vhSel.id}`;
   document.getElementById('wiz-stepper').style.display = 'none';
 }
 
-// ─────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // UTILS
-// ─────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function showMsg(txt, tipo) {
   const el = document.getElementById('wiz-msg');
   el.textContent = txt;

@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mis vehículos — Piezauto</title>
+  <title>Mis vehÃ­culos â€” Piezauto</title>
   <meta name="robots" content="noindex, nofollow">
   <link rel="stylesheet" href="css/estilos.css">
   <style>
@@ -225,18 +225,18 @@
 
 <div class="page-header">
   <div class="page-header-inner">
-    <a href="perfil.html" class="back-link">← Volver al perfil</a>
-    <span style="color:#555">·</span>
-    <span class="page-titulo">🚗 Mis vehículos</span>
+    <a href="perfil.html" class="back-link">â† Volver al perfil</a>
+    <span style="color:#555">Â·</span>
+    <span class="page-titulo">ðŸš— Mis vehÃ­culos</span>
   </div>
 </div>
 
 <div class="vehiculos-body">
 
-  <!-- Formulario alta/edición -->
+  <!-- Formulario alta/ediciÃ³n -->
   <div class="card">
     <div class="card-header">
-      <div class="card-titulo" id="form-titulo">Agregar vehículo</div>
+      <div class="card-titulo" id="form-titulo">Agregar vehÃ­culo</div>
     </div>
     <div class="card-body">
       <div class="alerta error"   id="alerta-vehiculo-error"></div>
@@ -248,7 +248,7 @@
           <div class="form-grupo">
             <label for="marca">Marca *</label>
             <select id="marca" name="marca" required>
-              <option value="">Seleccioná...</option>
+              <option value="">SeleccionÃ¡...</option>
             </select>
           </div>
           <div class="form-grupo">
@@ -259,12 +259,12 @@
 
         <div class="form-row-3">
           <div class="form-grupo">
-            <label for="anio">Año *</label>
+            <label for="anio">AÃ±o *</label>
             <input type="number" id="anio" name="anio" placeholder="2010"
                    min="1950" max="2030" required inputmode="numeric">
           </div>
           <div class="form-grupo">
-            <label for="version">Versión</label>
+            <label for="version">VersiÃ³n</label>
             <input type="text" id="version" name="version" placeholder="1.6 GNC">
             <p class="hint">Opcional</p>
           </div>
@@ -283,11 +283,11 @@
 
         <label class="checkbox-grupo">
           <input type="checkbox" id="principal" name="principal">
-          <span>Marcar como vehículo principal</span>
+          <span>Marcar como vehÃ­culo principal</span>
         </label>
 
         <div class="form-actions">
-          <button type="submit" class="btn-guardar" id="btn-submit">Guardar vehículo</button>
+          <button type="submit" class="btn-guardar" id="btn-submit">Guardar vehÃ­culo</button>
           <button type="button" class="btn-cancelar" id="btn-cancelar-edicion">Cancelar</button>
         </div>
       </form>
@@ -308,6 +308,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase.js"></script>
+<script src="js/auth-check.js"></script>
 <script src="js/auth-b2c.js"></script>
 <script src="js/vehiculos.js"></script>
 </body>

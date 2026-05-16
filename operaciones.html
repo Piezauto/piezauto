@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mis operaciones — Piezauto</title>
+  <title>Mis operaciones â€” Piezauto</title>
   <meta name="robots" content="noindex, nofollow">
   <link rel="stylesheet" href="css/estilos.css">
   <style>
@@ -75,7 +75,7 @@
     .empty { text-align: center; color: #aaa; padding: 50px 20px; }
     .empty a { color: var(--rojo); font-weight: 600; text-decoration: none; }
 
-    /* Línea de tiempo de estado */
+    /* LÃ­nea de tiempo de estado */
     .timeline { display: flex; align-items: center; gap: 0; margin: 16px 0; }
     .tl-step { display: flex; flex-direction: column; align-items: center; flex: 1; }
     .tl-dot { width: 12px; height: 12px; border-radius: 50%; background: #ddd; margin-bottom: 4px; }
@@ -91,6 +91,7 @@
 <body>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase.js"></script>
+<script src="js/auth-check.js"></script>
 <script src="js/auth-b2c.js"></script>
 
 <div id="header-b2c-root"></div>
@@ -104,29 +105,29 @@
   <div style="display:flex;gap:0;border-bottom:2px solid #eee;margin-bottom:20px">
     <button class="ops-tab active" id="tab-ops-btn"    onclick="switchOpsTab('ops')"    style="padding:10px 18px;font-size:13px;font-weight:700;background:none;border:none;border-bottom:2.5px solid var(--rojo);color:var(--rojo);cursor:pointer;font-family:inherit;margin-bottom:-2px">Mis pedidos</button>
     <button class="ops-tab"        id="tab-turnos-btn"    onclick="switchOpsTab('turnos')"   style="padding:10px 18px;font-size:13px;font-weight:700;background:none;border:none;border-bottom:2.5px solid transparent;color:#aaa;cursor:pointer;font-family:inherit;margin-bottom:-2px">
-      📅 Mis turnos <span id="badge-turnos" style="display:none;background:var(--rojo);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px"></span>
+      ðŸ“… Mis turnos <span id="badge-turnos" style="display:none;background:var(--rojo);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px"></span>
     </button>
     <button class="ops-tab"        id="tab-vehiculos-btn" onclick="switchOpsTab('vehiculos')" style="padding:10px 18px;font-size:13px;font-weight:700;background:none;border:none;border-bottom:2.5px solid transparent;color:#aaa;cursor:pointer;font-family:inherit;margin-bottom:-2px">
-      🚗 Mis vehículos
+      ðŸš— Mis vehÃ­culos
     </button>
   </div>
 
-  <!-- SECCIÓN VEHÍCULOS -->
+  <!-- SECCIÃ“N VEHÃCULOS -->
   <div id="seccion-vehiculos" style="display:none">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
-      <div style="font-size:13px;color:#888">Tus vehículos y su historial de trabajos</div>
+      <div style="font-size:13px;color:#888">Tus vehÃ­culos y su historial de trabajos</div>
       <a href="/registrar-trabajo" style="display:inline-flex;align-items:center;gap:6px;background:var(--rojo);color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:13px;font-weight:700;text-decoration:none">+ Registrar trabajo</a>
     </div>
-    <div id="lista-vehiculos-ops"><div style="text-align:center;padding:30px;color:#bbb">Cargando vehículos…</div></div>
+    <div id="lista-vehiculos-ops"><div style="text-align:center;padding:30px;color:#bbb">Cargando vehÃ­culosâ€¦</div></div>
   </div>
 
-  <!-- SECCIÓN TURNOS -->
+  <!-- SECCIÃ“N TURNOS -->
   <div id="seccion-turnos" style="display:none">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
       <div style="font-size:13px;color:#888">Tus solicitudes de turno en talleres Piezauto</div>
       <a href="/solicitar-turno.html" style="display:inline-flex;align-items:center;gap:6px;background:var(--rojo);color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:13px;font-weight:700;text-decoration:none;transition:opacity .15s" onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">+ Solicitar turno</a>
     </div>
-    <div id="lista-turnos"><div style="text-align:center;padding:30px;color:#bbb">Cargando turnos…</div></div>
+    <div id="lista-turnos"><div style="text-align:center;padding:30px;color:#bbb">Cargando turnosâ€¦</div></div>
   </div>
 
   <div id="seccion-ops">
@@ -149,7 +150,7 @@
 <!-- Modal detalle -->
 <div class="modal-overlay" id="modal-op" onclick="cerrarModal(event)">
   <div class="modal-box">
-    <button class="modal-close" onclick="cerrarModal()">✕</button>
+    <button class="modal-close" onclick="cerrarModal()">âœ•</button>
     <div class="modal-title" id="modal-titulo">Cargando...</div>
     <div id="modal-contenido"></div>
   </div>
@@ -159,7 +160,7 @@
 <script>
 const ESTADOS_TL = ['pendiente','pagado','enviado','entregado'];
 const ESTADO_LABELS = {
-  pendiente: 'Pendiente de confirmación',
+  pendiente: 'Pendiente de confirmaciÃ³n',
   pagado:    'Pago confirmado',
   enviado:   'Enviado',
   entregado: 'Entregado',
@@ -179,7 +180,7 @@ async function cargarOps() {
   const estado = document.getElementById('filtro-estado').value;
   const cliente = await getClienteActual();
   if (!cliente) {
-    document.getElementById('ops-lista').innerHTML = '<div class="empty">No encontramos tu perfil. <a href="perfil.html">Completá tu perfil</a>.</div>';
+    document.getElementById('ops-lista').innerHTML = '<div class="empty">No encontramos tu perfil. <a href="perfil.html">CompletÃ¡ tu perfil</a>.</div>';
     return;
   }
 
@@ -200,9 +201,9 @@ function renderLista(ops) {
   const wrap = document.getElementById('ops-lista');
   if (!ops.length) {
     wrap.innerHTML = `<div class="empty">
-      <div style="font-size:40px;margin-bottom:12px">📦</div>
-      <div style="font-size:16px;font-weight:700;color:#333;margin-bottom:8px">Sin operaciones todavía</div>
-      <a href="buscar.html">Ir al catálogo →</a>
+      <div style="font-size:40px;margin-bottom:12px">ðŸ“¦</div>
+      <div style="font-size:16px;font-weight:700;color:#333;margin-bottom:8px">Sin operaciones todavÃ­a</div>
+      <a href="buscar.html">Ir al catÃ¡logo â†’</a>
     </div>`;
     return;
   }
@@ -214,7 +215,7 @@ function renderLista(ops) {
     const notas = parseNotas(op.notas);
     const tallerNombre = op.cat_recomendaciones_talleres?.nombre || notas.taller?.nombre;
     const tallerTag = tallerNombre
-      ? `<div class="taller-tag">🔧 ${escH(tallerNombre)}</div>`
+      ? `<div class="taller-tag">ðŸ”§ ${escH(tallerNombre)}</div>`
       : '';
     const pago = op.metodo_pago || notas.metodo_pago;
     return `<div class="op-card ${op.estado}" onclick="abrirDetalle('${op.id}')">
@@ -223,7 +224,7 @@ function renderLista(ops) {
           <div class="op-num">#${escH(num)}</div>
           <div style="margin-top:4px">${badge}</div>
           ${tallerTag}
-          <div class="op-meta">${fecha}${pago ? ' · ' + pago : ''}</div>
+          <div class="op-meta">${fecha}${pago ? ' Â· ' + pago : ''}</div>
         </div>
         <div class="op-total">$${Number(op.total).toLocaleString('es-AR')}</div>
       </div>
@@ -255,7 +256,7 @@ async function abrirDetalle(opId) {
 
   // Timeline
   const tlHtml = op.estado === 'cancelado'
-    ? `<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 12px;font-size:13px;color:#c62828;margin-bottom:14px">❌ Este pedido fue cancelado.</div>`
+    ? `<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 12px;font-size:13px;color:#c62828;margin-bottom:14px">âŒ Este pedido fue cancelado.</div>`
     : (() => {
         const idx = ESTADOS_TL.indexOf(op.estado);
         let tl = '<div class="timeline">';
@@ -281,19 +282,19 @@ async function abrirDetalle(opId) {
   const taller = op.cat_recomendaciones_talleres || notas.taller;
   const tallerHtml = taller ? `
     <div class="taller-card">
-      <div class="tn">🔧 ${escH(taller.nombre)}</div>
+      <div class="tn">ðŸ”§ ${escH(taller.nombre)}</div>
       <div class="td">${escH(taller.direccion || '')}${taller.localidad ? ', ' + escH(taller.localidad) : ''}</div>
-      ${taller.whatsapp ? `<a class="taller-wa" href="https://wa.me/54${taller.whatsapp.replace(/\D/g,'')}" target="_blank">💬 Escribir al taller</a>` : ''}
-      <div style="font-size:11px;color:#555;margin-top:8px;line-height:1.5">El taller va a contactarte para coordinar el turno de instalación.</div>
+      ${taller.whatsapp ? `<a class="taller-wa" href="https://wa.me/54${taller.whatsapp.replace(/\D/g,'')}" target="_blank">ðŸ’¬ Escribir al taller</a>` : ''}
+      <div style="font-size:11px;color:#555;margin-top:8px;line-height:1.5">El taller va a contactarte para coordinar el turno de instalaciÃ³n.</div>
     </div>` : '';
 
   // Instrucciones de pago (si pendiente)
   const pagoHtml = op.estado === 'pendiente'
     ? `<div style="background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:12px 14px;font-size:13px;color:#795548;margin-top:14px">
-        ⏳ <strong>Pago pendiente:</strong> te contactamos por WhatsApp para confirmar el pago (transferencia o efectivo).
+        â³ <strong>Pago pendiente:</strong> te contactamos por WhatsApp para confirmar el pago (transferencia o efectivo).
        </div>` : '';
 
-  // Botón cancelar (solo si pendiente)
+  // BotÃ³n cancelar (solo si pendiente)
   const cancelBtn = op.estado === 'pendiente'
     ? `<button class="cancelar-btn" onclick="cancelarOp('${op.id}')">Cancelar pedido</button>` : '';
 
@@ -302,11 +303,11 @@ async function abrirDetalle(opId) {
   document.getElementById('modal-contenido').innerHTML = `
     ${tlHtml}
     <div class="section-h">Datos del pedido</div>
-    <div class="info-row"><span class="info-label">Número</span><span class="info-val">#${escH(num)}</span></div>
+    <div class="info-row"><span class="info-label">NÃºmero</span><span class="info-val">#${escH(num)}</span></div>
     <div class="info-row"><span class="info-label">Fecha</span><span class="info-val">${new Date(op.created_at).toLocaleString('es-AR')}</span></div>
     <div class="info-row"><span class="info-label">Total</span><span class="info-val" style="color:var(--rojo);font-size:16px">$${Number(op.total).toLocaleString('es-AR')}</span></div>
     ${pago ? `<div class="info-row"><span class="info-label">Pago</span><span class="info-val">${escH(pago)}</span></div>` : ''}
-    <div class="info-row"><span class="info-label">Entrega en</span><span class="info-val">${escH(op.direccion_entrega||'—')}</span></div>
+    <div class="info-row"><span class="info-label">Entrega en</span><span class="info-val">${escH(op.direccion_entrega||'â€”')}</span></div>
     ${notas.notas_cliente ? `<div class="info-row"><span class="info-label">Tu nota</span><span class="info-val">${escH(notas.notas_cliente)}</span></div>` : ''}
 
     <div class="section-h" style="margin-top:16px">Piezas (${items?.length||0})</div>
@@ -318,7 +319,7 @@ async function abrirDetalle(opId) {
 }
 
 async function cancelarOp(opId) {
-  if (!confirm('¿Cancelás este pedido? Esta acción no se puede deshacer.')) return;
+  if (!confirm('Â¿CancelÃ¡s este pedido? Esta acciÃ³n no se puede deshacer.')) return;
   await dbB2C.from('cat_operaciones_b2c').update({ estado: 'cancelado', updated_at: new Date().toISOString() }).eq('id', opId);
   cerrarModal();
   await cargarOps();
@@ -334,7 +335,7 @@ function escH(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').r
 
 document.addEventListener('DOMContentLoaded', initPage);
 
-// ─── TURNOS ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€ TURNOS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 let turnosData = [];
 
 function switchOpsTab(tab) {
@@ -354,14 +355,14 @@ function switchOpsTab(tab) {
 
 async function cargarTurnos() {
   const cont = document.getElementById('lista-turnos');
-  cont.innerHTML = '<div style="text-align:center;padding:30px;color:#bbb"><div style="width:24px;height:24px;border:3px solid #eee;border-top-color:var(--rojo);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px"></div>Cargando…</div>';
+  cont.innerHTML = '<div style="text-align:center;padding:30px;color:#bbb"><div style="width:24px;height:24px;border:3px solid #eee;border-top-color:var(--rojo);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px"></div>Cargandoâ€¦</div>';
   try {
     const { data: s } = await dbB2C.auth.getSession();
-    if (!s?.session) { cont.innerHTML = '<div style="text-align:center;padding:20px;color:#aaa;font-size:13px">Iniciá sesión para ver tus turnos.</div>'; return; }
+    if (!s?.session) { cont.innerHTML = '<div style="text-align:center;padding:20px;color:#aaa;font-size:13px">IniciÃ¡ sesiÃ³n para ver tus turnos.</div>'; return; }
     const uid = s.session.user.id;
     // Obtener cliente_id
     const { data: cli } = await dbB2C.from('cat_clientes_finales').select('id').eq('auth_user_id', uid).single();
-    if (!cli) { cont.innerHTML = '<div style="text-align:center;padding:20px;color:#aaa;font-size:13px">No se encontró tu perfil de cliente.</div>'; return; }
+    if (!cli) { cont.innerHTML = '<div style="text-align:center;padding:20px;color:#aaa;font-size:13px">No se encontrÃ³ tu perfil de cliente.</div>'; return; }
 
     const { data: turnos } = await dbB2C.from('cat_turnos')
       .select('id,taller_id,tipo,estado,fecha,hora_inicio,motivo,calificacion_cliente_al_taller,cat_recomendaciones_talleres(nombre)')
@@ -371,7 +372,7 @@ async function cargarTurnos() {
 
     turnosData = turnos || [];
     if (!turnosData.length) {
-      cont.innerHTML = '<div style="text-align:center;padding:30px;color:#bbb;font-size:13px">No tenés turnos registrados. <a href="/solicitar-turno.html" style="color:var(--rojo)">Pedí uno →</a></div>';
+      cont.innerHTML = '<div style="text-align:center;padding:30px;color:#bbb;font-size:13px">No tenÃ©s turnos registrados. <a href="/solicitar-turno.html" style="color:var(--rojo)">PedÃ­ uno â†’</a></div>';
       return;
     }
 
@@ -383,13 +384,13 @@ async function cargarTurnos() {
       badge.style.display = '';
     }
 
-    const TIPO_L = { inspeccion_presupuesto:'Inspección/Pres.', inicio_trabajo:'Inicio trabajo', consulta:'Consulta', reclamo:'Reclamo' };
+    const TIPO_L = { inspeccion_presupuesto:'InspecciÃ³n/Pres.', inicio_trabajo:'Inicio trabajo', consulta:'Consulta', reclamo:'Reclamo' };
     const EST_L  = { pendiente:'Pendiente', confirmado:'Confirmado', en_proceso:'En proceso', finalizado:'Finalizado', cancelado:'Cancelado' };
     const EST_CLS= { pendiente:'#fff8e1;#b45309', confirmado:'#dbeafe;#1d4ed8', en_proceso:'#ede9fe;#7c3aed', finalizado:'#dcfce7;#15803d', cancelado:'#fee2e2;#dc2626' };
 
     cont.innerHTML = turnosData.map(t => {
       const [bg, cl] = (EST_CLS[t.estado] || '#f0f0f0;#666').split(';');
-      const tallerNombre = t.cat_recomendaciones_talleres?.nombre || '—';
+      const tallerNombre = t.cat_recomendaciones_talleres?.nombre || 'â€”';
       const fechaStr = new Date(t.fecha + 'T00:00:00').toLocaleDateString('es-AR', { weekday:'short', day:'numeric', month:'short' });
       const puedeCalif = t.estado === 'finalizado' && !t.calificacion_cliente_al_taller;
 
@@ -398,13 +399,13 @@ async function cargarTurnos() {
           <div style="flex:1">
             <div style="font-size:11px;color:#aaa;font-weight:700;margin-bottom:2px">${tallerNombre}</div>
             <div style="font-size:14px;font-weight:700">${TIPO_L[t.tipo] || t.tipo}</div>
-            <div style="font-size:12px;color:#888;margin-top:3px">📅 ${fechaStr} · ${t.hora_inicio?.slice(0,5) || ''}</div>
+            <div style="font-size:12px;color:#888;margin-top:3px">ðŸ“… ${fechaStr} Â· ${t.hora_inicio?.slice(0,5) || ''}</div>
             ${t.motivo ? '<div style="font-size:12px;color:#666;margin-top:4px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">' + escH(t.motivo) + '</div>' : ''}
           </div>
           <span style="background:${bg};color:${cl};font-size:10px;font-weight:700;padding:3px 9px;border-radius:10px;flex-shrink:0">${EST_L[t.estado] || t.estado}</span>
         </div>
-        ${puedeCalif ? '<button onclick="event.stopPropagation();abrirCalifTurno(\'' + t.id + '\')" style="margin-top:10px;padding:6px 14px;background:var(--rojo);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">★ Calificar taller</button>' : ''}
-        ${t.calificacion_cliente_al_taller ? '<div style="margin-top:8px;font-size:12px;color:#888">Tu calificación: ' + '★'.repeat(t.calificacion_cliente_al_taller) + '</div>' : ''}
+        ${puedeCalif ? '<button onclick="event.stopPropagation();abrirCalifTurno(\'' + t.id + '\')" style="margin-top:10px;padding:6px 14px;background:var(--rojo);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">â˜… Calificar taller</button>' : ''}
+        ${t.calificacion_cliente_al_taller ? '<div style="margin-top:8px;font-size:12px;color:#888">Tu calificaciÃ³n: ' + 'â˜…'.repeat(t.calificacion_cliente_al_taller) + '</div>' : ''}
       </div>`;
     }).join('');
   } catch (e) {
@@ -412,7 +413,7 @@ async function cargarTurnos() {
   }
 }
 
-// Modal calificación simple
+// Modal calificaciÃ³n simple
 let califTurnoId = null, califTurnoVal = 0;
 function abrirCalifTurno(turnoId) {
   califTurnoId = turnoId; califTurnoVal = 0;
@@ -421,12 +422,12 @@ function abrirCalifTurno(turnoId) {
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;display:flex;align-items:center;justify-content:center;padding:20px';
   modal.innerHTML = `
     <div style="background:#fff;border-radius:14px;padding:24px;width:100%;max-width:380px">
-      <div style="font-size:16px;font-weight:800;margin-bottom:4px">¿Cómo fue el taller?</div>
-      <div style="font-size:13px;color:#888;margin-bottom:16px">Tu opinión ayuda a otros clientes.</div>
+      <div style="font-size:16px;font-weight:800;margin-bottom:4px">Â¿CÃ³mo fue el taller?</div>
+      <div style="font-size:13px;color:#888;margin-bottom:16px">Tu opiniÃ³n ayuda a otros clientes.</div>
       <div id="estrellas-cli" style="display:flex;gap:8px;font-size:32px;margin-bottom:16px;cursor:pointer">
-        ${[1,2,3,4,5].map(v => '<span data-v="' + v + '" onclick="setCalifTurno(' + v + ')" style="opacity:.3">★</span>').join('')}
+        ${[1,2,3,4,5].map(v => '<span data-v="' + v + '" onclick="setCalifTurno(' + v + ')" style="opacity:.3">â˜…</span>').join('')}
       </div>
-      <textarea id="resena-cli" rows="3" placeholder="Contá tu experiencia…" style="width:100%;border:1.5px solid #e0e0e0;border-radius:8px;padding:10px;font-size:13px;font-family:inherit;outline:none;resize:none"></textarea>
+      <textarea id="resena-cli" rows="3" placeholder="ContÃ¡ tu experienciaâ€¦" style="width:100%;border:1.5px solid #e0e0e0;border-radius:8px;padding:10px;font-size:13px;font-family:inherit;outline:none;resize:none"></textarea>
       <div style="display:flex;gap:8px;margin-top:14px">
         <button onclick="document.getElementById('modal-calif-turno').remove()" style="flex:1;padding:11px;border:1.5px solid #e0e0e0;border-radius:8px;background:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">Cancelar</button>
         <button onclick="enviarCalifTurno()" style="flex:1;padding:11px;border:none;border-radius:8px;background:var(--rojo);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">Enviar</button>
@@ -447,14 +448,14 @@ async function enviarCalifTurno() {
   } catch (e) { alert('Error: ' + e.message); }
 }
 
-// ─── VEHÍCULOS ───────────────────────────────────────────────────────────────
+// â”€â”€â”€ VEHÃCULOS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 let vehiculosOpsLoaded = false;
 
 async function cargarVehiculosOps() {
   vehiculosOpsLoaded = true;
   const cont = document.getElementById('lista-vehiculos-ops');
   const cliente = await getClienteActual();
-  if (!cliente) { cont.innerHTML = '<div style="text-align:center;padding:20px;color:#aaa;font-size:13px">Iniciá sesión para ver tus vehículos.</div>'; return; }
+  if (!cliente) { cont.innerHTML = '<div style="text-align:center;padding:20px;color:#aaa;font-size:13px">IniciÃ¡ sesiÃ³n para ver tus vehÃ­culos.</div>'; return; }
 
   const { data: vhs, error } = await dbB2C
     .from('cat_clientes_vehiculos')
@@ -464,14 +465,14 @@ async function cargarVehiculosOps() {
 
   if (error || !vhs?.length) {
     cont.innerHTML = `<div style="text-align:center;padding:32px 0;color:#aaa">
-      <div style="font-size:36px;margin-bottom:10px">🚗</div>
-      <div style="font-size:14px;color:#666">No tenés vehículos registrados.</div>
-      <a href="/vehiculos" style="display:inline-block;margin-top:14px;color:var(--rojo);font-weight:700;font-size:13px">+ Agregar vehículo</a>
+      <div style="font-size:36px;margin-bottom:10px">ðŸš—</div>
+      <div style="font-size:14px;color:#666">No tenÃ©s vehÃ­culos registrados.</div>
+      <a href="/vehiculos" style="display:inline-block;margin-top:14px;color:var(--rojo);font-weight:700;font-size:13px">+ Agregar vehÃ­culo</a>
     </div>`;
     return;
   }
 
-  // Para cada vehículo cargar el último trabajo
+  // Para cada vehÃ­culo cargar el Ãºltimo trabajo
   const ids = vhs.map(v => v.id);
   const { data: trabajos } = await dbB2C
     .from('cat_vehiculo_trabajos')
@@ -491,12 +492,12 @@ async function cargarVehiculosOps() {
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
         <div>
           <div style="font-size:15px;font-weight:700">${escH(label)}</div>
-          ${v.patente ? `<div style="font-size:12px;color:#888;margin-top:2px">🔢 ${escH(v.patente)}</div>` : ''}
-          ${v.km_actual ? `<div style="font-size:12px;color:#888;margin-top:2px">🛣️ ${Number(v.km_actual).toLocaleString('es-AR')} km</div>` : ''}
-          ${ult ? `<div style="font-size:12px;color:#666;margin-top:6px;padding:6px 8px;background:#f8f8f8;border-radius:6px">🔧 Último: ${escH(ult.descripcion)} — ${new Date(ult.fecha+'T00:00:00').toLocaleDateString('es-AR')}</div>` : '<div style="font-size:12px;color:#bbb;margin-top:6px">Sin trabajos registrados</div>'}
+          ${v.patente ? `<div style="font-size:12px;color:#888;margin-top:2px">ðŸ”¢ ${escH(v.patente)}</div>` : ''}
+          ${v.km_actual ? `<div style="font-size:12px;color:#888;margin-top:2px">ðŸ›£ï¸ ${Number(v.km_actual).toLocaleString('es-AR')} km</div>` : ''}
+          ${ult ? `<div style="font-size:12px;color:#666;margin-top:6px;padding:6px 8px;background:#f8f8f8;border-radius:6px">ðŸ”§ Ãšltimo: ${escH(ult.descripcion)} â€” ${new Date(ult.fecha+'T00:00:00').toLocaleDateString('es-AR')}</div>` : '<div style="font-size:12px;color:#bbb;margin-top:6px">Sin trabajos registrados</div>'}
         </div>
         <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
-          <a href="/mi-vehiculo?v=${v.id}" style="display:inline-flex;align-items:center;gap:4px;background:var(--rojo);color:#fff;border-radius:7px;padding:7px 12px;font-size:12px;font-weight:700;text-decoration:none">📋 Carnet</a>
+          <a href="/mi-vehiculo?v=${v.id}" style="display:inline-flex;align-items:center;gap:4px;background:var(--rojo);color:#fff;border-radius:7px;padding:7px 12px;font-size:12px;font-weight:700;text-decoration:none">ðŸ“‹ Carnet</a>
           <a href="/registrar-trabajo?v=${v.id}" style="display:inline-flex;align-items:center;gap:4px;background:#f5f5f5;color:#444;border:1px solid #ddd;border-radius:7px;padding:7px 12px;font-size:12px;font-weight:600;text-decoration:none">+ Trabajo</a>
         </div>
       </div>

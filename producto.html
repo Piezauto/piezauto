@@ -1,15 +1,15 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Producto — Piezauto</title>
+  <title>Producto â€” Piezauto</title>
   <link rel="stylesheet" href="css/estilos.css">
   <style>
     body { background: var(--gris-claro); }
 
-    /* ── Header B2C ── */
+    /* â”€â”€ Header B2C â”€â”€ */
     #header-b2c { background:var(--negro); position:sticky; top:0; z-index:100; box-shadow:0 2px 8px rgba(0,0,0,0.3); }
     .hb2c-inner { max-width:1100px; margin:0 auto; padding:12px 16px; display:flex; align-items:center; gap:12px; }
     .hb2c-logo { text-decoration:none; font-size:20px; font-weight:900; flex-shrink:0; }
@@ -28,23 +28,23 @@
     .hb2c-btn-login { background:var(--rojo); color:var(--blanco); text-decoration:none; padding:8px 16px; border-radius:var(--radio); font-size:13px; font-weight:600; }
     @media (max-width:480px) { .hb2c-nombre { display:none; } }
 
-    /* ── Layout ── */
+    /* â”€â”€ Layout â”€â”€ */
     .producto-layout { max-width:900px; margin:0 auto; padding:20px 16px 60px; }
 
-    /* ── Breadcrumb ── */
+    /* â”€â”€ Breadcrumb â”€â”€ */
     #breadcrumb { font-size:13px; color:var(--gris-text); margin-bottom:16px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
     #breadcrumb a { color:var(--gris-text); text-decoration:none; }
     #breadcrumb a:hover { color:var(--rojo); }
     #breadcrumb span:last-child { color:var(--negro); font-weight:600; }
 
-    /* ── Loader ── */
+    /* â”€â”€ Loader â”€â”€ */
     #loader-producto { display:flex; justify-content:center; align-items:center; gap:10px; padding:80px; color:var(--gris-text); }
     .spinner { width:22px; height:22px; border:2px solid var(--gris); border-top-color:var(--rojo); border-radius:50%; animation:spin 0.7s linear infinite; }
     @keyframes spin { to { transform:rotate(360deg); } }
     #error-producto { display:none; text-align:center; padding:48px; color:var(--gris-text); font-size:16px; }
     #ficha-container { display:none; }
 
-    /* ── Ficha grid ── */
+    /* â”€â”€ Ficha grid â”€â”€ */
     .ficha-grid { display:grid; grid-template-columns:1fr 320px; gap:20px; align-items:start; }
     @media (max-width:700px) { .ficha-grid { grid-template-columns:1fr; } }
 
@@ -117,7 +117,7 @@
 
   <div id="loader-producto">
     <div class="spinner"></div>
-    Cargando producto…
+    Cargando productoâ€¦
   </div>
   <p id="error-producto"></p>
 
@@ -134,14 +134,14 @@
           <div id="sku-fabricante"></div>
           <div id="sku-tags"></div>
           <div id="sku-oem-container">
-            <div class="oem-label">Código OEM</div>
+            <div class="oem-label">CÃ³digo OEM</div>
             <div id="sku-oem"></div>
           </div>
           <div id="tabla-atributos"></div>
         </div>
 
         <div class="aplicaciones-seccion" id="aplicaciones-seccion">
-          <div class="sec-titulo">Vehículos compatibles</div>
+          <div class="sec-titulo">VehÃ­culos compatibles</div>
           <ul id="aplicaciones-lista"></ul>
         </div>
 
@@ -154,11 +154,11 @@
       <div>
         <div class="compra-card">
           <div id="sku-precio"></div>
-          <div class="precio-nota">Precio público · IVA incluido</div>
+          <div class="precio-nota">Precio pÃºblico Â· IVA incluido</div>
           <div class="cantidad-row">
             <label>Cantidad</label>
             <div class="cantidad-ctrl">
-              <button onclick="cambiarCantidad(-1)">−</button>
+              <button onclick="cambiarCantidad(-1)">âˆ’</button>
               <input type="number" id="cantidad-input" value="1" min="1" max="99">
               <button onclick="cambiarCantidad(1)">+</button>
             </div>
@@ -186,6 +186,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase.js"></script>
+<script src="js/auth-check.js"></script>
 <script src="js/auth-b2c.js"></script>
 <script src="js/header-b2c.js"></script>
 <script src="js/carrito.js"></script>

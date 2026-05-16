@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Solicitar presupuesto — Piezauto</title>
+  <title>Solicitar presupuesto â€” Piezauto</title>
   <meta name="robots" content="noindex, nofollow">
   <link rel="stylesheet" href="css/estilos.css">
   <style>
@@ -116,6 +116,7 @@
 <body>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase.js"></script>
+<script src="js/auth-check.js"></script>
 <script src="js/auth-b2c.js"></script>
 
 <div id="header-b2c-root"></div>
@@ -128,23 +129,23 @@
 
     <!-- Progress -->
     <div class="wizard-progress" id="progress">
-      <div class="wp-step activo" id="step-ind-1"><div class="wp-circle">1</div><div class="wp-label">Vehículo</div></div>
-      <div class="wp-step"       id="step-ind-2"><div class="wp-circle">2</div><div class="wp-label">Descripción</div></div>
+      <div class="wp-step activo" id="step-ind-1"><div class="wp-circle">1</div><div class="wp-label">VehÃ­culo</div></div>
+      <div class="wp-step"       id="step-ind-2"><div class="wp-circle">2</div><div class="wp-label">DescripciÃ³n</div></div>
       <div class="wp-step"       id="step-ind-3"><div class="wp-circle">3</div><div class="wp-label">Zona</div></div>
       <div class="wp-step"       id="step-ind-4"><div class="wp-circle">4</div><div class="wp-label">Confirmar</div></div>
     </div>
 
-    <!-- PASO 1 — Vehículo y servicio -->
+    <!-- PASO 1 â€” VehÃ­culo y servicio -->
     <div class="wizard-card" id="step-1">
       <div class="wizard-card-header">
-        <div class="wizard-card-title">¿Qué necesitás?</div>
-        <div class="wizard-card-sub">Seleccioná tu vehículo y el tipo de servicio</div>
+        <div class="wizard-card-title">Â¿QuÃ© necesitÃ¡s?</div>
+        <div class="wizard-card-sub">SeleccionÃ¡ tu vehÃ­culo y el tipo de servicio</div>
       </div>
       <div class="wizard-card-body">
         <div class="form-row">
-          <label>Vehículo (opcional)</label>
+          <label>VehÃ­culo (opcional)</label>
           <select id="sel-vehiculo">
-            <option value="">Sin vehículo seleccionado</option>
+            <option value="">Sin vehÃ­culo seleccionado</option>
           </select>
         </div>
         <div class="form-row">
@@ -152,56 +153,56 @@
           <div class="svc-grid" id="svc-grid"></div>
         </div>
         <div class="form-row">
-          <label>Título corto del trabajo *</label>
+          <label>TÃ­tulo corto del trabajo *</label>
           <input type="text" id="inp-titulo" placeholder="Ej: Cambio de pastillas y discos delanteros" maxlength="120">
-          <div class="form-hint">Máx. 120 caracteres. Esto es lo primero que verán los talleres.</div>
+          <div class="form-hint">MÃ¡x. 120 caracteres. Esto es lo primero que verÃ¡n los talleres.</div>
         </div>
       </div>
       <div class="wizard-nav">
         <div></div>
-        <button class="btn-next" id="btn-next-1" onclick="irPaso(2)">Siguiente →</button>
+        <button class="btn-next" id="btn-next-1" onclick="irPaso(2)">Siguiente â†’</button>
       </div>
     </div>
 
-    <!-- PASO 2 — Descripción -->
+    <!-- PASO 2 â€” DescripciÃ³n -->
     <div class="wizard-card" id="step-2" style="display:none">
       <div class="wizard-card-header">
-        <div class="wizard-card-title">Describí el problema</div>
-        <div class="wizard-card-sub">Cuanto más detalle des, mejores presupuestos vas a recibir</div>
+        <div class="wizard-card-title">DescribÃ­ el problema</div>
+        <div class="wizard-card-sub">Cuanto mÃ¡s detalle des, mejores presupuestos vas a recibir</div>
       </div>
       <div class="wizard-card-body">
         <div class="form-row">
-          <label>Descripción detallada *</label>
-          <textarea id="inp-descripcion" rows="5" placeholder="Describí síntomas, cuándo ocurre, si hay ruidos, si revisaron algo antes, etc."></textarea>
+          <label>DescripciÃ³n detallada *</label>
+          <textarea id="inp-descripcion" rows="5" placeholder="DescribÃ­ sÃ­ntomas, cuÃ¡ndo ocurre, si hay ruidos, si revisaron algo antes, etc."></textarea>
         </div>
         <div class="form-row">
           <label>Fotos (hasta 5, opcional)</label>
           <div class="fotos-grid" id="fotos-grid"></div>
-          <div class="form-hint">Podés subir fotos del daño, panel de instrumentos, etc.</div>
+          <div class="form-hint">PodÃ©s subir fotos del daÃ±o, panel de instrumentos, etc.</div>
         </div>
         <div class="alert-err" id="err-step2"></div>
       </div>
       <div class="wizard-nav">
-        <button class="btn-prev" onclick="irPaso(1)">← Atrás</button>
-        <button class="btn-next" id="btn-next-2" onclick="irPaso(3)">Siguiente →</button>
+        <button class="btn-prev" onclick="irPaso(1)">â† AtrÃ¡s</button>
+        <button class="btn-next" id="btn-next-2" onclick="irPaso(3)">Siguiente â†’</button>
       </div>
     </div>
 
-    <!-- PASO 3 — Zona geográfica -->
+    <!-- PASO 3 â€” Zona geogrÃ¡fica -->
     <div class="wizard-card" id="step-3" style="display:none">
       <div class="wizard-card-header">
-        <div class="wizard-card-title">¿En qué zona buscás?</div>
+        <div class="wizard-card-title">Â¿En quÃ© zona buscÃ¡s?</div>
         <div class="wizard-card-sub">Vamos a enviar tu solicitud a talleres cercanos</div>
       </div>
       <div class="wizard-card-body">
         <div class="form-row">
-          <label>Dirección de referencia *</label>
-          <input type="text" id="inp-direccion" placeholder="Ej: Av. San Martín 1500, Ramos Mejía" oninput="onDireccionInput()">
-          <div class="form-hint">Barrio, calle o localidad desde donde buscás el taller.</div>
-          <div class="geocoding-spinner" id="geo-spinner">Buscando ubicación...</div>
+          <label>DirecciÃ³n de referencia *</label>
+          <input type="text" id="inp-direccion" placeholder="Ej: Av. San MartÃ­n 1500, Ramos MejÃ­a" oninput="onDireccionInput()">
+          <div class="form-hint">Barrio, calle o localidad desde donde buscÃ¡s el taller.</div>
+          <div class="geocoding-spinner" id="geo-spinner">Buscando ubicaciÃ³n...</div>
         </div>
         <div class="form-row">
-          <label>Radio de búsqueda: <strong id="radio-label">5 km</strong></label>
+          <label>Radio de bÃºsqueda: <strong id="radio-label">5 km</strong></label>
           <div class="radio-slider-wrap">
             <input type="range" class="radio-slider" id="inp-radio" min="1" max="20" value="5" step="1" oninput="onRadioChange()">
             <div class="radio-val" id="radio-val">5 km</div>
@@ -211,15 +212,15 @@
         <div class="alert-err" id="err-step3"></div>
       </div>
       <div class="wizard-nav">
-        <button class="btn-prev" onclick="irPaso(2)">← Atrás</button>
-        <button class="btn-next" id="btn-next-3" onclick="irPaso(4)">Siguiente →</button>
+        <button class="btn-prev" onclick="irPaso(2)">â† AtrÃ¡s</button>
+        <button class="btn-next" id="btn-next-3" onclick="irPaso(4)">Siguiente â†’</button>
       </div>
     </div>
 
-    <!-- PASO 4 — Confirmar -->
+    <!-- PASO 4 â€” Confirmar -->
     <div class="wizard-card" id="step-4" style="display:none">
       <div class="wizard-card-header">
-        <div class="wizard-card-title">Revisá y enviá</div>
+        <div class="wizard-card-title">RevisÃ¡ y enviÃ¡</div>
         <div class="wizard-card-sub">Vas a recibir presupuestos de talleres en tu zona en hasta 48 hs</div>
       </div>
       <div class="wizard-card-body">
@@ -227,8 +228,8 @@
         <div class="alert-err" id="err-step4"></div>
       </div>
       <div class="wizard-nav">
-        <button class="btn-prev" onclick="irPaso(3)">← Atrás</button>
-        <button class="btn-next" id="btn-enviar" onclick="enviarSolicitud()">📨 Enviar a talleres →</button>
+        <button class="btn-prev" onclick="irPaso(3)">â† AtrÃ¡s</button>
+        <button class="btn-next" id="btn-enviar" onclick="enviarSolicitud()">ðŸ“¨ Enviar a talleres â†’</button>
       </div>
     </div>
 
@@ -241,19 +242,19 @@
 
 <script>
 const SERVICIOS = [
-  { codigo:'aceite',        icon:'🛢️',  label:'Aceite / Service' },
-  { codigo:'frenos',        icon:'🔴',  label:'Frenos' },
-  { codigo:'suspension',    icon:'🔧',  label:'Suspensión' },
-  { codigo:'direccion',     icon:'🎯',  label:'Dirección / Alineación' },
-  { codigo:'motor',         icon:'⚙️',  label:'Motor' },
-  { codigo:'transmision',   icon:'⚡',  label:'Transmisión / Caja' },
-  { codigo:'electrico',     icon:'🔌',  label:'Eléctrico / Diagnóstico' },
-  { codigo:'aire',          icon:'❄️',  label:'Aire acond.' },
-  { codigo:'embrague',      icon:'🔵',  label:'Embrague' },
-  { codigo:'escape',        icon:'💨',  label:'Escape / Caño' },
-  { codigo:'bateria',       icon:'🔋',  label:'Batería' },
-  { codigo:'gomas',         icon:'🔘',  label:'Gomas / Neumáticos' },
-  { codigo:'chapa_pintura', icon:'🎨',  label:'Chapa y pintura' },
+  { codigo:'aceite',        icon:'ðŸ›¢ï¸',  label:'Aceite / Service' },
+  { codigo:'frenos',        icon:'ðŸ”´',  label:'Frenos' },
+  { codigo:'suspension',    icon:'ðŸ”§',  label:'SuspensiÃ³n' },
+  { codigo:'direccion',     icon:'ðŸŽ¯',  label:'DirecciÃ³n / AlineaciÃ³n' },
+  { codigo:'motor',         icon:'âš™ï¸',  label:'Motor' },
+  { codigo:'transmision',   icon:'âš¡',  label:'TransmisiÃ³n / Caja' },
+  { codigo:'electrico',     icon:'ðŸ”Œ',  label:'ElÃ©ctrico / DiagnÃ³stico' },
+  { codigo:'aire',          icon:'â„ï¸',  label:'Aire acond.' },
+  { codigo:'embrague',      icon:'ðŸ”µ',  label:'Embrague' },
+  { codigo:'escape',        icon:'ðŸ’¨',  label:'Escape / CaÃ±o' },
+  { codigo:'bateria',       icon:'ðŸ”‹',  label:'BaterÃ­a' },
+  { codigo:'gomas',         icon:'ðŸ”˜',  label:'Gomas / NeumÃ¡ticos' },
+  { codigo:'chapa_pintura', icon:'ðŸŽ¨',  label:'Chapa y pintura' },
 ];
 
 let _paso        = 1;
@@ -319,11 +320,11 @@ function renderFotosGrid() {
   let html = _fotos.map((f, i) => `
     <div class="foto-slot" onclick="removeFoto(${i})">
       <img src="${f.previewUrl}" alt="">
-      <button class="rm-btn">✕</button>
+      <button class="rm-btn">âœ•</button>
     </div>`).join('');
   if (_fotos.length < 5) {
     html += `<div class="foto-slot" onclick="document.getElementById('foto-input').click()">
-      <span class="add-icon">📷</span>
+      <span class="add-icon">ðŸ“·</span>
     </div>`;
   }
   grid.innerHTML = html;
@@ -395,8 +396,8 @@ async function actualizarZonaPreview() {
   const enZona = (data || []).filter(t => haversineKm(_geoLat, _geoLng, t.lat, t.lng) <= radio);
   const dir = document.getElementById('inp-direccion').value.trim();
 
-  preview.innerHTML = `✅ Tu solicitud llegará a <strong>${enZona.length} taller${enZona.length !== 1 ? 'es' : ''}</strong> dentro de <strong>${radio} km</strong> de "${dir}".
-    ${enZona.length === 0 ? '<br><em style="color:#c00">No hay talleres con ubicación registrada en esa zona por ahora.</em>' : ''}`;
+  preview.innerHTML = `âœ… Tu solicitud llegarÃ¡ a <strong>${enZona.length} taller${enZona.length !== 1 ? 'es' : ''}</strong> dentro de <strong>${radio} km</strong> de "${dir}".
+    ${enZona.length === 0 ? '<br><em style="color:#c00">No hay talleres con ubicaciÃ³n registrada en esa zona por ahora.</em>' : ''}`;
   preview.classList.add('visible');
 }
 
@@ -429,9 +430,9 @@ function irPaso(paso) {
 }
 
 function validarPaso1() {
-  if (!_svcSel) { alert('Seleccioná el tipo de servicio.'); return false; }
+  if (!_svcSel) { alert('SeleccionÃ¡ el tipo de servicio.'); return false; }
   const titulo = document.getElementById('inp-titulo').value.trim();
-  if (!titulo) { alert('Escribí un título para tu solicitud.'); return false; }
+  if (!titulo) { alert('EscribÃ­ un tÃ­tulo para tu solicitud.'); return false; }
   return true;
 }
 
@@ -439,7 +440,7 @@ function validarPaso2() {
   const desc = document.getElementById('inp-descripcion').value.trim();
   const err  = document.getElementById('err-step2');
   if (!desc || desc.length < 15) {
-    err.textContent = 'Escribí una descripción de al menos 15 caracteres.';
+    err.textContent = 'EscribÃ­ una descripciÃ³n de al menos 15 caracteres.';
     err.classList.add('visible');
     return false;
   }
@@ -450,9 +451,9 @@ function validarPaso2() {
 function validarPaso3() {
   const dir = document.getElementById('inp-direccion').value.trim();
   const err = document.getElementById('err-step3');
-  if (!dir) { err.textContent = 'Ingresá una dirección de referencia.'; err.classList.add('visible'); return false; }
+  if (!dir) { err.textContent = 'IngresÃ¡ una direcciÃ³n de referencia.'; err.classList.add('visible'); return false; }
   if (!_geoLat || !_geoLng) {
-    err.textContent = 'No pudimos ubicar esa dirección. Esperá unos segundos o probá con más detalle.';
+    err.textContent = 'No pudimos ubicar esa direcciÃ³n. EsperÃ¡ unos segundos o probÃ¡ con mÃ¡s detalle.';
     err.classList.add('visible');
     return false;
   }
@@ -470,14 +471,14 @@ function renderResumen() {
   const vTxt   = vSel.options[vSel.selectedIndex]?.text || 'Sin especificar';
 
   document.getElementById('resumen-contenido').innerHTML = `
-    <div class="resumen-item"><span class="res-label">Vehículo</span><span class="res-val">${vTxt}</span></div>
+    <div class="resumen-item"><span class="res-label">VehÃ­culo</span><span class="res-val">${vTxt}</span></div>
     <div class="resumen-item"><span class="res-label">Servicio</span><span class="res-val">${svc?.icon} ${svc?.label}</span></div>
-    <div class="resumen-item"><span class="res-label">Título</span><span class="res-val">${escHtml(titulo)}</span></div>
-    <div class="resumen-item"><span class="res-label">Descripción</span><span class="res-val" style="white-space:pre-wrap">${escHtml(desc.slice(0,200))}${desc.length > 200 ? '...' : ''}</span></div>
+    <div class="resumen-item"><span class="res-label">TÃ­tulo</span><span class="res-val">${escHtml(titulo)}</span></div>
+    <div class="resumen-item"><span class="res-label">DescripciÃ³n</span><span class="res-val" style="white-space:pre-wrap">${escHtml(desc.slice(0,200))}${desc.length > 200 ? '...' : ''}</span></div>
     <div class="resumen-item"><span class="res-label">Fotos adjuntas</span><span class="res-val">${_fotos.length > 0 ? _fotos.length + ' foto(s)' : 'Sin fotos'}</span></div>
-    <div class="resumen-item"><span class="res-label">Zona</span><span class="res-val">${escHtml(dir)} · ${radio} km de radio</span></div>
+    <div class="resumen-item"><span class="res-label">Zona</span><span class="res-val">${escHtml(dir)} Â· ${radio} km de radio</span></div>
     <div style="margin-top:14px;padding:12px 14px;background:#fff8e1;border-radius:8px;font-size:12px;color:#795548">
-      ⏱ Los talleres tienen <strong>48 horas</strong> para responder. Te avisamos por la app cuando lleguen presupuestos.
+      â± Los talleres tienen <strong>48 horas</strong> para responder. Te avisamos por la app cuando lleguen presupuestos.
     </div>`;
 }
 
@@ -541,10 +542,10 @@ async function enviarSolicitud() {
     window.location.href = `/mis-presupuestos?enviado=1`;
 
   } catch (ex) {
-    err.textContent = ex.message || 'Error inesperado. Intentá de nuevo.';
+    err.textContent = ex.message || 'Error inesperado. IntentÃ¡ de nuevo.';
     err.classList.add('visible');
     btn.disabled = false;
-    btn.textContent = '📨 Enviar a talleres →';
+    btn.textContent = 'ðŸ“¨ Enviar a talleres â†’';
   }
 }
 

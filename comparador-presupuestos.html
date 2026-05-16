@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Comparar presupuestos — Piezauto</title>
+  <title>Comparar presupuestos â€” Piezauto</title>
   <meta name="robots" content="noindex, nofollow">
   <link rel="stylesheet" href="css/estilos.css">
   <style>
@@ -75,13 +75,13 @@
     .sin-resp-titulo { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
     .sin-resp-sub { font-size: 13px; color: #888; line-height: 1.6; }
 
-    /* Decisión confirmada */
+    /* DecisiÃ³n confirmada */
     .decision-banner { background: #e8f5e9; border: 1.5px solid #a5d6a7; border-radius: 12px; padding: 16px 20px; margin-bottom: 18px; display: flex; align-items: center; gap: 12px; }
     .decision-icon { font-size: 28px; }
     .decision-txt { font-size: 13px; color: #2e7d32; line-height: 1.6; }
     .decision-txt strong { display: block; font-size: 15px; margin-bottom: 2px; }
 
-    /* Modal confirmación */
+    /* Modal confirmaciÃ³n */
     .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 200; align-items: center; justify-content: center; }
     .modal-bg.abierto { display: flex; }
     .modal { background: #fff; border-radius: 16px; padding: 28px; width: 100%; max-width: 400px; text-align: center; }
@@ -100,6 +100,7 @@
 <body>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase.js"></script>
+<script src="js/auth-check.js"></script>
 <script src="js/auth-b2c.js"></script>
 
 <div id="header-b2c-root"></div>
@@ -113,21 +114,21 @@
 <!-- Modal elegir -->
 <div class="modal-bg" id="modal-elegir">
   <div class="modal">
-    <div class="modal-icon">🤝</div>
-    <div class="modal-titulo">¿Elegís este taller?</div>
-    <div class="modal-sub" id="modal-elegir-sub">Al confirmar, el taller recibirá tu datos de contacto para coordinar el trabajo.</div>
+    <div class="modal-icon">ðŸ¤</div>
+    <div class="modal-titulo">Â¿ElegÃ­s este taller?</div>
+    <div class="modal-sub" id="modal-elegir-sub">Al confirmar, el taller recibirÃ¡ tu datos de contacto para coordinar el trabajo.</div>
     <div class="modal-btns">
       <button class="modal-cancel" onclick="cerrarModal()">Cancelar</button>
-      <button class="modal-confirm" onclick="confirmarEleccion()">Sí, lo elijo →</button>
+      <button class="modal-confirm" onclick="confirmarEleccion()">SÃ­, lo elijo â†’</button>
     </div>
   </div>
 </div>
 
 <script>
 const SVC_LABEL = {
-  aceite:'Aceite / Service', frenos:'Frenos', suspension:'Suspensión', direccion:'Dirección',
-  motor:'Motor', transmision:'Transmisión', electrico:'Eléctrico', aire:'Aire acond.',
-  embrague:'Embrague', escape:'Escape', bateria:'Batería', gomas:'Gomas', chapa_pintura:'Chapa y pintura',
+  aceite:'Aceite / Service', frenos:'Frenos', suspension:'SuspensiÃ³n', direccion:'DirecciÃ³n',
+  motor:'Motor', transmision:'TransmisiÃ³n', electrico:'ElÃ©ctrico', aire:'Aire acond.',
+  embrague:'Embrague', escape:'Escape', bateria:'BaterÃ­a', gomas:'Gomas', chapa_pintura:'Chapa y pintura',
 };
 const ESTADO_LABEL = {
   abierta:'Abierta', recibiendo_presupuestos:'Recibiendo propuestas',
@@ -185,25 +186,25 @@ function render() {
   // Header solicitud
   html += `
     <div class="sol-header">
-      <a href="mis-presupuestos.html" class="sol-back">← Mis solicitudes</a>
+      <a href="mis-presupuestos.html" class="sol-back">â† Mis solicitudes</a>
       <div class="sol-badge ${_solicitud.estado}">${ESTADO_LABEL[_solicitud.estado] || _solicitud.estado}</div>
       <div class="sol-titulo">${escHtml(_solicitud.titulo)}</div>
       <div class="sol-meta">
-        <div class="sol-meta-item"><strong>${SVC_LABEL[_solicitud.servicio_codigo] || _solicitud.servicio_codigo || '—'}</strong></div>
-        <div class="sol-meta-item">Zona: <strong>${_solicitud.zona_radio_km} km · ${escHtml(_solicitud.direccion_referencia || '—')}</strong></div>
+        <div class="sol-meta-item"><strong>${SVC_LABEL[_solicitud.servicio_codigo] || _solicitud.servicio_codigo || 'â€”'}</strong></div>
+        <div class="sol-meta-item">Zona: <strong>${_solicitud.zona_radio_km} km Â· ${escHtml(_solicitud.direccion_referencia || 'â€”')}</strong></div>
         <div class="sol-meta-item">Talleres notificados: <strong>${_solicitud.talleres_notificados || 0}</strong></div>
         <div class="sol-meta-item">Solicitud: <strong>${FDATE(_solicitud.created_at)}</strong></div>
       </div>
     </div>`;
 
-  // Banner si ya decidió
+  // Banner si ya decidiÃ³
   if (_solicitud.estado === 'cliente_decidio') {
     const elegido = _pres.find(p => p.id === _solicitud.presupuesto_elegido_id);
     html += `<div class="decision-banner">
-      <div class="decision-icon">✅</div>
+      <div class="decision-icon">âœ…</div>
       <div class="decision-txt">
         <strong>Ya elegiste un taller</strong>
-        ${elegido ? `Presupuesto de ${escHtml(elegido.cat_recomendaciones_talleres?.nombre || '—')} por ${FMT(elegido.monto_estimado_min)}` : ''}
+        ${elegido ? `Presupuesto de ${escHtml(elegido.cat_recomendaciones_talleres?.nombre || 'â€”')} por ${FMT(elegido.monto_estimado_min)}` : ''}
       </div>
     </div>`;
   }
@@ -211,7 +212,7 @@ function render() {
   // Sin presupuestos
   if (!_pres.length) {
     html += `<div class="sin-resp">
-      <div class="sin-resp-icon">⏳</div>
+      <div class="sin-resp-icon">â³</div>
       <div class="sin-resp-titulo">Esperando respuestas</div>
       <div class="sin-resp-sub">Los talleres tienen hasta 48 hs para enviarte sus propuestas.<br>Te avisamos cuando llegue la primera.</div>
     </div>`;
@@ -243,23 +244,23 @@ function renderCard(p) {
   const esDescart = p.estado === 'descartado';
 
   const rangoTxt = p.monto_estimado_max && p.monto_estimado_max !== p.monto_estimado_min
-    ? `${FMT(p.monto_estimado_min)} – ${FMT(p.monto_estimado_max)}`
+    ? `${FMT(p.monto_estimado_min)} â€“ ${FMT(p.monto_estimado_max)}`
     : FMT(p.monto_estimado_min);
 
   let footer = '';
   if (esElegido) {
-    footer = `<div class="elegido-badge">✅ Taller elegido</div>
-      <a href="solicitar-turno.html?taller_id=${t.id}&presupuesto_id=${p.id}" class="btn-elegir" style="background:#2e7d32">Sacar turno →</a>`;
+    footer = `<div class="elegido-badge">âœ… Taller elegido</div>
+      <a href="solicitar-turno.html?taller_id=${t.id}&presupuesto_id=${p.id}" class="btn-elegir" style="background:#2e7d32">Sacar turno â†’</a>`;
   } else if (!yaDecidio) {
-    footer = `<button class="btn-elegir" onclick="abrirModalElegir('${p.id}','${t.id}','${escHtml(t.nombre || '')}')">Elegir este taller →</button>`;
+    footer = `<button class="btn-elegir" onclick="abrirModalElegir('${p.id}','${t.id}','${escHtml(t.nombre || '')}')">Elegir este taller â†’</button>`;
   }
 
   return `<div class="pres-card ${esElegido ? 'elegido' : ''} ${esDescart ? 'descartado' : ''}">
     <div class="pres-card-header">
-      <div class="pres-taller-nombre">${escHtml(t.nombre || '—')}</div>
+      <div class="pres-taller-nombre">${escHtml(t.nombre || 'â€”')}</div>
       <div class="pres-taller-loc">
         ${t.localidad ? escHtml(t.localidad) : ''}
-        <a href="taller-perfil.html?taller_id=${t.id}" target="_blank" class="pres-taller-link">Ver perfil →</a>
+        <a href="taller-perfil.html?taller_id=${t.id}" target="_blank" class="pres-taller-link">Ver perfil â†’</a>
       </div>
     </div>
     <div class="pres-monto">
@@ -274,14 +275,14 @@ function renderCard(p) {
       </div>
       ${p.tiempo_estimado_dias ? `<div class="pres-field">
         <div class="pres-field-label">Plazo estimado</div>
-        <div class="pres-field-val">${p.tiempo_estimado_dias} día${p.tiempo_estimado_dias !== 1 ? 's' : ''}</div>
+        <div class="pres-field-val">${p.tiempo_estimado_dias} dÃ­a${p.tiempo_estimado_dias !== 1 ? 's' : ''}</div>
       </div>` : ''}
       ${p.fecha_disponibilidad ? `<div class="pres-field">
         <div class="pres-field-label">Disponibilidad</div>
         <div class="pres-field-val">${FDATE(p.fecha_disponibilidad)}</div>
       </div>` : ''}
       <div class="pres-field">
-        <div class="pres-field-label">Válido hasta</div>
+        <div class="pres-field-label">VÃ¡lido hasta</div>
         <div class="pres-field-val">${FDATE(p.validez_hasta)}</div>
       </div>
     </div>
@@ -307,7 +308,7 @@ function abrirModalElegir(presId, tallerId, nombre) {
   _presElegirId       = presId;
   _presElegirTallerId = tallerId;
   document.getElementById('modal-elegir-sub').textContent =
-    `Vas a elegir al taller "${nombre}". Los otros presupuestos se cerrarán.`;
+    `Vas a elegir al taller "${nombre}". Los otros presupuestos se cerrarÃ¡n.`;
   document.getElementById('modal-elegir').classList.add('abierto');
 }
 

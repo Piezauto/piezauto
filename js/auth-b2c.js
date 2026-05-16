@@ -112,6 +112,11 @@ async function loginCliente(email, password) {
 
 async function logoutCliente() {
   await dbB2C.auth.signOut();
+  if (typeof window.logoutLimpio === 'function') {
+    window.logoutLimpio();
+  } else {
+    window.location.href = '/login.html';
+  }
 }
 
 async function getClienteActual() {
@@ -121,20 +126,20 @@ async function getClienteActual() {
 
     const { data, error } = await dbB2C
       .from('cat_clientes_finales')
-      .select('*')
+      .select('id, auth_user_id, email, nombre, apellido, telefono, localidad, provincia, avatar_url, puntos_acumulados, activo, creado_en')
       .eq('auth_user_id', session.user.id)
       .single();
 
     if (error) {
       console.warn('[auth-b2c] getClienteActual error:', error.message, '| code:', error.code);
-      // Si es RLS recursion o permisos, loguear para diagnóstico
       if (error.message?.includes('recursion') || error.code === '42501') {
         console.error('[auth-b2c] CRÍTICO: RLS bloqueando cat_clientes_finales. Ejecutar fix_rls_recursion.sql en Supabase.');
       }
       return null;
     }
     if (!data) return null;
-    return { ...data, email: session.user.email };
+    const { password_hash: _ph, password: _pw, ...dataSafe } = data;
+    return { ...dataSafe, email: session.user.email };
   } catch (e) {
     console.warn('[auth-b2c] getClienteActual exception:', e.message);
     return null;

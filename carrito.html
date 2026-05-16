@@ -1,16 +1,16 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mi carrito — Piezauto</title>
+  <title>Mi carrito â€” Piezauto</title>
   <meta name="robots" content="noindex">
   <link rel="stylesheet" href="css/estilos.css">
   <style>
     body { background: var(--gris-claro); }
 
-    /* ── Header B2C ── */
+    /* â”€â”€ Header B2C â”€â”€ */
     #header-b2c { background:var(--negro); position:sticky; top:0; z-index:100; box-shadow:0 2px 8px rgba(0,0,0,0.3); }
     .hb2c-inner { max-width:1100px; margin:0 auto; padding:12px 16px; display:flex; align-items:center; gap:12px; }
     .hb2c-logo { text-decoration:none; font-size:20px; font-weight:900; flex-shrink:0; }
@@ -29,7 +29,7 @@
     .hb2c-btn-login { background:var(--rojo); color:var(--blanco); text-decoration:none; padding:8px 16px; border-radius:var(--radio); font-size:13px; font-weight:600; }
     @media (max-width:480px) { .hb2c-nombre { display:none; } }
 
-    /* ── Layout ── */
+    /* â”€â”€ Layout â”€â”€ */
     .carrito-layout {
       max-width: 900px;
       margin: 0 auto;
@@ -51,7 +51,7 @@
       .carrito-grid { grid-template-columns: 1fr; }
     }
 
-    /* ── Estado vacío ── */
+    /* â”€â”€ Estado vacÃ­o â”€â”€ */
     #carrito-vacio {
       display: none;
       text-align: center;
@@ -74,7 +74,7 @@
       font-size: 15px;
     }
 
-    /* ── Lista items ── */
+    /* â”€â”€ Lista items â”€â”€ */
     #carrito-items-container { display: none; }
     #lista-items { display: flex; flex-direction: column; gap: 10px; }
 
@@ -166,7 +166,7 @@
       .item-subtotal { text-align: left; }
     }
 
-    /* ── Acción limpiar ── */
+    /* â”€â”€ AcciÃ³n limpiar â”€â”€ */
     .carrito-actions {
       display: flex;
       justify-content: flex-end;
@@ -182,7 +182,7 @@
     }
     .btn-vaciar:hover { color: var(--rojo); }
 
-    /* ── Resumen ── */
+    /* â”€â”€ Resumen â”€â”€ */
     .resumen-card {
       background: var(--blanco);
       border-radius: 12px;
@@ -244,7 +244,7 @@
     }
     .btn-seguir-comprando:hover { color: var(--negro); }
 
-    /* ── Login CTA ── */
+    /* â”€â”€ Login CTA â”€â”€ */
     #login-cta {
       background: #e8f4fd;
       border: 1px solid #bce0f8;
@@ -272,11 +272,11 @@
 <main class="carrito-layout">
   <h1 class="carrito-titulo">Mi carrito</h1>
 
-  <!-- Vacío -->
+  <!-- VacÃ­o -->
   <div id="carrito-vacio">
-    <div class="vacio-icono">🛒</div>
-    <div class="vacio-titulo">Tu carrito está vacío</div>
-    <div class="vacio-sub">Buscá la pieza que necesitás y agregala acá.</div>
+    <div class="vacio-icono">ðŸ›’</div>
+    <div class="vacio-titulo">Tu carrito estÃ¡ vacÃ­o</div>
+    <div class="vacio-sub">BuscÃ¡ la pieza que necesitÃ¡s y agregala acÃ¡.</div>
     <a href="/buscar.html" class="btn-buscar-vacio">Ir a buscar piezas</a>
   </div>
 
@@ -298,7 +298,7 @@
           <div class="resumen-titulo">Resumen del pedido</div>
 
           <div id="login-cta">
-            <a href="/login.html">Ingresá</a> para guardar tu carrito y finalizar la compra.
+            <a href="/login.html">IngresÃ¡</a> para guardar tu carrito y finalizar la compra.
           </div>
 
           <div id="resumen-filas"></div>
@@ -308,11 +308,11 @@
           </div>
 
           <p class="nota-precios">
-            Precios en pesos argentinos · <span>IVA incluido</span> · Sujeto a disponibilidad
+            Precios en pesos argentinos Â· <span>IVA incluido</span> Â· Sujeto a disponibilidad
           </p>
 
           <button id="btn-checkout" onclick="irACheckout()">Continuar compra</button>
-          <a href="/buscar.html" class="btn-seguir-comprando">← Seguir comprando</a>
+          <a href="/buscar.html" class="btn-seguir-comprando">â† Seguir comprando</a>
 
           <div class="sync-badge" id="sync-badge"></div>
         </div>
@@ -324,6 +324,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase.js"></script>
+<script src="js/auth-check.js"></script>
 <script src="js/auth-b2c.js"></script>
 <script src="js/header-b2c.js"></script>
 <script src="js/carrito.js"></script>
@@ -339,7 +340,7 @@ async function initPaginaCarrito() {
       document.getElementById('login-cta').style.display = 'block';
     } else {
       await cargarCarritoDesdeDB();
-      document.getElementById('sync-badge').textContent = '✓ Carrito guardado en tu cuenta';
+      document.getElementById('sync-badge').textContent = 'âœ“ Carrito guardado en tu cuenta';
       renderCarrito(); // Re-render tras merge con BD
     }
   } catch (err) {
@@ -383,7 +384,7 @@ function renderCarrito() {
         </div>
 
         <div class="item-cantidad">
-          <button onclick="cambiarCantItem('${item.id}', -1)">−</button>
+          <button onclick="cambiarCantItem('${item.id}', -1)">âˆ’</button>
           <input type="number" class="item-cant-input" value="${item.cantidad}" min="1" max="99"
             onchange="setCantItem('${item.id}', this.value)"
             onblur="setCantItem('${item.id}', this.value)">
@@ -414,11 +415,11 @@ function renderResumen(items) {
   filas.innerHTML = `
     <div class="resumen-fila">
       <span>Productos (${cantTotal})</span>
-      <span>${subtotal > 0 ? '$' + subtotal.toLocaleString('es-AR', { minimumFractionDigits: 2 }) : '—'}</span>
+      <span>${subtotal > 0 ? '$' + subtotal.toLocaleString('es-AR', { minimumFractionDigits: 2 }) : 'â€”'}</span>
     </div>
-    ${sinPrecio > 0 ? `<div class="resumen-fila"><span style="color:var(--gris-text); font-size:12px">${sinPrecio} ítem(s) sin precio → consultar</span><span></span></div>` : ''}
+    ${sinPrecio > 0 ? `<div class="resumen-fila"><span style="color:var(--gris-text); font-size:12px">${sinPrecio} Ã­tem(s) sin precio â†’ consultar</span><span></span></div>` : ''}
     <div class="resumen-fila">
-      <span>Envío</span>
+      <span>EnvÃ­o</span>
       <span style="color:var(--gris-text)">A calcular</span>
     </div>
   `;
@@ -453,7 +454,7 @@ function quitarItem(skuId) {
 }
 
 function confirmarVaciar() {
-  if (confirm('¿Vaciar el carrito?')) {
+  if (confirm('Â¿Vaciar el carrito?')) {
     vaciarCarrito();
     renderCarrito();
     actualizarBadgeCarrito();

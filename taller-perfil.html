@@ -1,15 +1,15 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title id="pageTitle">Taller — Piezauto</title>
+  <title id="pageTitle">Taller â€” Piezauto</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="stylesheet" href="/css/estilos.css">
   <style>
     body { background: var(--gris-claro); }
 
-    /* ── Hero ── */
+    /* â”€â”€ Hero â”€â”€ */
     .hero {
       background: linear-gradient(135deg, #1A1A2E 0%, #16213E 100%);
       color: #fff;
@@ -31,7 +31,7 @@
     .calif-num     { font-size: 15px; font-weight: 700; }
     .calif-count   { font-size: 12px; color: rgba(255,255,255,.6); }
 
-    /* ── Botones de acción ── */
+    /* â”€â”€ Botones de acciÃ³n â”€â”€ */
     .hero-btns { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
     .btn-turno {
       display: inline-flex; align-items: center; gap: 7px;
@@ -48,7 +48,7 @@
     }
     .btn-wa:hover { opacity: .88; }
 
-    /* ── Contenido ── */
+    /* â”€â”€ Contenido â”€â”€ */
     .wrap { max-width: 640px; margin: 0 auto; padding: 20px 16px 60px; }
 
     /* Cards */
@@ -74,7 +74,7 @@
     .tipo-badge-on  { font-size: 10px; font-weight: 700; background: #dcfce7; color: #15803d; padding: 3px 9px; border-radius: 10px; }
     .tipo-badge-off { font-size: 10px; font-weight: 700; background: #f0f0f0; color: #aaa; padding: 3px 9px; border-radius: 10px; }
 
-    /* Reseñas */
+    /* ReseÃ±as */
     .resena-item { padding: 14px 0; border-bottom: 1px solid #f8f8f8; }
     .resena-item:last-child { border-bottom: none; }
     .resena-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
@@ -101,7 +101,7 @@
 <!-- Header simple -->
 <div style="background:#1A1A2E;padding:0 16px;height:48px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(0,0,0,.25)">
   <a href="/" style="font-weight:900;font-size:15px;color:var(--rojo);text-decoration:none">Piezauto</a>
-  <a href="/solicitar-turno.html" style="font-size:12px;color:#aaa;text-decoration:none">Solicitar turno →</a>
+  <a href="/solicitar-turno.html" style="font-size:12px;color:#aaa;text-decoration:none">Solicitar turno â†’</a>
 </div>
 
 <!-- HERO (se rellena por JS) -->
@@ -117,12 +117,12 @@
 <script>
 
 
-const DIAS_SEMANA = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const DIAS_SEMANA = ['Dom','Lun','Mar','MiÃ©','Jue','Vie','SÃ¡b'];
 const TIPO_INFO = {
-  inspeccion_presupuesto: { icon:'🔍', label:'Inspección / Presupuesto' },
-  inicio_trabajo:         { icon:'🔧', label:'Inicio de trabajo'        },
-  consulta:               { icon:'💬', label:'Consulta'                  },
-  reclamo:                { icon:'📢', label:'Reclamo'                   },
+  inspeccion_presupuesto: { icon:'ðŸ”', label:'InspecciÃ³n / Presupuesto' },
+  inicio_trabajo:         { icon:'ðŸ”§', label:'Inicio de trabajo'        },
+  consulta:               { icon:'ðŸ’¬', label:'Consulta'                  },
+  reclamo:                { icon:'ðŸ“¢', label:'Reclamo'                   },
 };
 
 async function sbGetSafe(tabla, qs) {
@@ -131,7 +131,7 @@ async function sbGetSafe(tabla, qs) {
       headers: { 'apikey': _B2C_KEY }
     });
     if (!r.ok) {
-      console.error(`sbGetSafe ${tabla} → HTTP ${r.status}`);
+      console.error(`sbGetSafe ${tabla} â†’ HTTP ${r.status}`);
       return [];
     }
     return await r.json();
@@ -141,10 +141,10 @@ async function sbGetSafe(tabla, qs) {
   }
 }
 
-// Timeout de seguridad: si en 8s no renderizó, mostrar error
+// Timeout de seguridad: si en 8s no renderizÃ³, mostrar error
 const _timeoutId = setTimeout(() => {
   if (document.getElementById('contenido')?.innerHTML.includes('spinner')) {
-    renderError('Tiempo de espera agotado. Verificá tu conexión.');
+    renderError('Tiempo de espera agotado. VerificÃ¡ tu conexiÃ³n.');
   }
 }, 8000);
 
@@ -154,11 +154,11 @@ const _timeoutId = setTimeout(() => {
 
   if (!tallerId) {
     clearTimeout(_timeoutId);
-    renderError('No se especificó un taller.');
+    renderError('No se especificÃ³ un taller.');
     return;
   }
 
-  // Cargar todo en paralelo — sbGetSafe nunca lanza, siempre devuelve array
+  // Cargar todo en paralelo â€” sbGetSafe nunca lanza, siempre devuelve array
   const [tallerArr, disponib, resenas] = await Promise.all([
     sbGetSafe('cat_recomendaciones_talleres',
       `select=id,nombre,direccion,localidad,telefono,whatsapp,especialidades,horarios,logo_url,tipo_establecimiento,atencion_express,sin_turno_previo,rango_precios_referencial&id=eq.${tallerId}&limit=1`),
@@ -174,15 +174,15 @@ const _timeoutId = setTimeout(() => {
   console.log('taller-perfil fetch result:', { taller, disponibCount: disponib.length, resenasCount: resenas.length });
 
   if (!taller) {
-    renderError('Taller no encontrado. Es posible que la página requiera permisos de acceso — verificar RLS en cat_recomendaciones_talleres para rol anon.');
+    renderError('Taller no encontrado. Es posible que la pÃ¡gina requiera permisos de acceso â€” verificar RLS en cat_recomendaciones_talleres para rol anon.');
     return;
   }
 
-  // Calificación promedio
+  // CalificaciÃ³n promedio
   const califs    = resenas.map(r => r.calificacion_cliente_al_taller).filter(Boolean);
   const promCalif = califs.length ? (califs.reduce((a,b)=>a+b,0)/califs.length).toFixed(1) : null;
 
-  // Horarios (de cat_recomendaciones_talleres.horarios — JSON de horarios de atención)
+  // Horarios (de cat_recomendaciones_talleres.horarios â€” JSON de horarios de atenciÃ³n)
   let horariosData = {};
   try {
     if (taller.horarios) {
@@ -192,41 +192,41 @@ const _timeoutId = setTimeout(() => {
     }
   } catch { horariosData = {}; }
 
-  // ── HERO ────────────────────────────────────────────────────────────
-  document.title = `${taller.nombre} — Piezauto`;
-  document.getElementById('pageTitle').textContent = `${taller.nombre} — Piezauto`;
+  // â”€â”€ HERO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  document.title = `${taller.nombre} â€” Piezauto`;
+  document.getElementById('pageTitle').textContent = `${taller.nombre} â€” Piezauto`;
 
   const TIPO_LABEL = {
-    taller_chapa_pintura:   '🎨 Chapa y pintura',
-    taller_mecanico:        '🔧 Taller mecánico',
-    lubricentro:            '🛢️ Lubricentro',
-    gomeria:                '🛞 Gomería',
-    electricidad_automotor: '⚡ Electricidad automotor',
-    cerrajeria_automotor:   '🔑 Cerrajería automotor',
-    mixto:                  '🏪 Mixto',
-    otro:                   '🔩 Otro',
+    taller_chapa_pintura:   'ðŸŽ¨ Chapa y pintura',
+    taller_mecanico:        'ðŸ”§ Taller mecÃ¡nico',
+    lubricentro:            'ðŸ›¢ï¸ Lubricentro',
+    gomeria:                'ðŸ›ž GomerÃ­a',
+    electricidad_automotor: 'âš¡ Electricidad automotor',
+    cerrajeria_automotor:   'ðŸ”‘ CerrajerÃ­a automotor',
+    mixto:                  'ðŸª Mixto',
+    otro:                   'ðŸ”© Otro',
   };
   const especialidades = Array.isArray(taller.especialidades) ? taller.especialidades : [];
   const tipoBadge = taller.tipo_establecimiento
     ? `<span class="hero-chip" style="background:rgba(230,57,70,.25);color:#ffb3b7;font-weight:700">${TIPO_LABEL[taller.tipo_establecimiento] || taller.tipo_establecimiento}</span>`
     : '';
   const expressBadge = taller.atencion_express
-    ? `<span class="hero-chip" style="background:rgba(209,250,229,.2);color:#a7f3d0;font-weight:700">🚀 Sin turno previo</span>`
+    ? `<span class="hero-chip" style="background:rgba(209,250,229,.2);color:#a7f3d0;font-weight:700">ðŸš€ Sin turno previo</span>`
     : '';
   const chips = [tipoBadge, expressBadge, ...especialidades.map(e => `<span class="hero-chip">${esc(e)}</span>`)].filter(Boolean).join('');
   const califHtml = promCalif
     ? `<div class="hero-calif">
-        <span class="estrellas-txt">${'★'.repeat(Math.round(parseFloat(promCalif)))}</span>
+        <span class="estrellas-txt">${'â˜…'.repeat(Math.round(parseFloat(promCalif)))}</span>
         <span class="calif-num">${promCalif}</span>
-        <span class="calif-count">(${califs.length} reseña${califs.length !== 1 ? 's' : ''})</span>
+        <span class="calif-count">(${califs.length} reseÃ±a${califs.length !== 1 ? 's' : ''})</span>
       </div>` : '';
 
   const logoHtml = taller.logo_url
     ? `<img src="${esc(taller.logo_url)}" alt="${esc(taller.nombre)}">`
-    : '🔧';
+    : 'ðŸ”§';
 
   const waLink = taller.whatsapp
-    ? `<a href="https://wa.me/54${taller.whatsapp.replace(/\D/g,'')}" target="_blank" rel="noopener" class="btn-wa">💬 WhatsApp</a>`
+    ? `<a href="https://wa.me/54${taller.whatsapp.replace(/\D/g,'')}" target="_blank" rel="noopener" class="btn-wa">ðŸ’¬ WhatsApp</a>`
     : '';
 
   document.getElementById('hero').innerHTML = `
@@ -235,18 +235,18 @@ const _timeoutId = setTimeout(() => {
         <div class="hero-logo">${logoHtml}</div>
         <div style="flex:1">
           <div class="hero-nombre">${esc(taller.nombre)}</div>
-          <div class="hero-dir">📍 ${esc(taller.direccion || '')}${taller.localidad ? ', ' + esc(taller.localidad) : ''}</div>
+          <div class="hero-dir">ðŸ“ ${esc(taller.direccion || '')}${taller.localidad ? ', ' + esc(taller.localidad) : ''}</div>
           ${chips ? `<div class="hero-chips">${chips}</div>` : ''}
           ${califHtml}
           <div class="hero-btns">
-            <a href="/solicitar-turno.html?taller_id=${tallerId}" class="btn-turno">📅 Solicitar turno</a>
+            <a href="/solicitar-turno.html?taller_id=${tallerId}" class="btn-turno">ðŸ“… Solicitar turno</a>
             ${waLink}
           </div>
         </div>
       </div>
     </div>`;
 
-  // ── CONTENIDO ────────────────────────────────────────────────────────
+  // â”€â”€ CONTENIDO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const cont = document.getElementById('contenido');
   let html = '';
 
@@ -254,7 +254,7 @@ const _timeoutId = setTimeout(() => {
   const precios = taller.rango_precios_referencial;
   if (precios && typeof precios === 'object' && Object.keys(precios).length > 0) {
     html += `<div class="card">
-      <div class="card-head"><h3>💰 Precios referenciales</h3></div>
+      <div class="card-head"><h3>ðŸ’° Precios referenciales</h3></div>
       <div class="card-body">
         <table style="width:100%;border-collapse:collapse;font-size:13px">
           ${Object.entries(precios).map(([svc, rango]) => `
@@ -263,35 +263,35 @@ const _timeoutId = setTimeout(() => {
               <td style="padding:6px 0;border-bottom:1px solid #f0f0f0;text-align:right;font-weight:700;color:var(--rojo)">$${esc(String(rango))}</td>
             </tr>`).join('')}
         </table>
-        <p style="font-size:11px;color:#aaa;margin-top:8px">Precios orientativos, sujetos a diagnóstico.</p>
+        <p style="font-size:11px;color:#aaa;margin-top:8px">Precios orientativos, sujetos a diagnÃ³stico.</p>
       </div>
     </div>`;
   }
 
-  // Sección contacto
+  // SecciÃ³n contacto
   html += `
     <div class="card">
-      <div class="card-head"><h3>📞 Contacto</h3></div>
+      <div class="card-head"><h3>ðŸ“ž Contacto</h3></div>
       <div class="card-body">
-        ${taller.telefono ? `<div style="display:flex;gap:10px;align-items:center;padding:6px 0"><span style="font-size:18px">📞</span><a href="tel:${esc(taller.telefono)}" style="color:var(--rojo);font-weight:600;text-decoration:none">${esc(taller.telefono)}</a></div>` : ''}
-        ${taller.whatsapp ? `<div style="display:flex;gap:10px;align-items:center;padding:6px 0"><span style="font-size:18px">💬</span><a href="https://wa.me/54${taller.whatsapp.replace(/\D/g,'')}" target="_blank" style="color:#25d366;font-weight:600;text-decoration:none">WhatsApp</a></div>` : ''}
-        ${taller.localidad ? `<div style="display:flex;gap:10px;align-items:center;padding:6px 0"><span style="font-size:18px">📍</span><span style="font-size:13px;color:#555">${esc(taller.direccion || '')}${taller.localidad ? ', ' + esc(taller.localidad) : ''}</span></div>` : ''}
+        ${taller.telefono ? `<div style="display:flex;gap:10px;align-items:center;padding:6px 0"><span style="font-size:18px">ðŸ“ž</span><a href="tel:${esc(taller.telefono)}" style="color:var(--rojo);font-weight:600;text-decoration:none">${esc(taller.telefono)}</a></div>` : ''}
+        ${taller.whatsapp ? `<div style="display:flex;gap:10px;align-items:center;padding:6px 0"><span style="font-size:18px">ðŸ’¬</span><a href="https://wa.me/54${taller.whatsapp.replace(/\D/g,'')}" target="_blank" style="color:#25d366;font-weight:600;text-decoration:none">WhatsApp</a></div>` : ''}
+        ${taller.localidad ? `<div style="display:flex;gap:10px;align-items:center;padding:6px 0"><span style="font-size:18px">ðŸ“</span><span style="font-size:13px;color:#555">${esc(taller.direccion || '')}${taller.localidad ? ', ' + esc(taller.localidad) : ''}</span></div>` : ''}
       </div>
     </div>`;
 
-  // Horarios de atención
+  // Horarios de atenciÃ³n
   const horaKeys = ['lun','mar','mie','jue','vie','sab','dom'];
-  const hLabelMap = { lun:'Lun', mar:'Mar', mie:'Mié', jue:'Jue', vie:'Vie', sab:'Sáb', dom:'Dom' };
+  const hLabelMap = { lun:'Lun', mar:'Mar', mie:'MiÃ©', jue:'Jue', vie:'Vie', sab:'SÃ¡b', dom:'Dom' };
   const horariosRows = horaKeys.map(k => {
     const h2 = horariosData[k];
     if (!h2) return '';
     return `<div class="horario-row">
       <div class="horario-dia">${hLabelMap[k]}</div>
-      ${h2.abierto ? `<div class="horario-hrs">${(h2.desde||'').slice(0,5)} – ${(h2.hasta||'').slice(0,5)}</div>` : '<div class="horario-cerr">Cerrado</div>'}
+      ${h2.abierto ? `<div class="horario-hrs">${(h2.desde||'').slice(0,5)} â€“ ${(h2.hasta||'').slice(0,5)}</div>` : '<div class="horario-cerr">Cerrado</div>'}
     </div>`;
   }).filter(Boolean).join('');
 
-  html += `<div class="card"><div class="card-head"><h3>🕐 Horarios de atención</h3></div><div class="card-body">${
+  html += `<div class="card"><div class="card-head"><h3>ðŸ• Horarios de atenciÃ³n</h3></div><div class="card-body">${
     horariosRows || '<div style="padding:6px 0;font-size:13px;color:#888;font-style:italic">Consultar horarios con el taller.</div>'
   }</div></div>`;
 
@@ -301,27 +301,27 @@ const _timeoutId = setTimeout(() => {
 
   const dispRows = TODOS_TIPOS.map(tipo => {
     const filas = disponib.filter(d => d.tipo_turno === tipo);
-    const info  = TIPO_INFO[tipo] || { icon:'📋', label: tipo };
+    const info  = TIPO_INFO[tipo] || { icon:'ðŸ“‹', label: tipo };
     const tieneDisp = filas.length > 0;
     const diasStr = filas.map(d => DIAS_SEMANA[d.dia_semana]).join(', ');
-    const horaStr = filas[0] ? `${(filas[0].hora_inicio||'').slice(0,5)}–${(filas[0].hora_fin||'').slice(0,5)}` : '';
+    const horaStr = filas[0] ? `${(filas[0].hora_inicio||'').slice(0,5)}â€“${(filas[0].hora_fin||'').slice(0,5)}` : '';
     return `
       <div class="tipo-turno-row">
         <div class="tipo-icon-sm">${info.icon}</div>
         <div class="tipo-info">
           <div class="tipo-nombre">${info.label}</div>
-          ${tieneDisp ? `<div class="tipo-dias">${diasStr}${horaStr ? ' · ' + horaStr : ''}</div>` : '<div class="tipo-dias">No disponible</div>'}
+          ${tieneDisp ? `<div class="tipo-dias">${diasStr}${horaStr ? ' Â· ' + horaStr : ''}</div>` : '<div class="tipo-dias">No disponible</div>'}
         </div>
         <span class="${tieneDisp ? 'tipo-badge-on' : 'tipo-badge-off'}">${tieneDisp ? 'Disponible' : 'No acepta'}</span>
       </div>`;
   }).join('');
 
-  html += `<div class="card"><div class="card-head"><h3>📅 Tipos de turno</h3></div><div class="card-body">${dispRows}</div></div>`;
+  html += `<div class="card"><div class="card-head"><h3>ðŸ“… Tipos de turno</h3></div><div class="card-body">${dispRows}</div></div>`;
 
-  // Reseñas
+  // ReseÃ±as
   if (resenas.length) {
     const resenasHtml = resenas.filter(r => r.resena_cliente).map(r => {
-      const stars = '★'.repeat(r.calificacion_cliente_al_taller || 0);
+      const stars = 'â˜…'.repeat(r.calificacion_cliente_al_taller || 0);
       const fecha = r.created_at ? new Date(r.created_at).toLocaleDateString('es-AR', { month:'long', year:'numeric' }) : '';
       const veh   = r.vehiculo_marca ? `${r.vehiculo_marca} ${r.vehiculo_modelo || ''}`.trim() : '';
       return `
@@ -331,12 +331,12 @@ const _timeoutId = setTimeout(() => {
             <span class="resena-fecha">${fecha}</span>
           </div>
           <div class="resena-texto">${esc(r.resena_cliente)}</div>
-          ${veh ? `<div class="resena-veh">🚗 ${esc(veh)}</div>` : ''}
+          ${veh ? `<div class="resena-veh">ðŸš— ${esc(veh)}</div>` : ''}
         </div>`;
     }).join('');
 
     if (resenasHtml) {
-      html += `<div class="card"><div class="card-head"><h3>⭐ Reseñas de clientes</h3></div><div class="card-body">${resenasHtml}</div></div>`;
+      html += `<div class="card"><div class="card-head"><h3>â­ ReseÃ±as de clientes</h3></div><div class="card-body">${resenasHtml}</div></div>`;
     }
   }
 
@@ -344,7 +344,7 @@ const _timeoutId = setTimeout(() => {
   html += `
     <div style="text-align:center;padding:12px 0">
       <a href="/solicitar-turno.html?taller_id=${tallerId}" class="btn-turno" style="font-size:15px;padding:14px 28px">
-        📅 Solicitar turno en ${esc(taller.nombre)}
+        ðŸ“… Solicitar turno en ${esc(taller.nombre)}
       </a>
     </div>`;
 
@@ -355,10 +355,10 @@ function renderError(msg) {
   document.getElementById('hero').innerHTML = '<div style="background:#1A1A2E;height:10px"></div>';
   document.getElementById('contenido').innerHTML = `
     <div class="error-wrap">
-      <div class="error-icon">🔍</div>
+      <div class="error-icon">ðŸ”</div>
       <div style="font-size:16px;font-weight:700;color:#555;margin-bottom:8px">Taller no encontrado</div>
       <div style="font-size:13px;color:#aaa">${msg}</div>
-      <a href="/" style="display:inline-block;margin-top:16px;color:var(--rojo);text-decoration:none;font-weight:600">← Volver al inicio</a>
+      <a href="/" style="display:inline-block;margin-top:16px;color:var(--rojo);text-decoration:none;font-weight:600">â† Volver al inicio</a>
     </div>`;
 }
 

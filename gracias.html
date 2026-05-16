@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pedido confirmado — Piezauto</title>
+  <title>Pedido confirmado â€” Piezauto</title>
   <meta name="robots" content="noindex, nofollow">
   <link rel="stylesheet" href="css/estilos.css">
   <style>
@@ -89,6 +89,7 @@
 <body>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase.js"></script>
+<script src="js/auth-check.js"></script>
 <script src="js/auth-b2c.js"></script>
 
 <div id="header-b2c-root"></div>
@@ -103,32 +104,32 @@
   <div id="gracias-contenido" style="display:none">
 
     <div class="hero-card">
-      <div class="hero-check">✅</div>
-      <div class="hero-titulo">¡Pedido confirmado!</div>
-      <div class="hero-sub">Recibimos tu pedido y ya lo estamos procesando.<br>Te contactamos a la brevedad para coordinar el envío o retiro.</div>
-      <div class="hero-num" id="num-operacion">—</div>
+      <div class="hero-check">âœ…</div>
+      <div class="hero-titulo">Â¡Pedido confirmado!</div>
+      <div class="hero-sub">Recibimos tu pedido y ya lo estamos procesando.<br>Te contactamos a la brevedad para coordinar el envÃ­o o retiro.</div>
+      <div class="hero-num" id="num-operacion">â€”</div>
     </div>
 
     <!-- Items -->
     <div class="card">
-      <div class="card-title"><span>📦</span> Piezas pedidas</div>
+      <div class="card-title"><span>ðŸ“¦</span> Piezas pedidas</div>
       <div id="items-lista"></div>
       <div class="total-row">
         <span>Total</span>
-        <span id="total-op">—</span>
+        <span id="total-op">â€”</span>
       </div>
     </div>
 
     <!-- Info del pedido -->
     <div class="card">
-      <div class="card-title"><span>📋</span> Detalles del pedido</div>
+      <div class="card-title"><span>ðŸ“‹</span> Detalles del pedido</div>
       <div id="info-pedido"></div>
     </div>
 
     <!-- Taller (si aplica) -->
     <div id="taller-section" style="display:none">
       <div class="taller-notice">
-        <div class="icon">🔧</div>
+        <div class="icon">ðŸ”§</div>
         <div class="text">
           <strong id="taller-nombre-notice">Taller asignado</strong>
           <span id="taller-texto-notice"></span>
@@ -144,10 +145,10 @@
     <!-- Cashback generado -->
     <div id="cashback-section" style="display:none">
       <div class="cashback-notice">
-        <div class="cashback-icon">💳</div>
+        <div class="cashback-icon">ðŸ’³</div>
         <div class="cashback-info">
-          <div class="cashback-title">¡Ganaste cashback!</div>
-          <div class="cashback-sub">Se acreditó en tu wallet · válido 12 meses</div>
+          <div class="cashback-title">Â¡Ganaste cashback!</div>
+          <div class="cashback-sub">Se acreditÃ³ en tu wallet Â· vÃ¡lido 12 meses</div>
         </div>
         <div class="cashback-monto" id="cashback-monto">$0</div>
       </div>
@@ -156,7 +157,7 @@
     <!-- Acciones -->
     <div class="acciones">
       <a href="operaciones.html" class="btn-primary">Ver mis operaciones</a>
-      <a href="mi-wallet.html" id="btn-wallet-gracias" class="btn-secondary" style="display:none">Ver mi wallet →</a>
+      <a href="mi-wallet.html" id="btn-wallet-gracias" class="btn-secondary" style="display:none">Ver mi wallet â†’</a>
       <a href="buscar.html" class="btn-secondary">Seguir comprando</a>
     </div>
 
