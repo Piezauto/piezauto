@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mis solicitudes — Piezauto</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="stylesheet" href="css/estilos.css">
+  <style>
+    body { background: var(--gris-claro); }
+    .page-wrap { max-width: 720px; margin: 0 auto; padding: 24px 16px 72px; }
+    .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; gap: 12px; }
+    .page-titulo { font-size: 20px; font-weight: 800; }
+    .btn-nueva { background: var(--rojo); color: #fff; border: none; border-radius: 8px; padding: 10px 18px; font-size: 13px; font-weight: 700; cursor: pointer; text-decoration: none; white-space: nowrap; }
+
+    .toast { background: #1a7a3f; color: #fff; padding: 12px 18px; border-radius: 10px; font-size: 13px; font-weight: 600; margin-bottom: 18px; display: none; }
+    .toast.visible { display: block; }
+
+    .solicitud-card {
+      background: #fff; border-radius: 12px; box-shadow: var(--sombra);
+      margin-bottom: 14px; overflow: hidden; cursor: pointer;
+      transition: box-shadow .15s;
+    }
+    .solicitud-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,.12); }
+    .sc-header { padding: 16px 18px 12px; display: flex; align-items: flex-start; gap: 12px; }
+    .sc-icon { font-size: 28px; flex-shrink: 0; }
+    .sc-info { flex: 1; min-width: 0; }
+    .sc-titulo { font-size: 15px; font-weight: 700; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sc-sub { font-size: 12px; color: #888; }
+    .sc-badge {
+      padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;
+      flex-shrink: 0; white-space: nowrap;
+    }
+    .sc-badge.abierta              { background: #fff3e0; color: #e65100; }
+    .sc-badge.recibiendo_presupuestos { background: #e3f2fd; color: #1565c0; }
+    .sc-badge.cliente_decidio      { background: #e8f5e9; color: #2e7d32; }
+    .sc-badge.cerrada_sin_respuestas { background: #f5f5f5; color: #888; }
+    .sc-badge.cancelada            { background: #fce8e8; color: #c00; }
+
+    .sc-stats { padding: 0 18px 14px; display: flex; gap: 16px; }
+    .sc-stat { font-size: 12px; color: #888; }
+    .sc-stat strong { color: #333; }
+
+    .sc-footer { padding: 10px 18px; border-top: 1px solid #f5f5f5; display: flex; align-items: center; justify-content: space-between; }
+    .sc-fecha { font-size: 11px; color: #aaa; }
+    .sc-link { font-size: 12px; font-weight: 700; color: var(--rojo); }
+
+    .empty-state { text-align: center; padding: 60px 20px; }
+    .empty-icon { font-size: 52px; margin-bottom: 14px; }
+    .empty-titulo { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+    .empty-sub { font-size: 14px; color: #888; margin-bottom: 24px; }
+
+    .spinner-wrap { display: flex; justify-content: center; padding: 60px; }
+    .spinner { width: 32px; height: 32px; border: 3px solid #eee; border-top-color: var(--rojo); border-radius: 50%; animation: spin .8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script src="js/auth-b2c.js"></script>
+
+<div id="header-b2c-root"></div>
+<script src="js/header-b2c.js"></script>
+
+<div class="page-wrap">
+  <div class="page-header">
+    <div class="page-titulo">📋 Mis solicitudes</div>
+    <a href="solicitar-presupuesto.html" class="btn-nueva">+ Nueva solicitud</a>
+  </div>
+
+  <div class="toast" id="toast-enviado">✅ ¡Solicitud enviada! Los talleres recibirán tu pedido en breve.</div>
+
+  <div id="loading-wrap" class="spinner-wrap"><div class="spinner"></div></div>
+  <div id="lista-contenido" style="display:none"></div>
+</div>
+
+<script>
+const ESTADO_LABEL = {
+  abierta:                 'Abierta',
+  recibiendo_presupuestos: 'Recibiendo propuestas',
+  cliente_decidio:         'Decidido',
+  cerrada_sin_respuestas:  'Sin respuestas',
+  cancelada:               'Cancelada',
+};
+const SVC_LABEL = {
+  aceite:'Aceite / Service', frenos:'Frenos', suspension:'Suspensión', direccion:'Dirección',
+  motor:'Motor', transmision:'Transmisión', electrico:'Eléctrico', aire:'Aire acond.',
+  embrague:'Embrague', escape:'Escape', bateria:'Batería', gomas:'Gomas', chapa_pintura:'Chapa y pintura',
+};
+const FDATE = ts => new Date(ts).toLocaleDateString('es-AR', { day:'2-digit', month:'short', year:'numeric' });
+
+async function init() {
+  const { data } = await dbB2C.auth.getSession();
+  if (!data?.session) { window.location.href = '/login?redirect=/mis-presupuestos'; return; }
+  const cliente = await getClienteActual();
+  if (!cliente) { window.location.href = '/login'; return; }
+
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('enviado') === '1') {
+    document.getElementById('toast-enviado').classList.add('visible');
+  }
+
+  const { data: solicitudes } = await dbB2C
+    .from('cat_solicitudes_presupuesto')
+    .select('id, titulo, servicio_codigo, estado, talleres_notificados, presupuestos_recibidos, created_at, fecha_limite_respuesta')
+    .eq('cliente_id', cliente.id)
+    .order('created_at', { ascending: false });
+
+  document.getElementById('loading-wrap').style.display = 'none';
+  const cont = document.getElementById('lista-contenido');
+  cont.style.display = 'block';
+
+  if (!solicitudes?.length) {
+    cont.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">📋</div>
+        <div class="empty-titulo">Todavía no hiciste ninguna solicitud</div>
+        <div class="empty-sub">Pedí presupuesto a talleres de tu zona gratis y sin compromiso.</div>
+        <a href="solicitar-presupuesto.html" class="btn-nueva">Solicitar mi primer presupuesto</a>
+      </div>`;
+    return;
+  }
+
+  cont.innerHTML = solicitudes.map(s => {
+    const svcLabel = SVC_LABEL[s.servicio_codigo] || s.servicio_codigo || '—';
+    const puedeCmp = ['recibiendo_presupuestos','cliente_decidio'].includes(s.estado) && s.presupuestos_recibidos > 0;
+    return `
+      <div class="solicitud-card" onclick="window.location='comparador-presupuestos.html?id=${s.id}'">
+        <div class="sc-header">
+          <div class="sc-icon">📋</div>
+          <div class="sc-info">
+            <div class="sc-titulo">${escHtml(s.titulo)}</div>
+            <div class="sc-sub">${svcLabel}</div>
+          </div>
+          <div class="sc-badge ${s.estado}">${ESTADO_LABEL[s.estado] || s.estado}</div>
+        </div>
+        <div class="sc-stats">
+          <div class="sc-stat">Talleres notificados: <strong>${s.talleres_notificados || 0}</strong></div>
+          <div class="sc-stat">Presupuestos recibidos: <strong style="color:${s.presupuestos_recibidos > 0 ? 'var(--rojo)' : '#333'}">${s.presupuestos_recibidos || 0}</strong></div>
+        </div>
+        <div class="sc-footer">
+          <div class="sc-fecha">${FDATE(s.created_at)}</div>
+          <div class="sc-link">${puedeCmp ? 'Comparar propuestas →' : 'Ver detalle →'}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+init();
+</script>
+</body>
+</html>

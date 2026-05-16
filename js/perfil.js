@@ -10,6 +10,7 @@ async function iniciarPerfil() {
   await cargarVehiculos(cliente.id);
   renderPreferencias(cliente);
   cargarWalletWidget(cliente.id);
+  cargarPresupuestosWidget(cliente.id);
 }
 
 function renderPerfil(cliente) {
@@ -199,6 +200,21 @@ async function guardarPreferencias() {
 
   btn.disabled = false;
   btn.textContent = 'Guardar preferencias';
+}
+
+async function cargarPresupuestosWidget(clienteId) {
+  const card = document.getElementById('presupuestos-card');
+  if (!card) return;
+  const { data } = await dbB2C
+    .from('cat_solicitudes_presupuesto')
+    .select('estado')
+    .eq('cliente_id', clienteId)
+    .in('estado', ['abierta','recibiendo_presupuestos']);
+  const count = data?.length || 0;
+  card.style.display = 'block';
+  document.getElementById('pres-activas-count').textContent = count;
+  document.getElementById('pres-activas-sub').textContent =
+    count === 1 ? 'solicitud activa' : 'solicitudes activas';
 }
 
 async function cargarWalletWidget(clienteId) {

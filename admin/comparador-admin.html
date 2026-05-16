@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Comparador — Admin Piezauto</title>
+  <link rel="stylesheet" href="../css/estilos.css">
+  <style>
+    body { background: #f0f0f0; }
+    .page-wrap { max-width: 1100px; margin: 0 auto; padding: 28px 20px 72px; }
+    .page-header { display: flex; align-items: center; gap: 16px; margin-bottom: 28px; }
+    .page-titulo { font-size: 22px; font-weight: 800; flex: 1; }
+    .back-link { font-size: 13px; color: #888; text-decoration: none; font-weight: 600; }
+    .back-link:hover { color: #333; }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 28px; }
+    .stat-card { background: #fff; border-radius: 12px; padding: 18px 20px; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+    .stat-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 5px; }
+    .stat-val { font-size: 26px; font-weight: 800; color: #1a1a1a; }
+    .stat-sub { font-size: 11px; color: #aaa; margin-top: 2px; }
+
+    .grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 28px; }
+    @media(max-width:700px) { .grid-2col { grid-template-columns: 1fr; } }
+
+    .table-card { background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.06); overflow: hidden; }
+    .table-card-title { padding: 16px 20px; font-size: 15px; font-weight: 700; border-bottom: 1px solid #f5f5f5; }
+
+    .filtros { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+    .filtros input, .filtros select { padding: 8px 12px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 13px; outline: none; background: #fff; }
+    .filtros input { flex: 1; min-width: 180px; }
+    .filtros select:focus, .filtros input:focus { border-color: #E63946; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { background: #f8f8f8; color: #555; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; padding: 11px 14px; text-align: left; white-space: nowrap; }
+    td { padding: 11px 14px; border-bottom: 1px solid #f5f5f5; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fafafa; }
+
+    .badge { padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 700; }
+    .badge.abierta              { background: #fff3e0; color: #e65100; }
+    .badge.recibiendo_presupuestos { background: #e3f2fd; color: #1565c0; }
+    .badge.cliente_decidio      { background: #e8f5e9; color: #2e7d32; }
+    .badge.cerrada_sin_respuestas { background: #f5f5f5; color: #888; }
+    .badge.cancelada            { background: #fce8e8; color: #c00; }
+
+    .taller-row { padding: 12px 14px; border-bottom: 1px solid #f5f5f5; font-size: 13px; display: flex; align-items: center; gap: 12px; }
+    .taller-row:last-child { border-bottom: none; }
+    .taller-nombre { font-weight: 700; flex: 1; }
+    .taller-stat { font-size: 12px; color: #888; white-space: nowrap; }
+    .taller-stat strong { color: #333; }
+    .conv-bar-wrap { width: 60px; background: #f5f5f5; border-radius: 4px; height: 6px; }
+    .conv-bar { height: 6px; border-radius: 4px; background: #E63946; }
+
+    .spinner-wrap { display: flex; justify-content: center; padding: 40px; }
+    .spinner { width: 30px; height: 30px; border: 3px solid #eee; border-top-color: #E63946; border-radius: 50%; animation: spin .8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .empty { text-align: center; padding: 30px; color: #aaa; font-size: 13px; }
+  </style>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase.js"></script>
+
+<div class="page-wrap">
+  <div class="page-header">
+    <a href="index.html" class="back-link">← Panel admin</a>
+    <div class="page-titulo">💬 Monitor del Comparador</div>
+  </div>
+
+  <div id="loading-wrap" class="spinner-wrap"><div class="spinner"></div></div>
+  <div id="page-contenido" style="display:none">
+
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-label">Solicitudes abiertas</div><div class="stat-val" id="s-abiertas">—</div></div>
+      <div class="stat-card"><div class="stat-label">Total solicitudes</div><div class="stat-val" id="s-total">—</div></div>
+      <div class="stat-card"><div class="stat-label">Tasa de conversión</div><div class="stat-val" id="s-conv">—</div><div class="stat-sub">decidieron / total con respuestas</div></div>
+      <div class="stat-card"><div class="stat-label">Ticket promedio elegido</div><div class="stat-val" id="s-ticket">—</div></div>
+      <div class="stat-card"><div class="stat-label">Presupuestos enviados</div><div class="stat-val" id="s-pres">—</div></div>
+      <div class="stat-card"><div class="stat-label">Sin respuestas</div><div class="stat-val" id="s-sin">—</div></div>
+    </div>
+
+    <!-- Tabla solicitudes + Taller ranking -->
+    <div class="grid-2col">
+      <!-- Tabla solicitudes -->
+      <div>
+        <div class="filtros">
+          <input id="filtro-buscar" type="text" placeholder="Buscar por título..." oninput="filtrarTabla()">
+          <select id="filtro-estado" onchange="filtrarTabla()">
+            <option value="">Todos los estados</option>
+            <option value="abierta">Abierta</option>
+            <option value="recibiendo_presupuestos">Recibiendo</option>
+            <option value="cliente_decidio">Decidida</option>
+            <option value="cerrada_sin_respuestas">Sin respuestas</option>
+          </select>
+        </div>
+        <div class="table-card">
+          <div class="table-card-title">📋 Solicitudes</div>
+          <div id="tabla-solicitudes"><div class="spinner-wrap"><div class="spinner"></div></div></div>
+        </div>
+      </div>
+
+      <!-- Talleres que más responden -->
+      <div>
+        <div class="table-card">
+          <div class="table-card-title">🏆 Talleres más activos</div>
+          <div id="ranking-talleres"><div class="spinner-wrap"><div class="spinner"></div></div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const ESTADO_LABEL = {
+  abierta:'Abierta', recibiendo_presupuestos:'Recibiendo', cliente_decidio:'Decidida',
+  cerrada_sin_respuestas:'Sin resp.', cancelada:'Cancelada',
+};
+const SVC_LABEL = {
+  aceite:'Aceite', frenos:'Frenos', suspension:'Suspensión', direccion:'Dirección',
+  motor:'Motor', transmision:'Trans.', electrico:'Eléctrico', aire:'A/C',
+  embrague:'Embrague', escape:'Escape', bateria:'Batería', gomas:'Gomas', chapa_pintura:'Chapa',
+};
+const FMT   = v => '$' + Number(v || 0).toLocaleString('es-AR');
+const FDATE = ts => new Date(ts).toLocaleDateString('es-AR', { day:'2-digit', month:'short', year:'numeric' });
+
+let _solicitudes = [];
+let _presupuestos = [];
+
+async function verificarAcceso() {
+  if (!sessionStorage.getItem('pz_admin')) { window.location.href = 'index.html'; return false; }
+  return true;
+}
+
+async function init() {
+  if (!await verificarAcceso()) return;
+
+  const [{ data: sols }, { data: pres }] = await Promise.all([
+    db.from('cat_solicitudes_presupuesto')
+      .select('id, titulo, servicio_codigo, estado, talleres_notificados, presupuestos_recibidos, created_at, taller_elegido_id, presupuesto_elegido_id')
+      .order('created_at', { ascending: false })
+      .limit(200),
+    db.from('cat_presupuestos_respuesta')
+      .select('id, solicitud_id, taller_id, monto_estimado_min, estado, created_at, cat_recomendaciones_talleres!taller_id(nombre)')
+      .limit(500),
+  ]);
+
+  _solicitudes  = sols  || [];
+  _presupuestos = pres  || [];
+
+  renderStats();
+  renderTabla(_solicitudes);
+  renderRankingTalleres();
+
+  document.getElementById('loading-wrap').style.display  = 'none';
+  document.getElementById('page-contenido').style.display = 'block';
+}
+
+function renderStats() {
+  const total    = _solicitudes.length;
+  const abiertas = _solicitudes.filter(s => ['abierta','recibiendo_presupuestos'].includes(s.estado)).length;
+  const decididas = _solicitudes.filter(s => s.estado === 'cliente_decidio').length;
+  const conResp  = _solicitudes.filter(s => s.presupuestos_recibidos > 0).length;
+  const sinResp  = _solicitudes.filter(s => s.estado === 'cerrada_sin_respuestas').length;
+  const conv     = conResp > 0 ? Math.round(decididas / conResp * 100) : 0;
+
+  // Ticket promedio de los elegidos
+  const elegidos = _presupuestos.filter(p => p.estado === 'elegido');
+  const ticket   = elegidos.length
+    ? elegidos.reduce((s, p) => s + Number(p.monto_estimado_min || 0), 0) / elegidos.length
+    : 0;
+
+  document.getElementById('s-abiertas').textContent = abiertas;
+  document.getElementById('s-total').textContent    = total;
+  document.getElementById('s-conv').textContent     = conv + '%';
+  document.getElementById('s-ticket').textContent   = ticket ? FMT(ticket) : '—';
+  document.getElementById('s-pres').textContent     = _presupuestos.length;
+  document.getElementById('s-sin').textContent      = sinResp;
+}
+
+function renderTabla(lista) {
+  const cont = document.getElementById('tabla-solicitudes');
+  if (!lista.length) { cont.innerHTML = '<div class="empty">Sin solicitudes.</div>'; return; }
+
+  cont.innerHTML = `<div style="overflow:auto"><table>
+    <thead><tr>
+      <th>Título</th><th>Servicio</th><th>Estado</th><th>Notif.</th><th>Resp.</th><th>Fecha</th>
+    </tr></thead>
+    <tbody>${lista.slice(0, 80).map(s => `
+      <tr>
+        <td style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(s.titulo)}</td>
+        <td>${SVC_LABEL[s.servicio_codigo] || '—'}</td>
+        <td><span class="badge ${s.estado}">${ESTADO_LABEL[s.estado] || s.estado}</span></td>
+        <td>${s.talleres_notificados || 0}</td>
+        <td style="font-weight:${s.presupuestos_recibidos > 0 ? '700;color:#E63946' : '400'}">${s.presupuestos_recibidos || 0}</td>
+        <td style="color:#aaa;white-space:nowrap">${FDATE(s.created_at)}</td>
+      </tr>`).join('')}
+    </tbody>
+  </table></div>`;
+}
+
+function filtrarTabla() {
+  const buscar  = document.getElementById('filtro-buscar').value.toLowerCase();
+  const estado  = document.getElementById('filtro-estado').value;
+  let lista = _solicitudes;
+  if (buscar) lista = lista.filter(s => s.titulo.toLowerCase().includes(buscar));
+  if (estado) lista = lista.filter(s => s.estado === estado);
+  renderTabla(lista);
+}
+
+function renderRankingTalleres() {
+  const cont = document.getElementById('ranking-talleres');
+
+  // Agrupar presupuestos por taller
+  const map = {};
+  _presupuestos.forEach(p => {
+    const n = p.cat_recomendaciones_talleres?.nombre || p.taller_id;
+    if (!map[p.taller_id]) map[p.taller_id] = { nombre: n, enviados: 0, elegidos: 0 };
+    map[p.taller_id].enviados++;
+    if (p.estado === 'elegido') map[p.taller_id].elegidos++;
+  });
+
+  const ranking = Object.values(map)
+    .map(t => ({ ...t, conv: t.enviados ? Math.round(t.elegidos / t.enviados * 100) : 0 }))
+    .sort((a, b) => b.enviados - a.enviados)
+    .slice(0, 15);
+
+  if (!ranking.length) { cont.innerHTML = '<div class="empty">Sin datos todavía.</div>'; return; }
+
+  const maxEnv = ranking[0].enviados;
+  cont.innerHTML = ranking.map(t => `
+    <div class="taller-row">
+      <div class="taller-nombre">${escHtml(t.nombre)}</div>
+      <div class="taller-stat">${t.enviados} resp.</div>
+      <div class="taller-stat"><strong>${t.conv}%</strong> conv.</div>
+      <div class="conv-bar-wrap"><div class="conv-bar" style="width:${Math.round(t.conv)}%"></div></div>
+    </div>`).join('');
+}
+
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+init();
+</script>
+</body>
+</html>

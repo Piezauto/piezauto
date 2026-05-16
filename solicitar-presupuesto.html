@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Solicitar presupuesto — Piezauto</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="stylesheet" href="css/estilos.css">
+  <style>
+    body { background: var(--gris-claro); }
+    .wizard-wrap { max-width: 640px; margin: 0 auto; padding: 24px 16px 72px; }
+
+    /* Progress */
+    .wizard-progress { display: flex; align-items: center; gap: 0; margin-bottom: 28px; }
+    .wp-step { flex: 1; display: flex; flex-direction: column; align-items: center; position: relative; }
+    .wp-step + .wp-step::before {
+      content: ''; position: absolute; top: 14px; left: -50%;
+      width: 100%; height: 2px; background: #ddd; z-index: 0;
+    }
+    .wp-step.done + .wp-step::before { background: var(--rojo); }
+    .wp-circle {
+      width: 28px; height: 28px; border-radius: 50%;
+      border: 2px solid #ddd; background: #fff; color: #aaa;
+      font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center;
+      position: relative; z-index: 1; transition: all .2s;
+    }
+    .wp-step.activo .wp-circle  { border-color: var(--rojo); color: var(--rojo); }
+    .wp-step.done   .wp-circle  { border-color: var(--rojo); background: var(--rojo); color: #fff; }
+    .wp-label { font-size: 10px; color: #aaa; margin-top: 5px; text-align: center; white-space: nowrap; }
+    .wp-step.activo .wp-label { color: var(--rojo); font-weight: 700; }
+    .wp-step.done   .wp-label { color: #888; }
+
+    /* Card */
+    .wizard-card { background: #fff; border-radius: 14px; box-shadow: 0 2px 12px rgba(0,0,0,.07); overflow: hidden; }
+    .wizard-card-header { padding: 20px 22px 0; border-bottom: 1px solid #f0f0f0; padding-bottom: 16px; }
+    .wizard-card-title { font-size: 18px; font-weight: 800; margin-bottom: 4px; }
+    .wizard-card-sub { font-size: 13px; color: #888; }
+    .wizard-card-body { padding: 22px; }
+
+    /* Forms */
+    .form-row { margin-bottom: 16px; }
+    .form-row label { display: block; font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 5px; }
+    .form-row input, .form-row select, .form-row textarea {
+      width: 100%; padding: 10px 12px; border: 1.5px solid #ddd; border-radius: 8px;
+      font-size: 14px; outline: none; box-sizing: border-box; font-family: inherit; transition: border-color .2s;
+    }
+    .form-row input:focus, .form-row select:focus, .form-row textarea:focus { border-color: var(--rojo); }
+    .form-row textarea { resize: vertical; min-height: 100px; }
+    .form-hint { font-size: 11px; color: #aaa; margin-top: 4px; }
+
+    /* Servicios grid */
+    .svc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+    .svc-btn {
+      border: 1.5px solid #e8e8e8; border-radius: 10px; padding: 12px 8px;
+      text-align: center; cursor: pointer; transition: all .15s; background: #fafafa;
+    }
+    .svc-btn:hover { border-color: #ccc; background: #f5f5f5; }
+    .svc-btn.sel { border-color: var(--rojo); background: #fff8f8; }
+    .svc-btn .svc-icon { font-size: 22px; display: block; margin-bottom: 5px; }
+    .svc-btn .svc-label { font-size: 12px; font-weight: 600; color: #333; line-height: 1.3; }
+    .svc-btn.sel .svc-label { color: var(--rojo); }
+
+    /* Fotos */
+    .fotos-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 10px; }
+    .foto-slot {
+      aspect-ratio: 1; border-radius: 8px; border: 2px dashed #ddd; overflow: hidden;
+      display: flex; align-items: center; justify-content: center; cursor: pointer;
+      background: #fafafa; position: relative; transition: border-color .2s;
+    }
+    .foto-slot:hover { border-color: #aaa; }
+    .foto-slot img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; }
+    .foto-slot .add-icon { font-size: 22px; color: #ccc; }
+    .foto-slot .rm-btn {
+      position: absolute; top: 2px; right: 2px; background: rgba(0,0,0,.6); color: #fff;
+      border: none; border-radius: 50%; width: 18px; height: 18px; font-size: 10px;
+      cursor: pointer; display: none; align-items: center; justify-content: center;
+    }
+    .foto-slot:hover .rm-btn { display: flex; }
+
+    /* Zona */
+    .radio-slider-wrap { display: flex; align-items: center; gap: 12px; }
+    .radio-slider { flex: 1; }
+    .radio-val { font-size: 18px; font-weight: 800; color: var(--rojo); min-width: 48px; text-align: right; }
+    .zona-preview {
+      background: linear-gradient(135deg, #e8f5e9, #f0fff0);
+      border: 1.5px solid #a5d6a7; border-radius: 10px;
+      padding: 14px 16px; margin-top: 14px; font-size: 13px; color: #2e7d32;
+      display: none;
+    }
+    .zona-preview.visible { display: block; }
+    .geocoding-spinner { display: none; font-size: 12px; color: #888; margin-top: 6px; }
+    .geocoding-spinner.visible { display: block; }
+
+    /* Resumen paso 4 */
+    .resumen-item { display: flex; gap: 10px; padding: 12px 0; border-bottom: 1px solid #f5f5f5; font-size: 13px; }
+    .resumen-item:last-child { border-bottom: none; }
+    .res-label { color: #888; min-width: 130px; flex-shrink: 0; font-weight: 500; }
+    .res-val { color: #222; font-weight: 600; flex: 1; }
+
+    /* Nav botones */
+    .wizard-nav { display: flex; gap: 10px; justify-content: space-between; padding: 16px 22px; border-top: 1px solid #f0f0f0; }
+    .btn-prev { background: #f5f5f5; color: #333; border: none; border-radius: 8px; padding: 11px 20px; font-size: 14px; font-weight: 700; cursor: pointer; }
+    .btn-next { background: var(--rojo); color: #fff; border: none; border-radius: 8px; padding: 11px 24px; font-size: 14px; font-weight: 700; cursor: pointer; flex: 1; transition: opacity .2s; }
+    .btn-next:hover:not(:disabled) { opacity: .88; }
+    .btn-next:disabled { opacity: .5; cursor: not-allowed; }
+
+    .alert-err { background: #fff0f0; color: #c00; border: 1px solid #ffd0d0; border-radius: 8px; padding: 10px 14px; font-size: 13px; margin-top: 10px; display: none; }
+    .alert-err.visible { display: block; }
+
+    .spinner-wrap { display: flex; justify-content: center; padding: 40px; }
+    .spinner { width: 30px; height: 30px; border: 3px solid #eee; border-top-color: var(--rojo); border-radius: 50%; animation: spin .8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script src="js/auth-b2c.js"></script>
+
+<div id="header-b2c-root"></div>
+<script src="js/header-b2c.js"></script>
+
+<div class="wizard-wrap">
+
+  <div id="loading-wrap" class="spinner-wrap"><div class="spinner"></div></div>
+  <div id="wizard-contenido" style="display:none">
+
+    <!-- Progress -->
+    <div class="wizard-progress" id="progress">
+      <div class="wp-step activo" id="step-ind-1"><div class="wp-circle">1</div><div class="wp-label">Vehículo</div></div>
+      <div class="wp-step"       id="step-ind-2"><div class="wp-circle">2</div><div class="wp-label">Descripción</div></div>
+      <div class="wp-step"       id="step-ind-3"><div class="wp-circle">3</div><div class="wp-label">Zona</div></div>
+      <div class="wp-step"       id="step-ind-4"><div class="wp-circle">4</div><div class="wp-label">Confirmar</div></div>
+    </div>
+
+    <!-- PASO 1 — Vehículo y servicio -->
+    <div class="wizard-card" id="step-1">
+      <div class="wizard-card-header">
+        <div class="wizard-card-title">¿Qué necesitás?</div>
+        <div class="wizard-card-sub">Seleccioná tu vehículo y el tipo de servicio</div>
+      </div>
+      <div class="wizard-card-body">
+        <div class="form-row">
+          <label>Vehículo (opcional)</label>
+          <select id="sel-vehiculo">
+            <option value="">Sin vehículo seleccionado</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>Tipo de servicio *</label>
+          <div class="svc-grid" id="svc-grid"></div>
+        </div>
+        <div class="form-row">
+          <label>Título corto del trabajo *</label>
+          <input type="text" id="inp-titulo" placeholder="Ej: Cambio de pastillas y discos delanteros" maxlength="120">
+          <div class="form-hint">Máx. 120 caracteres. Esto es lo primero que verán los talleres.</div>
+        </div>
+      </div>
+      <div class="wizard-nav">
+        <div></div>
+        <button class="btn-next" id="btn-next-1" onclick="irPaso(2)">Siguiente →</button>
+      </div>
+    </div>
+
+    <!-- PASO 2 — Descripción -->
+    <div class="wizard-card" id="step-2" style="display:none">
+      <div class="wizard-card-header">
+        <div class="wizard-card-title">Describí el problema</div>
+        <div class="wizard-card-sub">Cuanto más detalle des, mejores presupuestos vas a recibir</div>
+      </div>
+      <div class="wizard-card-body">
+        <div class="form-row">
+          <label>Descripción detallada *</label>
+          <textarea id="inp-descripcion" rows="5" placeholder="Describí síntomas, cuándo ocurre, si hay ruidos, si revisaron algo antes, etc."></textarea>
+        </div>
+        <div class="form-row">
+          <label>Fotos (hasta 5, opcional)</label>
+          <div class="fotos-grid" id="fotos-grid"></div>
+          <div class="form-hint">Podés subir fotos del daño, panel de instrumentos, etc.</div>
+        </div>
+        <div class="alert-err" id="err-step2"></div>
+      </div>
+      <div class="wizard-nav">
+        <button class="btn-prev" onclick="irPaso(1)">← Atrás</button>
+        <button class="btn-next" id="btn-next-2" onclick="irPaso(3)">Siguiente →</button>
+      </div>
+    </div>
+
+    <!-- PASO 3 — Zona geográfica -->
+    <div class="wizard-card" id="step-3" style="display:none">
+      <div class="wizard-card-header">
+        <div class="wizard-card-title">¿En qué zona buscás?</div>
+        <div class="wizard-card-sub">Vamos a enviar tu solicitud a talleres cercanos</div>
+      </div>
+      <div class="wizard-card-body">
+        <div class="form-row">
+          <label>Dirección de referencia *</label>
+          <input type="text" id="inp-direccion" placeholder="Ej: Av. San Martín 1500, Ramos Mejía" oninput="onDireccionInput()">
+          <div class="form-hint">Barrio, calle o localidad desde donde buscás el taller.</div>
+          <div class="geocoding-spinner" id="geo-spinner">Buscando ubicación...</div>
+        </div>
+        <div class="form-row">
+          <label>Radio de búsqueda: <strong id="radio-label">5 km</strong></label>
+          <div class="radio-slider-wrap">
+            <input type="range" class="radio-slider" id="inp-radio" min="1" max="20" value="5" step="1" oninput="onRadioChange()">
+            <div class="radio-val" id="radio-val">5 km</div>
+          </div>
+        </div>
+        <div class="zona-preview" id="zona-preview"></div>
+        <div class="alert-err" id="err-step3"></div>
+      </div>
+      <div class="wizard-nav">
+        <button class="btn-prev" onclick="irPaso(2)">← Atrás</button>
+        <button class="btn-next" id="btn-next-3" onclick="irPaso(4)">Siguiente →</button>
+      </div>
+    </div>
+
+    <!-- PASO 4 — Confirmar -->
+    <div class="wizard-card" id="step-4" style="display:none">
+      <div class="wizard-card-header">
+        <div class="wizard-card-title">Revisá y enviá</div>
+        <div class="wizard-card-sub">Vas a recibir presupuestos de talleres en tu zona en hasta 48 hs</div>
+      </div>
+      <div class="wizard-card-body">
+        <div id="resumen-contenido"></div>
+        <div class="alert-err" id="err-step4"></div>
+      </div>
+      <div class="wizard-nav">
+        <button class="btn-prev" onclick="irPaso(3)">← Atrás</button>
+        <button class="btn-next" id="btn-enviar" onclick="enviarSolicitud()">📨 Enviar a talleres →</button>
+      </div>
+    </div>
+
+  </div><!-- /wizard-contenido -->
+
+  <!-- Input file oculto para fotos -->
+  <input type="file" id="foto-input" accept="image/*" multiple style="display:none" onchange="onFotosSeleccionadas(this.files)">
+
+</div>
+
+<script>
+const SERVICIOS = [
+  { codigo:'aceite',        icon:'🛢️',  label:'Aceite / Service' },
+  { codigo:'frenos',        icon:'🔴',  label:'Frenos' },
+  { codigo:'suspension',    icon:'🔧',  label:'Suspensión' },
+  { codigo:'direccion',     icon:'🎯',  label:'Dirección / Alineación' },
+  { codigo:'motor',         icon:'⚙️',  label:'Motor' },
+  { codigo:'transmision',   icon:'⚡',  label:'Transmisión / Caja' },
+  { codigo:'electrico',     icon:'🔌',  label:'Eléctrico / Diagnóstico' },
+  { codigo:'aire',          icon:'❄️',  label:'Aire acond.' },
+  { codigo:'embrague',      icon:'🔵',  label:'Embrague' },
+  { codigo:'escape',        icon:'💨',  label:'Escape / Caño' },
+  { codigo:'bateria',       icon:'🔋',  label:'Batería' },
+  { codigo:'gomas',         icon:'🔘',  label:'Gomas / Neumáticos' },
+  { codigo:'chapa_pintura', icon:'🎨',  label:'Chapa y pintura' },
+];
+
+let _paso        = 1;
+let _clienteId   = null;
+let _svcSel      = null;
+let _fotos       = [];    // { file, previewUrl }
+let _fotosUrls   = [];    // URLs subidas a storage
+let _geoLat      = null;
+let _geoLng      = null;
+let _geoTimer    = null;
+let _vehiculoId  = null;
+
+async function init() {
+  const { data } = await dbB2C.auth.getSession();
+  if (!data?.session) { window.location.href = '/login?redirect=/solicitar-presupuesto'; return; }
+  const cliente = await getClienteActual();
+  if (!cliente) { window.location.href = '/login'; return; }
+  _clienteId = cliente.id;
+
+  await cargarVehiculos(cliente.id);
+  renderSvcGrid();
+  renderFotosGrid();
+
+  document.getElementById('loading-wrap').style.display = 'none';
+  document.getElementById('wizard-contenido').style.display = 'block';
+}
+
+async function cargarVehiculos(clienteId) {
+  const { data } = await dbB2C
+    .from('cat_clientes_vehiculos')
+    .select('id, modelo, anio, cat_marcas_terminales!marca_terminal_id(nombre)')
+    .eq('cliente_id', clienteId)
+    .order('principal', { ascending: false });
+
+  const sel = document.getElementById('sel-vehiculo');
+  (data || []).forEach(v => {
+    const marca = v.cat_marcas_terminales?.nombre || '';
+    const opt = document.createElement('option');
+    opt.value = v.id;
+    opt.textContent = `${marca} ${v.modelo || ''} ${v.anio || ''}`.trim();
+    sel.appendChild(opt);
+  });
+  sel.addEventListener('change', () => { _vehiculoId = sel.value || null; });
+}
+
+function renderSvcGrid() {
+  const grid = document.getElementById('svc-grid');
+  grid.innerHTML = SERVICIOS.map(s => `
+    <div class="svc-btn" id="svc-${s.codigo}" onclick="selSvc('${s.codigo}')">
+      <span class="svc-icon">${s.icon}</span>
+      <span class="svc-label">${s.label}</span>
+    </div>`).join('');
+}
+
+function selSvc(codigo) {
+  _svcSel = codigo;
+  document.querySelectorAll('.svc-btn').forEach(el => el.classList.remove('sel'));
+  document.getElementById('svc-' + codigo)?.classList.add('sel');
+}
+
+function renderFotosGrid() {
+  const grid = document.getElementById('fotos-grid');
+  let html = _fotos.map((f, i) => `
+    <div class="foto-slot" onclick="removeFoto(${i})">
+      <img src="${f.previewUrl}" alt="">
+      <button class="rm-btn">✕</button>
+    </div>`).join('');
+  if (_fotos.length < 5) {
+    html += `<div class="foto-slot" onclick="document.getElementById('foto-input').click()">
+      <span class="add-icon">📷</span>
+    </div>`;
+  }
+  grid.innerHTML = html;
+}
+
+function onFotosSeleccionadas(files) {
+  const disponibles = 5 - _fotos.length;
+  const lista = Array.from(files).slice(0, disponibles);
+  lista.forEach(file => {
+    const url = URL.createObjectURL(file);
+    _fotos.push({ file, previewUrl: url });
+  });
+  renderFotosGrid();
+  document.getElementById('foto-input').value = '';
+}
+
+function removeFoto(idx) {
+  _fotos.splice(idx, 1);
+  renderFotosGrid();
+}
+
+// Geocoding via Nominatim
+function onDireccionInput() {
+  clearTimeout(_geoTimer);
+  _geoLat = null;
+  _geoLng = null;
+  document.getElementById('zona-preview').classList.remove('visible');
+  const val = document.getElementById('inp-direccion').value.trim();
+  if (val.length < 5) return;
+  _geoTimer = setTimeout(() => geocodificar(val), 800);
+}
+
+async function geocodificar(dir) {
+  const spinner = document.getElementById('geo-spinner');
+  spinner.classList.add('visible');
+  try {
+    const query = encodeURIComponent(dir + ', Buenos Aires, Argentina');
+    const resp = await fetch(`https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1`, {
+      headers: { 'Accept-Language': 'es' }
+    });
+    const data = await resp.json();
+    if (data?.length) {
+      _geoLat = parseFloat(data[0].lat);
+      _geoLng = parseFloat(data[0].lon);
+      actualizarZonaPreview();
+    }
+  } catch {}
+  spinner.classList.remove('visible');
+}
+
+function onRadioChange() {
+  const val = document.getElementById('inp-radio').value;
+  document.getElementById('radio-val').textContent   = val + ' km';
+  document.getElementById('radio-label').textContent = val + ' km';
+  if (_geoLat) actualizarZonaPreview();
+}
+
+async function actualizarZonaPreview() {
+  const radio = parseInt(document.getElementById('inp-radio').value);
+  const preview = document.getElementById('zona-preview');
+
+  // Contar talleres en zona desde Supabase
+  const { data } = await dbB2C
+    .from('cat_recomendaciones_talleres')
+    .select('id, lat, lng')
+    .eq('activo', true)
+    .not('lat', 'is', null);
+
+  const enZona = (data || []).filter(t => haversineKm(_geoLat, _geoLng, t.lat, t.lng) <= radio);
+  const dir = document.getElementById('inp-direccion').value.trim();
+
+  preview.innerHTML = `✅ Tu solicitud llegará a <strong>${enZona.length} taller${enZona.length !== 1 ? 'es' : ''}</strong> dentro de <strong>${radio} km</strong> de "${dir}".
+    ${enZona.length === 0 ? '<br><em style="color:#c00">No hay talleres con ubicación registrada en esa zona por ahora.</em>' : ''}`;
+  preview.classList.add('visible');
+}
+
+function haversineKm(lat1, lng1, lat2, lng2) {
+  if (!lat2 || !lng2) return 9999;
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function irPaso(paso) {
+  if (paso === 2 && !validarPaso1()) return;
+  if (paso === 3 && !validarPaso2()) return;
+  if (paso === 4 && !validarPaso3()) return;
+  if (paso === 4) renderResumen();
+
+  document.querySelectorAll('.wizard-card').forEach(el => el.style.display = 'none');
+  document.getElementById('step-' + paso).style.display = 'block';
+
+  document.querySelectorAll('.wp-step').forEach((el, i) => {
+    el.classList.remove('activo', 'done');
+    if (i + 1 < paso) el.classList.add('done');
+    if (i + 1 === paso) el.classList.add('activo');
+  });
+
+  _paso = paso;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function validarPaso1() {
+  if (!_svcSel) { alert('Seleccioná el tipo de servicio.'); return false; }
+  const titulo = document.getElementById('inp-titulo').value.trim();
+  if (!titulo) { alert('Escribí un título para tu solicitud.'); return false; }
+  return true;
+}
+
+function validarPaso2() {
+  const desc = document.getElementById('inp-descripcion').value.trim();
+  const err  = document.getElementById('err-step2');
+  if (!desc || desc.length < 15) {
+    err.textContent = 'Escribí una descripción de al menos 15 caracteres.';
+    err.classList.add('visible');
+    return false;
+  }
+  err.classList.remove('visible');
+  return true;
+}
+
+function validarPaso3() {
+  const dir = document.getElementById('inp-direccion').value.trim();
+  const err = document.getElementById('err-step3');
+  if (!dir) { err.textContent = 'Ingresá una dirección de referencia.'; err.classList.add('visible'); return false; }
+  if (!_geoLat || !_geoLng) {
+    err.textContent = 'No pudimos ubicar esa dirección. Esperá unos segundos o probá con más detalle.';
+    err.classList.add('visible');
+    return false;
+  }
+  err.classList.remove('visible');
+  return true;
+}
+
+function renderResumen() {
+  const svc    = SERVICIOS.find(s => s.codigo === _svcSel);
+  const titulo = document.getElementById('inp-titulo').value.trim();
+  const desc   = document.getElementById('inp-descripcion').value.trim();
+  const radio  = document.getElementById('inp-radio').value;
+  const dir    = document.getElementById('inp-direccion').value.trim();
+  const vSel   = document.getElementById('sel-vehiculo');
+  const vTxt   = vSel.options[vSel.selectedIndex]?.text || 'Sin especificar';
+
+  document.getElementById('resumen-contenido').innerHTML = `
+    <div class="resumen-item"><span class="res-label">Vehículo</span><span class="res-val">${vTxt}</span></div>
+    <div class="resumen-item"><span class="res-label">Servicio</span><span class="res-val">${svc?.icon} ${svc?.label}</span></div>
+    <div class="resumen-item"><span class="res-label">Título</span><span class="res-val">${escHtml(titulo)}</span></div>
+    <div class="resumen-item"><span class="res-label">Descripción</span><span class="res-val" style="white-space:pre-wrap">${escHtml(desc.slice(0,200))}${desc.length > 200 ? '...' : ''}</span></div>
+    <div class="resumen-item"><span class="res-label">Fotos adjuntas</span><span class="res-val">${_fotos.length > 0 ? _fotos.length + ' foto(s)' : 'Sin fotos'}</span></div>
+    <div class="resumen-item"><span class="res-label">Zona</span><span class="res-val">${escHtml(dir)} · ${radio} km de radio</span></div>
+    <div style="margin-top:14px;padding:12px 14px;background:#fff8e1;border-radius:8px;font-size:12px;color:#795548">
+      ⏱ Los talleres tienen <strong>48 horas</strong> para responder. Te avisamos por la app cuando lleguen presupuestos.
+    </div>`;
+}
+
+async function subirFotos() {
+  const urls = [];
+  for (const f of _fotos) {
+    const ext  = f.file.name.split('.').pop();
+    const path = `solicitudes/${_clienteId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const { data, error } = await dbB2C.storage.from('solicitudes-fotos').upload(path, f.file, {
+      contentType: f.file.type, upsert: false,
+    });
+    if (!error && data?.path) {
+      const { data: pub } = dbB2C.storage.from('solicitudes-fotos').getPublicUrl(data.path);
+      if (pub?.publicUrl) urls.push(pub.publicUrl);
+    }
+  }
+  return urls;
+}
+
+async function enviarSolicitud() {
+  const btn = document.getElementById('btn-enviar');
+  const err = document.getElementById('err-step4');
+  btn.disabled = true;
+  btn.textContent = 'Enviando...';
+
+  try {
+    // Subir fotos si hay
+    let fotosUrls = [];
+    if (_fotos.length > 0) {
+      btn.textContent = 'Subiendo fotos...';
+      fotosUrls = await subirFotos();
+    }
+
+    const radio    = parseInt(document.getElementById('inp-radio').value);
+    const titulo   = document.getElementById('inp-titulo').value.trim();
+    const desc     = document.getElementById('inp-descripcion').value.trim();
+    const dir      = document.getElementById('inp-direccion').value.trim();
+    const vSel     = document.getElementById('sel-vehiculo').value;
+
+    btn.textContent = 'Creando solicitud...';
+
+    const { data, error } = await dbB2C
+      .from('cat_solicitudes_presupuesto')
+      .insert({
+        cliente_id:          _clienteId,
+        vehiculo_id:         vSel || null,
+        servicio_codigo:     _svcSel,
+        titulo,
+        descripcion:         desc,
+        fotos_urls:          fotosUrls,
+        zona_centro_lat:     _geoLat,
+        zona_centro_lng:     _geoLng,
+        zona_radio_km:       radio,
+        direccion_referencia: dir,
+      })
+      .select('id')
+      .single();
+
+    if (error || !data) throw new Error(error?.message || 'Error al crear la solicitud.');
+
+    window.location.href = `/mis-presupuestos?enviado=1`;
+
+  } catch (ex) {
+    err.textContent = ex.message || 'Error inesperado. Intentá de nuevo.';
+    err.classList.add('visible');
+    btn.disabled = false;
+    btn.textContent = '📨 Enviar a talleres →';
+  }
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+init();
+</script>
+</body>
+</html>

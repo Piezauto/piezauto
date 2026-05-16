@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Solicitudes en zona — Piezauto Point</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --accent:#E63946; --negro:#1a1a1a; --gris-claro:#f8f8f8; --sombra:0 2px 12px rgba(0,0,0,.08); --radius:10px; }
+    body { background: var(--gris-claro); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+
+    .header { background: var(--negro); color: #fff; padding: 14px 18px; display: flex; align-items: center; gap: 12px; }
+    .header-logo { font-size: 15px; font-weight: 900; background: linear-gradient(135deg,#E63946,#ff6b6b); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .header-title { font-size: 14px; font-weight: 600; color: #aaa; }
+    .header-sep { flex: 1; }
+    .header-back { color: #888; font-size: 13px; text-decoration: none; }
+
+    .wrap { max-width: 760px; margin: 0 auto; padding: 20px 16px 60px; }
+
+    .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; flex-wrap: wrap; gap: 10px; }
+    .page-titulo { font-size: 18px; font-weight: 800; }
+
+    .filtros { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+    .filtro-btn { padding: 6px 14px; border: 1.5px solid #ddd; border-radius: 20px; background: #fff; font-size: 12px; font-weight: 600; cursor: pointer; transition: all .15s; }
+    .filtro-btn:hover { border-color: #aaa; }
+    .filtro-btn.activo { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+    .sol-card { background: #fff; border-radius: var(--radius); box-shadow: var(--sombra); margin-bottom: 12px; overflow: hidden; }
+    .sol-card-header { padding: 14px 16px 10px; display: flex; align-items: flex-start; gap: 12px; }
+    .sol-icon { font-size: 26px; flex-shrink: 0; }
+    .sol-info { flex: 1; min-width: 0; }
+    .sol-titulo { font-size: 14px; font-weight: 700; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sol-sub { font-size: 11px; color: #888; }
+    .sol-estado { padding: 3px 9px; border-radius: 20px; font-size: 10px; font-weight: 700; flex-shrink: 0; }
+    .sol-estado.notificado { background: #e3f2fd; color: #1565c0; }
+    .sol-estado.visto      { background: #fff3e0; color: #e65100; }
+    .sol-estado.respondio  { background: #e8f5e9; color: #2e7d32; }
+    .sol-estado.rechazo    { background: #f5f5f5; color: #888; }
+
+    .sol-meta { padding: 0 16px 10px; display: flex; gap: 14px; flex-wrap: wrap; }
+    .sol-meta-item { font-size: 11px; color: #888; }
+    .sol-meta-item strong { color: #333; }
+
+    .sol-desc { padding: 0 16px 12px; font-size: 12px; color: #555; line-height: 1.6;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+    .sol-footer { padding: 10px 16px; border-top: 1px solid #f5f5f5; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .sol-fecha { font-size: 11px; color: #aaa; }
+    .btn-responder { background: var(--accent); color: #fff; border: none; border-radius: 7px; padding: 7px 16px; font-size: 12px; font-weight: 700; cursor: pointer; text-decoration: none; }
+    .btn-responder:hover { opacity: .88; }
+    .btn-ver-mas { font-size: 12px; color: var(--accent); font-weight: 600; background: none; border: none; cursor: pointer; }
+
+    /* Drawer detalle */
+    .drawer-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 100; }
+    .drawer-bg.abierto { display: block; }
+    .drawer { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-radius: 16px 16px 0 0; padding: 20px; max-height: 85vh; overflow-y: auto; z-index: 101; transform: translateY(100%); transition: transform .3s ease; }
+    .drawer.abierto { transform: translateY(0); }
+    .drawer-handle { width: 40px; height: 4px; background: #ddd; border-radius: 2px; margin: 0 auto 16px; }
+    .drawer-titulo { font-size: 17px; font-weight: 800; margin-bottom: 14px; }
+    .det-row { display: flex; gap: 8px; padding: 10px 0; border-bottom: 1px solid #f5f5f5; font-size: 13px; }
+    .det-row:last-child { border-bottom: none; }
+    .det-label { color: #888; min-width: 120px; flex-shrink: 0; }
+    .det-val { color: #222; font-weight: 600; flex: 1; }
+    .det-desc { font-size: 13px; color: #555; line-height: 1.7; white-space: pre-wrap; margin-top: 8px; padding-top: 8px; border-top: 1px solid #f5f5f5; }
+    .drawer-acciones { display: flex; gap: 10px; margin-top: 18px; }
+    .btn-full { flex: 1; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; border: none; text-align: center; text-decoration: none; display: block; }
+    .btn-full.rojo { background: var(--accent); color: #fff; }
+    .btn-full.gris { background: #f0f0f0; color: #333; }
+
+    .empty { text-align: center; padding: 50px 16px; color: #aaa; }
+    .empty-icon { font-size: 44px; margin-bottom: 12px; }
+    .spinner-wrap { display: flex; justify-content: center; padding: 50px; }
+    .spinner { width: 30px; height: 30px; border: 3px solid #eee; border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">Piezauto</div>
+  <div class="header-title">Point</div>
+  <div class="header-sep"></div>
+  <a href="../point/dashboard.html" class="header-back">← Dashboard</a>
+</div>
+
+<div class="wrap">
+  <div class="page-header">
+    <div class="page-titulo">📬 Solicitudes en mi zona</div>
+  </div>
+
+  <div class="filtros" id="filtros">
+    <button class="filtro-btn activo" onclick="filtrar('todos')">Todos</button>
+    <button class="filtro-btn" onclick="filtrar('notificado')">Sin ver</button>
+    <button class="filtro-btn" onclick="filtrar('visto')">Vistos</button>
+    <button class="filtro-btn" onclick="filtrar('respondio')">Respondidos</button>
+  </div>
+
+  <div id="loading-wrap" class="spinner-wrap"><div class="spinner"></div></div>
+  <div id="lista" style="display:none"></div>
+</div>
+
+<!-- Drawer detalle -->
+<div class="drawer-bg" id="drawer-bg" onclick="cerrarDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-handle"></div>
+  <div id="drawer-contenido"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase.js"></script>
+
+<script>
+const SVC_LABEL = {
+  aceite:'Aceite / Service', frenos:'Frenos', suspension:'Suspensión', direccion:'Dirección',
+  motor:'Motor', transmision:'Transmisión', electrico:'Eléctrico', aire:'Aire acond.',
+  embrague:'Embrague', escape:'Escape', bateria:'Batería', gomas:'Gomas', chapa_pintura:'Chapa y pintura',
+};
+const FDATE = ts => new Date(ts).toLocaleDateString('es-AR', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+
+let _taller     = null;
+let _notifs     = [];
+let _filtro     = 'todos';
+
+async function init() {
+  const sesion = sessionStorage.getItem('pz_taller');
+  if (!sesion) { window.location.href = '../point/index.html'; return; }
+  try { _taller = JSON.parse(sesion); } catch { window.location.href = '../point/index.html'; return; }
+
+  const { data, error } = await db
+    .from('cat_solicitudes_talleres_notificados')
+    .select(`
+      id, estado, distancia_km, notificado_at, respondio_at,
+      cat_solicitudes_presupuesto!solicitud_id(
+        id, titulo, descripcion, servicio_codigo, zona_radio_km, direccion_referencia,
+        fecha_limite_respuesta, created_at,
+        cat_clientes_vehiculos!vehiculo_id(modelo, anio)
+      )
+    `)
+    .eq('taller_id', _taller.id)
+    .order('notificado_at', { ascending: false });
+
+  _notifs = (data || []).filter(n => n.cat_solicitudes_presupuesto);
+
+  // Marcar notificados como vistos
+  const sinVer = _notifs.filter(n => n.estado === 'notificado').map(n => n.id);
+  if (sinVer.length) {
+    await db.from('cat_solicitudes_talleres_notificados')
+      .update({ estado: 'visto', visto_at: new Date().toISOString() })
+      .in('id', sinVer);
+    _notifs.forEach(n => { if (sinVer.includes(n.id)) n.estado = 'visto'; });
+  }
+
+  document.getElementById('loading-wrap').style.display = 'none';
+  document.getElementById('lista').style.display        = 'block';
+  renderLista();
+}
+
+function filtrar(tipo) {
+  _filtro = tipo;
+  document.querySelectorAll('.filtro-btn').forEach((btn, i) => {
+    const tipos = ['todos','notificado','visto','respondio'];
+    btn.classList.toggle('activo', tipos[i] === tipo);
+  });
+  renderLista();
+}
+
+function renderLista() {
+  const lista = _filtro === 'todos'
+    ? _notifs
+    : _notifs.filter(n => n.estado === _filtro);
+
+  const cont = document.getElementById('lista');
+  if (!lista.length) {
+    cont.innerHTML = `<div class="empty"><div class="empty-icon">📭</div><div>No hay solicitudes ${_filtro !== 'todos' ? 'en este estado' : 'en tu zona todavía'}.</div></div>`;
+    return;
+  }
+
+  cont.innerHTML = lista.map(n => {
+    const s = n.cat_solicitudes_presupuesto;
+    const svcLabel = SVC_LABEL[s.servicio_codigo] || s.servicio_codigo || 'Servicio general';
+    const venc = new Date(s.fecha_limite_respuesta) < new Date();
+    const yares = n.estado === 'respondio';
+
+    return `<div class="sol-card">
+      <div class="sol-card-header">
+        <div class="sol-icon">📋</div>
+        <div class="sol-info">
+          <div class="sol-titulo">${escHtml(s.titulo)}</div>
+          <div class="sol-sub">${svcLabel}</div>
+        </div>
+        <div class="sol-estado ${n.estado}">${estadoLabel(n.estado)}</div>
+      </div>
+      <div class="sol-meta">
+        ${n.distancia_km ? `<div class="sol-meta-item">Distancia: <strong>${n.distancia_km} km</strong></div>` : ''}
+        <div class="sol-meta-item">Radio cliente: <strong>${s.zona_radio_km} km</strong></div>
+        ${venc ? '<div class="sol-meta-item" style="color:#c00"><strong>⚠ Plazo vencido</strong></div>' : ''}
+      </div>
+      <div class="sol-desc">${escHtml(s.descripcion)}</div>
+      <div class="sol-footer">
+        <div class="sol-fecha">${FDATE(s.created_at)}</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn-ver-mas" onclick="abrirDrawer('${n.id}')">Ver detalle</button>
+          ${!yares && !venc ? `<a href="enviar-presupuesto.html?solicitud_id=${s.id}" class="btn-responder">Enviar presupuesto</a>` : ''}
+          ${yares ? '<span style="font-size:11px;color:#2e7d32;font-weight:700">✅ Respondida</span>' : ''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function estadoLabel(e) {
+  return { notificado:'Nueva', visto:'Vista', respondio:'Respondida', rechazo:'Rechazada', expirado:'Expirada' }[e] || e;
+}
+
+function abrirDrawer(notifId) {
+  const n = _notifs.find(x => x.id === notifId);
+  if (!n) return;
+  const s = n.cat_solicitudes_presupuesto;
+  const svcLabel = SVC_LABEL[s.servicio_codigo] || '—';
+  const v = s.cat_clientes_vehiculos;
+
+  document.getElementById('drawer-contenido').innerHTML = `
+    <div class="drawer-titulo">${escHtml(s.titulo)}</div>
+    <div class="det-row"><span class="det-label">Servicio</span><span class="det-val">${svcLabel}</span></div>
+    ${v ? `<div class="det-row"><span class="det-label">Vehículo</span><span class="det-val">${escHtml((v.modelo || '') + ' ' + (v.anio || ''))}</span></div>` : ''}
+    <div class="det-row"><span class="det-label">Zona</span><span class="det-val">${s.zona_radio_km} km · ${escHtml(s.direccion_referencia || '—')}</span></div>
+    ${n.distancia_km ? `<div class="det-row"><span class="det-label">Distancia</span><span class="det-val">${n.distancia_km} km del taller</span></div>` : ''}
+    <div class="det-row"><span class="det-label">Vence</span><span class="det-val">${FDATE(s.fecha_limite_respuesta)}</span></div>
+    <div class="det-desc">${escHtml(s.descripcion)}</div>
+    <div class="drawer-acciones">
+      ${n.estado !== 'respondio' ? `<a href="enviar-presupuesto.html?solicitud_id=${s.id}" class="btn-full rojo">Enviar presupuesto</a>` : '<div class="btn-full gris" style="cursor:default">✅ Ya respondiste</div>'}
+      <button class="btn-full gris" onclick="cerrarDrawer()">Cerrar</button>
+    </div>`;
+
+  document.getElementById('drawer-bg').classList.add('abierto');
+  document.getElementById('drawer').classList.add('abierto');
+}
+
+function cerrarDrawer() {
+  document.getElementById('drawer-bg').classList.remove('abierto');
+  document.getElementById('drawer').classList.remove('abierto');
+}
+
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+init();
+</script>
+</body>
+</html>

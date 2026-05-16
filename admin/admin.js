@@ -3590,6 +3590,7 @@ const PERM_SIDEBAR = {
   'nav-auditoria':          'owner',
   'nav-wallet-admin':       'comercial',
   'nav-referidos':          'comercial',
+  'nav-comparador':         'comercial',
 };
 
 async function aplicarPermisosAdmin() {

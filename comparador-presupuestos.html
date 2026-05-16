@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Comparar presupuestos — Piezauto</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="stylesheet" href="css/estilos.css">
+  <style>
+    body { background: var(--gris-claro); }
+    .page-wrap { max-width: 860px; margin: 0 auto; padding: 24px 16px 72px; }
+
+    /* Header solicitud */
+    .sol-header { background: var(--negro); border-radius: 12px; padding: 20px 22px; color: #fff; margin-bottom: 20px; }
+    .sol-back { font-size: 12px; color: #888; margin-bottom: 10px; display: block; text-decoration: none; }
+    .sol-back:hover { color: #ccc; }
+    .sol-titulo { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
+    .sol-meta { display: flex; gap: 14px; flex-wrap: wrap; }
+    .sol-meta-item { font-size: 12px; color: #aaa; }
+    .sol-meta-item strong { color: #ddd; }
+    .sol-badge {
+      display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; margin-bottom: 8px;
+    }
+    .sol-badge.abierta              { background: #fff3e0; color: #e65100; }
+    .sol-badge.recibiendo_presupuestos { background: #e3f2fd; color: #1565c0; }
+    .sol-badge.cliente_decidio      { background: #e8f5e9; color: #2e7d32; }
+    .sol-badge.cerrada_sin_respuestas { background: #f5f5f5; color: #888; }
+
+    /* Filtros */
+    .filtros-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+    .filtros-label { font-size: 12px; color: #888; font-weight: 600; }
+    .filtro-btn { padding: 6px 14px; border: 1.5px solid #ddd; border-radius: 20px; background: #fff; font-size: 12px; font-weight: 600; cursor: pointer; transition: all .15s; }
+    .filtro-btn:hover { border-color: #aaa; }
+    .filtro-btn.activo { background: var(--rojo); color: #fff; border-color: var(--rojo); }
+
+    /* Cards comparador */
+    .comparador-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+    .pres-card {
+      background: #fff; border-radius: 12px; box-shadow: var(--sombra);
+      overflow: hidden; display: flex; flex-direction: column;
+      border: 2px solid transparent; transition: border-color .15s;
+    }
+    .pres-card.elegido { border-color: #2e7d32; }
+    .pres-card.descartado { opacity: .5; }
+
+    .pres-card-header { padding: 16px 18px 12px; border-bottom: 1px solid #f5f5f5; }
+    .pres-taller-nombre { font-size: 15px; font-weight: 800; margin-bottom: 3px; }
+    .pres-taller-loc { font-size: 12px; color: #888; display: flex; align-items: center; gap: 6px; }
+    .pres-taller-dist { font-size: 11px; color: #aaa; }
+    .pres-taller-link { font-size: 11px; color: #2563eb; text-decoration: none; font-weight: 600; }
+    .pres-taller-link:hover { text-decoration: underline; }
+
+    .pres-monto { padding: 14px 18px 0; }
+    .pres-monto-val { font-size: 26px; font-weight: 800; color: var(--rojo); }
+    .pres-monto-rango { font-size: 13px; color: #888; margin-top: 2px; }
+    .pres-monto-iva { font-size: 10px; color: #aaa; }
+
+    .pres-body { padding: 14px 18px; flex: 1; }
+    .pres-field { margin-bottom: 10px; }
+    .pres-field-label { font-size: 10px; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 3px; }
+    .pres-field-val { font-size: 13px; color: #333; }
+    .pres-desc { font-size: 12px; color: #555; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+
+    .pres-footer { padding: 14px 18px; border-top: 1px solid #f5f5f5; display: flex; gap: 8px; flex-direction: column; }
+    .btn-elegir { background: var(--rojo); color: #fff; border: none; border-radius: 8px; padding: 11px; font-size: 13px; font-weight: 700; cursor: pointer; width: 100%; transition: opacity .2s; }
+    .btn-elegir:hover { opacity: .88; }
+    .btn-elegir:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-perfil-link { display: block; text-align: center; font-size: 12px; color: #888; text-decoration: none; }
+    .elegido-badge { text-align: center; font-size: 13px; font-weight: 700; color: #2e7d32; padding: 8px; }
+
+    /* Sin presupuestos */
+    .sin-resp { background: #fff; border-radius: 12px; padding: 40px 20px; text-align: center; box-shadow: var(--sombra); }
+    .sin-resp-icon { font-size: 44px; margin-bottom: 14px; }
+    .sin-resp-titulo { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+    .sin-resp-sub { font-size: 13px; color: #888; line-height: 1.6; }
+
+    /* Decisión confirmada */
+    .decision-banner { background: #e8f5e9; border: 1.5px solid #a5d6a7; border-radius: 12px; padding: 16px 20px; margin-bottom: 18px; display: flex; align-items: center; gap: 12px; }
+    .decision-icon { font-size: 28px; }
+    .decision-txt { font-size: 13px; color: #2e7d32; line-height: 1.6; }
+    .decision-txt strong { display: block; font-size: 15px; margin-bottom: 2px; }
+
+    /* Modal confirmación */
+    .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 200; align-items: center; justify-content: center; }
+    .modal-bg.abierto { display: flex; }
+    .modal { background: #fff; border-radius: 16px; padding: 28px; width: 100%; max-width: 400px; text-align: center; }
+    .modal-icon { font-size: 44px; margin-bottom: 12px; }
+    .modal-titulo { font-size: 18px; font-weight: 800; margin-bottom: 8px; }
+    .modal-sub { font-size: 13px; color: #666; margin-bottom: 22px; line-height: 1.6; }
+    .modal-btns { display: flex; gap: 10px; }
+    .modal-cancel { flex: 1; background: #f0f0f0; color: #333; border: none; border-radius: 8px; padding: 12px; font-size: 14px; font-weight: 700; cursor: pointer; }
+    .modal-confirm { flex: 2; background: var(--rojo); color: #fff; border: none; border-radius: 8px; padding: 12px; font-size: 14px; font-weight: 700; cursor: pointer; }
+
+    .spinner-wrap { display: flex; justify-content: center; padding: 60px; }
+    .spinner { width: 32px; height: 32px; border: 3px solid #eee; border-top-color: var(--rojo); border-radius: 50%; animation: spin .8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script src="js/auth-b2c.js"></script>
+
+<div id="header-b2c-root"></div>
+<script src="js/header-b2c.js"></script>
+
+<div class="page-wrap">
+  <div id="loading-wrap" class="spinner-wrap"><div class="spinner"></div></div>
+  <div id="page-contenido" style="display:none"></div>
+</div>
+
+<!-- Modal elegir -->
+<div class="modal-bg" id="modal-elegir">
+  <div class="modal">
+    <div class="modal-icon">🤝</div>
+    <div class="modal-titulo">¿Elegís este taller?</div>
+    <div class="modal-sub" id="modal-elegir-sub">Al confirmar, el taller recibirá tu datos de contacto para coordinar el trabajo.</div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="cerrarModal()">Cancelar</button>
+      <button class="modal-confirm" onclick="confirmarEleccion()">Sí, lo elijo →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SVC_LABEL = {
+  aceite:'Aceite / Service', frenos:'Frenos', suspension:'Suspensión', direccion:'Dirección',
+  motor:'Motor', transmision:'Transmisión', electrico:'Eléctrico', aire:'Aire acond.',
+  embrague:'Embrague', escape:'Escape', bateria:'Batería', gomas:'Gomas', chapa_pintura:'Chapa y pintura',
+};
+const ESTADO_LABEL = {
+  abierta:'Abierta', recibiendo_presupuestos:'Recibiendo propuestas',
+  cliente_decidio:'Decidiste', cerrada_sin_respuestas:'Sin respuestas', cancelada:'Cancelada',
+};
+const FDATE = ts => new Date(ts).toLocaleDateString('es-AR', { day:'2-digit', month:'short', year:'numeric' });
+const FMT   = v => '$' + Number(v || 0).toLocaleString('es-AR');
+
+let _solicitud  = null;
+let _pres       = [];
+let _ordenActual = 'precio';
+let _presElegirId = null;
+let _presElegirTallerId = null;
+
+async function init() {
+  const params = new URLSearchParams(window.location.search);
+  const solId  = params.get('id');
+  if (!solId) { window.location.href = '/mis-presupuestos'; return; }
+
+  const { data: session } = await dbB2C.auth.getSession();
+  if (!session?.session) { window.location.href = '/login?redirect=/comparador-presupuestos?id=' + solId; return; }
+
+  const [{ data: sol }, { data: pres }] = await Promise.all([
+    dbB2C.from('cat_solicitudes_presupuesto')
+      .select('id, titulo, servicio_codigo, descripcion, estado, talleres_notificados, presupuestos_recibidos, created_at, zona_radio_km, direccion_referencia, taller_elegido_id, presupuesto_elegido_id')
+      .eq('id', solId).single(),
+    dbB2C.from('cat_presupuestos_respuesta')
+      .select('id, taller_id, monto_estimado_min, monto_estimado_max, incluye_iva, descripcion_propuesta, tiempo_estimado_dias, fecha_disponibilidad, validez_hasta, estado, created_at, cat_recomendaciones_talleres!taller_id(id, nombre, localidad, tipo_establecimiento)')
+      .eq('solicitud_id', solId)
+      .order('monto_estimado_min', { ascending: true }),
+  ]);
+
+  if (!sol) { window.location.href = '/mis-presupuestos'; return; }
+
+  // Marcar como visto_cliente
+  if (pres?.length) {
+    await dbB2C.from('cat_presupuestos_respuesta')
+      .update({ estado: 'visto_cliente' })
+      .eq('solicitud_id', solId)
+      .eq('estado', 'enviado');
+  }
+
+  _solicitud = sol;
+  _pres = pres || [];
+
+  render();
+  document.getElementById('loading-wrap').style.display  = 'none';
+  document.getElementById('page-contenido').style.display = 'block';
+}
+
+function render() {
+  const cont = document.getElementById('page-contenido');
+  let html   = '';
+
+  // Header solicitud
+  html += `
+    <div class="sol-header">
+      <a href="mis-presupuestos.html" class="sol-back">← Mis solicitudes</a>
+      <div class="sol-badge ${_solicitud.estado}">${ESTADO_LABEL[_solicitud.estado] || _solicitud.estado}</div>
+      <div class="sol-titulo">${escHtml(_solicitud.titulo)}</div>
+      <div class="sol-meta">
+        <div class="sol-meta-item"><strong>${SVC_LABEL[_solicitud.servicio_codigo] || _solicitud.servicio_codigo || '—'}</strong></div>
+        <div class="sol-meta-item">Zona: <strong>${_solicitud.zona_radio_km} km · ${escHtml(_solicitud.direccion_referencia || '—')}</strong></div>
+        <div class="sol-meta-item">Talleres notificados: <strong>${_solicitud.talleres_notificados || 0}</strong></div>
+        <div class="sol-meta-item">Solicitud: <strong>${FDATE(_solicitud.created_at)}</strong></div>
+      </div>
+    </div>`;
+
+  // Banner si ya decidió
+  if (_solicitud.estado === 'cliente_decidio') {
+    const elegido = _pres.find(p => p.id === _solicitud.presupuesto_elegido_id);
+    html += `<div class="decision-banner">
+      <div class="decision-icon">✅</div>
+      <div class="decision-txt">
+        <strong>Ya elegiste un taller</strong>
+        ${elegido ? `Presupuesto de ${escHtml(elegido.cat_recomendaciones_talleres?.nombre || '—')} por ${FMT(elegido.monto_estimado_min)}` : ''}
+      </div>
+    </div>`;
+  }
+
+  // Sin presupuestos
+  if (!_pres.length) {
+    html += `<div class="sin-resp">
+      <div class="sin-resp-icon">⏳</div>
+      <div class="sin-resp-titulo">Esperando respuestas</div>
+      <div class="sin-resp-sub">Los talleres tienen hasta 48 hs para enviarte sus propuestas.<br>Te avisamos cuando llegue la primera.</div>
+    </div>`;
+    cont.innerHTML = html;
+    return;
+  }
+
+  // Filtros
+  html += `<div class="filtros-bar">
+    <span class="filtros-label">Ordenar por:</span>
+    <button class="filtro-btn ${_ordenActual==='precio'  ? 'activo' : ''}" onclick="ordenar('precio')">Menor precio</button>
+    <button class="filtro-btn ${_ordenActual==='tiempo'  ? 'activo' : ''}" onclick="ordenar('tiempo')">Menor plazo</button>
+    <button class="filtro-btn ${_ordenActual==='fecha'   ? 'activo' : ''}" onclick="ordenar('fecha')">Antes disponible</button>
+  </div>`;
+
+  // Grid de presupuestos
+  const ordenados = ordenarPres(_pres, _ordenActual);
+  html += '<div class="comparador-grid" id="pres-grid">';
+  html += ordenados.map(p => renderCard(p)).join('');
+  html += '</div>';
+
+  cont.innerHTML = html;
+}
+
+function renderCard(p) {
+  const t        = p.cat_recomendaciones_talleres || {};
+  const yaDecidio = _solicitud.estado === 'cliente_decidio';
+  const esElegido = p.id === _solicitud.presupuesto_elegido_id;
+  const esDescart = p.estado === 'descartado';
+
+  const rangoTxt = p.monto_estimado_max && p.monto_estimado_max !== p.monto_estimado_min
+    ? `${FMT(p.monto_estimado_min)} – ${FMT(p.monto_estimado_max)}`
+    : FMT(p.monto_estimado_min);
+
+  let footer = '';
+  if (esElegido) {
+    footer = `<div class="elegido-badge">✅ Taller elegido</div>
+      <a href="solicitar-turno.html?taller_id=${t.id}&presupuesto_id=${p.id}" class="btn-elegir" style="background:#2e7d32">Sacar turno →</a>`;
+  } else if (!yaDecidio) {
+    footer = `<button class="btn-elegir" onclick="abrirModalElegir('${p.id}','${t.id}','${escHtml(t.nombre || '')}')">Elegir este taller →</button>`;
+  }
+
+  return `<div class="pres-card ${esElegido ? 'elegido' : ''} ${esDescart ? 'descartado' : ''}">
+    <div class="pres-card-header">
+      <div class="pres-taller-nombre">${escHtml(t.nombre || '—')}</div>
+      <div class="pres-taller-loc">
+        ${t.localidad ? escHtml(t.localidad) : ''}
+        <a href="taller-perfil.html?taller_id=${t.id}" target="_blank" class="pres-taller-link">Ver perfil →</a>
+      </div>
+    </div>
+    <div class="pres-monto">
+      <div class="pres-monto-val">${FMT(p.monto_estimado_min)}</div>
+      ${p.monto_estimado_max ? `<div class="pres-monto-rango">Hasta ${FMT(p.monto_estimado_max)}</div>` : ''}
+      <div class="pres-monto-iva">${p.incluye_iva ? 'IVA incluido' : 'No incluye IVA'}</div>
+    </div>
+    <div class="pres-body">
+      <div class="pres-field">
+        <div class="pres-field-label">Propuesta</div>
+        <div class="pres-desc">${escHtml(p.descripcion_propuesta)}</div>
+      </div>
+      ${p.tiempo_estimado_dias ? `<div class="pres-field">
+        <div class="pres-field-label">Plazo estimado</div>
+        <div class="pres-field-val">${p.tiempo_estimado_dias} día${p.tiempo_estimado_dias !== 1 ? 's' : ''}</div>
+      </div>` : ''}
+      ${p.fecha_disponibilidad ? `<div class="pres-field">
+        <div class="pres-field-label">Disponibilidad</div>
+        <div class="pres-field-val">${FDATE(p.fecha_disponibilidad)}</div>
+      </div>` : ''}
+      <div class="pres-field">
+        <div class="pres-field-label">Válido hasta</div>
+        <div class="pres-field-val">${FDATE(p.validez_hasta)}</div>
+      </div>
+    </div>
+    <div class="pres-footer">${footer}</div>
+  </div>`;
+}
+
+function ordenarPres(lista, orden) {
+  return [...lista].sort((a, b) => {
+    if (orden === 'precio') return a.monto_estimado_min - b.monto_estimado_min;
+    if (orden === 'tiempo') return (a.tiempo_estimado_dias || 999) - (b.tiempo_estimado_dias || 999);
+    if (orden === 'fecha')  return (a.fecha_disponibilidad || '9999') < (b.fecha_disponibilidad || '9999') ? -1 : 1;
+    return 0;
+  });
+}
+
+function ordenar(tipo) {
+  _ordenActual = tipo;
+  render();
+}
+
+function abrirModalElegir(presId, tallerId, nombre) {
+  _presElegirId       = presId;
+  _presElegirTallerId = tallerId;
+  document.getElementById('modal-elegir-sub').textContent =
+    `Vas a elegir al taller "${nombre}". Los otros presupuestos se cerrarán.`;
+  document.getElementById('modal-elegir').classList.add('abierto');
+}
+
+function cerrarModal() {
+  document.getElementById('modal-elegir').classList.remove('abierto');
+}
+
+async function confirmarEleccion() {
+  const btn = document.querySelector('.modal-confirm');
+  btn.disabled = true;
+  btn.textContent = 'Confirmando...';
+
+  // Marcar solicitud como decidida
+  await dbB2C.from('cat_solicitudes_presupuesto')
+    .update({
+      estado:               'cliente_decidio',
+      taller_elegido_id:    _presElegirTallerId,
+      presupuesto_elegido_id: _presElegirId,
+      fecha_decision_cliente: new Date().toISOString(),
+    })
+    .eq('id', _solicitud.id);
+
+  // Marcar presupuesto elegido
+  await dbB2C.from('cat_presupuestos_respuesta')
+    .update({ estado: 'elegido' })
+    .eq('id', _presElegirId);
+
+  // Descartar los otros
+  await dbB2C.from('cat_presupuestos_respuesta')
+    .update({ estado: 'descartado' })
+    .eq('solicitud_id', _solicitud.id)
+    .neq('id', _presElegirId);
+
+  // Recargar
+  cerrarModal();
+  await init();
+}
+
+document.getElementById('modal-elegir').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal-elegir')) cerrarModal();
+});
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+init();
+</script>
+</body>
+</html>
