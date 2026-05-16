@@ -9,6 +9,7 @@ async function iniciarPerfil() {
   renderPerfil(cliente);
   await cargarVehiculos(cliente.id);
   renderPreferencias(cliente);
+  cargarComprasWidget(cliente.id);
   cargarWalletWidget(cliente.id);
   cargarPresupuestosWidget(cliente.id);
 }
@@ -200,6 +201,23 @@ async function guardarPreferencias() {
 
   btn.disabled = false;
   btn.textContent = 'Guardar preferencias';
+}
+
+async function cargarComprasWidget(clienteId) {
+  const card = document.getElementById('compras-card');
+  if (!card) return;
+  const { data } = await dbB2C
+    .from('cat_oportunidades_compra_programada')
+    .select('id, estado')
+    .eq('cliente_id', clienteId)
+    .in('estado', ['detectada','notificada','vista_cliente'])
+    .gt('fecha_expiracion', new Date().toISOString());
+  const count = data?.length || 0;
+  if (!count) return;
+  card.style.display = 'block';
+  document.getElementById('compras-count').textContent = count;
+  const noVistas = data.filter(o => o.estado === 'detectada' || o.estado === 'notificada').length;
+  if (noVistas > 0) document.getElementById('compras-badge').style.display = 'inline';
 }
 
 async function cargarPresupuestosWidget(clienteId) {

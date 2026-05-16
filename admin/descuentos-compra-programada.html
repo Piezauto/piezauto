@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Descuentos Compra Programada — Piezauto Admin</title>
+  <link rel="stylesheet" href="../css/estilos.css">
+  <style>
+    body { background: #f0f0f0; }
+    .page-wrap { max-width: 1100px; margin: 0 auto; padding: 28px 20px 72px; }
+    .page-header { display: flex; align-items: center; gap: 16px; margin-bottom: 28px; }
+    .page-titulo { font-size: 22px; font-weight: 800; flex: 1; }
+    .back-link { font-size: 13px; color: #888; text-decoration: none; font-weight: 600; }
+    .back-link:hover { color: #333; }
+
+    .info-banner { background: #e8f4fd; border: 1px solid #bee3f8; border-radius: 10px; padding: 14px 18px; margin-bottom: 24px; font-size: 13px; color: #1a5276; line-height: 1.5; }
+
+    .tabla-wrap { background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.06); overflow: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { background: #f8f8f8; color: #555; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; padding: 12px 16px; text-align: left; white-space: nowrap; }
+    td { padding: 12px 16px; border-bottom: 1px solid #f5f5f5; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fafafa; }
+
+    .servicio-chip { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; font-size: 13px; }
+    .servicio-icon { font-size: 18px; }
+
+    .desc-input { width: 64px; padding: 6px 8px; border: 1.5px solid #ddd; border-radius: 6px; font-size: 13px; font-weight: 700; text-align: center; outline: none; }
+    .desc-input:focus { border-color: #E63946; }
+    .desc-input.changed { border-color: #f59e0b; background: #fffbeb; }
+
+    .dias-km-wrap { display: flex; align-items: center; gap: 4px; font-size: 12px; }
+    .dias-km-wrap input { width: 56px; padding: 5px 6px; border: 1.5px solid #ddd; border-radius: 6px; font-size: 12px; text-align: center; outline: none; }
+    .dias-km-wrap input:focus { border-color: #E63946; }
+    .dias-km-wrap input.changed { border-color: #f59e0b; background: #fffbeb; }
+    .dias-km-wrap span { color: #888; }
+
+    .badge-activo { background: #d1fae5; color: #065f46; border-radius: 20px; padding: 2px 8px; font-size: 11px; font-weight: 700; }
+    .badge-inactivo { background: #fee2e2; color: #991b1b; border-radius: 20px; padding: 2px 8px; font-size: 11px; font-weight: 700; }
+
+    .btn-accion { font-size: 11px; padding: 5px 10px; border-radius: 6px; border: none; font-weight: 700; cursor: pointer; }
+    .btn-guardar-row { background: #E63946; color: #fff; display: none; }
+    .btn-guardar-row:hover { background: #c1121f; }
+    .btn-guardar-row.visible { display: inline-block; }
+    .btn-skus { background: #e8f4fd; color: #1565c0; }
+    .btn-skus:hover { background: #bee3f8; }
+    .btn-toggle-activo { background: #f0f0f0; color: #555; }
+
+    .save-all-bar { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: #1a1a1a; padding: 14px 24px; align-items: center; justify-content: space-between; z-index: 100; }
+    .save-all-bar.visible { display: flex; }
+    .save-all-bar span { color: #fff; font-size: 13px; font-weight: 600; }
+    .btn-save-all { background: #E63946; color: #fff; border: none; border-radius: 8px; padding: 10px 24px; font-size: 14px; font-weight: 700; cursor: pointer; }
+    .btn-save-all:hover { background: #c1121f; }
+    .btn-discard { background: #333; color: #aaa; border: none; border-radius: 8px; padding: 10px 18px; font-size: 14px; font-weight: 700; cursor: pointer; margin-right: 10px; }
+
+    /* Modal SKUs */
+    .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 200; align-items: center; justify-content: center; }
+    .modal-bg.abierto { display: flex; }
+    .modal { background: #fff; border-radius: 16px; padding: 28px; width: 100%; max-width: 520px; max-height: 85vh; overflow-y: auto; }
+    .modal-titulo { font-size: 17px; font-weight: 800; margin-bottom: 6px; }
+    .modal-sub { font-size: 13px; color: #888; margin-bottom: 20px; }
+    .sku-search-wrap { position: relative; margin-bottom: 16px; }
+    .sku-search-wrap input { width: 100%; padding: 10px 12px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 14px; outline: none; box-sizing: border-box; }
+    .sku-search-wrap input:focus { border-color: #E63946; }
+    .sku-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1.5px solid #ddd; border-radius: 8px; max-height: 180px; overflow-y: auto; z-index: 10; box-shadow: 0 4px 12px rgba(0,0,0,.1); display: none; }
+    .sku-dropdown.abierto { display: block; }
+    .sku-opt { padding: 10px 14px; cursor: pointer; font-size: 13px; border-bottom: 1px solid #f5f5f5; }
+    .sku-opt:hover { background: #f8f8f8; }
+    .sku-opt strong { display: block; font-size: 13px; }
+    .sku-opt span { font-size: 11px; color: #888; }
+
+    .skus-lista { display: flex; flex-direction: column; gap: 8px; min-height: 40px; }
+    .sku-tag { display: flex; align-items: center; justify-content: space-between; background: #f8f8f8; border-radius: 8px; padding: 8px 12px; font-size: 13px; }
+    .sku-tag-info strong { display: block; font-size: 13px; }
+    .sku-tag-info span { font-size: 11px; color: #888; }
+    .sku-remove { background: none; border: none; font-size: 16px; color: #ccc; cursor: pointer; padding: 2px 4px; }
+    .sku-remove:hover { color: #E63946; }
+    .skus-empty { color: #bbb; font-size: 13px; text-align: center; padding: 12px 0; }
+
+    .modal-acciones { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+    .btn-cancel { background: #f0f0f0; color: #333; border: none; border-radius: 8px; padding: 10px 18px; font-size: 13px; font-weight: 700; cursor: pointer; }
+    .btn-guardar { background: #E63946; color: #fff; border: none; border-radius: 8px; padding: 10px 20px; font-size: 13px; font-weight: 700; cursor: pointer; }
+    .btn-guardar:hover { background: #c1121f; }
+
+    .loading { text-align: center; padding: 40px; color: #888; font-size: 14px; }
+  </style>
+</head>
+<body>
+<div class="page-wrap">
+  <div class="page-header">
+    <a href="index.html" class="back-link">← Admin</a>
+    <div class="page-titulo">💰 Descuentos Compra Programada</div>
+    <a href="oportunidades-compra.html" class="btn-accion btn-skus" style="font-size:13px;padding:8px 14px;text-decoration:none">Ver oportunidades →</a>
+  </div>
+
+  <div class="info-banner">
+    Configurá los descuentos que Piezauto ofrece cuando detecta que un vehículo está próximo a su próximo mantenimiento.
+    Los descuentos se aplican al mostrar la oportunidad al cliente — el cliente decide si compra.
+    <strong>Trigger:</strong> ≤ días_anticipacion o ≤ km_anticipacion antes del próximo servicio.
+  </div>
+
+  <div class="tabla-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Servicio</th>
+          <th>Solo productos (%)</th>
+          <th>Solo servicio (%)</th>
+          <th>Combo (%)</th>
+          <th>Anticipación</th>
+          <th>Estado</th>
+          <th>SKUs</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="tabla-body">
+        <tr><td colspan="8" class="loading">Cargando...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Save all bar -->
+<div class="save-all-bar" id="save-bar">
+  <span id="save-bar-msg">Hay cambios sin guardar</span>
+  <div>
+    <button class="btn-discard" onclick="descartarCambios()">Descartar</button>
+    <button class="btn-save-all" onclick="guardarTodos()">Guardar cambios</button>
+  </div>
+</div>
+
+<!-- Modal SKUs -->
+<div class="modal-bg" id="modal-skus-bg">
+  <div class="modal">
+    <div class="modal-titulo" id="modal-skus-titulo">SKUs sugeridos</div>
+    <div class="modal-sub">Ingresá los productos que se ofrecerán en esta oportunidad.</div>
+
+    <div class="sku-search-wrap">
+      <input type="text" id="sku-search" placeholder="Buscar por nombre o SKU..." autocomplete="off" oninput="buscarSkus(this.value)">
+      <div class="sku-dropdown" id="sku-dropdown"></div>
+    </div>
+
+    <div class="skus-lista" id="skus-lista">
+      <div class="skus-empty">Sin SKUs asignados</div>
+    </div>
+
+    <div class="modal-acciones">
+      <button class="btn-cancel" onclick="cerrarModalSkus()">Cancelar</button>
+      <button class="btn-guardar" onclick="guardarSkus()">Guardar SKUs</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/supabase.js"></script>
+<script>
+const ICONOS = {
+  aceite: '🛢️', filtros: '🔧', frenos: '🛑', bateria: '🔋',
+  neumaticos: '🔄', amortiguadores: '🚗', correa: '⚙️', embrague: '🔩',
+  suspension: '🏎️', escape: '💨', electrico: '⚡', vtv: '📋', general: '🔨'
+};
+const NOMBRES = {
+  aceite: 'Aceite', filtros: 'Filtros', frenos: 'Frenos', bateria: 'Batería',
+  neumaticos: 'Neumáticos', amortiguadores: 'Amortiguadores', correa: 'Correa',
+  embrague: 'Embrague', suspension: 'Suspensión', escape: 'Escape',
+  electrico: 'Eléctrico', vtv: 'VTV', general: 'General'
+};
+
+let _filas = [];         // estado local de todas las filas
+let _cambiadas = new Set();
+let _modalServicio = null;
+let _modalSkus = [];     // SKUs del modal abierto
+let _skusBusquedaTimer = null;
+
+// ── INIT ─────────────────────────────────────────────
+const admin = JSON.parse(sessionStorage.getItem('pz_admin') || 'null');
+if (!admin) { window.location.href = 'login.html'; }
+
+document.addEventListener('DOMContentLoaded', cargarDescuentos);
+
+async function cargarDescuentos() {
+  const { data, error } = await db
+    .from('cat_descuentos_compra_programada')
+    .select('*')
+    .order('servicio_codigo');
+
+  if (error) {
+    document.getElementById('tabla-body').innerHTML =
+      `<tr><td colspan="8" style="color:#E63946;padding:20px">Error: ${error.message}</td></tr>`;
+    return;
+  }
+
+  _filas = data;
+  renderTabla();
+}
+
+function renderTabla() {
+  const tbody = document.getElementById('tabla-body');
+  if (!_filas.length) {
+    tbody.innerHTML = '<tr><td colspan="8" class="loading">Sin datos</td></tr>';
+    return;
+  }
+  tbody.innerHTML = _filas.map(f => {
+    const ic = ICONOS[f.servicio_codigo] || '🔧';
+    const nm = NOMBRES[f.servicio_codigo] || f.servicio_codigo;
+    const skuCount = Array.isArray(f.skus_sugeridos) ? f.skus_sugeridos.length : 0;
+    return `
+    <tr id="row-${f.servicio_codigo}">
+      <td><span class="servicio-chip"><span class="servicio-icon">${ic}</span> ${nm}</span></td>
+      <td>
+        <input class="desc-input" type="number" min="0" max="100" step="1"
+          id="d-prod-${f.servicio_codigo}" value="${f.descuento_solo_productos}"
+          oninput="marcarCambio('${f.servicio_codigo}', this)">
+        <span style="color:#888;font-size:11px;margin-left:3px">%</span>
+      </td>
+      <td>
+        <input class="desc-input" type="number" min="0" max="100" step="1"
+          id="d-serv-${f.servicio_codigo}" value="${f.descuento_solo_servicio}"
+          oninput="marcarCambio('${f.servicio_codigo}', this)">
+        <span style="color:#888;font-size:11px;margin-left:3px">%</span>
+      </td>
+      <td>
+        <input class="desc-input" type="number" min="0" max="100" step="1"
+          id="d-combo-${f.servicio_codigo}" value="${f.descuento_combo}"
+          oninput="marcarCambio('${f.servicio_codigo}', this)">
+        <span style="color:#888;font-size:11px;margin-left:3px">%</span>
+      </td>
+      <td>
+        <div class="dias-km-wrap">
+          <input type="number" min="1" max="365" id="d-dias-${f.servicio_codigo}" value="${f.dias_anticipacion}"
+            oninput="marcarCambio('${f.servicio_codigo}', this)">
+          <span>días</span>
+          <input type="number" min="100" max="10000" id="d-km-${f.servicio_codigo}" value="${f.km_anticipacion}"
+            oninput="marcarCambio('${f.servicio_codigo}', this)">
+          <span>km</span>
+        </div>
+      </td>
+      <td>
+        <button class="btn-accion btn-toggle-activo" onclick="toggleActivo('${f.servicio_codigo}')">
+          ${f.activo ? '<span class="badge-activo">Activo</span>' : '<span class="badge-inactivo">Inactivo</span>'}
+        </button>
+      </td>
+      <td>
+        <button class="btn-accion btn-skus" onclick="abrirModalSkus('${f.servicio_codigo}')">
+          🏷️ ${skuCount > 0 ? skuCount + ' SKUs' : 'Sin SKUs'}
+        </button>
+      </td>
+      <td>
+        <button class="btn-accion btn-guardar-row ${_cambiadas.has(f.servicio_codigo) ? 'visible' : ''}"
+          id="btn-save-${f.servicio_codigo}"
+          onclick="guardarFila('${f.servicio_codigo}')">
+          Guardar
+        </button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function marcarCambio(codigo, el) {
+  el.classList.add('changed');
+  _cambiadas.add(codigo);
+  document.getElementById(`btn-save-${codigo}`)?.classList.add('visible');
+  document.getElementById('save-bar').classList.add('visible');
+}
+
+function getValoresFila(codigo) {
+  return {
+    descuento_solo_productos: parseFloat(document.getElementById(`d-prod-${codigo}`)?.value) || 0,
+    descuento_solo_servicio:  parseFloat(document.getElementById(`d-serv-${codigo}`)?.value) || 0,
+    descuento_combo:          parseFloat(document.getElementById(`d-combo-${codigo}`)?.value) || 0,
+    dias_anticipacion:        parseInt(document.getElementById(`d-dias-${codigo}`)?.value) || 30,
+    km_anticipacion:          parseInt(document.getElementById(`d-km-${codigo}`)?.value) || 1000,
+    updated_at:               new Date().toISOString(),
+  };
+}
+
+async function guardarFila(codigo) {
+  const btn = document.getElementById(`btn-save-${codigo}`);
+  btn.textContent = '...';
+  btn.disabled = true;
+
+  const vals = getValoresFila(codigo);
+  const { error } = await db
+    .from('cat_descuentos_compra_programada')
+    .update(vals)
+    .eq('servicio_codigo', codigo);
+
+  if (error) {
+    alert('Error al guardar: ' + error.message);
+    btn.textContent = 'Guardar';
+    btn.disabled = false;
+    return;
+  }
+
+  const idx = _filas.findIndex(f => f.servicio_codigo === codigo);
+  if (idx !== -1) Object.assign(_filas[idx], vals);
+  _cambiadas.delete(codigo);
+  btn.classList.remove('visible');
+  btn.textContent = 'Guardar';
+  btn.disabled = false;
+
+  // limpia clases changed
+  ['d-prod-', 'd-serv-', 'd-combo-', 'd-dias-', 'd-km-'].forEach(prefix => {
+    document.getElementById(prefix + codigo)?.classList.remove('changed');
+  });
+
+  if (_cambiadas.size === 0) document.getElementById('save-bar').classList.remove('visible');
+}
+
+async function guardarTodos() {
+  const btn = document.querySelector('.btn-save-all');
+  btn.textContent = 'Guardando...';
+  btn.disabled = true;
+
+  for (const codigo of _cambiadas) {
+    await guardarFila(codigo);
+  }
+
+  btn.textContent = 'Guardar cambios';
+  btn.disabled = false;
+}
+
+function descartarCambios() {
+  _cambiadas.clear();
+  document.getElementById('save-bar').classList.remove('visible');
+  renderTabla();
+}
+
+async function toggleActivo(codigo) {
+  const fila = _filas.find(f => f.servicio_codigo === codigo);
+  if (!fila) return;
+  const nuevoActivo = !fila.activo;
+  const { error } = await db
+    .from('cat_descuentos_compra_programada')
+    .update({ activo: nuevoActivo, updated_at: new Date().toISOString() })
+    .eq('servicio_codigo', codigo);
+  if (error) { alert('Error: ' + error.message); return; }
+  fila.activo = nuevoActivo;
+  renderTabla();
+}
+
+// ── MODAL SKUs ──────────────────────────────────────
+function abrirModalSkus(codigo) {
+  _modalServicio = codigo;
+  const fila = _filas.find(f => f.servicio_codigo === codigo);
+  _modalSkus = Array.isArray(fila?.skus_sugeridos) ? JSON.parse(JSON.stringify(fila.skus_sugeridos)) : [];
+
+  const nm = NOMBRES[codigo] || codigo;
+  document.getElementById('modal-skus-titulo').textContent = `SKUs para ${nm}`;
+  document.getElementById('sku-search').value = '';
+  document.getElementById('sku-dropdown').classList.remove('abierto');
+  renderSkusLista();
+  document.getElementById('modal-skus-bg').classList.add('abierto');
+}
+
+function cerrarModalSkus() {
+  document.getElementById('modal-skus-bg').classList.remove('abierto');
+  _modalServicio = null;
+  _modalSkus = [];
+}
+
+function renderSkusLista() {
+  const wrap = document.getElementById('skus-lista');
+  if (!_modalSkus.length) {
+    wrap.innerHTML = '<div class="skus-empty">Sin SKUs asignados</div>';
+    return;
+  }
+  wrap.innerHTML = _modalSkus.map((s, i) => `
+    <div class="sku-tag">
+      <div class="sku-tag-info">
+        <strong>${s.nombre || s.sku || s.id}</strong>
+        <span>${s.sku ? 'SKU: ' + s.sku : ''} ${s.precio ? '— $' + parseFloat(s.precio).toLocaleString('es-AR') : ''}</span>
+      </div>
+      <button class="sku-remove" onclick="quitarSku(${i})">×</button>
+    </div>`).join('');
+}
+
+function quitarSku(idx) {
+  _modalSkus.splice(idx, 1);
+  renderSkusLista();
+}
+
+function buscarSkus(q) {
+  clearTimeout(_skusBusquedaTimer);
+  const dropdown = document.getElementById('sku-dropdown');
+  if (!q.trim()) { dropdown.classList.remove('abierto'); return; }
+  _skusBusquedaTimer = setTimeout(async () => {
+    const { data } = await db
+      .from('productos')
+      .select('id, nombre, sku, precio')
+      .ilike('nombre', `%${q}%`)
+      .eq('activo', true)
+      .limit(8);
+    if (!data?.length) { dropdown.classList.remove('abierto'); return; }
+    dropdown.innerHTML = data.map(p => `
+      <div class="sku-opt" onclick="agregarSku(${JSON.stringify(JSON.stringify(p))})">
+        <strong>${p.nombre}</strong>
+        <span>SKU: ${p.sku || '—'} | $${parseFloat(p.precio || 0).toLocaleString('es-AR')}</span>
+      </div>`).join('');
+    dropdown.classList.add('abierto');
+  }, 300);
+}
+
+function agregarSku(pJson) {
+  const p = JSON.parse(pJson);
+  if (_modalSkus.some(s => s.id === p.id)) return;
+  _modalSkus.push({ id: p.id, sku: p.sku, nombre: p.nombre, precio: p.precio });
+  document.getElementById('sku-search').value = '';
+  document.getElementById('sku-dropdown').classList.remove('abierto');
+  renderSkusLista();
+}
+
+async function guardarSkus() {
+  if (!_modalServicio) return;
+  const { error } = await db
+    .from('cat_descuentos_compra_programada')
+    .update({ skus_sugeridos: _modalSkus, updated_at: new Date().toISOString() })
+    .eq('servicio_codigo', _modalServicio);
+  if (error) { alert('Error: ' + error.message); return; }
+  const idx = _filas.findIndex(f => f.servicio_codigo === _modalServicio);
+  if (idx !== -1) _filas[idx].skus_sugeridos = _modalSkus;
+  cerrarModalSkus();
+  renderTabla();
+}
+
+// cerrar dropdown al clic fuera
+document.addEventListener('click', e => {
+  if (!e.target.closest('.sku-search-wrap')) {
+    document.getElementById('sku-dropdown').classList.remove('abierto');
+  }
+});
+</script>
+</body>
+</html>

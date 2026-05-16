@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Oportunidades Compra Programada — Piezauto Admin</title>
+  <link rel="stylesheet" href="../css/estilos.css">
+  <style>
+    body { background: #f0f0f0; }
+    .page-wrap { max-width: 1200px; margin: 0 auto; padding: 28px 20px 72px; }
+    .page-header { display: flex; align-items: center; gap: 16px; margin-bottom: 28px; }
+    .page-titulo { font-size: 22px; font-weight: 800; flex: 1; }
+    .back-link { font-size: 13px; color: #888; text-decoration: none; font-weight: 600; }
+    .back-link:hover { color: #333; }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 28px; }
+    .stat-card { background: #fff; border-radius: 12px; padding: 16px 18px; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+    .stat-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; }
+    .stat-val { font-size: 28px; font-weight: 800; color: #1a1a1a; }
+    .stat-sub { font-size: 11px; color: #aaa; margin-top: 2px; }
+    .stat-card.highlight { border-left: 3px solid #E63946; }
+
+    .section-title { font-size: 15px; font-weight: 800; margin: 28px 0 14px; }
+
+    /* Funnel pipeline */
+    .funnel-wrap { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-bottom: 32px; }
+    .funnel-card { background: #fff; border-radius: 10px; padding: 14px 12px; box-shadow: 0 2px 8px rgba(0,0,0,.06); text-align: center; }
+    .funnel-estado { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: #888; margin-bottom: 6px; font-weight: 700; }
+    .funnel-count { font-size: 30px; font-weight: 800; }
+    .funnel-pct { font-size: 11px; color: #888; margin-top: 3px; }
+    .fc-detectada  { color: #64748b; }
+    .fc-notificada { color: #0369a1; }
+    .fc-vista      { color: #7c3aed; }
+    .fc-comprada   { color: #16a34a; }
+    .fc-combo      { color: #ca8a04; }
+    .fc-expirada   { color: #dc2626; }
+
+    /* Ranking servicios */
+    .ranking-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 28px; }
+    .ranking-card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+    .ranking-titulo { font-size: 13px; font-weight: 700; color: #555; margin-bottom: 14px; text-transform: uppercase; letter-spacing: .04em; }
+    .ranking-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .ranking-icon { font-size: 18px; width: 28px; text-align: center; }
+    .ranking-info { flex: 1; }
+    .ranking-nombre { font-size: 13px; font-weight: 700; }
+    .ranking-sub { font-size: 11px; color: #888; }
+    .ranking-bar-wrap { width: 100px; background: #f0f0f0; border-radius: 4px; height: 6px; }
+    .ranking-bar { height: 6px; border-radius: 4px; background: #E63946; }
+    .ranking-num { font-size: 13px; font-weight: 800; color: #1a1a1a; width: 32px; text-align: right; }
+
+    /* Filtros + tabla */
+    .filtros { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+    .filtros input, .filtros select { padding: 8px 12px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 13px; outline: none; background: #fff; }
+    .filtros input:focus, .filtros select:focus { border-color: #E63946; }
+    .filtros input { flex: 1; min-width: 200px; }
+
+    .tabla-wrap { background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.06); overflow: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { background: #f8f8f8; color: #555; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; padding: 12px 16px; text-align: left; white-space: nowrap; }
+    td { padding: 11px 16px; border-bottom: 1px solid #f5f5f5; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fafafa; }
+
+    .badge { display: inline-block; border-radius: 20px; padding: 2px 8px; font-size: 11px; font-weight: 700; }
+    .badge-detectada   { background: #f1f5f9; color: #64748b; }
+    .badge-notificada  { background: #e0f2fe; color: #0369a1; }
+    .badge-vista       { background: #ede9fe; color: #7c3aed; }
+    .badge-comprada    { background: #dcfce7; color: #16a34a; }
+    .badge-agendado    { background: #fef9c3; color: #a16207; }
+    .badge-combo       { background: #d1fae5; color: #065f46; }
+    .badge-rechazada   { background: #fee2e2; color: #991b1b; }
+    .badge-expirada    { background: #f5f5f5; color: #aaa; }
+
+    .btn-det { font-size: 11px; padding: 4px 10px; border-radius: 6px; background: #f8f8f8; border: 1px solid #e0e0e0; cursor: pointer; font-weight: 600; }
+    .btn-det:hover { background: #e0e0e0; }
+
+    /* Modal detalle */
+    .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 200; align-items: center; justify-content: center; }
+    .modal-bg.abierto { display: flex; }
+    .modal { background: #fff; border-radius: 16px; padding: 28px; width: 100%; max-width: 520px; max-height: 88vh; overflow-y: auto; }
+    .modal-titulo { font-size: 17px; font-weight: 800; margin-bottom: 16px; }
+    .det-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+    .det-item label { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: #888; margin-bottom: 3px; font-weight: 700; }
+    .det-item span { font-size: 14px; font-weight: 600; }
+    .modal-acciones { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+    .btn-cancel { background: #f0f0f0; color: #333; border: none; border-radius: 8px; padding: 10px 18px; font-size: 13px; font-weight: 700; cursor: pointer; }
+
+    .paginacion { display: flex; gap: 8px; justify-content: center; margin-top: 18px; }
+    .paginacion button { padding: 6px 12px; border: 1.5px solid #ddd; border-radius: 6px; background: #fff; font-size: 13px; cursor: pointer; font-weight: 600; }
+    .paginacion button.activo { background: #E63946; color: #fff; border-color: #E63946; }
+    .paginacion button:disabled { opacity: .4; cursor: default; }
+  </style>
+</head>
+<body>
+<div class="page-wrap">
+  <div class="page-header">
+    <a href="index.html" class="back-link">← Admin</a>
+    <div class="page-titulo">💡 Oportunidades Compra Programada</div>
+    <a href="descuentos-compra-programada.html" style="font-size:13px;color:#888;text-decoration:none;font-weight:600">⚙️ Configurar descuentos</a>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-grid" id="stats-grid">
+    <div class="stat-card"><div class="stat-label">Total detectadas</div><div class="stat-val" id="st-total">—</div></div>
+    <div class="stat-card"><div class="stat-label">Activas</div><div class="stat-val" id="st-activas">—</div><div class="stat-sub">detectada + notificada + vista</div></div>
+    <div class="stat-card highlight"><div class="stat-label">Convertidas</div><div class="stat-val" id="st-conv">—</div><div class="stat-sub" id="st-conv-pct">—</div></div>
+    <div class="stat-card"><div class="stat-label">Rechazadas</div><div class="stat-val" id="st-rech">—</div></div>
+    <div class="stat-card"><div class="stat-label">Expiradas</div><div class="stat-val" id="st-exp">—</div></div>
+    <div class="stat-card"><div class="stat-label">Tasa conversión</div><div class="stat-val" id="st-tasa">—</div></div>
+  </div>
+
+  <!-- Pipeline funnel -->
+  <div class="section-title">Pipeline de estados</div>
+  <div class="funnel-wrap">
+    <div class="funnel-card"><div class="funnel-estado">Detectada</div><div class="funnel-count fc-detectada" id="fc-detectada">—</div></div>
+    <div class="funnel-card"><div class="funnel-estado">Notificada</div><div class="funnel-count fc-notificada" id="fc-notificada">—</div></div>
+    <div class="funnel-card"><div class="funnel-estado">Vista</div><div class="funnel-count fc-vista" id="fc-vista">—</div></div>
+    <div class="funnel-card"><div class="funnel-estado">Comprada</div><div class="funnel-count fc-comprada" id="fc-comprada">—</div><div class="funnel-pct">solo productos</div></div>
+    <div class="funnel-card"><div class="funnel-estado">Combo</div><div class="funnel-count fc-combo" id="fc-combo">—</div><div class="funnel-pct">combo completo</div></div>
+    <div class="funnel-card"><div class="funnel-estado">Expirada</div><div class="funnel-count fc-expirada" id="fc-expirada">—</div></div>
+  </div>
+
+  <!-- Ranking servicios -->
+  <div class="ranking-grid">
+    <div class="ranking-card">
+      <div class="ranking-titulo">🔝 Servicios más detectados</div>
+      <div id="ranking-detectados"><div style="color:#888;font-size:13px">Cargando...</div></div>
+    </div>
+    <div class="ranking-card">
+      <div class="ranking-titulo">🏆 Mayor tasa de conversión</div>
+      <div id="ranking-conversion"><div style="color:#888;font-size:13px">Cargando...</div></div>
+    </div>
+  </div>
+
+  <!-- Tabla -->
+  <div class="section-title">Listado de oportunidades</div>
+  <div class="filtros">
+    <input type="text" id="filtro-buscar" placeholder="Buscar por cliente, vehículo, servicio..." oninput="filtrar()">
+    <select id="filtro-estado" onchange="filtrar()">
+      <option value="">Todos los estados</option>
+      <option value="detectada">Detectada</option>
+      <option value="notificada">Notificada</option>
+      <option value="vista_cliente">Vista</option>
+      <option value="comprada_productos">Comprada (productos)</option>
+      <option value="agendado_servicio">Agendado</option>
+      <option value="combo_comprado">Combo comprado</option>
+      <option value="rechazada">Rechazada</option>
+      <option value="expirada">Expirada</option>
+    </select>
+    <select id="filtro-servicio" onchange="filtrar()">
+      <option value="">Todos los servicios</option>
+      <option value="aceite">Aceite</option>
+      <option value="filtros">Filtros</option>
+      <option value="frenos">Frenos</option>
+      <option value="bateria">Batería</option>
+      <option value="neumaticos">Neumáticos</option>
+      <option value="amortiguadores">Amortiguadores</option>
+      <option value="correa">Correa</option>
+      <option value="embrague">Embrague</option>
+      <option value="suspension">Suspensión</option>
+      <option value="escape">Escape</option>
+      <option value="electrico">Eléctrico</option>
+      <option value="vtv">VTV</option>
+      <option value="general">General</option>
+    </select>
+  </div>
+
+  <div class="tabla-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Cliente</th>
+          <th>Vehículo</th>
+          <th>Servicio</th>
+          <th>Trigger</th>
+          <th>Restante</th>
+          <th>Descuento</th>
+          <th>Estado</th>
+          <th>Detectada</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="tabla-body">
+        <tr><td colspan="9" style="text-align:center;padding:32px;color:#888">Cargando...</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="paginacion" id="paginacion"></div>
+</div>
+
+<!-- Modal detalle -->
+<div class="modal-bg" id="modal-det-bg">
+  <div class="modal">
+    <div class="modal-titulo" id="det-titulo">Detalle oportunidad</div>
+    <div class="det-grid" id="det-contenido"></div>
+    <div class="modal-acciones">
+      <button class="btn-cancel" onclick="cerrarModal()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/supabase.js"></script>
+<script>
+const ICONOS = {
+  aceite:'🛢️', filtros:'🔧', frenos:'🛑', bateria:'🔋',
+  neumaticos:'🔄', amortiguadores:'🚗', correa:'⚙️', embrague:'🔩',
+  suspension:'🏎️', escape:'💨', electrico:'⚡', vtv:'📋', general:'🔨'
+};
+const NOMBRES = {
+  aceite:'Aceite', filtros:'Filtros', frenos:'Frenos', bateria:'Batería',
+  neumaticos:'Neumáticos', amortiguadores:'Amortiguadores', correa:'Correa',
+  embrague:'Embrague', suspension:'Suspensión', escape:'Escape',
+  electrico:'Eléctrico', vtv:'VTV', general:'General'
+};
+
+const admin = JSON.parse(sessionStorage.getItem('pz_admin') || 'null');
+if (!admin) window.location.href = 'login.html';
+
+let _todos = [];
+let _filtrados = [];
+const PER_PAGE = 30;
+let _pagina = 0;
+
+document.addEventListener('DOMContentLoaded', iniciar);
+
+async function iniciar() {
+  await Promise.all([cargarStats(), cargarTabla()]);
+}
+
+async function cargarStats() {
+  const { data } = await db
+    .from('cat_oportunidades_compra_programada')
+    .select('estado');
+  if (!data) return;
+
+  const byEstado = {};
+  data.forEach(r => { byEstado[r.estado] = (byEstado[r.estado] || 0) + 1; });
+
+  const total = data.length;
+  const activas = (byEstado.detectada||0) + (byEstado.notificada||0) + (byEstado.vista_cliente||0);
+  const conv = (byEstado.comprada_productos||0) + (byEstado.agendado_servicio||0) + (byEstado.combo_comprado||0);
+  const rech = byEstado.rechazada || 0;
+  const exp  = byEstado.expirada  || 0;
+  const conResp = conv + rech;
+  const tasa = conResp > 0 ? Math.round(conv / conResp * 100) : 0;
+
+  document.getElementById('st-total').textContent = total;
+  document.getElementById('st-activas').textContent = activas;
+  document.getElementById('st-conv').textContent = conv;
+  document.getElementById('st-conv-pct').textContent = `${tasa}% de las cerradas`;
+  document.getElementById('st-rech').textContent = rech;
+  document.getElementById('st-exp').textContent = exp;
+  document.getElementById('st-tasa').textContent = tasa + '%';
+
+  ['detectada','notificada','vista_cliente','comprada_productos','combo_comprado','expirada'].forEach(e => {
+    const el = document.getElementById('fc-' + e.replace('_cliente','').replace('_productos',''));
+    if (el) el.textContent = byEstado[e] || 0;
+  });
+  const elVista = document.getElementById('fc-vista');
+  if (elVista) elVista.textContent = byEstado.vista_cliente || 0;
+  const elComp = document.getElementById('fc-comprada');
+  if (elComp) elComp.textContent = byEstado.comprada_productos || 0;
+}
+
+async function cargarTabla() {
+  const { data } = await db
+    .from('cat_oportunidades_compra_programada')
+    .select(`
+      id, servicio_codigo, tipo_trigger, km_estimados_restantes, dias_estimados_restantes,
+      descuento_productos_aplicado, descuento_combo_aplicado, estado,
+      fecha_deteccion, fecha_notificacion, fecha_accion_cliente, fecha_expiracion,
+      cat_clientes_finales!cliente_id(nombre, apellido, email),
+      cat_clientes_vehiculos!vehiculo_id(marca_terminal_id, modelo, anio, cat_marcas_terminales!marca_terminal_id(nombre))
+    `)
+    .order('fecha_deteccion', { ascending: false });
+
+  _todos = data || [];
+  calcularRankings();
+  filtrar();
+}
+
+function calcularRankings() {
+  const porServicio = {};
+  const conv = {};
+  _todos.forEach(o => {
+    const s = o.servicio_codigo;
+    porServicio[s] = (porServicio[s] || 0) + 1;
+    if (!conv[s]) conv[s] = { c: 0, t: 0 };
+    conv[s].t++;
+    if (['comprada_productos','agendado_servicio','combo_comprado'].includes(o.estado)) conv[s].c++;
+  });
+
+  const topDetectados = Object.entries(porServicio).sort((a,b) => b[1]-a[1]).slice(0,5);
+  const maxDet = topDetectados[0]?.[1] || 1;
+  document.getElementById('ranking-detectados').innerHTML = topDetectados.map(([s,n]) => `
+    <div class="ranking-row">
+      <span class="ranking-icon">${ICONOS[s]||'🔧'}</span>
+      <div class="ranking-info">
+        <div class="ranking-nombre">${NOMBRES[s]||s}</div>
+        <div class="ranking-sub">${n} oportunidades</div>
+      </div>
+      <div class="ranking-bar-wrap"><div class="ranking-bar" style="width:${Math.round(n/maxDet*100)}%"></div></div>
+      <div class="ranking-num">${n}</div>
+    </div>`).join('') || '<div style="color:#bbb;font-size:13px">Sin datos</div>';
+
+  const topConv = Object.entries(conv)
+    .filter(([,v]) => v.t >= 2)
+    .map(([s,v]) => [s, Math.round(v.c/v.t*100)])
+    .sort((a,b) => b[1]-a[1]).slice(0,5);
+  document.getElementById('ranking-conversion').innerHTML = topConv.map(([s,pct]) => `
+    <div class="ranking-row">
+      <span class="ranking-icon">${ICONOS[s]||'🔧'}</span>
+      <div class="ranking-info">
+        <div class="ranking-nombre">${NOMBRES[s]||s}</div>
+        <div class="ranking-sub">tasa de conversión</div>
+      </div>
+      <div class="ranking-bar-wrap"><div class="ranking-bar" style="width:${pct}%"></div></div>
+      <div class="ranking-num">${pct}%</div>
+    </div>`).join('') || '<div style="color:#bbb;font-size:13px">Insuficientes datos</div>';
+}
+
+function filtrar() {
+  const q = document.getElementById('filtro-buscar').value.toLowerCase();
+  const est = document.getElementById('filtro-estado').value;
+  const serv = document.getElementById('filtro-servicio').value;
+
+  _filtrados = _todos.filter(o => {
+    const cli = o.cat_clientes_finales;
+    const veh = o.cat_clientes_vehiculos;
+    const textoCliente = `${cli?.nombre||''} ${cli?.apellido||''} ${cli?.email||''}`.toLowerCase();
+    const textoVeh = `${veh?.cat_marcas_terminales?.nombre||''} ${veh?.modelo||''} ${veh?.anio||''}`.toLowerCase();
+    const matchQ = !q || textoCliente.includes(q) || textoVeh.includes(q) || o.servicio_codigo.includes(q);
+    const matchEst = !est || o.estado === est;
+    const matchServ = !serv || o.servicio_codigo === serv;
+    return matchQ && matchEst && matchServ;
+  });
+  _pagina = 0;
+  renderTabla();
+}
+
+function renderTabla() {
+  const tbody = document.getElementById('tabla-body');
+  const start = _pagina * PER_PAGE;
+  const pagina = _filtrados.slice(start, start + PER_PAGE);
+
+  if (!pagina.length) {
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:32px;color:#888">Sin resultados</td></tr>';
+    renderPaginacion();
+    return;
+  }
+
+  tbody.innerHTML = pagina.map(o => {
+    const cli = o.cat_clientes_finales;
+    const veh = o.cat_clientes_vehiculos;
+    const nombreVeh = `${veh?.cat_marcas_terminales?.nombre||''} ${veh?.modelo||''} ${veh?.anio||''}`.trim() || '—';
+    const nombreCli = `${cli?.nombre||''} ${cli?.apellido||''}`.trim() || '—';
+    const restante = o.tipo_trigger === 'km_proximo'
+      ? (o.km_estimados_restantes != null ? o.km_estimados_restantes + ' km' : '—')
+      : (o.dias_estimados_restantes != null ? o.dias_estimados_restantes + ' días' : '—');
+    const desc = o.descuento_combo_aplicado > 0 ? o.descuento_combo_aplicado + '% combo' : o.descuento_productos_aplicado + '% prod.';
+    const fecha = o.fecha_deteccion ? new Date(o.fecha_deteccion).toLocaleDateString('es-AR') : '—';
+    return `
+    <tr>
+      <td><strong>${nombreCli}</strong><div style="font-size:11px;color:#888">${cli?.email||''}</div></td>
+      <td style="font-size:12px">${nombreVeh}</td>
+      <td><span>${ICONOS[o.servicio_codigo]||''} ${NOMBRES[o.servicio_codigo]||o.servicio_codigo}</span></td>
+      <td style="font-size:11px;color:#555">${o.tipo_trigger === 'ambos' ? '📅+🛣️' : o.tipo_trigger === 'km_proximo' ? '🛣️ km' : '📅 fecha'}</td>
+      <td style="font-size:12px">${restante}</td>
+      <td style="font-size:12px;color:#059669;font-weight:700">${desc}</td>
+      <td><span class="badge badge-${estadoBadge(o.estado)}">${estadoLabel(o.estado)}</span></td>
+      <td style="font-size:11px;color:#888">${fecha}</td>
+      <td><button class="btn-det" onclick="abrirDetalle('${o.id}')">Ver</button></td>
+    </tr>`;
+  }).join('');
+
+  renderPaginacion();
+}
+
+function renderPaginacion() {
+  const total = _filtrados.length;
+  const pages = Math.ceil(total / PER_PAGE);
+  const wrap = document.getElementById('paginacion');
+  if (pages <= 1) { wrap.innerHTML = ''; return; }
+  wrap.innerHTML = `
+    <button ${_pagina === 0 ? 'disabled' : ''} onclick="irPagina(${_pagina-1})">← Ant</button>
+    <span style="font-size:13px;padding:6px 10px;font-weight:600">${_pagina+1} / ${pages}</span>
+    <button ${_pagina >= pages-1 ? 'disabled' : ''} onclick="irPagina(${_pagina+1})">Sig →</button>`;
+}
+function irPagina(p) { _pagina = p; renderTabla(); window.scrollTo(0,0); }
+
+function estadoBadge(e) {
+  const m = { detectada:'detectada', notificada:'notificada', vista_cliente:'vista',
+    comprada_productos:'comprada', agendado_servicio:'agendado',
+    combo_comprado:'combo', rechazada:'rechazada', expirada:'expirada' };
+  return m[e] || 'detectada';
+}
+function estadoLabel(e) {
+  const m = { detectada:'Detectada', notificada:'Notificada', vista_cliente:'Vista',
+    comprada_productos:'Comprada', agendado_servicio:'Agendado',
+    combo_comprado:'Combo', rechazada:'Rechazada', expirada:'Expirada' };
+  return m[e] || e;
+}
+
+function abrirDetalle(id) {
+  const o = _todos.find(x => x.id === id);
+  if (!o) return;
+  const cli = o.cat_clientes_finales;
+  const veh = o.cat_clientes_vehiculos;
+  document.getElementById('det-titulo').textContent =
+    `${ICONOS[o.servicio_codigo]||''} ${NOMBRES[o.servicio_codigo]||o.servicio_codigo} — ${estadoLabel(o.estado)}`;
+  document.getElementById('det-contenido').innerHTML = `
+    <div class="det-item"><label>Cliente</label><span>${(cli?.nombre||'')+' '+(cli?.apellido||'')}</span></div>
+    <div class="det-item"><label>Email</label><span style="font-size:12px">${cli?.email||'—'}</span></div>
+    <div class="det-item"><label>Vehículo</label><span>${(veh?.cat_marcas_terminales?.nombre||'')+' '+(veh?.modelo||'')+' '+(veh?.anio||'')}</span></div>
+    <div class="det-item"><label>Trigger</label><span>${o.tipo_trigger}</span></div>
+    <div class="det-item"><label>Km restantes</label><span>${o.km_estimados_restantes != null ? o.km_estimados_restantes+' km' : '—'}</span></div>
+    <div class="det-item"><label>Días restantes</label><span>${o.dias_estimados_restantes != null ? o.dias_estimados_restantes+' días' : '—'}</span></div>
+    <div class="det-item"><label>Desc. productos</label><span>${o.descuento_productos_aplicado}%</span></div>
+    <div class="det-item"><label>Desc. combo</label><span>${o.descuento_combo_aplicado}%</span></div>
+    <div class="det-item"><label>Estado</label><span class="badge badge-${estadoBadge(o.estado)}">${estadoLabel(o.estado)}</span></div>
+    <div class="det-item"><label>Detectada</label><span>${o.fecha_deteccion ? new Date(o.fecha_deteccion).toLocaleString('es-AR') : '—'}</span></div>
+    <div class="det-item"><label>Notificada</label><span>${o.fecha_notificacion ? new Date(o.fecha_notificacion).toLocaleString('es-AR') : '—'}</span></div>
+    <div class="det-item"><label>Acción cliente</label><span>${o.fecha_accion_cliente ? new Date(o.fecha_accion_cliente).toLocaleString('es-AR') : '—'}</span></div>
+    <div class="det-item"><label>Expira</label><span>${o.fecha_expiracion ? new Date(o.fecha_expiracion).toLocaleDateString('es-AR') : '—'}</span></div>`;
+  document.getElementById('modal-det-bg').classList.add('abierto');
+}
+
+function cerrarModal() {
+  document.getElementById('modal-det-bg').classList.remove('abierto');
+}
+document.getElementById('modal-det-bg').addEventListener('click', e => {
+  if (e.target === e.currentTarget) cerrarModal();
+});
+</script>
+</body>
+</html>

@@ -139,6 +139,27 @@
     .btn-primary:hover { opacity: .88; }
     .btn-ghost { display: inline-flex; align-items: center; gap: 6px; background: #fff; color: #444; border: 1.5px solid #ddd; border-radius: 8px; padding: 10px 16px; font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none; font-family: inherit; }
 
+    /* Compras programadas */
+    .cp-card { background: #fff; border-radius: 12px; padding: 18px; box-shadow: var(--sombra); margin-bottom: 14px; border-left: 4px solid var(--rojo); }
+    .cp-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .cp-icono { font-size: 26px; }
+    .cp-info { flex: 1; }
+    .cp-servicio { font-size: 15px; font-weight: 800; }
+    .cp-trigger { font-size: 12px; color: #888; margin-top: 2px; }
+    .cp-descuentos { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+    .cp-desc-chip { border-radius: 20px; padding: 4px 10px; font-size: 12px; font-weight: 700; }
+    .cp-desc-prod { background: #e8f4fd; color: #1565c0; }
+    .cp-desc-serv { background: #e8f5e9; color: #1b5e20; }
+    .cp-desc-combo { background: #fff3e0; color: #e65100; }
+    .cp-acciones { display: flex; gap: 8px; flex-wrap: wrap; }
+    .cp-btn { flex: 1; min-width: 130px; padding: 9px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; border: none; cursor: pointer; text-decoration: none; text-align: center; display: inline-block; font-family: inherit; }
+    .cp-btn-prod { background: #e8f4fd; color: #1565c0; }
+    .cp-btn-prod:hover { background: #bee3f8; }
+    .cp-btn-serv { background: #e8f5e9; color: #1b5e20; }
+    .cp-btn-serv:hover { background: #c8e6c9; }
+    .cp-btn-combo { background: var(--rojo); color: #fff; }
+    .cp-btn-combo:hover { background: var(--rojo-dark); }
+
     /* Empty state */
     .empty { text-align: center; padding: 32px 16px; color: #aaa; }
     .empty-icon { font-size: 36px; margin-bottom: 10px; }
@@ -179,6 +200,7 @@
   <button class="vh-tab"        data-tab="tab-historial"     onclick="switchVhTab(this)">🔧 Historial</button>
   <button class="vh-tab"        data-tab="tab-documentos"    onclick="switchVhTab(this)">📁 Documentos</button>
   <button class="vh-tab"        data-tab="tab-recordatorios" onclick="switchVhTab(this)">🔔 Recordatorios</button>
+  <button class="vh-tab"        data-tab="tab-compras"       onclick="switchVhTab(this)">🛒 Compras prog.</button>
   <button class="vh-tab"        data-tab="tab-config"        onclick="switchVhTab(this)">⚙️ Config</button>
 </nav>
 
@@ -304,6 +326,15 @@
   </div>
 </div>
 
+<!-- Panel: Compras programadas -->
+<div class="vh-panel" id="tab-compras">
+  <div class="card" style="margin-bottom:10px">
+    <div class="card-title"><span>🛒</span> Compras programadas</div>
+    <p style="font-size:13px;color:#888;margin:0 0 4px">Detectamos mantenimientos próximos para este vehículo y preparamos descuentos especiales para vos.</p>
+  </div>
+  <div id="compras-lista"><div class="loading-txt">Cargando...</div></div>
+</div>
+
 <!-- Panel: Configuración -->
 <div class="vh-panel" id="tab-config">
   <div class="card" id="cfg-panel">
@@ -396,6 +427,7 @@ function switchVhTab(btn) {
   btn.classList.add('active');
   document.getElementById(btn.dataset.tab).classList.add('active');
   if (btn.dataset.tab === 'tab-config') renderCfg();
+  if (btn.dataset.tab === 'tab-compras') cargarComprasProgramadas();
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -739,6 +771,108 @@ async function guardarCfg() {
     await cargarVehiculo();
     setTimeout(() => { if (msg) msg.textContent = ''; }, 2500);
   }
+}
+
+// ─────────────────────────────────────────────────────────────
+// COMPRAS PROGRAMADAS
+// ─────────────────────────────────────────────────────────────
+const CP_ICONOS = {
+  aceite:'🛢️', filtros:'🔧', frenos:'🛑', bateria:'🔋',
+  neumaticos:'🔄', amortiguadores:'🚗', correa:'⚙️', embrague:'🔩',
+  suspension:'🏎️', escape:'💨', electrico:'⚡', vtv:'📋', general:'🔨'
+};
+const CP_NOMBRES = {
+  aceite:'Aceite', filtros:'Filtros', frenos:'Frenos', bateria:'Batería',
+  neumaticos:'Neumáticos', amortiguadores:'Amortiguadores', correa:'Correa',
+  embrague:'Embrague', suspension:'Suspensión', escape:'Escape',
+  electrico:'Eléctrico', vtv:'VTV', general:'General'
+};
+let _comprasLoaded = false;
+
+async function cargarComprasProgramadas() {
+  if (_comprasLoaded) return;
+  const wrap = document.getElementById('compras-lista');
+  if (!_vehiculoId || !_cliente) return;
+
+  const { data, error } = await dbB2C
+    .from('cat_oportunidades_compra_programada')
+    .select('*')
+    .eq('vehiculo_id', _vehiculoId)
+    .in('estado', ['detectada','notificada','vista_cliente'])
+    .gt('fecha_expiracion', new Date().toISOString())
+    .order('fecha_deteccion', { ascending: false });
+
+  if (error) {
+    wrap.innerHTML = `<div style="color:#E63946;font-size:13px;text-align:center;padding:24px">Error: ${error.message}</div>`;
+    return;
+  }
+
+  // Marcar como vistas
+  if (data?.length) {
+    const ids = data.filter(o => o.estado !== 'vista_cliente').map(o => o.id);
+    if (ids.length) {
+      await dbB2C.from('cat_oportunidades_compra_programada')
+        .update({ estado: 'vista_cliente', fecha_visualizacion: new Date().toISOString() })
+        .in('id', ids);
+    }
+  }
+
+  if (!data?.length) {
+    wrap.innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">✅</div>
+        <div class="empty-txt">No hay oportunidades activas</div>
+        <div class="empty-sub">Cuando sea momento de un mantenimiento, te avisamos acá con descuentos especiales.</div>
+      </div>`;
+    _comprasLoaded = true;
+    return;
+  }
+
+  wrap.innerHTML = data.map(o => {
+    const ic = CP_ICONOS[o.servicio_codigo] || '🔧';
+    const nm = CP_NOMBRES[o.servicio_codigo] || o.servicio_codigo;
+    const restante = o.tipo_trigger === 'km_proximo'
+      ? (o.km_estimados_restantes != null ? `Faltan ~${o.km_estimados_restantes.toLocaleString('es-AR')} km` : '')
+      : (o.dias_estimados_restantes != null ? `Faltan ~${o.dias_estimados_restantes} días` : '');
+    const descProd  = parseFloat(o.descuento_productos_aplicado || 0);
+    const descCombo = parseFloat(o.descuento_combo_aplicado || 0);
+    return `
+    <div class="cp-card">
+      <div class="cp-header">
+        <div class="cp-icono">${ic}</div>
+        <div class="cp-info">
+          <div class="cp-servicio">${nm}</div>
+          ${restante ? `<div class="cp-trigger">${restante}</div>` : ''}
+        </div>
+      </div>
+      <div class="cp-descuentos">
+        ${descProd > 0 ? `<span class="cp-desc-chip cp-desc-prod">🛒 ${descProd}% solo productos</span>` : ''}
+        ${descCombo > 0 ? `<span class="cp-desc-chip cp-desc-combo">⭐ ${descCombo}% combo completo</span>` : ''}
+      </div>
+      <div class="cp-acciones">
+        <a href="/catalogo.html?q=${encodeURIComponent(nm)}" class="cp-btn cp-btn-prod"
+          onclick="registrarAccion('${o.id}','comprada_productos')">
+          🛒 Solo productos
+        </a>
+        <a href="/solicitar-turno.html?servicio=${o.servicio_codigo}&oportunidad_id=${o.id}" class="cp-btn cp-btn-serv"
+          onclick="registrarAccion('${o.id}','agendado_servicio')">
+          🔧 Solo servicio
+        </a>
+        <a href="/solicitar-turno.html?servicio=${o.servicio_codigo}&oportunidad_id=${o.id}&combo=1&vehiculo_id=${_vehiculoId}" class="cp-btn cp-btn-combo"
+          onclick="registrarAccion('${o.id}','combo_comprado')">
+          ⭐ Combo completo
+        </a>
+      </div>
+    </div>`;
+  }).join('');
+
+  _comprasLoaded = true;
+}
+
+async function registrarAccion(oportunidadId, nuevoEstado) {
+  await dbB2C.from('cat_oportunidades_compra_programada')
+    .update({ estado: nuevoEstado, fecha_accion_cliente: new Date().toISOString() })
+    .eq('id', oportunidadId);
 }
 
 // ─────────────────────────────────────────────────────────────

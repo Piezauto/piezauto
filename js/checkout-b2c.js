@@ -43,6 +43,7 @@ async function initCheckout() {
     cargarDatosCliente(),
     cargarTalleres(),
     cargarWalletDisponible(),
+    cargarBannerComprasProgramadas(),
   ]);
 
   renderResumen();
@@ -142,6 +143,25 @@ function seleccionarPago(tipo) {
   document.getElementById(`pago-${tipo}`).classList.add('selected');
   _metodoPago = tipo;
   document.getElementById('pago-info').innerHTML = PAGO_INFO[tipo] || '';
+}
+
+// ── Banner compras programadas ────────────────────────────────────────
+
+async function cargarBannerComprasProgramadas() {
+  if (!_cliente?.id) return;
+  const { data } = await dbB2C
+    .from('cat_oportunidades_compra_programada')
+    .select('id')
+    .eq('cliente_id', _cliente.id)
+    .in('estado', ['detectada','notificada','vista_cliente'])
+    .gt('fecha_expiracion', new Date().toISOString());
+  const count = data?.length || 0;
+  if (!count) return;
+  const banner = document.getElementById('compras-prog-banner');
+  if (!banner) return;
+  banner.style.display = 'block';
+  document.getElementById('compras-prog-banner-txt').textContent =
+    `Tenés ${count} descuento${count !== 1 ? 's' : ''} programado${count !== 1 ? 's' : ''} disponible${count !== 1 ? 's' : ''}`;
 }
 
 // ── Wallet en checkout ────────────────────────────────────────────────

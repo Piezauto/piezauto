@@ -2,6 +2,7 @@
 // Deploy: cd worker-mp && npx wrangler deploy --name piezauto
 import { ejecutarRecordatorios } from './recordatorios.js';
 import { ejecutarVencimientosWallet } from './wallet-vencimientos.js';
+import { ejecutarDeteccionComprasProgramadas } from './compra-programada.js';
 
 const ALLOWED_ORIGINS = [
   'https://piezauto.piezauto1.workers.dev',
@@ -90,6 +91,8 @@ export default {
   async scheduled(event, env, ctx) {
     if (event.cron === '0 3 * * *') {
       ctx.waitUntil(ejecutarVencimientosWallet(env));
+    } else if (event.cron === '0 4 * * *') {
+      ctx.waitUntil(ejecutarDeteccionComprasProgramadas(env));
     } else {
       ctx.waitUntil(ejecutarRecordatorios(env));
     }

@@ -3588,9 +3588,11 @@ const PERM_SIDEBAR = {
   'nav-usuarios-internos':  'owner',
   'nav-insights':           'insights',
   'nav-auditoria':          'owner',
-  'nav-wallet-admin':       'comercial',
-  'nav-referidos':          'comercial',
-  'nav-comparador':         'comercial',
+  'nav-wallet-admin':             'comercial',
+  'nav-referidos':                'comercial',
+  'nav-comparador':               'comercial',
+  'nav-descuentos-programados':   'comercial',
+  'nav-oportunidades-compra':     'comercial',
 };
 
 async function aplicarPermisosAdmin() {

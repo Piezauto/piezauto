@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mis Compras Programadas — Piezauto</title>
+  <link rel="stylesheet" href="css/estilos.css">
+  <style>
+    body { background: var(--gris-claro); }
+    .page-hero {
+      background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+      color: #fff;
+      padding: 20px 16px 24px;
+    }
+    .hero-back { display: inline-flex; align-items: center; gap: 6px; color: rgba(255,255,255,.7); font-size: 13px; text-decoration: none; margin-bottom: 12px; }
+    .hero-back:hover { color: #fff; }
+    .hero-titulo { font-size: 22px; font-weight: 800; }
+    .hero-sub { font-size: 13px; color: rgba(255,255,255,.6); margin-top: 4px; }
+
+    .stats-strip {
+      display: flex; gap: 0; background: #fff;
+      border-bottom: 1px solid #f0f0f0;
+      overflow-x: auto; scrollbar-width: none;
+    }
+    .stats-strip::-webkit-scrollbar { display: none; }
+    .stat-item { flex-shrink: 0; padding: 14px 20px; text-align: center; border-right: 1px solid #f0f0f0; }
+    .stat-item:last-child { border-right: none; }
+    .stat-n { font-size: 22px; font-weight: 800; color: #1a1a1a; }
+    .stat-l { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: .05em; margin-top: 2px; }
+
+    .page-content { max-width: 720px; margin: 0 auto; padding: 20px 16px 80px; }
+
+    .filtros { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+    .filtro-btn { padding: 7px 14px; border-radius: 20px; border: 1.5px solid #ddd; background: #fff; font-size: 12px; font-weight: 700; color: #666; cursor: pointer; transition: all .15s; }
+    .filtro-btn.activo { background: var(--rojo); color: #fff; border-color: var(--rojo); }
+
+    .veh-seccion { margin-bottom: 28px; }
+    .veh-titulo { font-size: 14px; font-weight: 800; color: #555; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .veh-badge { background: var(--rojo); color: #fff; border-radius: 20px; padding: 2px 8px; font-size: 11px; }
+
+    .cp-card { background: #fff; border-radius: 12px; padding: 18px; box-shadow: var(--sombra); margin-bottom: 12px; border-left: 4px solid var(--rojo); }
+    .cp-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .cp-icono { font-size: 26px; }
+    .cp-info { flex: 1; }
+    .cp-servicio { font-size: 15px; font-weight: 800; }
+    .cp-trigger { font-size: 12px; color: #888; margin-top: 2px; }
+    .cp-descuentos { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+    .cp-desc-chip { border-radius: 20px; padding: 4px 10px; font-size: 12px; font-weight: 700; }
+    .cp-desc-prod  { background: #e8f4fd; color: #1565c0; }
+    .cp-desc-combo { background: #fff3e0; color: #e65100; }
+    .cp-acciones { display: flex; gap: 8px; flex-wrap: wrap; }
+    .cp-btn { flex: 1; min-width: 120px; padding: 9px 10px; border-radius: 8px; font-size: 11px; font-weight: 700; border: none; cursor: pointer; text-decoration: none; text-align: center; display: inline-block; font-family: inherit; }
+    .cp-btn-prod  { background: #e8f4fd; color: #1565c0; }
+    .cp-btn-prod:hover  { background: #bee3f8; }
+    .cp-btn-serv  { background: #e8f5e9; color: #1b5e20; }
+    .cp-btn-serv:hover  { background: #c8e6c9; }
+    .cp-btn-combo { background: var(--rojo); color: #fff; }
+    .cp-btn-combo:hover { background: var(--rojo-dark); }
+
+    /* Ahorro potencial banner */
+    .ahorro-banner { background: linear-gradient(135deg, #059669 0%, #047857 100%); color: #fff; border-radius: 14px; padding: 18px 20px; margin-bottom: 24px; display: flex; align-items: center; gap: 14px; }
+    .ahorro-icon { font-size: 32px; }
+    .ahorro-info { flex: 1; }
+    .ahorro-monto { font-size: 24px; font-weight: 800; }
+    .ahorro-label { font-size: 12px; opacity: .8; margin-top: 2px; }
+
+    .empty { text-align: center; padding: 48px 16px; }
+    .empty-icon { font-size: 44px; margin-bottom: 12px; }
+    .empty-txt { font-size: 16px; font-weight: 700; color: #333; }
+    .empty-sub { font-size: 13px; color: #888; margin-top: 6px; }
+
+    .loading-txt { text-align: center; padding: 40px; color: #888; font-size: 14px; }
+  </style>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script src="js/auth-b2c.js"></script>
+<script src="js/utils-b2c.js"></script>
+
+<div id="header-b2c-root"></div>
+<script src="js/header-b2c.js"></script>
+
+<div class="page-hero">
+  <a href="/perfil.html" class="hero-back">← Perfil</a>
+  <div class="hero-titulo">🛒 Compras programadas</div>
+  <div class="hero-sub">Descuentos preparados para vos, basados en el estado de tus vehículos.</div>
+</div>
+
+<!-- Stats strip -->
+<div class="stats-strip">
+  <div class="stat-item"><div class="stat-n" id="st-activas">—</div><div class="stat-l">Activas</div></div>
+  <div class="stat-item"><div class="stat-n" id="st-veh">—</div><div class="stat-l">Vehículos</div></div>
+  <div class="stat-item"><div class="stat-n" id="st-ahorro" style="color:#059669">—</div><div class="stat-l">Ahorro potencial</div></div>
+</div>
+
+<div class="page-content">
+  <!-- Filtros por estado -->
+  <div class="filtros" id="filtros-wrap" style="display:none">
+    <button class="filtro-btn activo" data-estado="" onclick="setFiltro(this,'')">Todas</button>
+    <button class="filtro-btn" data-estado="detectada" onclick="setFiltro(this,'detectada')">Nuevas</button>
+    <button class="filtro-btn" data-estado="vista_cliente" onclick="setFiltro(this,'vista_cliente')">Vistas</button>
+  </div>
+
+  <div id="contenido-principal">
+    <div class="loading-txt">Cargando...</div>
+  </div>
+</div>
+
+<script>
+const ICONOS = {
+  aceite:'🛢️', filtros:'🔧', frenos:'🛑', bateria:'🔋',
+  neumaticos:'🔄', amortiguadores:'🚗', correa:'⚙️', embrague:'🔩',
+  suspension:'🏎️', escape:'💨', electrico:'⚡', vtv:'📋', general:'🔨'
+};
+const NOMBRES = {
+  aceite:'Aceite', filtros:'Filtros', frenos:'Frenos', bateria:'Batería',
+  neumaticos:'Neumáticos', amortiguadores:'Amortiguadores', correa:'Correa',
+  embrague:'Embrague', suspension:'Suspensión', escape:'Escape',
+  electrico:'Eléctrico', vtv:'VTV', general:'General'
+};
+
+let _oportunidades = [];
+let _vehiculos = {};
+let _filtroEstado = '';
+
+async function init() {
+  const cliente = await getClienteActual();
+  if (!cliente) { window.location.href = '/login?redirect=/mis-compras-programadas'; return; }
+
+  const { data: opData } = await dbB2C
+    .from('cat_oportunidades_compra_programada')
+    .select('*')
+    .eq('cliente_id', cliente.id)
+    .in('estado', ['detectada','notificada','vista_cliente'])
+    .gt('fecha_expiracion', new Date().toISOString())
+    .order('fecha_deteccion', { ascending: false });
+
+  _oportunidades = opData || [];
+
+  if (_oportunidades.length) {
+    const vIds = [...new Set(_oportunidades.map(o => o.vehiculo_id))];
+    const { data: vData } = await dbB2C
+      .from('cat_clientes_vehiculos')
+      .select('id, modelo, anio, cat_marcas_terminales!marca_terminal_id(nombre)')
+      .in('id', vIds);
+    (vData || []).forEach(v => { _vehiculos[v.id] = v; });
+
+    // Marcar vistas
+    const noVistas = _oportunidades.filter(o => o.estado !== 'vista_cliente').map(o => o.id);
+    if (noVistas.length) {
+      await dbB2C.from('cat_oportunidades_compra_programada')
+        .update({ estado: 'vista_cliente', fecha_visualizacion: new Date().toISOString() })
+        .in('id', noVistas);
+    }
+  }
+
+  actualizarStats();
+  if (_oportunidades.length) document.getElementById('filtros-wrap').style.display = 'flex';
+  renderContenido();
+}
+
+function actualizarStats() {
+  const activas = _oportunidades.length;
+  const vehiculos = new Set(_oportunidades.map(o => o.vehiculo_id)).size;
+
+  // Ahorro potencial: suma de descuento_combo_aplicado * precio_productos_calculado / 100
+  // Estimado simple con descuento promedio de productos
+  let ahorroPot = 0;
+  _oportunidades.forEach(o => {
+    const base = parseFloat(o.precio_productos_calculado || 0);
+    const desc = parseFloat(o.descuento_combo_aplicado || o.descuento_productos_aplicado || 0);
+    if (base > 0 && desc > 0) ahorroPot += base * desc / 100;
+  });
+
+  document.getElementById('st-activas').textContent = activas;
+  document.getElementById('st-veh').textContent = vehiculos;
+  document.getElementById('st-ahorro').textContent =
+    ahorroPot > 0 ? '$' + ahorroPot.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : '—';
+}
+
+function setFiltro(btn, estado) {
+  document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('activo'));
+  btn.classList.add('activo');
+  _filtroEstado = estado;
+  renderContenido();
+}
+
+function renderContenido() {
+  const wrap = document.getElementById('contenido-principal');
+  const filtradas = _filtroEstado
+    ? _oportunidades.filter(o => o.estado === _filtroEstado)
+    : _oportunidades;
+
+  if (!filtradas.length) {
+    wrap.innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">${_oportunidades.length ? '🔍' : '✅'}</div>
+        <div class="empty-txt">${_oportunidades.length ? 'Sin resultados para este filtro' : '¡Todo en orden!'}</div>
+        <div class="empty-sub">${_oportunidades.length ? 'Probá con otro filtro.' : 'No tenés compras programadas activas. Cuando sea momento de un mantenimiento, te avisamos.'}</div>
+      </div>`;
+    return;
+  }
+
+  // Agrupar por vehículo
+  const porVeh = {};
+  filtradas.forEach(o => {
+    if (!porVeh[o.vehiculo_id]) porVeh[o.vehiculo_id] = [];
+    porVeh[o.vehiculo_id].push(o);
+  });
+
+  wrap.innerHTML = Object.entries(porVeh).map(([vId, ops]) => {
+    const v = _vehiculos[vId];
+    const nombreV = v ? `${v.cat_marcas_terminales?.nombre||''} ${v.modelo||''} ${v.anio||''}`.trim() : 'Vehículo';
+    return `
+    <div class="veh-seccion">
+      <div class="veh-titulo">
+        🚗 ${nombreV}
+        <span class="veh-badge">${ops.length}</span>
+      </div>
+      ${ops.map(o => renderCard(o, vId)).join('')}
+    </div>`;
+  }).join('');
+}
+
+function renderCard(o, vId) {
+  const ic = ICONOS[o.servicio_codigo] || '🔧';
+  const nm = NOMBRES[o.servicio_codigo] || o.servicio_codigo;
+  const restante = o.tipo_trigger === 'km_proximo'
+    ? (o.km_estimados_restantes != null ? `Faltan ~${o.km_estimados_restantes.toLocaleString('es-AR')} km` : '')
+    : (o.dias_estimados_restantes != null ? `Faltan ~${o.dias_estimados_restantes} días` : '');
+  const descProd  = parseFloat(o.descuento_productos_aplicado || 0);
+  const descCombo = parseFloat(o.descuento_combo_aplicado || 0);
+  return `
+  <div class="cp-card" id="cpcard-${o.id}">
+    <div class="cp-header">
+      <div class="cp-icono">${ic}</div>
+      <div class="cp-info">
+        <div class="cp-servicio">${nm}</div>
+        ${restante ? `<div class="cp-trigger">${restante}</div>` : ''}
+      </div>
+    </div>
+    <div class="cp-descuentos">
+      ${descProd > 0 ? `<span class="cp-desc-chip cp-desc-prod">🛒 ${descProd}% solo productos</span>` : ''}
+      ${descCombo > 0 ? `<span class="cp-desc-chip cp-desc-combo">⭐ ${descCombo}% combo</span>` : ''}
+    </div>
+    <div class="cp-acciones">
+      <a href="/catalogo.html?q=${encodeURIComponent(nm)}"
+        class="cp-btn cp-btn-prod"
+        onclick="registrarAccion('${o.id}','comprada_productos')">
+        🛒 Solo productos
+      </a>
+      <a href="/solicitar-turno.html?servicio=${o.servicio_codigo}&oportunidad_id=${o.id}"
+        class="cp-btn cp-btn-serv"
+        onclick="registrarAccion('${o.id}','agendado_servicio')">
+        🔧 Solo servicio
+      </a>
+      <a href="/solicitar-turno.html?servicio=${o.servicio_codigo}&oportunidad_id=${o.id}&combo=1&vehiculo_id=${vId}"
+        class="cp-btn cp-btn-combo"
+        onclick="registrarAccion('${o.id}','combo_comprado')">
+        ⭐ Combo completo
+      </a>
+    </div>
+  </div>`;
+}
+
+async function registrarAccion(oportunidadId, nuevoEstado) {
+  await dbB2C.from('cat_oportunidades_compra_programada')
+    .update({ estado: nuevoEstado, fecha_accion_cliente: new Date().toISOString() })
+    .eq('id', oportunidadId);
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
