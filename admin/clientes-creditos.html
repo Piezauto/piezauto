@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Créditos Clientes — Admin Piezauto</title>
+<style>
+:root {
+  --brand:#1A1A2E; --accent:#E94560;
+  --ink-1:#111827; --ink-2:#374151; --ink-3:#6B7280;
+  --surface:#FFFFFF; --surface-2:#F9FAFB; --surface-3:#F3F4F6;
+  --line:#E5E7EB; --green:#059669; --green-soft:#ECFDF5;
+  --red:#DC2626; --red-soft:#FEF2F2; --amber:#D97706;
+  --radius:8px; --radius-lg:12px;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.07); --shadow:0 4px 16px rgba(0,0,0,.10);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--surface-2);color:var(--ink-1);font-size:14px;line-height:1.5}
+button{font-family:inherit;cursor:pointer}
+
+/* Layout */
+.app{display:grid;grid-template-columns:280px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* Sidebar */
+.sidebar{background:var(--brand);color:#fff;padding:20px 0;position:sticky;top:0;height:100vh;overflow-y:auto}
+.sidebar-logo{padding:0 20px 20px;font-size:16px;font-weight:800;border-bottom:1px solid rgba(255,255,255,.1)}
+.sidebar-logo span{color:var(--accent)}
+.sidebar-nav{padding:12px 0}
+.sidebar-link{display:flex;align-items:center;gap:10px;padding:10px 20px;color:rgba(255,255,255,.7);text-decoration:none;font-size:13px;font-weight:600;transition:all .15s}
+.sidebar-link:hover,.sidebar-link.activo{color:#fff;background:rgba(255,255,255,.08)}
+.sidebar-link.activo{border-left:3px solid var(--accent)}
+@media(max-width:860px){.sidebar{display:none}}
+
+/* Main */
+.main{padding:28px 24px 60px;max-width:1100px}
+.page-header{margin-bottom:24px}
+.page-title{font-size:22px;font-weight:800;margin-bottom:4px}
+.page-sub{font-size:13px;color:var(--ink-3)}
+
+/* Buscador */
+.search-bar{display:flex;gap:10px;margin-bottom:20px}
+.search-input{flex:1;padding:10px 14px;border:1.5px solid var(--line);border-radius:var(--radius-lg);font-size:14px;outline:none;background:var(--surface)}
+.search-input:focus{border-color:var(--accent)}
+
+/* Grid de clientes */
+.clientes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-bottom:28px}
+.cliente-card{background:var(--surface);border-radius:var(--radius-lg);border:1.5px solid var(--line);padding:16px;box-shadow:var(--shadow-sm);transition:box-shadow .15s;cursor:pointer}
+.cliente-card:hover,.cliente-card.selected{box-shadow:var(--shadow);border-color:var(--accent)}
+.cliente-card.selected{background:#fff5f5}
+.cliente-nombre{font-weight:700;font-size:14px;margin-bottom:2px}
+.cliente-email{font-size:12px;color:var(--ink-3);margin-bottom:10px}
+.cliente-saldo-row{display:flex;justify-content:space-between;align-items:center}
+.cliente-saldo-label{font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em}
+.cliente-saldo-val{font-size:18px;font-weight:800;color:var(--green)}
+.cliente-saldo-val.cero{color:var(--ink-3)}
+.btn-cargar{margin-top:10px;width:100%;padding:8px;border:none;border-radius:var(--radius);background:var(--accent);color:#fff;font-size:12px;font-weight:700;transition:opacity .15s}
+.btn-cargar:hover{opacity:.88}
+
+/* Panel historial */
+.panel-historial{background:var(--surface);border-radius:var(--radius-lg);border:1.5px solid var(--line);padding:20px;box-shadow:var(--shadow-sm)}
+.panel-title{font-size:15px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.panel-cliente-name{font-size:13px;color:var(--ink-3)}
+
+/* Tabla movimientos */
+.tabla-mov{width:100%;border-collapse:collapse}
+.tabla-mov th{text-align:left;font-size:11px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em;padding:8px 12px;border-bottom:2px solid var(--line)}
+.tabla-mov td{padding:10px 12px;border-bottom:1px solid var(--line);font-size:13px}
+.tabla-mov tr:last-child td{border-bottom:none}
+.tabla-mov tr:hover td{background:var(--surface-2)}
+.monto-credito{color:var(--green);font-weight:700}
+.monto-debito{color:var(--red);font-weight:700}
+.monto-reversion{color:var(--amber);font-weight:700}
+.tipo-badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700}
+.tipo-credito  {background:var(--green-soft);color:var(--green)}
+.tipo-debito   {background:var(--red-soft);color:var(--red)}
+.tipo-reversion{background:#fffbeb;color:var(--amber)}
+
+/* Modal carga crédito */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:200;display:none}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border-radius:var(--radius-lg);padding:28px;width:100%;max-width:420px;box-shadow:0 8px 40px rgba(0,0,0,.2)}
+.modal-title{font-size:16px;font-weight:800;margin-bottom:20px}
+.form-row{margin-bottom:14px}
+.form-row label{display:block;font-size:11px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px}
+.form-row input,.form-row textarea{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:var(--radius);font-size:14px;outline:none;font-family:inherit}
+.form-row input:focus,.form-row textarea:focus{border-color:var(--accent)}
+.modal-actions{display:flex;gap:10px;margin-top:20px}
+.btn-cancelar{flex:1;padding:11px;border:1.5px solid var(--line);border-radius:var(--radius);background:none;font-size:14px;font-weight:600}
+.btn-confirmar-carga{flex:2;padding:11px;border:none;border-radius:var(--radius);background:var(--green);color:#fff;font-size:14px;font-weight:700}
+.btn-confirmar-carga:disabled{opacity:.5;cursor:not-allowed}
+.modal-msg{font-size:13px;min-height:18px;margin-top:8px;text-align:center}
+.modal-msg.ok{color:var(--green)} .modal-msg.err{color:var(--red)}
+
+/* Loading */
+.spinner-wrap{display:flex;justify-content:center;padding:40px}
+.spinner{width:30px;height:30px;border:3px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty{text-align:center;color:var(--ink-3);padding:40px;font-size:14px}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo"><span>Pieza</span>auto · Admin</div>
+    <nav class="sidebar-nav">
+      <a href="/admin" class="sidebar-link">🏠 Inicio</a>
+      <a href="/admin/clientes-creditos" class="sidebar-link activo">💳 Créditos Clientes</a>
+      <a href="/admin/operaciones-taller" class="sidebar-link">📦 Operaciones</a>
+      <a href="/admin/talleres-validacion" class="sidebar-link">✅ Validación Talleres</a>
+      <a href="/admin/talleres-externos" class="sidebar-link">🔧 Talleres Externos</a>
+      <a href="/admin/comprobantes_admin" class="sidebar-link">📄 Comprobantes</a>
+    </nav>
+  </aside>
+
+  <!-- Contenido -->
+  <main class="main">
+    <div class="page-header">
+      <div class="page-title">💳 Créditos Clientes</div>
+      <div class="page-sub">Cargá crédito manual al wallet de un cliente y consultá el historial de movimientos.</div>
+    </div>
+
+    <div class="search-bar">
+      <input type="text" class="search-input" id="buscador" placeholder="Buscar por nombre o email..." oninput="buscarClientes()">
+    </div>
+
+    <div class="clientes-grid" id="clientes-grid">
+      <div class="spinner-wrap" style="grid-column:1/-1"><div class="spinner"></div></div>
+    </div>
+
+    <!-- Panel historial -->
+    <div class="panel-historial" id="panel-historial" style="display:none">
+      <div class="panel-title">
+        Historial de movimientos
+        <span class="panel-cliente-name" id="panel-cliente-name"></span>
+      </div>
+      <div id="historial-contenido">
+        <div class="spinner-wrap"><div class="spinner"></div></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Modal carga crédito -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-title">Cargar crédito al wallet</div>
+    <div id="modal-cliente-info" style="font-size:13px;color:var(--ink-3);margin-bottom:16px"></div>
+    <div class="form-row">
+      <label>Monto a cargar ($) *</label>
+      <input type="number" id="modal-monto" placeholder="0.00" min="1" step="0.01">
+    </div>
+    <div class="form-row">
+      <label>Concepto *</label>
+      <textarea id="modal-concepto" rows="3" placeholder="Ej: Crédito por referido a Franzoni Centro"></textarea>
+    </div>
+    <div class="modal-msg" id="modal-msg"></div>
+    <div class="modal-actions">
+      <button class="btn-cancelar" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn-confirmar-carga" id="btn-confirmar-carga" onclick="confirmarCarga()">Cargar crédito</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/js/supabase.js"></script>
+<script>
+let _clientes = [];
+let _clienteSel = null;
+let _buscarTimeout = null;
+
+async function init() {
+  // Verificar sesión admin (sessionStorage.pz_admin)
+  const admin = JSON.parse(sessionStorage.getItem('pz_admin') || 'null');
+  if (!admin) { window.location.href = '/admin'; return; }
+
+  await cargarClientes('');
+}
+
+async function cargarClientes(q) {
+  const grid = document.getElementById('clientes-grid');
+  grid.innerHTML = '<div class="spinner-wrap" style="grid-column:1/-1"><div class="spinner"></div></div>';
+
+  let query = db
+    .from('cat_clientes_finales')
+    .select('id, nombre, apellido, email, credito_saldo')
+    .eq('activo', true)
+    .order('nombre');
+
+  if (q) {
+    query = query.or(`nombre.ilike.%${q}%,apellido.ilike.%${q}%,email.ilike.%${q}%`);
+  }
+
+  const { data, error } = await query.limit(60);
+
+  if (error || !data?.length) {
+    grid.innerHTML = '<div class="empty" style="grid-column:1/-1">No se encontraron clientes.</div>';
+    return;
+  }
+
+  _clientes = data;
+  renderClientes(data);
+}
+
+function renderClientes(lista) {
+  const grid = document.getElementById('clientes-grid');
+  grid.innerHTML = lista.map(c => {
+    const saldo = parseFloat(c.credito_saldo || 0);
+    const saldoFmt = '$' + saldo.toLocaleString('es-AR', { minimumFractionDigits: 2 });
+    const selected = _clienteSel?.id === c.id ? 'selected' : '';
+    return `<div class="cliente-card ${selected}" onclick="seleccionarCliente('${c.id}')">
+      <div class="cliente-nombre">${escH(c.nombre || '')} ${escH(c.apellido || '')}</div>
+      <div class="cliente-email">${escH(c.email || '—')}</div>
+      <div class="cliente-saldo-row">
+        <span class="cliente-saldo-label">Saldo wallet</span>
+        <span class="cliente-saldo-val ${saldo === 0 ? 'cero' : ''}">${saldoFmt}</span>
+      </div>
+      <button class="btn-cargar" onclick="event.stopPropagation();abrirModal('${c.id}')">+ Cargar crédito</button>
+    </div>`;
+  }).join('');
+}
+
+async function seleccionarCliente(id) {
+  _clienteSel = _clientes.find(c => c.id === id);
+  renderClientes(_clientes); // refrescar para mostrar selected
+  await cargarHistorial(id);
+}
+
+async function cargarHistorial(clienteId) {
+  const panel = document.getElementById('panel-historial');
+  const cont  = document.getElementById('historial-contenido');
+  const nameEl = document.getElementById('panel-cliente-name');
+
+  panel.style.display = 'block';
+  cont.innerHTML = '<div class="spinner-wrap"><div class="spinner"></div></div>';
+
+  const c = _clientes.find(x => x.id === clienteId);
+  if (nameEl && c) nameEl.textContent = `${c.nombre || ''} ${c.apellido || ''}`.trim();
+
+  const { data, error } = await db
+    .from('cat_creditos_clientes')
+    .select('id, tipo, monto, concepto, saldo_post, created_at')
+    .eq('cliente_id', clienteId)
+    .order('created_at', { ascending: false })
+    .limit(50);
+
+  if (error || !data?.length) {
+    cont.innerHTML = '<div class="empty">Sin movimientos registrados.</div>';
+    return;
+  }
+
+  cont.innerHTML = `<table class="tabla-mov">
+    <thead>
+      <tr>
+        <th>Fecha</th>
+        <th>Tipo</th>
+        <th>Concepto</th>
+        <th style="text-align:right">Monto</th>
+        <th style="text-align:right">Saldo post</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${data.map(m => {
+        const fecha = new Date(m.created_at).toLocaleDateString('es-AR', { day:'2-digit', month:'short', year:'2-digit' });
+        const signo = m.tipo === 'credito' || m.tipo === 'reversion' ? '+' : '-';
+        const montoClass = m.tipo === 'debito' ? 'monto-debito' : m.tipo === 'reversion' ? 'monto-reversion' : 'monto-credito';
+        const badgeClass = `tipo-${m.tipo}`;
+        return `<tr>
+          <td>${fecha}</td>
+          <td><span class="tipo-badge ${badgeClass}">${m.tipo}</span></td>
+          <td>${escH(m.concepto || '—')}</td>
+          <td style="text-align:right"><span class="${montoClass}">${signo}$${Number(m.monto).toLocaleString('es-AR', { minimumFractionDigits: 2 })}</span></td>
+          <td style="text-align:right;color:var(--ink-3)">$${Number(m.saldo_post || 0).toLocaleString('es-AR', { minimumFractionDigits: 2 })}</td>
+        </tr>`;
+      }).join('')}
+    </tbody>
+  </table>`;
+}
+
+function buscarClientes() {
+  clearTimeout(_buscarTimeout);
+  _buscarTimeout = setTimeout(() => {
+    cargarClientes(document.getElementById('buscador').value.trim());
+  }, 350);
+}
+
+// ── Modal ─────────────────────────────────────────────────────────────
+
+function abrirModal(clienteId) {
+  _clienteSel = _clientes.find(c => c.id === clienteId);
+  if (!_clienteSel) return;
+  document.getElementById('modal-monto').value    = '';
+  document.getElementById('modal-concepto').value = '';
+  document.getElementById('modal-msg').textContent = '';
+  document.getElementById('modal-msg').className   = 'modal-msg';
+  document.getElementById('btn-confirmar-carga').disabled = false;
+  document.getElementById('modal-cliente-info').textContent =
+    `Cliente: ${_clienteSel.nombre || ''} ${_clienteSel.apellido || ''} · Saldo actual: $${Number(_clienteSel.credito_saldo || 0).toLocaleString('es-AR', { minimumFractionDigits: 2 })}`;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function cerrarModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+}
+
+async function confirmarCarga() {
+  const monto   = parseFloat(document.getElementById('modal-monto').value);
+  const concepto = document.getElementById('modal-concepto').value.trim();
+  const msgEl   = document.getElementById('modal-msg');
+  const btn     = document.getElementById('btn-confirmar-carga');
+
+  if (!monto || monto <= 0)   { msgEl.className = 'modal-msg err'; msgEl.textContent = 'Ingresá un monto válido.'; return; }
+  if (!concepto)               { msgEl.className = 'modal-msg err'; msgEl.textContent = 'Escribí un concepto.'; return; }
+  if (!_clienteSel?.id)        { msgEl.className = 'modal-msg err'; msgEl.textContent = 'No hay cliente seleccionado.'; return; }
+
+  btn.disabled = true;
+  msgEl.textContent = 'Procesando...';
+  msgEl.className = 'modal-msg';
+
+  const { data, error } = await db.rpc('wallet_movimiento', {
+    p_cliente_id:   _clienteSel.id,
+    p_tipo:         'credito',
+    p_monto:        monto,
+    p_concepto:     concepto,
+    p_operacion_id: null,
+  });
+
+  if (error) {
+    msgEl.className = 'modal-msg err';
+    msgEl.textContent = 'Error: ' + (error.message || 'No se pudo cargar el crédito.');
+    btn.disabled = false;
+    return;
+  }
+
+  msgEl.className = 'modal-msg ok';
+  msgEl.textContent = `✅ Crédito de $${monto.toLocaleString('es-AR', { minimumFractionDigits: 2 })} cargado exitosamente.`;
+
+  // Actualizar saldo en memoria
+  _clienteSel.credito_saldo = (parseFloat(_clienteSel.credito_saldo || 0) + monto);
+  const idx = _clientes.findIndex(c => c.id === _clienteSel.id);
+  if (idx >= 0) _clientes[idx] = { ..._clientes[idx], credito_saldo: _clienteSel.credito_saldo };
+  renderClientes(_clientes);
+  cargarHistorial(_clienteSel.id);
+
+  setTimeout(() => {
+    cerrarModal();
+    btn.disabled = false;
+  }, 1800);
+}
+
+// Cerrar modal clickeando afuera
+document.getElementById('modal-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal-overlay')) cerrarModal();
+});
+
+function escH(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

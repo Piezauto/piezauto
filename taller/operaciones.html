@@ -46,11 +46,21 @@
       display: inline-block; padding: 3px 10px; border-radius: 20px;
       font-size: 11px; font-weight: 700;
     }
-    .badge-pendiente { background: #fff8e1; color: #b45309; }
-    .badge-pagado    { background: #dbeafe; color: #1d4ed8; }
-    .badge-enviado   { background: #ede9fe; color: #7c3aed; }
-    .badge-entregado { background: #dcfce7; color: #15803d; }
-    .badge-cancelado { background: #fee2e2; color: #dc2626; }
+    .badge-pendiente              { background: #fff8e1; color: #b45309; }
+    .badge-pendiente_aprobacion  { background: #fff3e0; color: #e65100; }
+    .badge-pendiente_pago        { background: #fce7f3; color: #9d174d; }
+    .badge-pagado                { background: #dbeafe; color: #1d4ed8; }
+    .badge-pagado_confirmado     { background: #d1fae5; color: #065f46; }
+    .badge-enviado               { background: #ede9fe; color: #7c3aed; }
+    .badge-entregado             { background: #dcfce7; color: #15803d; }
+    .badge-cancelado             { background: #fee2e2; color: #dc2626; }
+    .badge-rechazado             { background: #fee2e2; color: #dc2626; }
+
+    /* Tab de aprobación pendiente */
+    .aprobacion-banner { background: #fff3e0; border: 1.5px solid #ffd180; border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; display: none; align-items: center; gap: 12px; }
+    .aprobacion-banner.visible { display: flex; }
+    .aprobacion-banner-txt { flex: 1; font-size: 13px; color: #7c4a00; }
+    .aprobacion-banner-count { background: #e65100; color: #fff; font-size: 13px; font-weight: 800; padding: 4px 12px; border-radius: 20px; white-space: nowrap; }
 
     .btn-sm { padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; border: none; transition: background .2s; }
     .btn-aprobar  { background: #22c55e; color: #fff; }
@@ -99,11 +109,20 @@
 <div class="wrap">
   <div class="page-title">Todas las operaciones</div>
 
+  <!-- Banner aprobaciones pendientes -->
+  <div class="aprobacion-banner" id="aprobacion-banner">
+    <span class="aprobacion-banner-txt">⏳ Tenés operaciones esperando tu aprobación (cliente pagó con MP)</span>
+    <span class="aprobacion-banner-count" id="aprobacion-banner-count">0</span>
+  </div>
+
   <div class="filtros">
     <select id="filtro-estado" onchange="cargarOps()">
       <option value="">Todos los estados</option>
+      <option value="pendiente_aprobacion">🟠 Pendiente aprobación</option>
       <option value="pendiente">Pendiente</option>
+      <option value="pendiente_pago">Pendiente pago</option>
       <option value="pagado">Pagado</option>
+      <option value="pagado_confirmado">Pagado confirmado</option>
       <option value="enviado">Enviado</option>
       <option value="entregado">Entregado</option>
       <option value="cancelado">Cancelado</option>
@@ -135,11 +154,37 @@ async function initPage() {
   _tallerId = getTallerMeta().taller_id;
   await initTallerHeader();
 
-  // Si viene con ?id= abrir directo el detalle
+  // Mostrar banner si hay operaciones pendientes de aprobación
+  cargarBannerAprobacion();
+
   const params = new URLSearchParams(window.location.search);
   const opId   = params.get('id');
+  const estado = params.get('estado');
+  if (estado) document.getElementById('filtro-estado').value = estado;
   await cargarOps();
   if (opId) abrirDetalle(opId);
+}
+
+async function cargarBannerAprobacion() {
+  try {
+    const { count } = await dbB2C
+      .from('cat_operaciones_b2c')
+      .select('id', { count: 'exact', head: true })
+      .eq('taller_id', _tallerId)
+      .eq('pendiente_aprobacion_taller', true);
+    const n = count || 0;
+    const banner = document.getElementById('aprobacion-banner');
+    const countEl = document.getElementById('aprobacion-banner-count');
+    if (n > 0 && banner) {
+      banner.classList.add('visible');
+      if (countEl) countEl.textContent = n;
+      banner.style.cursor = 'pointer';
+      banner.onclick = () => {
+        document.getElementById('filtro-estado').value = 'pendiente_aprobacion';
+        cargarOps();
+      };
+    }
+  } catch {}
 }
 
 async function cargarOps() {
@@ -148,12 +193,16 @@ async function cargarOps() {
 
   let q = dbB2C
     .from('cat_operaciones_b2c')
-    .select('id, estado, total, direccion_entrega, created_at, notas, cat_clientes_finales!cliente_id(nombre, apellido, telefono)')
+    .select('id, estado, total, credito_aplicado, direccion_entrega, created_at, updated_at, notas, pendiente_aprobacion_taller, mp_status, cat_clientes_finales!cliente_id(nombre, apellido, telefono)')
     .eq('taller_id', _tallerId)
     .order('created_at', { ascending: false })
     .limit(100);
 
-  if (estado) q = q.eq('estado', estado);
+  if (estado === 'pendiente_aprobacion') {
+    q = q.eq('pendiente_aprobacion_taller', true);
+  } else if (estado) {
+    q = q.eq('estado', estado);
+  }
 
   const { data } = await q;
   let ops = data || [];
@@ -180,20 +229,31 @@ function renderLista(ops) {
     const fecha = new Date(op.created_at).toLocaleDateString('es-AR');
     const badge = `<span class="badge badge-${op.estado}">${op.estado}</span>`;
     const wa    = tel ? ` · <a href="https://wa.me/54${tel.replace(/\D/g,'')}" target="_blank" style="color:#22c55e;font-weight:700;text-decoration:none;font-size:12px" onclick="event.stopPropagation()">WhatsApp</a>` : '';
-    const btns  = op.estado === 'pendiente'
-      ? `<button class="btn-sm btn-aprobar"  onclick="aprobar('${op.id}',event)">✓</button>
-         <button class="btn-sm btn-rechazar" onclick="rechazar('${op.id}',event)">✕</button>`
+    const necesitaAprobacion = op.pendiente_aprobacion_taller;
+    const horasTranscurridas = necesitaAprobacion
+      ? Math.floor((Date.now() - new Date(op.created_at)) / 3600000)
+      : 0;
+    const tiempoRestante = necesitaAprobacion && horasTranscurridas < 48
+      ? `<span style="font-size:10px;color:#e65100;font-weight:700">${48 - horasTranscurridas}hs restantes</span>`
       : '';
+    const btns = necesitaAprobacion
+      ? `<button class="btn-sm btn-aprobar"  onclick="aprobar('${op.id}',event)">✓ Aprobar</button>
+         <button class="btn-sm btn-rechazar" onclick="rechazar('${op.id}',event)">✕ Rechazar</button>`
+      : op.estado === 'pendiente'
+        ? `<button class="btn-sm btn-aprobar" onclick="aprobar('${op.id}',event)">✓</button>
+           <button class="btn-sm btn-rechazar" onclick="rechazar('${op.id}',event)">✕</button>`
+        : '';
     return `<div class="op-card ${op.estado}" onclick="abrirDetalle('${op.id}')">
       <div class="op-row">
         <div class="op-info">
           <div class="op-num">#${escH(num)} ${badge}</div>
           <div class="op-meta">${escH(nom)}${wa}</div>
           <div class="op-meta">${fecha} · 📍 ${escH(op.direccion_entrega || '—')}</div>
+          ${tiempoRestante}
         </div>
         <div class="op-right">
           <div class="op-total">$${Number(op.total).toLocaleString('es-AR')}</div>
-          <div style="display:flex;gap:6px">${btns}</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">${btns}</div>
         </div>
       </div>
     </div>`;
@@ -307,19 +367,52 @@ function cerrarDetalle(evt) {
 
 async function aprobar(opId, evt) {
   evt?.stopPropagation();
-  if (!confirm('¿Confirmás la aprobación?')) return;
-  await dbB2C.from('cat_operaciones_b2c').update({ estado: 'pagado', pendiente_aprobacion_taller: false, updated_at: new Date().toISOString() }).eq('id', opId);
-  await dbB2C.from('cat_notificaciones_talleres').update({ leida: true }).eq('operacion_id', opId);
+  if (!confirm('¿Confirmás la aprobación de esta operación?')) return;
+  await dbB2C.from('cat_operaciones_b2c').update({
+    estado:                      'pagado',
+    pendiente_aprobacion_taller: false,
+    updated_at:                  new Date().toISOString(),
+  }).eq('id', opId);
+  await dbB2C.from('cat_notificaciones_talleres').update({ leida: true }).eq('operacion_id', opId).catch(() => {});
   cerrarDetalle();
+  cargarBannerAprobacion();
   await cargarOps();
 }
 
 async function rechazar(opId, evt) {
   evt?.stopPropagation();
-  if (!confirm('¿Rechazás esta operación? Quedará cancelada.')) return;
-  await dbB2C.from('cat_operaciones_b2c').update({ estado: 'cancelado', pendiente_aprobacion_taller: false, updated_at: new Date().toISOString() }).eq('id', opId);
-  await dbB2C.from('cat_notificaciones_talleres').update({ leida: true }).eq('operacion_id', opId);
+  const motivo = prompt('Motivo del rechazo (se le informará al cliente):', 'No podemos tomar el trabajo en este momento.');
+  if (motivo === null) return; // canceló el prompt
+
+  // Obtener la operación para saber si hay wallet_usado/credito_aplicado
+  const { data: op } = await dbB2C
+    .from('cat_operaciones_b2c')
+    .select('id, cliente_id, credito_aplicado, total')
+    .eq('id', opId)
+    .single();
+
+  await dbB2C.from('cat_operaciones_b2c').update({
+    estado:                      'cancelado',
+    pendiente_aprobacion_taller: false,
+    notas:                       JSON.stringify({ rechazo_taller: motivo, rechazado_at: new Date().toISOString() }),
+    updated_at:                  new Date().toISOString(),
+  }).eq('id', opId);
+
+  await dbB2C.from('cat_notificaciones_talleres').update({ leida: true }).eq('operacion_id', opId).catch(() => {});
+
+  // Revertir wallet si el cliente había aplicado crédito
+  if (op?.credito_aplicado > 0 && op?.cliente_id) {
+    await dbB2C.rpc('wallet_movimiento', {
+      p_cliente_id:   op.cliente_id,
+      p_tipo:         'reversion',
+      p_monto:        op.credito_aplicado,
+      p_concepto:     `Taller rechazó operación #${opId.slice(0, 8)}: ${motivo}`,
+      p_operacion_id: opId,
+    }).catch(err => console.warn('[wallet reversion]', err));
+  }
+
   cerrarDetalle();
+  cargarBannerAprobacion();
   await cargarOps();
 }
 

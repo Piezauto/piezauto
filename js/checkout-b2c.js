@@ -1,25 +1,25 @@
-﻿// Checkout B2C — Fase 3 Piezauto
+// Checkout B2C — Piezauto
 // Depende de: js/auth-b2c.js (dbB2C, getClienteActual), js/carrito.js (cargarCarritoLocal, calcularTotales)
 
 const PAGO_INFO = {
-  manual:       '📋 <strong>Transferencia bancaria:</strong> te enviamos el CBU/alias por WhatsApp al confirmar. El pedido se activa una vez que confirmamos el pago.',
-  efectivo:     '💵 <strong>Efectivo:</strong> abonás al retirar la pieza en el local. Dirección: te la enviamos al confirmar.',
-  mercadopago:  '📱 <strong>MercadoPago:</strong> serás redirigido al checkout de MercadoPago para completar el pago de forma segura.',
-  debito:       '⏳ <strong>Débito/Crédito:</strong> próximamente. Por ahora usá transferencia o efectivo.',
+  manual:      '📋 <strong>Transferencia bancaria:</strong> te enviamos el CBU/alias por WhatsApp al confirmar. El pedido se activa una vez que confirmamos el pago.',
+  efectivo:    '💵 <strong>Efectivo:</strong> abonás al retirar la pieza en el local. Dirección: te la enviamos al confirmar.',
+  mercadopago: '📱 <strong>MercadoPago:</strong> serás redirigido al checkout seguro de MercadoPago. Podés pagar con tarjeta, débito o dinero en cuenta.',
+  debito:      '⏳ <strong>Débito/Crédito directo:</strong> próximamente. Por ahora usá MercadoPago o transferencia.',
 };
 
-let _cliente      = null;
-let _talleres     = [];
-let _tallerSel    = null;
-let _metodoPago   = 'manual';
-let _operacionId  = null;
-let _walletSaldo  = 0;
-let _walletUsar   = 0;
+let _cliente       = null;
+let _talleres      = [];
+let _tallerSel     = null;
+let _metodoPago    = 'mercadopago';
+let _operacionId   = null;
+let _walletSaldo   = 0;
+let _walletUsar    = 0;
+let _necesitaTaller = true;
 
-// ── Init ────────────────────────────────────────────────────────────
+// ── Init ─────────────────────────────────────────────────────────────
 
 async function initCheckout() {
-  // Guard: sesión requerida
   let session = null;
   try {
     const { data } = await dbB2C.auth.getSession();
@@ -30,7 +30,6 @@ async function initCheckout() {
     return;
   }
 
-  // Guard: carrito no vacío
   const items = cargarCarritoLocal();
   if (!items.length) {
     window.location.href = '/buscar';
@@ -47,6 +46,8 @@ async function initCheckout() {
   ]);
 
   renderResumen();
+  seleccionarPago('mercadopago');
+
   document.getElementById('loading-wrap').style.display   = 'none';
   document.getElementById('checkout-contenido').style.display = 'grid';
 }
@@ -56,35 +57,55 @@ async function initCheckout() {
 async function cargarDatosCliente() {
   if (!_cliente) return;
   const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
-  set('f-nombre',   _cliente.nombre);
-  set('f-apellido', _cliente.apellido);
-  set('f-telefono', _cliente.telefono);
-  set('f-email',    _cliente.email);
+  set('f-nombre',    _cliente.nombre);
+  set('f-apellido',  _cliente.apellido);
+  set('f-telefono',  _cliente.telefono);
+  set('f-email',     _cliente.email);
+  if (_cliente.localidad) {
+    const dir = document.getElementById('f-direccion');
+    if (dir && !dir.value) dir.placeholder = `Dirección en ${_cliente.localidad}`;
+  }
 }
 
-// ── Talleres ─────────────────────────────────────────────────────────
+// ── Talleres del Paquete (top 3 por distancia) ──────────────────────
 
 async function cargarTalleres() {
-  const { data, error } = await dbB2C
-    .from('cat_recomendaciones_talleres')
-    .select('id, nombre, razon_social, direccion, localidad, whatsapp, lat, lng')
-    .eq('activo', true)
-    .limit(6);
+  // Si el cliente tiene lat/lng usamos la función SQL, sino fallback client-side
+  let data, error;
 
-  if (error || !data?.length) {
-    renderTallerList([]);
-    return;
-  }
-
-  let lista = data;
   if (_cliente?.lat && _cliente?.lng) {
-    lista = data
-      .map(t => ({ ...t, _dist: haversine(_cliente.lat, _cliente.lng, t.lat, t.lng) }))
-      .sort((a, b) => a._dist - b._dist);
+    const res = await dbB2C.rpc('talleres_cercanos_paquete', {
+      p_lat:   _cliente.lat,
+      p_lng:   _cliente.lng,
+      p_limit: 3,
+    });
+    data  = res.data;
+    error = res.error;
   }
 
-  _talleres = lista;
-  renderTallerList(lista);
+  // Fallback: traer paquete_socio y calcular distancia client-side
+  if (error || !data?.length) {
+    const res = await dbB2C
+      .from('cat_recomendaciones_talleres')
+      .select('id, nombre, razon_social, direccion, localidad, whatsapp, telefono, lat, lng, logo_url')
+      .eq('activo', true)
+      .eq('paquete_socio', true)
+      .limit(10);
+    data  = res.data || [];
+    error = res.error;
+
+    if (_cliente?.lat && _cliente?.lng) {
+      data = data
+        .map(t => ({ ...t, distancia_km: haversine(_cliente.lat, _cliente.lng, t.lat, t.lng) }))
+        .sort((a, b) => a.distancia_km - b.distancia_km)
+        .slice(0, 3);
+    } else {
+      data = data.slice(0, 3);
+    }
+  }
+
+  _talleres = data || [];
+  renderTallerList(_talleres);
 }
 
 function haversine(lat1, lng1, lat2, lng2) {
@@ -93,16 +114,21 @@ function haversine(lat1, lng1, lat2, lng2) {
   const dLat = (lat2 - lat1) * Math.PI / 180;
   const dLng = (lng2 - lng1) * Math.PI / 180;
   const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLng/2)**2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)) * 10) / 10;
 }
 
 function renderTallerList(talleres) {
   const wrap = document.getElementById('taller-list');
-  let html = '';
+  if (!wrap) return;
 
+  let html = '';
   talleres.forEach((t, i) => {
-    const dist = t._dist && t._dist < 9999 ? `<span style="font-size:11px;color:#888;margin-left:6px">${t._dist.toFixed(1)} km</span>` : '';
-    const wa      = t.whatsapp ? `<a class="taller-wa" href="https://wa.me/54${t.whatsapp.replace(/\D/g,'')}" target="_blank">WhatsApp</a>` : '';
+    const dist = t.distancia_km && t.distancia_km < 9999
+      ? `<span style="font-size:11px;color:#888;margin-left:6px;font-weight:600">📍 ${t.distancia_km} km</span>`
+      : '';
+    const wa = t.whatsapp
+      ? `<a class="taller-wa" href="https://wa.me/54${String(t.whatsapp).replace(/\D/g,'')}" target="_blank" onclick="event.stopPropagation()">WhatsApp</a>`
+      : '';
     const perfilLink = `<a href="/taller-perfil?taller_id=${t.id}" target="_blank" onclick="event.stopPropagation()" style="font-size:11px;color:#2563eb;font-weight:600;text-decoration:none;margin-left:8px">Ver perfil →</a>`;
     html += `<div class="taller-card" id="taller-card-${i}" onclick="seleccionarTaller(${i})">
       <input type="radio" name="taller" id="taller-radio-${i}">
@@ -115,32 +141,42 @@ function renderTallerList(talleres) {
     </div>`;
   });
 
-  html += `<div class="taller-sin" id="taller-card-sin" onclick="seleccionarTaller(-1)">
-    <label><input type="radio" name="taller" id="taller-radio-sin"> Comprar sin taller por ahora</label>
-  </div>`;
+  if (!talleres.length) {
+    html = '<div style="font-size:13px;color:#888;padding:12px 0">No hay talleres del Paquete disponibles en tu zona por ahora.</div>';
+  }
 
   wrap.innerHTML = html;
 }
 
-function seleccionarTaller(idx) {
-  document.querySelectorAll('.taller-card, .taller-sin').forEach(el => el.classList.remove('selected'));
-  if (idx === -1) {
-    document.getElementById('taller-card-sin').classList.add('selected');
-    document.getElementById('taller-radio-sin').checked = true;
+function toggleNecesitaTaller(necesita) {
+  _necesitaTaller = necesita;
+  const listWrap = document.getElementById('taller-list-wrap');
+  const msgWrap  = document.getElementById('taller-aprobacion-msg');
+  if (listWrap) listWrap.style.display = necesita ? 'block' : 'none';
+  if (!necesita) {
     _tallerSel = null;
-    return;
+    document.querySelectorAll('.taller-card').forEach(el => el.classList.remove('selected'));
+    if (msgWrap) msgWrap.style.display = 'none';
   }
-  document.getElementById(`taller-card-${idx}`).classList.add('selected');
+}
+
+function seleccionarTaller(idx) {
+  document.querySelectorAll('.taller-card').forEach(el => el.classList.remove('selected'));
+  document.getElementById(`taller-card-${idx}`)?.classList.add('selected');
   document.getElementById(`taller-radio-${idx}`).checked = true;
   const t = _talleres[idx];
   _tallerSel = { id: t.id, nombre: t.nombre, direccion: t.direccion, localidad: t.localidad, whatsapp: t.whatsapp };
+
+  const msgWrap = document.getElementById('taller-aprobacion-msg');
+  if (msgWrap) msgWrap.style.display = 'block';
 }
 
-// ── Pago ──────────────────────────────────────────────────────────────
+// ── Pago ─────────────────────────────────────────────────────────────
 
 function seleccionarPago(tipo) {
   document.querySelectorAll('.pago-btn').forEach(el => el.classList.remove('selected'));
-  document.getElementById(`pago-${tipo}`).classList.add('selected');
+  const el = document.getElementById(`pago-${tipo}`);
+  if (el) el.classList.add('selected');
   _metodoPago = tipo;
   document.getElementById('pago-info').innerHTML = PAGO_INFO[tipo] || '';
 }
@@ -160,25 +196,25 @@ async function cargarBannerComprasProgramadas() {
   const banner = document.getElementById('compras-prog-banner');
   if (!banner) return;
   banner.style.display = 'block';
-  document.getElementById('compras-prog-banner-txt').textContent =
-    `Tenés ${count} descuento${count !== 1 ? 's' : ''} programado${count !== 1 ? 's' : ''} disponible${count !== 1 ? 's' : ''}`;
+  const txt = document.getElementById('compras-prog-banner-txt');
+  if (txt) txt.textContent = `Tenés ${count} descuento${count !== 1 ? 's' : ''} programado${count !== 1 ? 's' : ''} disponible${count !== 1 ? 's' : ''}`;
 }
 
-// ── Wallet en checkout ────────────────────────────────────────────────
+// ── Wallet ────────────────────────────────────────────────────────────
 
 async function cargarWalletDisponible() {
   if (!_cliente?.id) return;
   const { data } = await dbB2C
-    .from('cat_wallet_b2c')
-    .select('saldo')
-    .eq('cliente_id', _cliente.id)
+    .from('cat_clientes_finales')
+    .select('credito_saldo')
+    .eq('id', _cliente.id)
     .maybeSingle();
-  _walletSaldo = parseFloat(data?.saldo || 0);
+  _walletSaldo = parseFloat(data?.credito_saldo || 0);
   if (_walletSaldo < 0.01) return;
   const box = document.getElementById('wallet-checkout-box');
   if (box) box.classList.add('visible');
   const txt = document.getElementById('wallet-disp-txt');
-  if (txt) txt.textContent = '$' + _walletSaldo.toLocaleString('es-AR', { minimumFractionDigits: 2 });
+  if (txt) txt.textContent = '$' + _walletSaldo.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 function actualizarWalletDescuento() {
@@ -194,9 +230,8 @@ function actualizarWalletDescuento() {
 
   if (val > 0) {
     row.style.display = 'flex';
-    txt.textContent = '-$' + val.toLocaleString('es-AR', { minimumFractionDigits: 2 });
-    const totalFinal = total - val;
-    document.getElementById('res-total').textContent = '$' + totalFinal.toLocaleString('es-AR');
+    txt.textContent   = '-$' + val.toLocaleString('es-AR', { minimumFractionDigits: 2 });
+    document.getElementById('res-total').textContent = '$' + (total - val).toLocaleString('es-AR', { minimumFractionDigits: 2 });
   } else {
     row.style.display = 'none';
     renderResumen();
@@ -215,6 +250,7 @@ function aplicarMaxWallet() {
 function renderResumen() {
   const { items, subtotal, total } = calcularTotales();
   const wrap = document.getElementById('resumen-items');
+  if (!wrap) return;
   wrap.innerHTML = items.map(i => `
     <div class="resumen-item">
       <div class="resumen-item-desc">
@@ -231,20 +267,17 @@ function renderResumen() {
 // ── Confirmar pedido ─────────────────────────────────────────────────
 
 async function confirmarPedido() {
-  // 1. Validar sesión
   if (!_cliente || !_cliente.id) {
     mostrarMsg('Necesitás iniciar sesión para confirmar el pedido.', 'error');
     setTimeout(() => window.location.href = '/login?redirect=/checkout-b2c', 1500);
     return;
   }
 
-  // 2. Método de pago no disponible
   if (_metodoPago === 'debito') {
-    mostrarMsg('Ese medio de pago estará disponible próximamente. Elegí transferencia o efectivo.', 'error');
+    mostrarMsg('Ese medio de pago estará disponible próximamente. Elegí MercadoPago o transferencia.', 'error');
     return;
   }
 
-  // 3. Validar campos obligatorios
   const nombre       = document.getElementById('f-nombre')?.value?.trim()   || '';
   const apellido     = document.getElementById('f-apellido')?.value?.trim() || '';
   const telefono     = document.getElementById('f-telefono')?.value?.trim() || '';
@@ -255,66 +288,63 @@ async function confirmarPedido() {
   if (!telefono)            { mostrarMsg('Completá tu teléfono de contacto.', 'error'); return; }
   if (!direccion)           { mostrarMsg('Completá la dirección de entrega.', 'error'); return; }
 
-  // 4. Validar carrito
   const items = cargarCarritoLocal();
-  if (!items || !items.length) {
-    mostrarMsg('El carrito está vacío.', 'error');
-    return;
-  }
+  if (!items || !items.length) { mostrarMsg('El carrito está vacío.', 'error'); return; }
 
-  // 5. Deshabilitar botón
   const btn = document.getElementById('btn-confirmar');
-  if (btn) { btn.disabled = true; btn.textContent = 'Confirmando pedido...'; }
-  mostrarMsg('Confirmando pedido...', 'info');
+  if (btn) { btn.disabled = true; btn.textContent = 'Procesando...'; }
+  mostrarMsg('Procesando pedido...', 'info');
 
   try {
-    // 6. Actualizar teléfono si cambió
+    // Actualizar teléfono si cambió
     if (telefono !== _cliente.telefono) {
       await dbB2C.from('cat_clientes_finales').update({ telefono }).eq('id', _cliente.id);
     }
 
-    // 7. Calcular totales
     const { subtotal, total } = calcularTotales();
     const walletAplicado = Math.min(_walletUsar, _walletSaldo, total);
-    const totalFinal = total - walletAplicado;
+    const totalFinal = Math.max(0, total - walletAplicado);
+
+    const esMercadoPago = _metodoPago === 'mercadopago';
 
     const opPayload = {
       cliente_id:                  _cliente.id,
-      taller_id:                   _tallerSel?.id || null,
+      taller_id:                   (_necesitaTaller && _tallerSel?.id) ? _tallerSel.id : null,
       metodo_pago:                 _metodoPago,
-      estado:                      'pendiente',
+      canal_pago:                  _metodoPago,
+      estado:                      esMercadoPago ? 'pendiente_pago' : 'pendiente',
       subtotal,
+      descuento:                   0,
+      credito_aplicado:            walletAplicado,
+      // Para MP: wallet_usado = 0 hasta que webhook confirme; para manual: debitamos inmediato
+      wallet_usado:                esMercadoPago ? 0 : walletAplicado,
       total:                       totalFinal,
-      descuento:                   walletAplicado,
-      wallet_usado:                walletAplicado,
       direccion_entrega:           direccion,
-      pendiente_aprobacion_taller: !!_tallerSel,
+      pendiente_aprobacion_taller: !esMercadoPago && !!((_necesitaTaller && _tallerSel)),
       notas: JSON.stringify({
-        taller:        _tallerSel    || null,
+        taller:        (_necesitaTaller && _tallerSel) ? _tallerSel : null,
         notas_cliente: notasCliente,
+        metodo_pago:   _metodoPago,
       }),
     };
 
-    // 8. Buscar borrador existente (creado por carrito.js) o crear operación nueva
+    // Buscar borrador existente o crear operación nueva
     const { data: borradores } = await dbB2C
       .from('cat_operaciones_b2c')
       .select('id')
       .eq('cliente_id', _cliente.id)
-      .eq('estado', 'pendiente')
+      .in('estado', ['pendiente', 'pendiente_pago'])
       .order('created_at', { ascending: false })
       .limit(1);
 
     let opId = borradores?.[0]?.id;
 
     if (opId) {
-      // Actualizar borrador existente
       await dbB2C.from('cat_operaciones_b2c')
         .update({ ...opPayload, updated_at: new Date().toISOString() })
         .eq('id', opId);
-      // Reemplazar items: borrar los anteriores e insertar los del carrito actual
       await dbB2C.from('cat_operaciones_b2c_items').delete().eq('operacion_id', opId);
     } else {
-      // Crear operación nueva
       const { data: op, error: opError } = await dbB2C
         .from('cat_operaciones_b2c')
         .insert(opPayload)
@@ -324,7 +354,7 @@ async function confirmarPedido() {
       opId = op.id;
     }
 
-    // Insertar items (tanto para borrador actualizado como para operación nueva)
+    // Insertar items
     const lineas = items.map(i => ({
       operacion_id:    opId,
       sku_id:          i.id,
@@ -336,40 +366,51 @@ async function confirmarPedido() {
 
     _operacionId = opId;
 
-    // 8b. Debitar wallet si corresponde
-    if (walletAplicado > 0) {
-      await dbB2C.rpc('fn_aplicar_movimiento_wallet', {
+    // Para pagos no-MP: debitar wallet inmediatamente si corresponde
+    if (!esMercadoPago && walletAplicado > 0) {
+      await dbB2C.rpc('wallet_movimiento', {
         p_cliente_id:   _cliente.id,
         p_tipo:         'debito',
-        p_concepto:     'Pago operación #' + opId.slice(0, 8),
         p_monto:        walletAplicado,
+        p_concepto:     `Pago operación #${opId.slice(0, 8)} vía ${_metodoPago}`,
         p_operacion_id: opId,
-        p_vence_at:     null,
-      }).catch(() => {});
+      }).catch(err => console.warn('[wallet] Error debitando:', err));
     }
 
-    // 9. Notificar al taller
-    if (_tallerSel?.id) {
+    // Notificar taller (para pagos no-MP el taller se notifica al confirmar el pedido)
+    if (!esMercadoPago && _necesitaTaller && _tallerSel?.id) {
       await dbB2C.from('cat_notificaciones_talleres').insert({
         taller_id:    _tallerSel.id,
         operacion_id: opId,
         tipo:         'nueva_operacion',
-        mensaje:      `Nueva operación asignada — $${total.toLocaleString('es-AR')} · ${direccion}`,
+        mensaje:      `Nueva operación asignada — $${totalFinal.toLocaleString('es-AR')} · ${direccion}`,
         leida:        false,
       }).catch(() => {});
     }
 
-    // 10. Flujo MercadoPago
-    if (_metodoPago === 'mercadopago') {
+    // Flujo MercadoPago
+    if (esMercadoPago) {
       mostrarMsg('Generando link de pago con MercadoPago...', 'info');
       try {
-        const mpData = await mpCrearPreferencia({
-          operacionId: opId,
-          items: items.map(i => ({
+        // Si hay wallet aplicado, pasamos un único item con el monto neto
+        let mpItems;
+        if (walletAplicado > 0) {
+          mpItems = [{
+            descripcion:     'Compra Piezauto (crédito wallet aplicado)',
+            cantidad:        1,
+            precio_unitario: Math.max(1, Math.round(totalFinal)),
+          }];
+        } else {
+          mpItems = items.map(i => ({
             descripcion:     i.descripcion || 'Autoparte Piezauto',
             cantidad:        i.cantidad    || 1,
-            precio_unitario: i.precio      || 0,
-          })),
+            precio_unitario: Math.round(i.precio || 0),
+          }));
+        }
+
+        const mpData = await mpCrearPreferencia({
+          operacionId: opId,
+          items: mpItems,
           pagador: {
             nombre:   `${nombre} ${apellido}`.trim(),
             email:    _cliente.email || '',
@@ -381,6 +422,7 @@ async function confirmarPedido() {
             pending: `${window.location.origin}/gracias?op=${opId}&pago=pendiente`,
           },
         });
+
         if (mpData?.init_point) {
           await mpGuardarPreferencia(dbB2C, opId, mpData.preference_id);
           localStorage.removeItem('piezauto_carrito_b2c');
@@ -389,17 +431,17 @@ async function confirmarPedido() {
           return;
         }
       } catch (mpErr) {
-        console.error('[MP] Error creando preferencia:', mpErr);
+        console.error('[MP] Error:', mpErr);
       }
-      // MP falló — pedido registrado, coordinar manualmente
+      // MP falló — pedido registrado
       mostrarMsg('MercadoPago no disponible ahora. Tu pedido fue registrado — te contactamos por WhatsApp.', 'info');
       localStorage.removeItem('piezauto_carrito_b2c');
       if (typeof actualizarBadgeCarrito === 'function') actualizarBadgeCarrito();
-      if (btn) { btn.disabled = false; btn.textContent = 'Confirmar pedido'; }
+      if (btn) { btn.disabled = false; btn.textContent = 'Confirmar pedido →'; }
       return;
     }
 
-    // 11. Limpiar y redirigir (transferencia / efectivo / manual)
+    // Flujo manual (transferencia / efectivo)
     localStorage.removeItem('piezauto_carrito_b2c');
     if (typeof actualizarBadgeCarrito === 'function') actualizarBadgeCarrito();
     window.location.href = `/gracias?op=${opId}`;
@@ -407,7 +449,7 @@ async function confirmarPedido() {
   } catch (err) {
     console.error('[checkout] Error:', err);
     mostrarMsg(err.message || 'Error al confirmar el pedido. Intentá de nuevo.', 'error');
-    if (btn) { btn.disabled = false; btn.textContent = 'Confirmar pedido'; }
+    if (btn) { btn.disabled = false; btn.textContent = 'Confirmar pedido →'; }
   }
 }
 
@@ -415,6 +457,7 @@ async function confirmarPedido() {
 
 function mostrarMsg(txt, tipo) {
   const el = document.getElementById('checkout-msg');
+  if (!el) return;
   el.style.color = tipo === 'error' ? '#c00' : '#888';
   el.textContent = txt;
 }

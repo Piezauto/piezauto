@@ -63,10 +63,19 @@
     .taller-dir { font-size: 12px; color: #666; }
     .taller-loc { font-size: 11px; color: #aaa; margin-top: 2px; }
     .taller-wa { display: inline-flex; align-items: center; gap: 4px; margin-top: 6px; font-size: 11px; font-weight: 600; color: #22c55e; }
-    .taller-sin { border: 2px dashed #e8e8e8; border-radius: 10px; padding: 12px 14px; cursor: pointer; transition: border-color .2s; }
-    .taller-sin.selected { border-color: #aaa; background: #fafafa; }
-    .taller-sin label { cursor: pointer; font-size: 13px; color: #666; display: flex; align-items: center; gap: 8px; }
     .taller-mano { font-size: 11px; color: #888; margin-top: 8px; padding: 8px 10px; background: #f8f8f8; border-radius: 6px; line-height: 1.5; }
+
+    /* Toggle instalación */
+    .instalacion-toggle { display: flex; gap: 0; border: 1.5px solid #e0e0e0; border-radius: 8px; overflow: hidden; margin-bottom: 16px; }
+    .instalacion-toggle button {
+      flex: 1; padding: 10px 8px; border: none; background: #f8f8f8;
+      font-size: 13px; font-weight: 600; color: #666; cursor: pointer; transition: all .2s;
+    }
+    .instalacion-toggle button.activo { background: var(--negro); color: #fff; }
+    .taller-aprobacion-msg {
+      display: none; margin-top: 12px; background: #fff8e1; border: 1px solid #ffe082;
+      border-radius: 8px; padding: 12px 14px; font-size: 12px; color: #795548; line-height: 1.6;
+    }
 
     /* Pago buttons */
     .pago-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -198,16 +207,25 @@
 
     <!-- Taller -->
     <div class="card">
-      <div class="card-title"><span>🔧</span> Taller de instalación (opcional)</div>
-      <p style="font-size:13px;color:#555;margin-bottom:14px;line-height:1.6">
-        Si querés que un taller del Paquete Piezauto instale la pieza, seleccioná uno.
-        El taller va a confirmar el turno con vos directamente.
-      </p>
-      <div id="taller-list" class="taller-list">
-        <div class="spinner-wrap" style="padding:20px 0"><div class="spinner"></div></div>
+      <div class="card-title"><span>🔧</span> Instalación de la pieza</div>
+      <div class="instalacion-toggle">
+        <button class="activo" id="btn-con-taller" onclick="toggleNecesitaTaller(true)">🔧 Necesito instalación</button>
+        <button id="btn-sin-taller" onclick="toggleNecesitaTaller(false)">📦 Solo retiro la pieza</button>
       </div>
-      <div class="nota-mano-obra">
-        <strong>Nota:</strong> el precio de la pieza es el que ves en el resumen. La mano de obra se coordina directamente con el taller y se abona por separado.
+      <div id="taller-list-wrap">
+        <p style="font-size:13px;color:#555;margin-bottom:12px;line-height:1.6">
+          Los 3 talleres del <strong>Paquete Piezauto</strong> más cercanos a vos:
+        </p>
+        <div id="taller-list" class="taller-list">
+          <div class="spinner-wrap" style="padding:20px 0"><div class="spinner"></div></div>
+        </div>
+        <div class="taller-aprobacion-msg" id="taller-aprobacion-msg">
+          ⏳ <strong>Tu compra queda pendiente de aprobación del taller (48hs).</strong><br>
+          Si el taller no puede tomar el trabajo en ese plazo, el monto pagado queda como crédito en tu wallet.
+        </div>
+        <div class="nota-mano-obra" style="margin-top:12px">
+          <strong>Nota:</strong> el precio de la pieza es el del resumen. La mano de obra se coordina y abona directamente con el taller.
+        </div>
       </div>
     </div>
 
@@ -215,29 +233,24 @@
     <div class="card">
       <div class="card-title"><span>💳</span> Medio de pago</div>
       <div class="pago-grid">
-        <div class="pago-btn selected" id="pago-manual" onclick="seleccionarPago('manual')">
+        <div class="pago-btn selected" id="pago-mercadopago" onclick="seleccionarPago('mercadopago')" style="grid-column:1/-1">
+          <div class="pago-icon">📱</div>
+          <span class="pago-label">MercadoPago</span>
+          <span class="pago-sub">Tarjeta · Débito · Dinero en cuenta</span>
+        </div>
+        <div class="pago-btn" id="pago-manual" onclick="seleccionarPago('manual')">
           <div class="pago-icon">🏦</div>
           <span class="pago-label">Transferencia</span>
-          <span class="pago-sub">Pago manual</span>
+          <span class="pago-sub">CBU/alias por WhatsApp</span>
         </div>
         <div class="pago-btn" id="pago-efectivo" onclick="seleccionarPago('efectivo')">
           <div class="pago-icon">💵</div>
           <span class="pago-label">Efectivo</span>
           <span class="pago-sub">Al retirar</span>
         </div>
-        <div class="pago-btn" id="pago-mercadopago" onclick="seleccionarPago('mercadopago')">
-          <div class="pago-icon">📱</div>
-          <span class="pago-label">MercadoPago</span>
-          <span class="pago-sub">Próximamente</span>
-        </div>
-        <div class="pago-btn" id="pago-debito" style="pointer-events:none;cursor:not-allowed;opacity:.5">
-          <div class="pago-icon">💳</div>
-          <span class="pago-label">Débito/Crédito</span>
-          <span class="pago-sub">Próximamente</span>
-        </div>
       </div>
       <div id="pago-info" class="pago-info">
-        📋 <strong>Transferencia bancaria:</strong> te enviamos el CBU/alias por WhatsApp al confirmar. El pedido se activa una vez que confirmamos el pago.
+        📱 <strong>MercadoPago:</strong> serás redirigido al checkout seguro de MercadoPago. Podés pagar con tarjeta, débito o dinero en cuenta.
       </div>
     </div>
 
@@ -306,5 +319,14 @@
 <script src="js/carrito.js"></script>
 <script src="js/checkout-b2c.js"></script>
 <script src="/lib/mercadopago.js"></script>
+<script>
+// Sincronizar estilo visual del toggle de instalación
+const _origToggle = window.toggleNecesitaTaller;
+window.toggleNecesitaTaller = function(necesita) {
+  _origToggle(necesita);
+  document.getElementById('btn-con-taller')?.classList.toggle('activo',  necesita);
+  document.getElementById('btn-sin-taller')?.classList.toggle('activo', !necesita);
+};
+</script>
 </body>
 </html>

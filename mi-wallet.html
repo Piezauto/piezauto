@@ -216,43 +216,59 @@ async function init() {
 }
 
 async function cargarWallet() {
-  const { data } = await dbB2C
-    .from('cat_wallet_b2c')
-    .select('saldo, total_ganado, total_usado')
-    .eq('cliente_id', _clienteId)
+  // Saldo desde cat_clientes_finales (denormalizado, actualizado por wallet_movimiento)
+  const { data: clienteData } = await dbB2C
+    .from('cat_clientes_finales')
+    .select('credito_saldo')
+    .eq('id', _clienteId)
     .maybeSingle();
 
-  document.getElementById('hero-saldo').textContent  = FMT(data?.saldo || 0);
-  document.getElementById('stat-ganado').textContent = FMT(data?.total_ganado || 0);
-  document.getElementById('stat-usado').textContent  = FMT(data?.total_usado || 0);
+  const saldo = parseFloat(clienteData?.credito_saldo || 0);
+  document.getElementById('hero-saldo').textContent = FMT(saldo);
+
+  // Stats agregados desde cat_creditos_clientes
+  const { data: movs } = await dbB2C
+    .from('cat_creditos_clientes')
+    .select('tipo, monto')
+    .eq('cliente_id', _clienteId);
+
+  const ganado = (movs || []).filter(m => m.tipo === 'credito').reduce((s, m) => s + Number(m.monto), 0);
+  const usado  = (movs || []).filter(m => m.tipo === 'debito').reduce((s, m) => s + Number(m.monto), 0);
+  document.getElementById('stat-ganado').textContent = FMT(ganado);
+  document.getElementById('stat-usado').textContent  = FMT(usado);
 }
 
 async function cargarMovimientos() {
   const cont = document.getElementById('lista-movimientos');
   const { data, error } = await dbB2C
-    .from('cat_wallet_movimientos')
-    .select('*')
+    .from('cat_creditos_clientes')
+    .select('id, tipo, monto, concepto, saldo_post, created_at, operacion_id')
     .eq('cliente_id', _clienteId)
     .order('created_at', { ascending: false })
     .limit(60);
 
   if (error || !data?.length) {
-    cont.innerHTML = '<div class="mov-empty">No tenés movimientos todavía.<br>Completá una compra para ganar tu primer cashback.</div>';
+    cont.innerHTML = '<div class="mov-empty">Todavía no tenés movimientos en tu wallet.<br>Completá una compra o recibí créditos para verlos acá.</div>';
     return;
   }
 
+  const TIPO_ICON  = { credito:'💚', debito:'🔴', reversion:'↩️' };
+  const TIPO_LABEL = { credito:'Crédito', debito:'Usado', reversion:'Reversión' };
+
   cont.innerHTML = data.map(m => {
-    const venceTxt = m.vence_at && m.tipo === 'credito'
-      ? `<span class="badge-vence">Vence ${FDATE(m.vence_at)}</span>`
+    const tipoKey = m.tipo in TIPO_ICON ? m.tipo : 'credito';
+    const signo   = m.tipo === 'debito' ? '-' : '+';
+    const opLink  = m.operacion_id
+      ? `<a href="/operaciones?id=${m.operacion_id}" style="font-size:10px;color:#2563eb;text-decoration:none">Ver operación →</a>`
       : '';
     return `
       <div class="mov-item">
-        <div class="mov-icon ${m.tipo}">${MOV_ICON[m.tipo] || '💳'}</div>
+        <div class="mov-icon ${tipoKey}">${TIPO_ICON[tipoKey]}</div>
         <div class="mov-info">
-          <div class="mov-concepto">${m.concepto}</div>
-          <div class="mov-fecha">${FDATE(m.created_at)}${venceTxt}</div>
+          <div class="mov-concepto">${String(m.concepto || TIPO_LABEL[tipoKey] || '—').replace(/</g,'&lt;')}</div>
+          <div class="mov-fecha">${FDATE(m.created_at)} ${opLink}</div>
         </div>
-        <div class="mov-monto ${m.tipo}">${m.tipo === 'debito' ? '-' : '+'}${FMT(m.monto)}</div>
+        <div class="mov-monto ${tipoKey}">${signo}${FMT(m.monto)}</div>
       </div>`;
   }).join('');
 }

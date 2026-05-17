@@ -18,6 +18,41 @@ function corsHeaders(origin) {
   };
 }
 
+// Llama a wallet_movimiento vía Supabase REST (service_role)
+async function callWalletMovimiento(env, params) {
+  const res = await fetch(`${env.SUPABASE_URL}/rest/v1/rpc/wallet_movimiento`, {
+    method: 'POST',
+    headers: {
+      'apikey':        env.SUPABASE_SERVICE_ROLE_KEY,
+      'Authorization': `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+      'Content-Type':  'application/json',
+    },
+    body: JSON.stringify(params),
+  });
+  if (!res.ok) {
+    const txt = await res.text().catch(() => '');
+    console.error('[wallet_movimiento] error:', res.status, txt);
+  }
+  return res;
+}
+
+// PATCH sobre cat_operaciones_b2c
+async function patchOperacion(env, opId, payload) {
+  return fetch(
+    `${env.SUPABASE_URL}/rest/v1/cat_operaciones_b2c?id=eq.${opId}`,
+    {
+      method: 'PATCH',
+      headers: {
+        'apikey':        env.SUPABASE_SERVICE_ROLE_KEY,
+        'Authorization': `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+        'Content-Type':  'application/json',
+        'Prefer':        'return=minimal',
+      },
+      body: JSON.stringify(payload),
+    }
+  );
+}
+
 export default {
   async fetch(request, env) {
     const url    = new URL(request.url);
@@ -30,52 +65,163 @@ export default {
 
     // POST /crear-preferencia
     if (url.pathname === '/crear-preferencia' && request.method === 'POST') {
-      const body = await request.json();
-      const res  = await fetch('https://api.mercadopago.com/checkout/preferences', {
-        method:  'POST',
-        headers: {
-          'Authorization':  `Bearer ${env.MP_ACCESS_TOKEN}`,
-          'Content-Type':   'application/json',
-        },
-        body: JSON.stringify(body),
-      });
-      const data = await res.json();
-      return new Response(JSON.stringify(data), {
-        status:  res.status,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders(origin) },
-      });
+      try {
+        const body = await request.json();
+        const res  = await fetch('https://api.mercadopago.com/checkout/preferences', {
+          method:  'POST',
+          headers: {
+            'Authorization': `Bearer ${env.MP_ACCESS_TOKEN}`,
+            'Content-Type':  'application/json',
+          },
+          body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        return new Response(JSON.stringify(data), {
+          status:  res.status,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders(origin) },
+        });
+      } catch (err) {
+        return new Response(JSON.stringify({ error: err.message }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders(origin) },
+        });
+      }
     }
 
     // POST /webhook — notificaciones MP
     if (url.pathname === '/webhook' && request.method === 'POST') {
-      const body = await request.json();
-      if (body.action === 'payment.updated' || body.type === 'payment') {
-        const paymentId = body.data?.id;
-        if (paymentId) {
+      try {
+        const body = await request.json().catch(() => ({}));
+
+        if (body.action === 'payment.updated' || body.type === 'payment') {
+          const paymentId = body.data?.id;
+          if (!paymentId) return new Response('OK');
+
+          // Obtener detalles del pago desde MP
           const pRes = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
             headers: { 'Authorization': `Bearer ${env.MP_ACCESS_TOKEN}` },
           });
           const payment = await pRes.json();
-          const estado  =
-            payment.status === 'approved' ? 'pagado'   :
-            payment.status === 'rejected' ? 'cancelado': 'pendiente';
-          await fetch(
-            `${env.SUPABASE_URL}/rest/v1/cat_operaciones_b2c?mp_preference_id=eq.${payment.external_reference}`,
+          const opId = payment.external_reference;
+          if (!opId) return new Response('OK');
+
+          // Obtener operación actual
+          const opRes = await fetch(
+            `${env.SUPABASE_URL}/rest/v1/cat_operaciones_b2c?id=eq.${opId}&select=id,taller_id,cliente_id,credito_aplicado,total`,
             {
-              method:  'PATCH',
               headers: {
                 'apikey':        env.SUPABASE_SERVICE_ROLE_KEY,
                 'Authorization': `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
-                'Content-Type':  'application/json',
               },
-              body: JSON.stringify({
-                estado,
-                mp_payment_id: String(paymentId),
-                mp_status:     payment.status,
-              }),
             }
           );
+          const ops = await opRes.json();
+          const op = Array.isArray(ops) ? ops[0] : null;
+          if (!op) return new Response('OK');
+
+          const walletAplicado = parseFloat(op.credito_aplicado) || 0;
+
+          if (payment.status === 'approved') {
+            let nuevoEstado = 'pagado_confirmado';
+            let pendienteAprobacion = false;
+
+            // Si tiene taller, verificar autoaprobar_trabajos del cliente
+            if (op.taller_id) {
+              const cliRes = await fetch(
+                `${env.SUPABASE_URL}/rest/v1/cat_clientes_finales?id=eq.${op.cliente_id}&select=autoaprobar_trabajos`,
+                {
+                  headers: {
+                    'apikey':        env.SUPABASE_SERVICE_ROLE_KEY,
+                    'Authorization': `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+                  },
+                }
+              );
+              const clientes = await cliRes.json();
+              const autoaprobar = clientes?.[0]?.autoaprobar_trabajos ?? false;
+
+              if (!autoaprobar) {
+                nuevoEstado = 'pendiente_aprobacion';
+                pendienteAprobacion = true;
+              } else {
+                nuevoEstado = 'pagado';
+              }
+            } else {
+              nuevoEstado = 'pagado';
+            }
+
+            // Actualizar operación
+            await patchOperacion(env, opId, {
+              estado:                      nuevoEstado,
+              mp_payment_id:               String(paymentId),
+              mp_status:                   payment.status,
+              pendiente_aprobacion_taller: pendienteAprobacion,
+              updated_at:                  new Date().toISOString(),
+            });
+
+            // Debitar wallet si el cliente había aplicado crédito
+            if (walletAplicado > 0) {
+              await callWalletMovimiento(env, {
+                p_cliente_id:   op.cliente_id,
+                p_tipo:         'debito',
+                p_monto:        walletAplicado,
+                p_concepto:     `Pago op #${opId.slice(0, 8)} vía MercadoPago`,
+                p_operacion_id: opId,
+              });
+            }
+
+            // Notificar taller si queda pendiente de aprobación
+            if (pendienteAprobacion && op.taller_id) {
+              await fetch(
+                `${env.SUPABASE_URL}/rest/v1/cat_notificaciones_talleres`,
+                {
+                  method: 'POST',
+                  headers: {
+                    'apikey':        env.SUPABASE_SERVICE_ROLE_KEY,
+                    'Authorization': `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+                    'Content-Type':  'application/json',
+                    'Prefer':        'return=minimal',
+                  },
+                  body: JSON.stringify({
+                    taller_id:    op.taller_id,
+                    operacion_id: opId,
+                    tipo:         'pendiente_aprobacion',
+                    mensaje:      `Operación pagada pendiente de aprobación — $${Number(op.total).toLocaleString('es-AR')}`,
+                    leida:        false,
+                  }),
+                }
+              );
+            }
+
+          } else if (payment.status === 'rejected') {
+            await patchOperacion(env, opId, {
+              estado:       'cancelado',
+              mp_payment_id: String(paymentId),
+              mp_status:    payment.status,
+              updated_at:   new Date().toISOString(),
+            });
+
+            // Revertir wallet si se había reservado crédito
+            if (walletAplicado > 0) {
+              await callWalletMovimiento(env, {
+                p_cliente_id:   op.cliente_id,
+                p_tipo:         'reversion',
+                p_monto:        walletAplicado,
+                p_concepto:     `Reversión por pago rechazado — op #${opId.slice(0, 8)}`,
+                p_operacion_id: opId,
+              });
+            }
+
+          } else {
+            // pending / in_process / etc.
+            await patchOperacion(env, opId, {
+              mp_payment_id: String(paymentId),
+              mp_status:     payment.status,
+              updated_at:    new Date().toISOString(),
+            });
+          }
         }
+      } catch (err) {
+        console.error('[webhook] Error:', err);
       }
       return new Response('OK');
     }
